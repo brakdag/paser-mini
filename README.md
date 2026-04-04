@@ -1,6 +1,6 @@
 # Passer (Sistema Autónomo de Function Calling - ReAct Pattern)
 
-Este proyecto (anteriormente *mi_proyecto_agente*) implementa un agente autónomo utilizando el modelo Gemini de Google (vía `google-genai` SDK) que emplea el patrón **ReAct (Reasoning and Acting)** para ejecutar funciones locales de forma transparente para el usuario.
+Este proyecto implementa un agente autónomo utilizando el modelo Gemini de Google (vía `google-genai` SDK) que emplea el patrón **ReAct (Reasoning and Acting)** para ejecutar funciones locales de forma transparente para el usuario.
 
 El nombre "Passer" hace referencia al *Passer domesticus* (gorrión), un ave muy común en el sur mendocino.
 
@@ -20,16 +20,6 @@ El nombre "Passer" hace referencia al *Passer domesticus* (gorrión), un ave muy
     *   **Pensamientos:** Permite alternar la visibilidad de los pensamientos del modelo (líneas que comienzan con `*`) mediante el comando `/thinking`.
     *   **Directorio de Trabajo:** Permite cambiar el directorio de trabajo del agente mediante `/cd <ruta>`.
 
-4.  **Herramientas Disponibles:**
-    *   `obtener_hora_actual(zona_horaria)`
-    *   `calculadora_basica(operacion)`
-    *   `leer_archivo(path)`
-    *   `escribir_archivo(path, contenido)`
-    *   `borrar_archivo(path)`
-    *   `listar_archivos(path)`
-    *   `buscar_en_internet(query)`: Búsqueda vía DuckDuckGo.
-    *   `leer_url(url)`: Lectura de contenido de páginas web.
-
 ## 🛠️ Comandos en la Consola
 
 *   `:q` - Salir de la sesión.
@@ -41,10 +31,31 @@ El nombre "Passer" hace referencia al *Passer domesticus* (gorrión), un ave muy
 
 *   Python 3.x
 *   Librería `google-genai`
+*   Librería `html2text`
 *   Variable de entorno `GEMINI_API_KEY` configurada con tu clave de API de Google AI Studio.
 
 ## 💻 Ejecución
 
+Puedes iniciar la aplicación usando el script auxiliar:
+
 ```bash
-PYTHONPATH=. python3 passer/main.py
+./chat.sh
 ```
+
+O manualmente:
+
+```bash
+PYTHONPATH=. ./venv/bin/python -m passer.main
+```
+
+## 🛠️ Herramientas Disponibles
+
+*   `obtener_hora_actual(zona_horaria)`
+*   `calculadora_basica(operacion)`
+*   `leer_archivo(path)`
+*   `escribir_archivo(path, contenido)`
+*   `borrar_archivo(path)`
+*   `listar_archivos(path)`
+*   `buscar_en_internet(query)`: Búsqueda vía DuckDuckGo.
+*   `leer_url(url)`: Lectura de contenido de páginas web.
+*   `obtener_directorio_actual()`: Devuelve la ruta absoluta del directorio de trabajo actual.
