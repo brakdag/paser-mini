@@ -99,8 +99,20 @@ class ChatManager:
         while True:
             full_response_text = ""
             print("Gemini: ", end="")
+            in_tool_block = False
             for text_chunk in self.assistant.send_message_stream(current_input):
                 full_response_text += text_chunk
+                
+                # Detect start of TOOL_CALL block
+                if "<TOOL_CALL>" in text_chunk:
+                    in_tool_block = True
+                
+                if in_tool_block:
+                    if "</TOOL_CALL>" in text_chunk:
+                        in_tool_block = False
+                    continue # Do not print this chunk
+                    
+                # Print non-tool chunks
                 for line in text_chunk.splitlines(keepends=True):
                     if self.thinking_enabled or not line.lstrip().startswith('*'):
                         print(line, end="", flush=True)
