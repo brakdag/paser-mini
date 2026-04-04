@@ -3,8 +3,13 @@ import sys
 import time
 import itertools
 import threading
+from rich.console import Console
+from rich.markdown import Markdown
+from rich.live import Live
 from passer.core.interfaces import IAIAssistant
 from passer.tools import tools_functions as tf
+
+console = Console()
 
 class Spinner:
     def __init__(self, message="Procesando..."):
@@ -48,7 +53,8 @@ class ChatManager:
             "leer_lineas": "Leyendo archivo...",
             "leer_cabecera": "Leyendo archivo...",
             "modificar_linea": "Modificando línea...",
-            "reemplazar_texto": "Reemplazando texto..."
+            "reemplazar_texto": "Reemplazando texto...",
+            "analizar_codigo_con_pyright": "Analizando código con Pyright..."
         }
 
     def run(self):
@@ -100,27 +106,32 @@ class ChatManager:
         current_input = user_input
         while True:
             full_response_text = ""
-            print("Gemini: ", end="")
+            visible_response_text = ""
             in_tool_block = False
-            for text_chunk in self.assistant.send_message_stream(current_input):
-                full_response_text += text_chunk
-                
-                # Detect start of TOOL_CALL block
-                if "<TOOL_CALL>" in text_chunk:
-                    in_tool_block = True
-                
-                if in_tool_block:
-                    if "</TOOL_CALL>" in text_chunk:
-                        in_tool_block = False
-                    continue # Do not print this chunk
-                    
-                # Print non-tool chunks
-                for line in text_chunk.splitlines(keepends=True):
-                    if self.thinking_enabled or not line.lstrip().startswith('*'):
-                        print(line, end="", flush=True)
-            print("")
             
-            # Parseo TOOL_CALL
+            # Using Live context for real-time Markdown rendering
+            with Live(console=console, refresh_per_second=4, transient=True) as live:
+                for text_chunk in self.assistant.send_message_stream(current_input):
+                    full_response_text += text_chunk
+                    
+                    # Detect start/end of TOOL_CALL block
+                    if "<TOOL_CALL>" in text_chunk:
+                        in_tool_block = True
+                    
+                    if in_tool_block:
+                        if "</TOOL_CALL>" in text_chunk:
+                            in_tool_block = False
+                        continue
+                    
+                    # Update visible text
+                    if self.thinking_enabled or not text_chunk.lstrip().startswith('*'):
+                        visible_response_text += text_chunk
+                        live.update(Markdown(visible_response_text))
+            
+            # Final render after streaming
+            console.print(Markdown(visible_response_text))
+            
+            # Parseo TOOL_CALL (usando full_response_text)
             start_tag, end_tag = "<TOOL_CALL>", "</TOOL_CALL>"
             s = full_response_text.find(start_tag)
             e = full_response_text.find(end_tag)
@@ -139,14 +150,16 @@ class ChatManager:
                             msg = self.tool_messages.get(f_name, "Procesando...")
                             with Spinner(msg):
                                 res = self.tools[f_name](**f_args)
+                        
                         # Enviar respuesta y obtener la siguiente del modelo
                         response = self.assistant.send_message(f"<TOOL_RESPONSE>{json.dumps({'status': 'success', 'data': res})}</TOOL_RESPONSE>")
                         
                         # Si hay un nuevo paso, procesarlo
                         if response and response.text:
-                            current_input = response.text # O quizás no necesitamos inputs si el chat sigue
+                            current_input = response.text 
                         current_input = "" 
                         continue
 
                 except Exception as e: print(f"Error: {e}")
+            
             break

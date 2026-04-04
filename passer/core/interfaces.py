@@ -1,7 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import Generator
+from typing import Generator, Any, Optional
 
 class IAIAssistant(ABC):
+    @property
+    @abstractmethod
+    def current_model(self) -> Optional[str]:
+        pass
+
     @abstractmethod
     def start_chat(self, model_name: str, system_instruction: str, temperature: float):
         pass
@@ -11,7 +16,7 @@ class IAIAssistant(ABC):
         pass
     
     @abstractmethod
-    def send_message(self, message: str):
+    def send_message(self, message: str) -> Any:
         pass
         
     @abstractmethod

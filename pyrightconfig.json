@@ -1,0 +1,10 @@
+{
+  "venvPath": ".",
+  "venv": "venv",
+  "include": [
+    "passer"
+  ],
+  "typeCheckingMode": "basic",
+  "reportMissingImports": true,
+  "reportMissingTypeStubs": false
+}

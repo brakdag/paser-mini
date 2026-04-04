@@ -6,6 +6,7 @@ import json
 import urllib.request
 import urllib.parse
 import html2text
+import subprocess
 
 # Esta variable será gestionada por el ChatManager
 PROJECT_ROOT = os.getcwd()
@@ -30,7 +31,10 @@ def obtener_hora_actual(zona_horaria: str) -> str:
         return f"Error: {e}"
 
 def obtener_directorio_actual() -> str:
-    return PROJECT_ROOT
+    try:
+        return os.getcwd()
+    except Exception as e:
+        return f"Error: {e}"
 
 def calculadora_basica(operacion: str) -> str:
     try:
@@ -163,3 +167,17 @@ def reemplazar_texto(path: str, texto_buscar: str, texto_reemplazar: str) -> str
     except Exception as e:
         print(f"DEBUG: Error reemplazando texto en {path}: {e}")
         return f"Error: {e}"
+
+def analizar_codigo_con_pyright(path: str = ".") -> str:
+    """Analiza código usando pyright y devuelve errores si existen."""
+    try:
+        pyright_path = os.path.join(PROJECT_ROOT, "venv", "bin", "pyright")
+        if not os.path.exists(pyright_path):
+            pyright_path = "pyright"
+            
+        result = subprocess.run([pyright_path, "--outputjson", path], capture_output=True, text=True)
+        if result.returncode == 0:
+            return "No se encontraron errores de tipo."
+        return result.stdout
+    except Exception as e:
+        return f"Error ejecutando pyright: {e}"
