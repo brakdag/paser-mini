@@ -6,3 +6,4 @@ __pycache__/
 .vscode/
 projects/
 .chat_history
+paser.egg-info/
