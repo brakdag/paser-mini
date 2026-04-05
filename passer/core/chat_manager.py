@@ -27,12 +27,8 @@ class ChatManager:
         self.system_instruction = system_instruction
         self.thinking_enabled = True
         
-        try:
-            with open("config.json", "r") as f:
-                config = json.load(f)
-                self.temperature = config.get("default_temperature", 0.7)
-        except Exception:
-            self.temperature = 0.7
+        self.config = self._load_config()
+        self.temperature = self.config.get("default_temperature", 0.7)
         
         self.command_handler = CommandHandler(self)
         self.executor = AutonomousExecutor(
@@ -40,6 +36,13 @@ class ChatManager:
             self.tools,
             on_tool_used=self._on_tool_used,
         )
+
+    def _load_config(self):
+        try:
+            with open("config.json", "r") as f:
+                return json.load(f)
+        except Exception:
+            return {}
 
     def _on_tool_used(self, tool_name: str, args: dict, result: str, success: bool):
         """Callback ejecutado por el executor cuando se usa una herramienta."""
@@ -100,10 +103,5 @@ class ChatManager:
                     print_model_response(cleaned)
     
     def _initialize_chat(self):
-        try:
-            with open("config.json", "r") as f:
-                config = json.load(f)
-                model = config.get("model_name", "models/gemma-4-31b-it")
-        except:
-            model = "models/gemma-4-31b-it"
+        model = self.config.get("model_name", "models/gemma-4-31b-it")
         self.assistant.start_chat(model, self.system_instruction, self.temperature)
