@@ -19,7 +19,8 @@ class JsonFormatter(logging.Formatter):
 
 logger = logging.getLogger("tools")
 if not logger.handlers:
-    handler = logging.StreamHandler(sys.stdout)
+    # Cambiamos StreamHandler por FileHandler para evitar JSON en stdout
+    handler = logging.FileHandler("paser.log")
     handler.setFormatter(JsonFormatter())
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)

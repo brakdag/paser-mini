@@ -10,15 +10,18 @@ from rich.box import ROUNDED
 
 class ChatManager:
     # Herramientas que producen feedback de archivo
+    # Usando glifos de Meslo Nerd Font
     FILE_TOOLS = {
-        "leer_archivo": ("Leyó", "📖"),
-        "escribir_archivo": ("Escribió", "📝"),
-        "borrar_archivo": ("Borró", "🗑️"),
-        "modificar_linea": ("Modificó", "📝"),
-        "reemplazar_texto": ("Reemplazó", "🔄"),
-        "reemplazar_bloque_texto": ("Reemplazó (bloque)", "🔄"),
-        "leer_cabecera": ("Leyó (cabecera)", "📖"),
-        "leer_lineas": ("Leyó (rango)", "📖"),
+        "leer_archivo": ("Leyó", ""),       # nf-fa-file_text_o
+        "escribir_archivo": ("Escribió", ""),
+        "borrar_archivo": ("Borró", ""),      # nf-fa-trash_o
+        "modificar_linea": ("Modificó", ""),
+        "reemplazar_texto": ("Reemplazó", ""),    # nf-fa-refresh
+        "reemplazar_bloque_texto": ("Reemplazó (bloque)", ""),
+        "leer_cabecera": ("Leyó (cabecera)", ""),
+        "leer_lineas": ("Leyó (rango)", ""),
+        "mover_archivo": ("Movió", ""),       # nf-fa-arrows_h (o similar para mover)
+        "crear_carpeta": ("Creó", ""),       # nf-fa-folder
     }
 
     def __init__(self, assistant: IAIAssistant, tools: dict, system_instruction: str):
@@ -50,11 +53,20 @@ class ChatManager:
         """Callback ejecutado por el executor cuando se usa una herramienta."""
         if tool_name in self.FILE_TOOLS:
             verb, icon = self.FILE_TOOLS[tool_name]
-            # Extraer nombre de archivo del argumento 'path' si existe
-            path = args.get("path", "archivo desconocido")
-            filename = os.path.basename(path) if path else "archivo desconocido"
             status_icon = "✅" if success else "❌"
-            console.print(f"  {icon} {verb}: {filename} {status_icon}", style="dim yellow")
+            
+            # Personalización de mensaje según herramienta
+            if tool_name == "mover_archivo":
+                origen = os.path.basename(args.get("origen", "desconocido"))
+                destino = os.path.basename(args.get("destino", "desconocido"))
+                msg = f"{origen} -> {destino}"
+            elif tool_name == "crear_carpeta":
+                msg = args.get("path", "desconocido")
+            else:
+                path = args.get("path", "archivo desconocido")
+                msg = os.path.basename(path) if path else "archivo desconocido"
+                
+            console.print(f"  {icon} {verb}: {msg} {status_icon}", style="dim yellow")
     
     def run(self):
         self._initialize_chat()
