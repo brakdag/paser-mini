@@ -6,7 +6,8 @@ from unittest.mock import MagicMock, patch
 # Añadir el directorio raíz al path para importar módulos de paser
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from paser.tools.tools_functions import buscar_en_internet, escribir_archivo
+from paser.tools.web_tools import buscar_en_internet
+from paser.tools.file_tools import escribir_archivo
 
 def test_clima_mendoza_autonomo():
     print("Iniciando prueba: buscar clima Mendoza y guardar en archivo...")

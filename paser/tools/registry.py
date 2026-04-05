@@ -1,22 +1,25 @@
-from paser.tools import tools_functions as tf
+from paser.tools import file_tools as ft
+from paser.tools import web_tools as wt
+from paser.tools import system_tools as st
+from paser.tools import util_tools as ut
 
 AVAILABLE_TOOLS = {
-    "obtener_hora_actual": tf.obtener_hora_actual,
-    "calculadora_basica": tf.calculadora_basica,
-    "leer_archivo": tf.leer_archivo,
-    "escribir_archivo": tf.escribir_archivo,
-    "borrar_archivo": tf.borrar_archivo,
-    "listar_archivos": tf.listar_archivos,
-    "buscar_en_internet": tf.buscar_en_internet,
-    "leer_url": tf.leer_url,
-    "obtener_directorio_actual": tf.obtener_directorio_actual,
-    "leer_lineas": tf.leer_lineas,
-    "leer_cabecera": tf.leer_cabecera,
-    "modificar_linea": tf.modificar_linea,
-    "reemplazar_texto": tf.reemplazar_texto,
-    "reemplazar_bloque_texto": tf.reemplazar_bloque_texto,
-    "analizar_codigo_con_pyright": tf.analizar_codigo_con_pyright,
-    "buscar_reemplazar_global": tf.buscar_reemplazar_global
+    "obtener_hora_actual": ut.obtener_hora_actual,
+    "calculadora_basica": ut.calculadora_basica,
+    "leer_archivo": ft.leer_archivo,
+    "escribir_archivo": ft.escribir_archivo,
+    "borrar_archivo": ft.borrar_archivo,
+    "listar_archivos": ft.listar_archivos,
+    "buscar_en_internet": wt.buscar_en_internet,
+    "leer_url": wt.leer_url,
+    "obtener_directorio_actual": ut.obtener_directorio_actual,
+    "leer_lineas": ft.leer_lineas,
+    "leer_cabecera": ft.leer_cabecera,
+    "modificar_linea": ft.modificar_linea,
+    "reemplazar_texto": ft.reemplazar_texto,
+    "reemplazar_bloque_texto": ft.reemplazar_bloque_texto,
+    "analizar_codigo_con_pyright": st.analizar_codigo_con_pyright,
+    "buscar_reemplazar_global": ft.buscar_reemplazar_global
 }
 
 TOOL_CATALOG = """

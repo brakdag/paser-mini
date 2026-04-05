@@ -5,7 +5,7 @@ import json
 # Añadir el directorio raíz al path para importar módulos de paser
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from paser.tools.tools_functions import obtener_directorio_actual
+from paser.tools.util_tools import obtener_directorio_actual
 
 def test_get_cwd():
     print("Iniciando prueba: obtener directorio actual...")

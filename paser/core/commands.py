@@ -1,8 +1,7 @@
 import json
 from rich.table import Table
 from paser.core.ui import get_input, console, print_panel
-import paser.tools.file_tools as tf
-import paser.tools.tools_functions as tfunc
+from paser.tools import core_tools
 
 class CommandHandler:
     def __init__(self, chat_manager):
@@ -18,9 +17,8 @@ class CommandHandler:
         if input_stripped.startswith('/cd '):
             path = input_stripped[4:]
             try:
-                tf.set_project_root(path)
-                tfunc.set_project_root(path) # Asegurar sincronización
-                console.print(f"Directorio cambiado a: {tf.PROJECT_ROOT}", style="green")
+                core_tools.set_project_root(path)
+                console.print(f"Directorio cambiado a: {core_tools.PROJECT_ROOT}", style="green")
             except FileNotFoundError as e:
                 console.print(str(e), style="red")
             return True
