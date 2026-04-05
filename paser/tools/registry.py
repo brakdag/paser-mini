@@ -19,7 +19,9 @@ AVAILABLE_TOOLS = {
     "reemplazar_texto": ft.reemplazar_texto,
     "reemplazar_bloque_texto": ft.reemplazar_bloque_texto,
     "analizar_codigo_con_pyright": st.analizar_codigo_con_pyright,
-    "buscar_reemplazar_global": ft.buscar_reemplazar_global
+    "buscar_reemplazar_global": ft.buscar_reemplazar_global,
+    "mover_archivo": ft.mover_archivo,
+    "crear_carpeta": ft.crear_carpeta
 }
 
 TOOL_CATALOG = """
@@ -39,7 +41,9 @@ TOOL_CATALOG = """
     {"name": "reemplazar_texto", "description": "Busca todas las ocurrencias de 'texto_buscar' en un archivo y las reemplaza por 'texto_reemplazar'.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "texto_buscar": {"type": "string"}, "texto_reemplazar": {"type": "string"}}, "required": ["path", "texto_buscar", "texto_reemplazar"]}},
     {"name": "reemplazar_bloque_texto", "description": "Busca un bloque de texto exacto y lo reemplaza por otro. Útil para cambios quirúrgicos de varias líneas.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "texto_buscar": {"type": "string"}, "texto_reemplazar": {"type": "string"}}, "required": ["path", "texto_buscar", "texto_reemplazar"]}},
     {"name": "analizar_codigo_con_pyright", "description": "Analiza código con pyright y devuelve errores si existen.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": []}},
-    {"name": "buscar_reemplazar_global", "description": "Busca y reemplaza una cadena de texto en múltiples archivos dentro de un directorio.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "texto_buscar": {"type": "string"}, "texto_reemplazar": {"type": "string"}, "extensiones": {"type": "array", "items": {"type": "string"}}}, "required": ["path", "texto_buscar", "texto_reemplazar"]}}
+    {"name": "buscar_reemplazar_global", "description": "Busca y reemplaza una cadena de texto en múltiples archivos dentro de un directorio.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "texto_buscar": {"type": "string"}, "texto_reemplazar": {"type": "string"}, "extensiones": {"type": "array", "items": {"type": "string"}}}, "required": ["path", "texto_buscar", "texto_reemplazar"]}},
+    {"name": "mover_archivo", "description": "Mueve o renombra un archivo o directorio de 'origen' a 'destino'. Si el directorio destino no existe, se crea.", "parameters": {"type": "object", "properties": {"origen": {"type": "string"}, "destino": {"type": "string"}}, "required": ["origen", "destino"]}},
+    {"name": "crear_carpeta", "description": "Crea un directorio (incluyendo directorios padres si es necesario).", "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]}}
 ]
 """
 

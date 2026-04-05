@@ -211,3 +211,29 @@ def buscar_reemplazar_global(path: str, texto_buscar: str, texto_reemplazar: str
     except Exception as e:
         logger.error(f"Error en buscar_reemplazar_global: {e}")
         return f"Error: {e}"
+
+def mover_archivo(origen: str, destino: str) -> str:
+    try:
+        safe_origen = context.get_safe_path(origen)
+        safe_destino = context.get_safe_path(destino)
+        if not os.path.exists(safe_origen):
+            return f"Error: '{origen}' no existe."
+        directorio_destino = os.path.dirname(safe_destino)
+        if directorio_destino:
+            os.makedirs(directorio_destino, exist_ok=True)
+        os.rename(safe_origen, safe_destino)
+        logger.info(f"Archivo movido de '{origen}' a '{destino}'.")
+        return f"Archivo movido de '{origen}' a '{destino}' exitosamente."
+    except Exception as e:
+        logger.error(f"Error al mover archivo de '{origen}' a '{destino}': {e}")
+        return f"Error: {e}"
+
+def crear_carpeta(path: str) -> str:
+    try:
+        safe_path = context.get_safe_path(path)
+        os.makedirs(safe_path, exist_ok=True)
+        logger.info(f"Carpeta '{path}' creada.")
+        return f"Carpeta '{path}' creada exitosamente."
+    except Exception as e:
+        logger.error(f"Error al crear carpeta '{path}': {e}")
+        return f"Error: {e}"

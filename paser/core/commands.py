@@ -1,4 +1,6 @@
 import json
+import os
+import os
 from rich.table import Table
 from paser.core.ui import get_input, console, print_panel
 from paser.tools import core_tools
@@ -53,7 +55,8 @@ class CommandHandler:
                 temp_input = get_input(f"Temp (0-1, default {self.chat_manager.temperature}): ")
                 new_temp = float(temp_input or self.chat_manager.temperature)
                 
-                config_path = "config.json"
+                # commands.py está en paser/core/, subimos dos niveles para llegar a la raíz
+                config_path = os.path.join(os.path.dirname(__file__), '..', '..', 'config.json')
                 try:
                     with open(config_path, "r") as f:
                         config = json.load(f)
