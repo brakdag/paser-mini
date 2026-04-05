@@ -95,11 +95,19 @@ def calculadora_basica(operacion: str) -> str:
         logger.error(f"Error en calculadora_basica: {e}")
         return f"Error: {e}"
 
+# Límite de 5MB para lectura de archivos
+FILE_SIZE_LIMIT = 5 * 1024 * 1024
+
 def leer_archivo(path: str) -> str:
     try:
         safe_path = get_safe_path(path)
         if not os.path.isfile(safe_path):
             return f"Error: Archivo no encontrado en '{path}'."
+        
+        file_size = os.path.getsize(safe_path)
+        if file_size > FILE_SIZE_LIMIT:
+            return f"Error: El archivo '{path}' es demasiado grande ({file_size / 1024 / 1024:.2f} MB). El límite es {FILE_SIZE_LIMIT / 1024 / 1024:.2f} MB."
+
         with open(safe_path, 'r', encoding='utf-8') as f:
             content = f.read()
             if not content:
