@@ -20,9 +20,9 @@ El nombre "Passer" hace referencia al *Passer domesticus* (gorrión), un ave muy
     *   **Pensamientos:** Permite alternar la visibilidad de los pensamientos del modelo (líneas que comienzan con `*`) mediante el comando `/thinking`.
     *   **Directorio de Trabajo:** Permite cambiar el directorio de trabajo del agente mediante `/cd <ruta>`.
 
-## 📋 Hoja de Ruta
+## 📋 Seguimiento del Proyecto
 
-Para ver el estado actual del desarrollo, las tareas completadas y los pendientes, consulta el archivo [TODO.md](TODO.md).
+El seguimiento de tareas, errores y nuevas características se gestiona a través de los **Issues** de GitHub. Puedes ver el estado actual del desarrollo [aquí](https://github.com/brakdag/passer/issues).
 
 ## 🛠️ Comandos en la Consola
 
