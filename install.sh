@@ -1,29 +1,30 @@
 #!/bin/bash
-# Install script for 'paser'
 set -e
 
-# Get project root from where the script is executed
-PROJECT_ROOT=$(pwd)
-echo "Setting up project in: $PROJECT_ROOT"
+echo "🚀 Iniciando instalación de Paser..."
 
-# 1. Create/Recreate virtual environment
-echo "Creating virtual environment..."
+# 1. Verificar dependencias básicas
+if ! command -v python3 &> /dev/null; then
+    echo "❌ Error: python3 no está instalado."
+    exit 1
+fi
+
+# Get project root (donde se ejecute el script)
+PROJECT_ROOT=$(pwd)
+echo "📂 Proyecto en: $PROJECT_ROOT"
+
+# 2. Crear/Recrear entorno virtual
+echo "🛠️ Preparando entorno virtual..."
 python3 -m venv "$PROJECT_ROOT/venv"
 
-# 2. Upgrade pip and install dependencies in editable mode
-echo "Installing package and dependencies..."
-"$PROJECT_ROOT/venv/bin/pip" install --upgrade pip
-"$PROJECT_ROOT/venv/bin/pip" install -e .
+# 3. Instalar/Actualizar dependencias
+echo "📦 Instalando dependencias..."
+"$PROJECT_ROOT/venv/bin/pip" install --upgrade pip > /dev/null
+"$PROJECT_ROOT/venv/bin/pip" install -e . > /dev/null
 
-# 3. Add to local bin
-echo "Setting up 'paser' command link..."
+# 4. Crear enlace simbólico
+echo "🔗 Configurando comando 'paser'..."
 mkdir -p "$HOME/bin"
 ln -sf "$PROJECT_ROOT/venv/bin/paser" "$HOME/bin/paser"
 
-# 4. Check PATH
-if [[ ":$PATH:" != *":$HOME/bin:"* ]]; then
-    echo "Warning: \$HOME/bin is not in your PATH."
-    echo "Add 'export PATH=\"\$HOME/bin:\$PATH\"' to your ~/.zshrc or ~/.bashrc"
-else
-    echo "Successfully installed! You can now run 'paser' from anywhere."
-fi
+echo "✅ ¡Instalación exitosa! Asegúrate de tener '$HOME/bin' en tu PATH."

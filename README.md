@@ -10,11 +10,20 @@ El cambio de nombre de "Passer" a "Paser" simplifica la escritura en la terminal
 
 ## ⚙️ Instalación
 
-```bash
-# Instalación en una sola línea
-git clone https://github.com/brakdag/paser.git && cd paser && chmod +x install.sh && ./install.sh
+Puedes elegir entre clonar el repositorio (para desarrollo) o ejecutar el script de instalación directamente:
 
-# Configura tu clave de API
+### Opción 1: Instalación rápida (Recomendada)
+```bash
+curl -fsSL https://raw.githubusercontent.com/brakdag/paser/main/install.sh | bash
+```
+
+### Opción 2: Clonar desde el repositorio (Para desarrollo)
+```bash
+git clone https://github.com/brakdag/paser.git && cd paser && chmod +x install.sh && ./install.sh
+```
+
+### 3. Configura tu clave de API
+```bash
 export GOOGLE_API_KEY="tu_clave_api_aquí"
 ```
 
