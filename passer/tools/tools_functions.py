@@ -12,6 +12,7 @@ import operator
 import tempfile
 import logging
 import sys
+import time
 
 # Configuración de logging estructurado (JSON)
 class JsonFormatter(logging.Formatter):
@@ -32,6 +33,21 @@ if not logger.handlers:
     handler.setFormatter(JsonFormatter())
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)
+
+def retry_request(func):
+    def wrapper(*args, **kwargs):
+        max_retries = 3
+        backoff_factor = 1
+        for i in range(max_retries):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                if i == max_retries - 1:
+                    raise e
+                sleep_time = backoff_factor * (2 ** i)
+                logger.warning(f"Error in {func.__name__}, retrying in {sleep_time} seconds. Attempt {i+1}/{max_retries}. Error: {e}")
+                time.sleep(sleep_time)
+    return wrapper
 
 # Esta variable será gestionada por el ChatManager
 PROJECT_ROOT = os.getcwd()
@@ -172,13 +188,17 @@ def listar_archivos(path: str = ".") -> str:
         logger.error(f"Error al listar archivos en {path}: {e}")
         return f"Error: {e}"
 
+@retry_request
+def _fetch_url(url: str):
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+    with urllib.request.urlopen(req, timeout=10) as response:
+        return response.read().decode('utf-8', errors='ignore')
+
 def buscar_en_internet(query: str) -> str:
     encoded_query = urllib.parse.quote(query)
     url = f"https://lite.duckduckgo.com/lite/?q={encoded_query}"
-    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     try:
-        with urllib.request.urlopen(req, timeout=10) as response:
-            html = response.read().decode('utf-8', errors='ignore')
+        html = _fetch_url(url)
         links = re.findall(r'<a[^>]*?href="([^\"]+)\"[^>]*?>(.*?)</a>', html, re.DOTALL)
         results = []
         for link, title in links[:3]: # Limited to 3 results
@@ -197,10 +217,8 @@ def buscar_en_internet(query: str) -> str:
 
 
 def leer_url(url: str) -> str:
-    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     try:
-        with urllib.request.urlopen(req, timeout=10) as response:
-            html = response.read().decode('utf-8', errors='ignore')
+        html = _fetch_url(url)
         h = html2text.HTML2Text()
         h.ignore_links = True
         h.ignore_images = True
