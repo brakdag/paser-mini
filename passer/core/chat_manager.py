@@ -1,165 +1,109 @@
 import json
-import sys
-import time
-import itertools
-import threading
 import re
-from rich.console import Console
-from rich.markdown import Markdown
-from rich.live import Live
+import os
 from passer.core.interfaces import IAIAssistant
-from passer.tools import tools_functions as tf
-
-console = Console()
-
-class Spinner:
-    def __init__(self, message="Procesando..."):
-        self.message = message
-        self.stop_running = threading.Event()
-        self.spin_thread = None
-
-    def _spin(self):
-        spinner = itertools.cycle(['|', '/', '-', '\\'])
-        while not self.stop_running.is_set():
-            sys.stdout.write(f"\r{next(spinner)} {self.message}")
-            sys.stdout.flush()
-            time.sleep(0.1)
-        sys.stdout.write("\r" + " " * (len(self.message) + 2) + "\r")
-        sys.stdout.flush()
-
-    def __enter__(self):
-        self.spin_thread = threading.Thread(target=self._spin)
-        self.spin_thread.start()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.stop_running.set()
-        if self.spin_thread:
-            self.spin_thread.join()
+from passer.core.ui import console, print_panel, get_input, print_model_response, SpinnerContext
+from passer.core.commands import CommandHandler
+from passer.core.executor import AutonomousExecutor
+from prompt_toolkit.history import FileHistory
+from rich.box import ROUNDED
 
 class ChatManager:
+    # Herramientas que producen feedback de archivo
+    FILE_TOOLS = {
+        "leer_archivo": ("Leyó", "📖"),
+        "escribir_archivo": ("Escribió", "📝"),
+        "borrar_archivo": ("Borró", "🗑️"),
+        "modificar_linea": ("Modificó", "📝"),
+        "reemplazar_texto": ("Reemplazó", "🔄"),
+        "reemplazar_bloque_texto": ("Reemplazó (bloque)", "🔄"),
+        "leer_cabecera": ("Leyó (cabecera)", "📖"),
+        "leer_lineas": ("Leyó (rango)", "📖"),
+    }
+
     def __init__(self, assistant: IAIAssistant, tools: dict, system_instruction: str):
         self.assistant = assistant
         self.tools = tools
         self.system_instruction = system_instruction
         self.thinking_enabled = True
-        self.temperature = 0.7
-        self.max_turns = 10  # Límite para evitar bucles infinitos (ID-004)
-        self.tool_messages = {
-            "leer_archivo": "Leyendo archivo...",
-            "escribir_archivo": "Escribiendo archivo...",
-            "borrar_archivo": "Borrando archivo...",
-            "listar_archivos": "Listando archivos...",
-            "buscar_en_internet": "Buscando en internet...",
-            "leer_url": "Consultando web...",
-            "leer_lineas": "Leyendo archivo...",
-            "leer_cabecera": "Leyendo archivo...",
-            "modificar_linea": "Modificando línea...",
-            "reemplazar_texto": "Reemplazando texto...",
-            "analizar_codigo_con_pyright": "Analizando código con Pyright..."
-        }
+        
+        try:
+            with open("config.json", "r") as f:
+                config = json.load(f)
+                self.temperature = config.get("default_temperature", 0.7)
+        except Exception:
+            self.temperature = 0.7
+        
+        self.command_handler = CommandHandler(self)
+        self.executor = AutonomousExecutor(
+            self.assistant,
+            self.tools,
+            on_tool_used=self._on_tool_used,
+        )
 
+    def _on_tool_used(self, tool_name: str, args: dict, result: str, success: bool):
+        """Callback ejecutado por el executor cuando se usa una herramienta."""
+        if tool_name in self.FILE_TOOLS:
+            verb, icon = self.FILE_TOOLS[tool_name]
+            # Extraer nombre de archivo del argumento 'path' si existe
+            path = args.get("path", "archivo desconocido")
+            filename = os.path.basename(path) if path else "archivo desconocido"
+            status_icon = "✅" if success else "❌"
+            console.print(f"  {icon} {verb}: {filename} {status_icon}", style="dim yellow")
+    
     def run(self):
         self._initialize_chat()
         
-        # ASCII Box for connection info
+        # Welcome panel
         model_name = self.assistant.current_model or "Desconocido"
-        msg = f" Conectado a: Google | Modelo: {model_name} "
-        border = "+" + "-" * len(msg) + "+"
-        print(f"\n{border}")
-        print(f"|{msg}|")
-        print(f"{border}\n")
+        temp_str = f"{self.temperature:.1f}"
+        print_panel(
+            "🐶 Passer",
+            f"Modelo: {model_name}  |  Temperatura: {temp_str}",
+            box_type=ROUNDED,
+            style="cyan",
+        )
+        
+        history = FileHistory(".chat_history")
         
         while True:
             try:
-                user_input = input("Tú: ")
-            except (EOFError, KeyboardInterrupt): break
-            if not user_input: continue
-            if user_input.strip() == ':q': break
+                user_input = get_input("❯ ", history=history)
+            except (EOFError, KeyboardInterrupt):
+                break
+                
+            if not user_input: 
+                continue
+            if user_input.strip() == ':q': 
+                print_panel("Adiós", "¡Hasta la próxima! 👋", style="green")
+                break
             
-            # Comandos
-            if user_input.strip().startswith('/cd '):
-                tf.set_project_root(user_input.strip()[4:])
-                print(f"Directorio: {tf.PROJECT_ROOT}")
-                continue
-            elif user_input.strip() == '/thinking':
-                self.thinking_enabled = not self.thinking_enabled
-                print(f"Pensamientos: {'Visible' if self.thinking_enabled else 'Oculto'}")
-                continue
-            elif user_input.strip() == '/models':
-                models = self.assistant.get_available_models()
-                for i, m in enumerate(models): print(f"{i}: {m}")
-                choice = input("Modelo: ")
-                try:
-                    idx = int(choice)
-                    model_name = models[idx]
-                    self.temperature = float(input(f"Temp (0-1, default {self.temperature}): ") or self.temperature)
-                    self.assistant.start_chat(model_name, self.system_instruction, self.temperature)
-                except: print("Error.")
+            # El input ya se mostró por prompt_toolkit con su estilo
+            
+            # Intentar procesar como comando
+            if self.command_handler.handle(user_input):
                 continue
             
-            # Ejecución autónoma
-            self._autonomous_loop(user_input)
-
+            # Ejecución autónoma con spinner
+            with SpinnerContext("Pensando", "cyan"):
+                result = self.executor.execute(
+                    user_input=user_input,
+                    thinking_enabled=self.thinking_enabled,
+                    get_confirmation_callback=get_input
+                )
+            
+            # Mostrar respuesta del modelo (filtrando bloques internos)
+            if result:
+                cleaned = re.sub(r'<TOOL_CALL>.*?</TOOL_CALL>', '', result, flags=re.DOTALL)
+                cleaned = re.sub(r'<TOOL_RESPONSE>.*?</TOOL_RESPONSE>', '', cleaned, flags=re.DOTALL)
+                if cleaned.strip():
+                    print_model_response(cleaned)
+    
     def _initialize_chat(self):
-        self.assistant.start_chat("models/gemma-4-31b-it", self.system_instruction, self.temperature)
-
-    def _autonomous_loop(self, user_input):
-        current_input = user_input
-        turn_count = 0
-        while turn_count < self.max_turns:
-            turn_count += 1
-            full_response_text = ""
-            visible_response_text = ""
-            in_tool_block = False
-            
-            # Using Live context for real-time Markdown rendering
-            with Live(console=console, refresh_per_second=4, transient=True) as live:
-                for text_chunk in self.assistant.send_message_stream(current_input):
-                    full_response_text += text_chunk
-                    
-                    # Detect start/end of TOOL_CALL block
-                    if "<TOOL_CALL>" in text_chunk:
-                        in_tool_block = True
-                    
-                    if in_tool_block:
-                        if "</TOOL_CALL>" in text_chunk:
-                            in_tool_block = False
-                        continue
-                    
-                    # Update visible text
-                    if self.thinking_enabled or not text_chunk.lstrip().startswith('*'):
-                        visible_response_text += text_chunk
-                        live.update(Markdown(visible_response_text))
-            
-            # Final render after streaming
-            console.print(Markdown(visible_response_text))
-            
-            # Parseo TOOL_CALL (usando full_response_text)
-            start_tag, end_tag = "<TOOL_CALL>", "</TOOL_CALL>"
-            s = full_response_text.find(start_tag)
-            e = full_response_text.find(end_tag)
-            tool_json = full_response_text[s+len(start_tag):e] if s != -1 and e != -1 else None
-            
-            if tool_json:
-                try:
-                    tool_call = json.loads(tool_json)
-                    f_name = tool_call.get("name")
-                    f_args = tool_call.get("args", {})
-                    if f_name in self.tools:
-                        if f_name == "borrar_archivo":
-                            confirm = input(f"\n¿Borrar '{f_args.get('path')}'? (y/n): ")
-                            res = self.tools[f_name](**f_args) if confirm == 'y' else "Cancelado."
-                        else:
-                            msg = self.tool_messages.get(f_name, "Procesando...")
-                            with Spinner(msg):
-                                res = self.tools[f_name](**f_args)
-                        
-                        # Seteamos la respuesta de la herramienta como el siguiente input
-                        # para que el send_message_stream al inicio del bucle la procese y la muestre.
-                        current_input = f"<TOOL_RESPONSE>{json.dumps({'status': 'success', 'data': res})}</TOOL_RESPONSE>"
-                        continue
-
-                except Exception as e: print(f"Error: {e}")
-            
-            break
+        try:
+            with open("config.json", "r") as f:
+                config = json.load(f)
+                model = config.get("model_name", "models/gemma-4-31b-it")
+        except:
+            model = "models/gemma-4-31b-it"
+        self.assistant.start_chat(model, self.system_instruction, self.temperature)

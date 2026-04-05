@@ -17,9 +17,11 @@ class GeminiAdapter(IAIAssistant):
         self._current_model = model_name
         self.chat = self.client.chats.create(
             model=model_name, 
-            config=types.GenerateContentConfig(temperature=temperature)
+            config=types.GenerateContentConfig(
+                temperature=temperature,
+                system_instruction=system_instruction
+            )
         )
-        self.chat.send_message(system_instruction)
 
     def send_message_stream(self, message: str) -> Generator[str, None, None]:
         if not self.chat:
