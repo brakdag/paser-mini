@@ -54,11 +54,13 @@ paser
 ## 🛠️ Herramientas Disponibles
 
 *   `obtener_hora_actual(zona_horaria)`
-*   `calculadora_basica(operacion)`
-*   `leer_archivo(path)`
-*   `escribir_archivo(path, contenido)`
-*   `borrar_archivo(path)`
-*   `listar_archivos(path)`
-*   `buscar_en_internet(query)`: Búsqueda vía DuckDuckGo.
-*   `leer_url(url)`: Lectura de contenido de páginas web.
-*   `obtener_directorio_actual()`: Devuelve la ruta absoluta del directorio de trabajo actual.
+ *   `calculadora_basica(operacion)`
+ *   `leer_archivo(path)`
+ *   `escribir_archivo(path, contenido)`
+ *   `borrar_archivo(path)`
+ *   `listar_archivos(path)`
+ *   `mover_archivo(origen, destino)`: Mueve o renombra un archivo/directorio.
+ *   `crear_carpeta(path)`: Crea un directorio (incluye directorios padres).
+ *   `buscar_en_internet(query)`: Búsqueda vía DuckDuckGo.
+ *   `leer_url(url)`: Lectura de contenido de páginas web.
+ *   `obtener_directorio_actual()`: Devuelve la ruta absoluta del directorio de trabajo actual.
