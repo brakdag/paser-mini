@@ -11,15 +11,10 @@ El cambio de nombre de "Passer" a "Paser" simplifica la escritura en la terminal
 ## ⚙️ Instalación
 
 ```bash
-# 1. Clona el repositorio
-git clone https://github.com/brakdag/paser.git
-cd paser
+# Instalación en una sola línea
+git clone https://github.com/brakdag/paser.git && cd paser && chmod +x install.sh && ./install.sh
 
-# 2. Instala automáticamente
-chmod +x install.sh
-./install.sh
-
-# 3. Configura tu clave de API
+# Configura tu clave de API
 export GOOGLE_API_KEY="tu_clave_api_aquí"
 ```
 
