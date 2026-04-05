@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "passer"
+version = "0.1.0"
+authors = [
+  { name="Author", email="author@example.com" },
+]
+description = "Agente autónomo usando ReAct"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "google-genai",
+    "html2text",
+    "rich",
+    "prompt_toolkit",
+]
+
+[project.scripts]
+passer = "passer.main:main"

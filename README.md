@@ -40,16 +40,10 @@ El seguimiento de tareas, errores y nuevas características se gestiona a travé
 
 ## 💻 Ejecución
 
-Puedes iniciar la aplicación usando el script auxiliar:
+Una vez instalado, puedes ejecutar la aplicación simplemente usando:
 
 ```bash
-./chat.sh
-```
-
-O manualmente:
-
-```bash
-PYTHONPATH=. ./venv/bin/python -m passer.main
+passer
 ```
 
 ## 🛠️ Herramientas Disponibles

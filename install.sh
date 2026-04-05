@@ -10,23 +10,15 @@ echo "Setting up project in: $PROJECT_ROOT"
 echo "Creating virtual environment..."
 python3 -m venv "$PROJECT_ROOT/venv"
 
-# 2. Upgrade pip and install dependencies
-echo "Installing dependencies..."
+# 2. Upgrade pip and install dependencies in editable mode
+echo "Installing package and dependencies..."
 "$PROJECT_ROOT/venv/bin/pip" install --upgrade pip
-"$PROJECT_ROOT/venv/bin/pip" install -r "$PROJECT_ROOT/requirements.txt"
+"$PROJECT_ROOT/venv/bin/pip" install -e .
 
-# 3. Setup symlink in ~/bin
-echo "Setting up 'passer' command..."
+# 3. Add to local bin
+echo "Setting up 'passer' command link..."
 mkdir -p "$HOME/bin"
-# Ensure the script uses the absolute path dynamically
-# We will regenerate chat.sh to be portable
-echo "#!/bin/bash
-PROJECT_ROOT=\"$PROJECT_ROOT\"
-export PYTHONPATH=\"\$PROJECT_ROOT\"
-\"\$PROJECT_ROOT/venv/bin/python\" -m passer.main \"\$@\"" > "$PROJECT_ROOT/chat.sh"
-chmod +x "$PROJECT_ROOT/chat.sh"
-
-ln -sf "$PROJECT_ROOT/chat.sh" "$HOME/bin/passer"
+ln -sf "$PROJECT_ROOT/venv/bin/passer" "$HOME/bin/passer"
 
 # 4. Check PATH
 if [[ ":$PATH:" != *":$HOME/bin:"* ]]; then
