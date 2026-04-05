@@ -10,17 +10,18 @@ El cambio de nombre de "Passer" a "Paser" simplifica la escritura en la terminal
 
 ## ⚙️ Instalación
 
-1.  Clona el repositorio.
-2.  Crea un entorno virtual e instala las dependencias:
-    ```bash
-    python3 -m venv venv
-    source venv/bin/activate
-    pip install -e .
-    ```
-3.  Configura tu clave de API:
-    ```bash
-    export GEMINI_API_KEY="tu_clave_api_aquí"
-    ```
+```bash
+# 1. Clona el repositorio
+git clone https://github.com/brakdag/paser.git
+cd paser
+
+# 2. Instala automáticamente
+chmod +x install.sh
+./install.sh
+
+# 3. Configura tu clave de API
+export GEMINI_API_KEY="tu_clave_api_aquí"
+```
 
 ## 💻 Ejecución
 
