@@ -1,6 +1,7 @@
 import json
 import re
 import logging
+import ast
 from typing import Any
 
 from paser.core.repetition_detector import RepetitionDetector
@@ -16,24 +17,35 @@ class AutonomousExecutor:
         self.on_tool_used = on_tool_used
 
     def _extract_tool_calls(self, text: str) -> list[dict[str, Any]]:
-        # Regex mejorado para capturar JSON
-        pattern = r"<TOOL_CALL>(.*?)</TOOL_CALL>"
+        # Regex para capturar <TOOL_CALL> o <tool_call>, manejando espacios
+        pattern = r"<(?:TOOL_CALL|tool_call)\s*>(.*?)</(?:TOOL_CALL|tool_call)>"
         calls: list[dict[str, Any]] = []
         
-        for match in re.finditer(pattern, text, re.DOTALL):
+        for match in re.finditer(pattern, text, re.IGNORECASE | re.DOTALL):
             raw_content = match.group(1).strip()
+            
+            # Intentar cargar como JSON estándar
             try:
                 data = json.loads(raw_content)
-                
-                # Validación de estructura básica: 'name' y 'args' deben estar presentes
-                if not isinstance(data, dict) or "name" not in data or "args" not in data:
-                    logger.error(f"Estructura de TOOL_CALL inválida. Se requiere 'name' y 'args'. Contenido: {raw_content}")
-                    continue
-                    
-                calls.append(data)
-            except json.JSONDecodeError as e:
-                logger.error(f"Error de sintaxis JSON en TOOL_CALL: {e}. Contenido: {raw_content}")
+            except json.JSONDecodeError:
+                # Fallback: intentar convertir comillas simples a dobles para JSON
+                try:
+                    s_double = raw_content.replace("'", '"')
+                    data = json.loads(s_double)
+                except json.JSONDecodeError:
+                    # Fallback extra: intentar evaluar como literal de Python (maneja single quotes)
+                    try:
+                        data = ast.literal_eval(raw_content)
+                    except (ValueError, SyntaxError, TypeError):
+                        logger.error(f"No se pudo parsear el TOOL_CALL: {raw_content}")
+                        continue
+            
+            # Validación de estructura básica: 'name' y 'args' deben estar presentes
+            if not isinstance(data, dict) or "name" not in data or "args" not in data:
+                logger.error(f"Estructura de TOOL_CALL inválida. Se requiere 'name' y 'args'. Contenido: {raw_content}")
                 continue
+                
+            calls.append(data)
                 
         return calls
 
