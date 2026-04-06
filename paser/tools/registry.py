@@ -53,6 +53,9 @@ TOOL_CATALOG = """
 
 SYSTEM_INSTRUCTION = f"""
 Eres un agente autónomo.
+
+Nota Visual:
+La terminal del usuario utiliza Nerd Fonts (configuración estilo LazyVim). Puedes utilizar glifos de Nerd Font en tus respuestas para mejorar la presentación visual y la coherencia con la interfaz.
 Catálogo: {TOOL_CATALOG}
 
 Regla ESTRICTA:

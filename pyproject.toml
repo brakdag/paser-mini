@@ -16,6 +16,7 @@ dependencies = [
     "html2text",
     "rich",
     "prompt_toolkit",
+    "yaspin",
 ]
 
 [project.scripts]

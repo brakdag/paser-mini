@@ -26,7 +26,7 @@ class ChatManager:
     }
 
     NOTIFICATION_TOOLS = {
-        "notify_user": ("Notificación", "󰂚"),
+        "notify_user": ("Notificación", "󱔗"),
     }
 
     def __init__(self, assistant: IAIAssistant, tools: dict, system_instruction: str):
@@ -58,7 +58,7 @@ class ChatManager:
         """Callback ejecutado por el executor cuando se usa una herramienta."""
         if tool_name in self.FILE_TOOLS:
             verb, icon = self.FILE_TOOLS[tool_name]
-            status_icon = "✅" if success else "❌"
+            status_icon = "" if success else ""
             
             # Personalización de mensaje según herramienta
             if tool_name == "rename_path":
@@ -78,7 +78,7 @@ class ChatManager:
         
         elif tool_name in self.NOTIFICATION_TOOLS:
             verb, icon = self.NOTIFICATION_TOOLS[tool_name]
-            status_icon = "✅" if success else "❌"
+            status_icon = "" if success else ""
             mensaje = args.get("mensaje", "")
             console.print(f"  {icon} {verb}: {mensaje} {status_icon}", style="dim yellow")
     
@@ -99,7 +99,7 @@ class ChatManager:
         
         while True:
             try:
-                user_input = get_input("❯ ", history=history)
+                user_input = get_input("<ansigreen>│</ansigreen>  ", history=history)
             except (EOFError, KeyboardInterrupt):
                 break
                 

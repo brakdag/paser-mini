@@ -73,3 +73,5 @@ def notify_user(mensaje):
     - [ ] Implement `read_files(paths: list[str])` in `paser/tools/file_tools.py` with safe path validation.
     - [ ] Register tool in `paser/tools/registry.py` (Dictionary and JSON Catalog).
     - [ ] Add UI feedback mapping in `paser/core/chat_manager.py`.
+- [ ] **Fix Rich Markdown parsing with Nerd Fonts**: Resolve issues where `rich` has trouble parsing Nerd Font glyphs during markdown rendering.
+- [ ] **Integrate professional spinner**: Replace current spinner implementation with `yaspin` for a standard, studied terminal loading experience.

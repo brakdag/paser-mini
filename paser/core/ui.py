@@ -8,9 +8,13 @@ from rich.panel import Panel
 from rich.markdown import Markdown
 from rich.text import Text
 from rich.box import ROUNDED
+from rich.live import Live
 from prompt_toolkit import prompt
+from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.styles import Style
 from contextlib import contextmanager
+import threading
+import time
 
 console = Console()
 
@@ -61,12 +65,14 @@ def get_input(prompt_text: str, history=None) -> str:
         '': '#00FF00',
         'prompt': '#00FF00 bold',
     })
-    return prompt(prompt_text, history=history, style=style)
+    # Usamos HTML para permitir colores específicos dentro del prompt
+    return prompt(HTML(prompt_text), history=history, style=style)
 
+
+from yaspin import yaspin
 
 @contextmanager
 def SpinnerContext(message: str = "", color: str = "cyan"):
-    """Muestra un spinner mientras dura el bloque."""
-    status_text = f"[bold {color}]{message}..." if message else ""
-    with console.status(status_text, spinner="dots12"):
-        yield
+    """Muestra un spinner profesional usando yaspin."""
+    with yaspin(text=message, color=color) as spinner:
+        yield spinner
