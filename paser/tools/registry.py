@@ -7,6 +7,7 @@ AVAILABLE_TOOLS = {
     "get_time": ut.get_time,
     "calculate": ut.calculate,
     "read_file": ft.read_file,
+    "read_files": ft.read_files,
     "write_file": ft.write_file,
     "remove_file": ft.remove_file,
     "list_dir": ft.list_dir,
@@ -21,7 +22,8 @@ AVAILABLE_TOOLS = {
     "analyze_pyright": st.analyze_pyright,
     "global_replace": ft.global_replace,
     "rename_path": ft.rename_path,
-    "make_dir": ft.make_dir
+    "make_dir": ft.make_dir,
+    "notify_user": st.notify_user
 }
 
 TOOL_CATALOG = """
@@ -29,6 +31,7 @@ TOOL_CATALOG = """
     {"name": "get_time", "description": "Obtiene la hora actual.", "parameters": {"type": "object", "properties": {"zona_horaria": {"type": "string"}}, "required": ["zona_horaria"]}},
     {"name": "calculate", "description": "Evalúa operación matemática.", "parameters": {"type": "object", "properties": {"operacion": {"type": "string"}}, "required": ["operacion"]}},
     {"name": "read_file", "description": "Lee archivo.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]}},
+    {"name": "read_files", "description": "Lee varios archivos a la vez.", "parameters": {"type": "object", "properties": {"paths": {"type": "array", "items": {"type": "string"}}}, "required": ["paths"]}},
     {"name": "write_file", "description": "Escribe archivo.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "contenido": {"type": "string"}}, "required": ["path", "contenido"]}},
     {"name": "remove_file", "description": "Borra archivo.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]}},
     {"name": "list_dir", "description": "Lista archivos.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]}},
@@ -43,7 +46,8 @@ TOOL_CATALOG = """
     {"name": "analyze_pyright", "description": "Analiza código con pyright y devuelve errores si existen.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": []}},
     {"name": "global_replace", "description": "Busca y reemplaza una cadena de texto en múltiples archivos dentro de un directorio.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "texto_buscar": {"type": "string"}, "texto_reemplazar": {"type": "string"}, "extensiones": {"type": "array", "items": {"type": "string"}}}, "required": ["path", "texto_buscar", "texto_reemplazar"]}},
     {"name": "rename_path", "description": "Mueve o renombra un archivo o directorio de 'origen' a 'destino'. Si el directorio destino no existe, se crea.", "parameters": {"type": "object", "properties": {"origen": {"type": "string"}, "destino": {"type": "string"}}, "required": ["origen", "destino"]}},
-    {"name": "make_dir", "description": "Crea un directorio (incluyendo directorios padres si es necesario).", "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]}}
+    {"name": "make_dir", "description": "Crea un directorio (incluyendo directorios padres si es necesario).", "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]}},
+    {"name": "notify_user", "description": "Triggers a system notification with a Nerd Font bell icon and a specific sound alert.", "parameters": {"type": "object", "properties": {"mensaje": {"type": "string", "description": "The notification text to be displayed to the user."}}, "required": ["mensaje"]}}
 ]
 """
 

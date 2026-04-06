@@ -65,7 +65,8 @@ def get_input(prompt_text: str, history=None) -> str:
 
 
 @contextmanager
-def SpinnerContext(message: str = "Pensando", color: str = "cyan"):
+def SpinnerContext(message: str = "", color: str = "cyan"):
     """Muestra un spinner mientras dura el bloque."""
-    with console.status(f"[bold {color}]{message}...", spinner="dots12"):
+    status_text = f"[bold {color}]{message}..." if message else ""
+    with console.status(status_text, spinner="dots12"):
         yield

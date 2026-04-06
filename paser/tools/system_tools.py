@@ -21,43 +21,43 @@ def analyze_pyright(path: str = ".") -> str:
         logger.error(f"Error ejecutando pyright: {e}")
         return f"Error ejecutando pyright: {e}"
 
-def notificar_usuario(mensaje: str = "") -> str:
-    """Envía una notificación sonora al usuario usando el archivo assets/type.wav."""
+def notify_user(mensaje: str = "") -> str:
+    """Triggers a system notification with a Nerd Font bell icon and a specific sound alert."""
     import platform
     import subprocess
     import os
 
-    logger.info(f"Notificación: {mensaje}")
+    if not mensaje:
+        mensaje = "Task completed"
+
+
 
     try:
         system = platform.system()
-        # Construir ruta absoluta al archivo assets/type.wav relativo al paquete Paser
-        # system_tools.py está en paser/tools/, assets/ está en la raíz del proyecto (hermana de paser/)
         current_file = os.path.abspath(__file__)
         tools_dir = os.path.dirname(current_file)
         paser_dir = os.path.dirname(tools_dir)
-        project_root = os.path.dirname(paser_dir)
-        sound_path = os.path.join(project_root, "assets", "type.wav")
+        sound_path = os.path.join(paser_dir, "assets", "type.wav")
 
         if not os.path.exists(sound_path):
-            print('\a')
+            print('\a', end='', flush=True)
             logger.warning(f"Archivo de sonido no encontrado: {sound_path}")
-            return "OK"
+            return "Visual notification delivered (sound file missing)."
 
         if system == "Linux":
             try:
-                subprocess.run(["paplay", sound_path], check=True, capture_output=True)
+                subprocess.Popen(["paplay", sound_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             except:
-                subprocess.run(["aplay", sound_path], check=True, capture_output=True)
+                subprocess.Popen(["aplay", sound_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         elif system == "Darwin":
-            subprocess.run(["afplay", sound_path], check=True, capture_output=True)
+            subprocess.Popen(["afplay", sound_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         elif system == "Windows":
             import winsound
-            winsound.PlaySound(sound_path, winsound.SND_FILENAME)
+            winsound.PlaySound(sound_path, winsound.SND_FILENAME | winsound.SND_ASYNC)
         else:
-            print('\a')
+            print('\a', end='', flush=True)
 
-        return "OK"
+        return "Notification delivered"
     except Exception as e:
         logger.error(f"Error al intentar notificar: {e}")
-        return "Error"
+        return f"Error delivering notification: {e}"

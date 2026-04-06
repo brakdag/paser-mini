@@ -27,6 +27,17 @@ def read_file(path: str) -> str:
         logger.error(f"Error en read_file {path}: {e}")
         return f"Error: {e}"
 
+def read_files(paths: list[str]) -> str:
+    if not isinstance(paths, list):
+        return "Error: El parámetro 'paths' debe ser una lista de rutas."
+    
+    results = []
+    for path in paths:
+        content = read_file(path)
+        results.append(f"--- ARCHIVO: {path} ---\n{content}\n--- FIN ARCHIVO ---")
+        
+    return "\n\n".join(results)
+
 def write_file(path: str, contenido: str) -> str:
     try:
         safe_path = context.get_safe_path(path)

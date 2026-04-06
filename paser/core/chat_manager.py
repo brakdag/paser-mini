@@ -13,6 +13,7 @@ class ChatManager:
     # Usando glifos de Meslo Nerd Font
     FILE_TOOLS = {
         "read_file": ("Leyó", ""),
+        "read_files": ("Leyó", ""),
         "write_file": ("Escribió", ""),
         "remove_file": ("Borró", ""),
         "update_line": ("Modificó", ""),
@@ -25,7 +26,7 @@ class ChatManager:
     }
 
     NOTIFICATION_TOOLS = {
-        "notificar_usuario": ("Notificación", "󰂚"),
+        "notify_user": ("Notificación", "󰂚"),
     }
 
     def __init__(self, assistant: IAIAssistant, tools: dict, system_instruction: str):
@@ -66,6 +67,9 @@ class ChatManager:
                 msg = f"{origen} -> {destino}"
             elif tool_name == "make_dir":
                 msg = args.get("path", "desconocido")
+            elif tool_name == "read_files":
+                paths = args.get("paths", [])
+                msg = f"{len(paths)} archivos" if paths else "sin archivos"
             else:
                 path = args.get("path", "archivo desconocido")
                 msg = os.path.basename(path) if path else "archivo desconocido"
@@ -112,7 +116,7 @@ class ChatManager:
                 continue
             
             # Ejecución autónoma con spinner
-            with SpinnerContext("Pensando", "cyan"):
+            with SpinnerContext("", "cyan"):
                 result = self.executor.execute(
                     user_input=user_input,
                     thinking_enabled=self.thinking_enabled,
