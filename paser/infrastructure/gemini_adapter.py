@@ -25,9 +25,17 @@ class GeminiAdapter(IAIAssistant):
         config_params = {"temperature": temperature}
         history = []
         
-        if "gemma" in model_name.lower():
-            # Gemma models often don't support system_instruction in the config
-            # We simulate it by adding it to the chat history
+        # Intentar aplicar system_instruction de manera segura
+        try:
+            config_params["system_instruction"] = system_instruction
+            # Intentar crear chat para verificar compatibilidad de system_instruction
+            self.client.chats.create(
+                model=model_name,
+                config=types.GenerateContentConfig(**config_params),
+                history=[]
+            )
+        except Exception:
+            # Si falla, probablemente sea Gemma u otro modelo que no admite system_instruction en la config
             config_params["system_instruction"] = None
             history = [
                 types.Content(
@@ -39,8 +47,6 @@ class GeminiAdapter(IAIAssistant):
                     parts=[types.Part.from_text(text="Understood. I will follow these instructions.")]
                 ),
             ]
-        else:
-            config_params["system_instruction"] = system_instruction
 
         try:
             self.chat = self.client.chats.create(
@@ -76,6 +82,28 @@ class GeminiAdapter(IAIAssistant):
                 # Retornamos un string que el AutonomousExecutor._extract_text pueda manejar
                 return f"⚠️ Error: Cuota de API excedida (429). Por favor, espera un momento o cambia el modelo. {e}"
             raise e
+
+    def get_history(self) -> list:
+        if not self.chat:
+            return []
+        # Convertir objetos de historial a diccionarios serializables
+        return [
+            {"role": content.role, "parts": [part.text for part in content.parts if part.text]}
+            for content in self.chat.history
+        ]
+
+    def load_history(self, history_data: list, model_name: str, temperature: float):
+        self._current_model = model_name
+        history = [
+            types.Content(role=item["role"], parts=[types.Part.from_text(text=text) for text in item["parts"]])
+            for item in history_data
+        ]
+        
+        self.chat = self.client.chats.create(
+            model=model_name,
+            config=types.GenerateContentConfig(temperature=temperature),
+            history=history
+        )
 
     def get_available_models(self) -> list:
         # Relaxed filtering to ensure models appear

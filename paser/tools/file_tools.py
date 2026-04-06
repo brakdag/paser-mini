@@ -83,7 +83,7 @@ def read_lines(path: str, inicio: int, fin: int) -> str:
 def read_head(path: str, cantidad_lineas: int) -> str:
     return read_lines(path, 1, cantidad_lineas)
 
-def update_line(path: str, numero_linea: int, nuevo_contenido: str) -> str:
+def update_line(path: str, line_number: int, new_content: str) -> str:
     safe_path = context.get_safe_path(path)
     directorio = os.path.dirname(safe_path)
     linea_encontrada = False
@@ -92,8 +92,8 @@ def update_line(path: str, numero_linea: int, nuevo_contenido: str) -> str:
         temp_path = tf.name
         with open(safe_path, 'r', encoding='utf-8') as original_file:
             for i, line in enumerate(original_file, 1):
-                if i == numero_linea:
-                    tf.write(nuevo_contenido + "\n")
+                if i == line_number:
+                    tf.write(new_content + "\n")
                     linea_encontrada = True
                 else:
                     tf.write(line)
@@ -102,13 +102,13 @@ def update_line(path: str, numero_linea: int, nuevo_contenido: str) -> str:
     
     if linea_encontrada:
         os.replace(temp_path, safe_path)
-        return f"Línea {numero_linea} modificada."
+        return f"Line {line_number} modified."
     else:
         if os.path.exists(temp_path):
             os.remove(temp_path)
-        raise IndexError(f"Número de línea {numero_linea} fuera de rango en {path}.")
+        raise IndexError(f"Line number {line_number} out of range in {path}.")
 
-def replace_text(path: str, texto_buscar: str, texto_reemplazar: str) -> str:
+def replace_text(path: str, search_text: str, replace_text: str) -> str:
     safe_path = context.get_safe_path(path)
     directorio = os.path.dirname(safe_path)
     
@@ -116,21 +116,21 @@ def replace_text(path: str, texto_buscar: str, texto_reemplazar: str) -> str:
         temp_path = tf.name
         with open(safe_path, 'r', encoding='utf-8') as original_file:
             for line in original_file:
-                tf.write(line.replace(texto_buscar, texto_reemplazar))
+                tf.write(line.replace(search_text, replace_text))
         tf.flush()
         os.fsync(tf.fileno())
     
     os.replace(temp_path, safe_path)
-    return "Reemplazo completado."
+    return "Replacement completed."
 
-def replace_block(path: str, texto_buscar: str, texto_reemplazar: str) -> str:
+def replace_block(path: str, search_text: str, replace_text: str) -> str:
     safe_path = context.get_safe_path(path)
     directorio = os.path.dirname(safe_path)
     with open(safe_path, 'r', encoding='utf-8') as f:
         content = f.read()
-    if texto_buscar not in content:
-        raise ValueError(f"El bloque de texto no se encontró en {path}.")
-    new_content = content.replace(texto_buscar, texto_reemplazar, 1)
+    if search_text not in content:
+        raise ValueError(f"The text block was not found in {path}.")
+    new_content = content.replace(search_text, replace_text, 1)
     with tempfile.NamedTemporaryFile('w', dir=directorio, delete=False, encoding='utf-8') as tf:
         temp_path = tf.name
         tf.write(new_content)
@@ -138,20 +138,20 @@ def replace_block(path: str, texto_buscar: str, texto_reemplazar: str) -> str:
         os.fsync(tf.fileno())
     
     os.replace(temp_path, safe_path)
-    return "Bloque de texto reemplazado exitosamente."
+    return "Text block replaced successfully."
 
-def global_replace(path: str, texto_buscar: str, texto_reemplazar: str, extensiones: list = None) -> str:
+def global_replace(path: str, search_text: str, replace_text: str, extensions: list = None) -> str:
     safe_base_path = context.get_safe_path(path)
     if not os.path.isdir(safe_base_path):
-         raise NotADirectoryError(f"'{path}' no es un directorio válido.")
+         raise NotADirectoryError(f"'{path}' is not a valid directory.")
     modificados = []
-    if extensiones is None:
-        extensiones = [".py", ".md", ".txt", ".json"]
+    if extensions is None:
+        extensions = [".py", ".md", ".txt", ".json"]
     for root, dirs, files in os.walk(safe_base_path):
         if any(part in root.split(os.sep) for part in ['.git', 'venv', '__pycache__']):
             continue
         for file in files:
-            if extensiones and not any(file.endswith(ext) for ext in extensiones):
+            if extensions and not any(file.endswith(ext) for ext in extensions):
                 continue
             file_path = os.path.join(root, file)
             if os.path.getsize(file_path) > FILE_SIZE_LIMIT:
@@ -159,8 +159,8 @@ def global_replace(path: str, texto_buscar: str, texto_reemplazar: str, extensio
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
-                if texto_buscar in content:
-                    new_content = content.replace(texto_buscar, texto_reemplazar)
+                if search_text in content:
+                    new_content = content.replace(search_text, replace_text)
                     with tempfile.NamedTemporaryFile('w', dir=root, delete=False, encoding='utf-8') as tf:
                         temp_path = tf.name
                         tf.write(new_content)
@@ -170,20 +170,20 @@ def global_replace(path: str, texto_buscar: str, texto_reemplazar: str, extensio
                     os.replace(temp_path, file_path)
                     modificados.append(file_path)
             except Exception as e:
-                logger.error(f"Error procesando {file_path}: {e}")
-    return f"Reemplazo global completado en {len(modificados)} archivos: {json.dumps(modificados)}"
+                logger.error(f"Error processing {file_path}: {e}")
+    return f"Global replacement completed in {len(modificados)} files: {json.dumps(modificados)}"
 
-def rename_path(origen: str, destino: str) -> str:
-    safe_origen = context.get_safe_path(origen)
-    safe_destino = context.get_safe_path(destino)
+def rename_path(source: str, destination: str) -> str:
+    safe_origen = context.get_safe_path(source)
+    safe_destino = context.get_safe_path(destination)
     if not os.path.exists(safe_origen):
-        raise FileNotFoundError(f"'{origen}' no existe.")
+        raise FileNotFoundError(f"'{source}' does not exist.")
     directorio_destino = os.path.dirname(safe_destino)
     if directorio_destino:
         os.makedirs(directorio_destino, exist_ok=True)
     os.rename(safe_origen, safe_destino)
-    logger.info(f"Archivo movido de '{origen}' a '{destino}'.")
-    return f"Archivo movido de '{origen}' a '{destino}' exitosamente."
+    logger.info(f"Path moved from '{source}' to '{destination}'.")
+    return f"Path moved from '{source}' to '{destination}' successfully."
 
 def make_dir(path: str) -> str:
     safe_path = context.get_safe_path(path)

@@ -1,6 +1,7 @@
 import json
 import re
 import os
+import datetime
 from paser.core.interfaces import IAIAssistant
 from paser.core.ui import console, print_panel, get_input, print_model_response, SpinnerContext
 from paser.core.commands import CommandHandler
@@ -148,3 +149,46 @@ class ChatManager:
     def _initialize_chat(self):
         model = self.config.get("model_name", "models/gemma-2-27B-it")
         self.assistant.start_chat(model, self.system_instruction, self.temperature)
+    
+    def save_session(self, name: str = None):
+        if not name:
+            name = self.get_session_title()
+        
+        session_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'sessions')
+        os.makedirs(session_dir, exist_ok=True)
+        
+        session_data = {
+            "model_name": self.assistant.current_model,
+            "temperature": self.temperature,
+            "history": self.assistant.get_history()
+        }
+        
+        path = os.path.join(session_dir, f"{name}.json")
+        with open(path, "w") as f:
+            json.dump(session_data, f, indent=4)
+        return path
+
+    def load_session(self, name: str):
+        session_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'sessions')
+        path = os.path.join(session_dir, f"{name}.json")
+        
+        with open(path, "r") as f:
+            session_data = json.load(f)
+            
+        self.temperature = session_data["temperature"]
+        self.assistant.load_history(
+            session_data["history"],
+            session_data["model_name"],
+            self.temperature
+        )
+
+    def get_session_title(self):
+        try:
+            # Ask AI for a short 3-word title
+            response = self.assistant.send_message("Please provide a very short, 3-word title for this conversation session. Return only the title text, nothing else.")
+            # Response might be a complex object, need to extract text
+            # Assuming it's an object with a .text attribute or similar
+            title = str(response.text if hasattr(response, 'text') else response).strip()
+            return re.sub(r'[^a-zA-Z0-9]', '_', title)
+        except Exception:
+            return datetime.datetime.now().strftime("%Y%m%d_%H%M%S")

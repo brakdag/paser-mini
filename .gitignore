@@ -7,3 +7,5 @@ __pycache__/
 projects/
 .chat_history
 paser.egg-info/
+sessions/
+

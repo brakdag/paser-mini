@@ -17,14 +17,17 @@ def analyze_pyright(path: str = ".") -> str:
         return "No se encontraron errores de tipo."
     return result.stdout
 
-def notify_user(mensaje: str = "") -> str:
+def notify_user(message: str = "") -> str:
     """Triggers a system notification. Note: Use Nerd Font glyphs compatible with JetBrains Mono for any visual cues."""
     import platform
     import subprocess
     import os
 
-    if not mensaje:
-        mensaje = "Task completed"
+    if not message:
+        message = "Task completed"
+    else:
+        # Si hay mensaje, lo imprimimos además del sonido
+        print(f"\n🔔 {message}\n")
 
     system = platform.system()
     current_file = os.path.abspath(__file__)
@@ -34,7 +37,7 @@ def notify_user(mensaje: str = "") -> str:
 
     if not os.path.exists(sound_path):
         print('\a', end='', flush=True)
-        logger.warning(f"Archivo de sonido no encontrado: {sound_path}")
+        logger.warning(f"Sound file not found: {sound_path}")
         return "Visual notification delivered (sound file missing)."
 
     if system == "Linux":
@@ -70,7 +73,7 @@ def is_window_in_focus(**kwargs) -> str:
     except Exception:
         return "False: Could not determine window focus (xdotool missing?)."
 
-def set_timer(seconds: int, mensaje: str = "Timer finished") -> str:
+def set_timer(seconds: int, message: str = "Timer finished") -> str:
     """Sets a timer that will trigger a system notification after 'seconds' seconds in the background."""
     import platform
     import subprocess
@@ -87,18 +90,19 @@ def set_timer(seconds: int, mensaje: str = "Timer finished") -> str:
     
     if platform.system() == "Linux":
         # Use notify-send if available, otherwise just print bell
-        cmd = f"import time; time.sleep({seconds}); import subprocess; subprocess.run(['notify-send', '{mensaje}'])"
+        cmd = f"import time; time.sleep({seconds}); import subprocess; subprocess.run(['notify-send', {repr(message)}])"
     elif platform.system() == "Darwin":
         # Use osascript for macOS
-        cmd = f"import time; time.sleep({seconds}); import subprocess; subprocess.run(['osascript', '-e', 'display notification \"{mensaje}\" with title \"Paser Timer\"'])"
+        cmd = f"import time; time.sleep({seconds}); import subprocess; subprocess.run(['osascript', '-e', 'display notification ' + {repr(message)} + ' with title \"Paser Timer\"'])"
     elif platform.system() == "Windows":
-        # Use PowerShell for Windows
-        cmd = f"import time; time.sleep({seconds}); import subprocess; subprocess.run(['powershell', '-Command', 'Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show(\"{mensaje}\", \"Paser Timer\")'])"
+        # Use PowerShell for Windows. Escape single quotes in the message.
+        escaped_message = message.replace("'", "''")
+        cmd = f"import time; time.sleep({seconds}); import subprocess; subprocess.run(['powershell', '-Command', \"Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('{escaped_message}', 'Paser Timer')\"])"
     else:
         cmd = f"import time; time.sleep({seconds}); print('\a')"
 
     try:
         subprocess.Popen([python_exe, "-c", cmd], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        return f"Timer set for {seconds} seconds: {mensaje}"
+        return f"Timer set for {seconds} seconds: {message}"
     except Exception as e:
         return f"Failed to set timer: {str(e)}"

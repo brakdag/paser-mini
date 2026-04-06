@@ -2,7 +2,7 @@ import json
 import re
 import logging
 import ast
-from typing import Any, Optional
+from typing import Any, Optional, get_type_hints, get_origin, get_args
 
 from paser.core.repetition_detector import RepetitionDetector
 from paser.core.interfaces import IAIAssistant
@@ -18,18 +18,19 @@ class AutonomousExecutor:
 
     def _parse_call_content(self, raw_content: str) -> Optional[dict[str, Any]]:
         """Intenta parsear el contenido de un TOOL_CALL usando múltiples estrategias."""
+        # Estrategia 1: Intentar JSON directamente
         try:
             data = json.loads(raw_content)
         except json.JSONDecodeError:
+            # Estrategia 2: Intentar evaluar como literal de Python (más seguro que reemplazar comillas)
             try:
-                # Fallback: intentar convertir comillas simples a dobles para JSON
-                s_double = raw_content.replace("'", '"')
-                data = json.loads(s_double)
-            except json.JSONDecodeError:
-                # Fallback extra: intentar evaluar como literal de Python
+                data = ast.literal_eval(raw_content)
+            except (ValueError, SyntaxError, TypeError):
+                # Estrategia 3: Intento desesperado de arreglar comillas (solo si las anteriores fallan)
                 try:
-                    data = ast.literal_eval(raw_content)
-                except (ValueError, SyntaxError, TypeError):
+                    s_double = raw_content.replace("'", '"')
+                    data = json.loads(s_double)
+                except json.JSONDecodeError:
                     return None
         
         if not isinstance(data, dict) or "name" not in data:
@@ -41,15 +42,16 @@ class AutonomousExecutor:
             
         return data
 
-    def _extract_tool_calls(self, text: str) -> list[dict[str, Any]]:
+    def _extract_tool_calls(self, text: str) -> list[tuple[Optional[dict[str, Any]], str]]:
         # Regex para capturar <TOOL_CALL> o <tool_call>, manejando espacios
         pattern = r"<(?:TOOL_CALL|tool_call)\s*>(.*?)</(?:TOOL_CALL|tool_call)>"
-        calls: list[dict[str, Any]] = []
+        calls: list[tuple[Optional[dict[str, Any]], str]] = []
         
         # 1. Capturar llamadas completas
         for match in re.finditer(pattern, text, re.IGNORECASE | re.DOTALL):
-            data = self._parse_call_content(match.group(1).strip())
-            calls.append(data)
+            raw = match.group(1).strip()
+            data = self._parse_call_content(raw)
+            calls.append((data, raw))
         
         # 2. Capturar llamada truncada al final (sin etiqueta de cierre)
         # Buscamos la última apertura de etiqueta
@@ -60,8 +62,7 @@ class AutonomousExecutor:
             # Si no hay etiqueta de cierre y el contenido comienza con '{', es probablemente una llamada truncada
             if not re.search(r"</(?:TOOL_CALL|tool_call)>", remaining, re.IGNORECASE) and remaining.startswith('{'):
                 data = self._parse_call_content(remaining)
-                if data:
-                    calls.append(data)
+                calls.append((data, remaining))
                     
         return calls
 
@@ -88,14 +89,34 @@ class AutonomousExecutor:
                 break
 
             combined_tool_responses = []
-            for call in calls:
-                if call is None:
-                    tr = self._format_tool_response("Error de sintaxis: El TOOL_CALL no es un JSON válido o está mal formado.", success=False)
+            for call_data, raw_content in calls:
+                if call_data is None:
+                    tr = self._format_tool_response(f"Error de sintaxis: El TOOL_CALL '{raw_content}' no es un JSON válido o está mal formado.", success=False)
                     combined_tool_responses.append(tr)
                     continue
 
-                name = call.get("name")
-                args = call.get("args", {})
+                name = call_data.get("name")
+                args = call_data.get("args", {})
+                
+                # Validación de tipos de argumentos basada en hints de la función
+                if name in self.tools:
+                    func = self.tools[name]
+                    hints = get_type_hints(func)
+                    for arg_name, arg_value in args.items():
+                        if arg_name in hints:
+                            expected_type = hints[arg_name]
+                            # Manejar Optional o Union
+                            origin = get_origin(expected_type)
+                            if origin is not None:
+                                expected_type = get_args(expected_type)[0]
+                            
+                            if not isinstance(arg_value, expected_type):
+                                try:
+                                    args[arg_name] = expected_type(arg_value)
+                                except (ValueError, TypeError):
+                                    tr = self._format_tool_response(f"Tipo inválido para el argumento '{arg_name}' en '{name}'. Se esperaba {expected_type.__name__}.", success=False)
+                                    combined_tool_responses.append(tr)
+                                    continue
                 
                 # Validación básica de argumentos
                 if not isinstance(args, dict):
@@ -105,9 +126,15 @@ class AutonomousExecutor:
                 else:
                     try:
                         result = self.tools[name](**args)
-                        tr = self._format_tool_response(result, success=True)
+                        # Verificar si la herramienta realmente tuvo éxito o si devolvió un mensaje de error
+                        is_error = isinstance(result, str) and (
+                            "Error" in result or 
+                            "failed" in result.lower() or 
+                            "invalid" in result.lower()
+                        )
+                        tr = self._format_tool_response(result, success=not is_error)
                         if self.on_tool_used:
-                            self.on_tool_used(name, args, result, True)
+                            self.on_tool_used(name, args, result, not is_error)
                     except Exception as exc:
                         # Eliminamos logger.error para evitar fugas de detalles técnicos en la consola
                         tr = self._format_tool_response(str(exc), success=False)

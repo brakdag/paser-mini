@@ -1,3 +1,4 @@
+import os
 from paser.tools import file_tools as ft
 from paser.tools import web_tools as wt
 from paser.tools import system_tools as st
@@ -32,50 +33,28 @@ AVAILABLE_TOOLS = {
     "notify_mobile": mt.notify_mobile
 }
 
-TOOL_CATALOG = """
-[
-    {"name": "get_time", "description": "Obtiene la hora actual.", "parameters": {"type": "object", "properties": {"zona_horaria": {"type": "string"}}, "required": ["zona_horaria"]}},
-    {"name": "calculate", "description": "Evalúa operación matemática.", "parameters": {"type": "object", "properties": {"operacion": {"type": "string"}}, "required": ["operacion"]}},
-    {"name": "read_file", "description": "Lee archivo.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]}},
-    {"name": "read_files", "description": "Lee varios archivos a la vez.", "parameters": {"type": "object", "properties": {"paths": {"type": "array", "items": {"type": "string"}}}, "required": ["paths"]}},
-    {"name": "write_file", "description": "Escribe archivo.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "contenido": {"type": "string"}}, "required": ["path", "contenido"]}},
-    {"name": "remove_file", "description": "Borra archivo.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]}},
-    {"name": "list_dir", "description": "Lista archivos.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]}},
-    {"name": "web_search", "description": "Busca en internet.", "parameters": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}},
-    {"name": "fetch_url", "description": "Lee URL.", "parameters": {"type": "object", "properties": {"url": {"type": "string"}}, "required": ["url"]}},
-    {"name": "get_cwd", "description": "Obtiene el directorio actual de trabajo.", "parameters": {"type": "object", "properties": {}}},
-    {"name": "read_lines", "description": "Lee rango de líneas.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "inicio": {"type": "integer"}, "fin": {"type": "integer"}}, "required": ["path", "inicio", "fin"]}},
-    {"name": "read_head", "description": "Lee primeras líneas.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "cantidad_lineas": {"type": "integer"}}, "required": ["path", "cantidad_lineas"]}},
-    {"name": "update_line", "description": "Modifica el contenido de una línea específica en un archivo indicando el número de línea (1-indexed).", "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "numero_linea": {"type": "integer"}, "nuevo_contenido": {"type": "string"}}, "required": ["path", "numero_linea", "nuevo_contenido"]}},
-    {"name": "replace_text", "description": "Busca todas las ocurrencias de 'texto_buscar' en un archivo y las reemplaza por 'texto_reemplazar'.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "texto_buscar": {"type": "string"}, "texto_reemplazar": {"type": "string"}}, "required": ["path", "texto_buscar", "texto_reemplazar"]}},
-    {"name": "replace_block", "description": "Busca un bloque de texto exacto y lo reemplaza por otro. Útil para cambios quirúrgicos de varias líneas.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "texto_buscar": {"type": "string"}, "texto_reemplazar": {"type": "string"}}, "required": ["path", "texto_buscar", "texto_reemplazar"]}},
-    {"name": "analyze_pyright", "description": "Analiza código con pyright y devuelve errores si existen.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": []}},
-    {"name": "global_replace", "description": "Busca y reemplaza una cadena de texto en múltiples archivos dentro de un directorio.", "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "texto_buscar": {"type": "string"}, "texto_reemplazar": {"type": "string"}, "extensiones": {"type": "array", "items": {"type": "string"}}}, "required": ["path", "texto_buscar", "texto_reemplazar"]}},
-    {"name": "rename_path", "description": "Mueve o renombra un archivo o directorio de 'origen' a 'destino'. Si el directorio destino no existe, se crea.", "parameters": {"type": "object", "properties": {"origen": {"type": "string"}, "destino": {"type": "string"}}, "required": ["origen", "destino"]}},
-    {"name": "make_dir", "description": "Crea un directorio (incluyendo directorios padres si es necesario).", "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]}},
-    {"name": "glob_search", "description": "Busca archivos que coincidan con un patrón glob recursivo (ej: **/*.py) en el directorio de trabajo.", "parameters": {"type": "object", "properties": {"pattern": {"type": "string"}}, "required": ["pattern"]}},
-    {"name": "global_search", "description": "Busca una cadena de texto en todos los archivos del proyecto, devolviendo archivo, línea y contenido.", "parameters": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}},
-    {"name": "notify_user", "description": "Triggers a system notification with a Nerd Font bell icon and a specific sound alert.", "parameters": {"type": "object", "properties": {"mensaje": {"type": "string", "description": "The notification text to be displayed to the user."}}, "required": ["mensaje"]}},
-    {"name": "is_window_in_focus", "description": "Verifica si la ventana de la terminal tiene el foco actual del sistema. Útil para saber si el usuario está viendo la consola antes de enviar una notificación.", "parameters": {"type": "object", "properties": {"action": {"type": "string", "description": "Argumento dummy para asegurar el cierre del tag (ej: 'verificar')"}}, "required": ["action"]}}
-]
-"""
+with open(os.path.join(os.path.dirname(__file__), "registry_positional.json"), "r") as f:
+    TOOL_CATALOG = f.read()
 
 SYSTEM_INSTRUCTION = f"""
-Eres un agente autónomo.
+You are an autonomous agent.
 
-Nota Visual:
-La terminal del usuario utiliza Nerd Fonts (configuración estilo LazyVim). Puedes utilizar glifos de Nerd Font en tus respuestas para mejorar la presentación visual y la coherencia con la interfaz.
-Catálogo: {TOOL_CATALOG}
+Visual: Terminal uses Markdown + Nerd Fonts (LazyVim). Use Nerd Font glyphs for consistency.
 
-Regla ESTRICTA:
-Todas las llamadas a herramientas deben seguir este formato JSON exacto:
-<TOOL_CALL>{{"name": "nombre_herramienta", "args": {{"nombre_parametro": "valor"}}}}</TOOL_CALL>
+Tool Catalog [Name, Description, {{Param:Type}}]:
+{TOOL_CATALOG}
 
-No resumas NADA hasta que hayas terminado de usar TODAS las herramientas necesarias. Si necesitas hacer varias tareas, ejecuta una, espera <TOOL_RESPONSE>, y ejecuta la siguiente.
+STRICT Rules:
+1. Tool calls must use this exact JSON format:
+<TOOL_CALL>{{"name": "tool_name", "args": {{"arg": "value"}}}}</TOOL_CALL>
 
-Regla de Notificación: La herramienta `notify_user` debe ser la ÚLTIMA acción de toda la interacción.
-1. Primero, completa todas las tareas y escribe tu respuesta final detallada para el usuario.
-2. Solo después de haber entregado la respuesta final, verifica el foco con `is_window_in_focus`.
-3. Si el foco es False, llama a `notify_user` como el cierre absoluto de la sesión.
-Nunca notifiques antes de haber terminado de escribir el resultado final.
+2. Execution: Do NOT summarize until all tasks are complete. Execute sequentially: Tool -> Wait for <TOOL_RESPONSE> -> Next Tool.
+
+3. Notification Rule: `notify_user` must be the LAST action of the session.
+   - First, complete tasks and write the final response.
+   - Then, check terminal focus with `is_window_in_focus`.
+   - If False, call `notify_user` to signal completion.
+   - NEVER notify before writing the final result.
 """
+
+

@@ -1,6 +1,6 @@
 import json
 import os
-import os
+import sys
 from rich.table import Table
 from paser.core.ui import get_input, console, print_panel
 from paser.tools import core_tools
@@ -38,9 +38,40 @@ class CommandHandler:
             console.clear()
             return True
             
+        elif input_stripped == '/session':
+            session_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'sessions')
+            os.makedirs(session_dir, exist_ok=True)
+            sessions = [f for f in os.listdir(session_dir) if f.endswith('.json')]
+            
+            if not sessions:
+                console.print("No hay sesiones guardadas.", style="yellow")
+                return True
+                
+            for i, s in enumerate(sessions):
+                console.print(f"{i}: {s}")
+            
+            choice = get_input("Selecciona sesión (o 'c' para cancelar): ")
+            if choice == 'c': return True
+            
+            try:
+                idx = int(choice)
+                name = sessions[idx].replace('.json', '')
+                self.chat_manager.load_session(name)
+                print_panel("Sesión cargada", f"󰄵 {name}", style="green")
+            except Exception as e:
+                console.print(f"Error cargando sesión: {e}", style="red")
+            return True
+            
         elif input_stripped == '/thinking':
             self.chat_manager.thinking_enabled = not self.chat_manager.thinking_enabled
             console.print(f"Pensamientos: {'Visible' if self.chat_manager.thinking_enabled else 'Oculto'}", style="bold")
+            return True
+            
+        elif input_stripped == '/reset':
+            # Guardar sesión antes de reiniciar
+            path = self.chat_manager.save_session("last_session")
+            print_panel("Reiniciando...", f"Guardando sesión en {path}...", style="yellow")
+            os.execv(sys.executable, [sys.executable] + sys.argv)
             return True
             
         elif input_stripped == '/models':
