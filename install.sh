@@ -24,7 +24,7 @@ echo "📦 Instalando dependencias..."
 
 # 4. Crear enlace simbólico
 echo "🔗 Configurando comando 'paser'..."
-mkdir -p "$HOME/bin"
-ln -sf "$PROJECT_ROOT/venv/bin/paser" "$HOME/bin/paser"
+mkdir -p "$HOME/.local/bin"
+ln -sf "$PROJECT_ROOT/venv/bin/paser" "$HOME/.local/bin/paser"
 
-echo "✅ ¡Instalación exitosa! Asegúrate de tener '$HOME/bin' en tu PATH."
+echo "✅ ¡Instalación exitosa! Asegúrate de tener '$HOME/.local/bin' en tu PATH."

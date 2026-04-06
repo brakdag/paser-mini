@@ -8,7 +8,7 @@
 
 El cambio de nombre de "Passer" a "Paser" simplifica la escritura en la terminal, manteniendo la raíz del nombre original y el significado vinculado al gorrión, un ave muy común en el sur mendocino.
 
-## ⚙️ Instalación
+##  Instalación
 
 Puedes elegir entre clonar el repositorio (para desarrollo) o ejecutar el script de instalación directamente:
 
@@ -27,7 +27,7 @@ git clone https://github.com/brakdag/paser.git && cd paser && chmod +x install.s
 export GOOGLE_API_KEY="tu_clave_api_aquí"
 ```
 
-## 💻 Ejecución
+##  Ejecución
 
 Una vez instalado, puedes ejecutar la aplicación simplemente usando:
 
@@ -35,7 +35,7 @@ Una vez instalado, puedes ejecutar la aplicación simplemente usando:
 paser
 ```
 
-## ✨ Características Principales
+##  Características Principales
 
 1.  **Function Calling Local (Manual):**
     *   No utiliza herramientas nativas de la SDK de Google.
@@ -51,7 +51,7 @@ paser
     *   **Pensamientos:** Permite alternar la visibilidad de los pensamientos del modelo (líneas que comienzan con `*`) mediante el comando `/thinking`.
     *   **Directorio de Trabajo:** Permite cambiar el directorio de trabajo del agente mediante `/cd <ruta>`.
 
-## 🛠️ Herramientas Disponibles
+##  Herramientas Disponibles
 
 *   `obtener_hora_actual(zona_horaria)`
  *   `calculadora_basica(operacion)`

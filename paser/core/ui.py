@@ -24,11 +24,11 @@ def print_panel(title: str, message: str, box_type=ROUNDED, style: str = "none")
 
 
 def print_error(message: str):
-    console.print(Panel(message, title="❌ Error", border_style="red"))
+    console.print(Panel(message, title=" Error", border_style="red"))
 
 
 def print_info(message: str):
-    console.print(Panel(message, title="ℹ Info", border_style="blue"))
+    console.print(Panel(message, title=" Info", border_style="blue"))
 
 
 def print_model_response(text: str):
@@ -44,7 +44,7 @@ def print_tool_call(tool_name: str, args: dict):
     console.print(
         Panel(
             f"```json\n{{\"name\": \"{tool_name}\", \"args\": {args}}}\n```",
-            title="🔧 Tool Call",
+            title=" Tool Call",
             border_style="magenta",
             expand=False,
         )
@@ -54,7 +54,7 @@ def print_tool_call(tool_name: str, args: dict):
 def print_tool_result(tool_name: str, result: str):
     console.print(
         Panel(result[:200] if len(result) > 200 else result,
-              title=f"✅ {tool_name}",
+              title=f" {tool_name}",
               border_style="green",
               expand=False)
     )

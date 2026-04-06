@@ -73,7 +73,7 @@ class CommandHandler:
                     self.chat_manager.system_instruction, 
                     new_temp
                 )
-                print_panel("Modelo cambiado", f"✅ {model_name} | Temperatura: {new_temp}", style="green")
+                print_panel("Modelo cambiado", f" {model_name} | Temperatura: {new_temp}", style="green")
             except Exception as e:
                 console.print(f"Error: {e}", style="red")
             return True

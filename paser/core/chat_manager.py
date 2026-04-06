@@ -12,27 +12,27 @@ class ChatManager:
     # Herramientas que producen feedback de archivo
     # Usando glifos de Meslo Nerd Font
     FILE_TOOLS = {
-        "read_file": ("Leyó", ""),
-        "read_files": ("Leyó", ""),
-        "write_file": ("Escribió", ""),
-        "remove_file": ("Borró", ""),
-        "update_line": ("Modificó", ""),
-        "replace_text": ("Reemplazó", ""),
-        "replace_block": ("Reemplazó (bloque)", ""),
-        "read_head": ("Leyó (cabecera)", ""),
-        "read_lines": ("Leyó (rango)", ""),
-        "rename_path": ("Movió", ""),
-        "make_dir": ("Creó", ""),
-        "glob_search": ("Buscó archivos", ""),
-        "global_search": ("Buscó texto", ""),
+        "read_file": ("Leyó", "📄"),
+        "read_files": ("Leyó", "📄"),
+        "write_file": ("Escribió", "📄"),
+        "remove_file": ("Borró", "🗑️"),
+        "update_line": ("Modificó", "📄"),
+        "replace_text": ("Reemplazó", "🔄"),
+        "replace_block": ("Reemplazó (bloque)", "🔄"),
+        "read_head": ("Leyó (cabecera)", "📄"),
+        "read_lines": ("Leyó (rango)", "📄"),
+        "rename_path": ("Movió", "↔️"),
+        "make_dir": ("Creó", "📁"),
+        "glob_search": ("Buscó archivos", "🔍"),
+        "global_search": ("Buscó texto", "🔍"),
     }
 
     NOTIFICATION_TOOLS = {
-        "notify_user": ("Notificación", "󱔗"),
+        "notify_user": ("Notificación", "🔖"),
     }
 
     SYSTEM_TOOLS = {
-        "is_window_in_focus": ("Verificando foco", ""),
+        "is_window_in_focus": ("Verificando foco", "👥"),
     }
 
     def __init__(self, assistant: IAIAssistant, tools: dict, system_instruction: str):
@@ -64,7 +64,7 @@ class ChatManager:
         """Callback ejecutado por el executor cuando se usa una herramienta."""
         if tool_name in self.FILE_TOOLS:
             verb, icon = self.FILE_TOOLS[tool_name]
-            status_icon = "" if success else ""
+            status_icon = "👍" if success else "❌"
             
             # Personalización de mensaje según herramienta
             if tool_name == "rename_path":
@@ -88,13 +88,13 @@ class ChatManager:
         
         elif tool_name in self.NOTIFICATION_TOOLS:
             verb, icon = self.NOTIFICATION_TOOLS[tool_name]
-            status_icon = "" if success else ""
+            status_icon = "👍" if success else "❌"
             mensaje = args.get("mensaje", "")
             console.print(f"  {icon} {verb}: {mensaje} {status_icon}", style="dim yellow")
         
         elif tool_name in self.SYSTEM_TOOLS:
             verb, icon = self.SYSTEM_TOOLS[tool_name]
-            status_icon = "" if success else ""
+            status_icon = "👍" if success else "❌"
             console.print(f"  {icon} {verb} {status_icon}", style="dim yellow")
     
     def run(self):
@@ -104,7 +104,7 @@ class ChatManager:
         model_name = self.assistant.current_model or "Desconocido"
         temp_str = f"{self.temperature:.1f}"
         print_panel(
-            "🐶 Passer",
+            "🚀 Passer",
             f"Modelo: {model_name}  |  Temperatura: {temp_str}",
             box_type=ROUNDED,
             style="cyan",
@@ -121,7 +121,7 @@ class ChatManager:
             if not user_input: 
                 continue
             if user_input.strip() == ':q': 
-                print_panel("Adiós", "¡Hasta la próxima! 👋", style="green")
+                print_panel("Adiós", "¡Hasta la próxima! ", style="green")
                 break
             
             # El input ya se mostró por prompt_toolkit con su estilo
@@ -146,5 +146,5 @@ class ChatManager:
                     print_model_response(cleaned)
     
     def _initialize_chat(self):
-        model = self.config.get("model_name", "models/gemma-4-31b-it")
+        model = self.config.get("model_name", "models/gemma-2-27B-it")
         self.assistant.start_chat(model, self.system_instruction, self.temperature)

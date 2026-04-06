@@ -40,4 +40,4 @@ class GeminiAdapter(IAIAssistant):
     def get_available_models(self) -> list:
         # Relaxed filtering to ensure models appear
         models = self.client.models.list()
-        return [m.name for m in models if m.name and ('gemini' in m.name or 'gemma' in m.name)]
+        return [m.name for m in models if m.name and ('gemini' in m.name.lower() or 'gemma' in m.name.lower())]
