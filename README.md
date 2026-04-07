@@ -53,17 +53,21 @@ paser
 
 ## 󰍃 Herramientas Disponibles
 
-*   `obtener_hora_actual(zona_horaria)`
- *   `calculadora_basica(operacion)`
- *   `leer_archivo(path)`
- *   `escribir_archivo(path, contenido)`
- *   `borrar_archivo(path)`
- *   `listar_archivos(path)`
- *   `mover_archivo(origen, destino)`: Mueve o renombra un archivo/directorio.
- *   `crear_carpeta(path)`: Crea un directorio (incluye directorios padres).
- *   `buscar_en_internet(query)`: Bóqueda vía DuckDuckGo.
- *   `leer_url(url)`: Lectura de contenido de páginas web.
- *   `obtener_directorio_actual()`: Devuelve la ruta absoluta del directorio de trabajo actual.
+### 󰈚 Archivos y Directorios
+* `read_file(path)`, `read_files(paths)`, `read_lines(...)`, `read_head(...)`: Lectura de archivos.
+* `write_file(path, contenido)`, `update_line(...)`, `replace_text(...)`, `replace_block(...)`: Escritura y edición.
+* `list_dir(path)`, `make_dir(path)`, `rename_path(origen, destino)`, `remove_file(path)`: Gestión de rutas.
+* `global_search(query)`, `glob_search(pattern)`, `global_replace(...)`: Búsqueda y reemplazo masivo.
+
+### 󰍃 Utilidades y Web
+* `web_search(query)`, `fetch_url(url)`: Acceso a información externa.
+* `get_time(zona_horaria)`, `calculate(operacion)`, `get_cwd()`: Herramientas básicas.
+
+### 󰇄 Sistema y Notificaciones
+* `analyze_pyright(path)`: Análisis estático de Python.
+* `notify_user(mensaje)`, `notify_mobile(mensaje)`: Notificaciones al usuario.
+* `set_timer(seconds, message)`: Programación de tareas.
+* `is_window_in_focus(action)`: Verificación de estado de la terminal.
 
 ## 󰒊 Protocolos Internos del Agente (Mitigación de Errores)
 
