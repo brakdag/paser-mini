@@ -1,0 +1,14 @@
+{"timestamp": "2026-04-07T19:44:46.502316", "level": "INFO", "logger": "tools", "message": "Archivo 'TODO.md' escrito exitosamente."}
+{"timestamp": "2026-04-07T19:45:31.127005", "level": "INFO", "logger": "tools", "message": "Archivo 'code_navigator.py' escrito exitosamente."}
+{"timestamp": "2026-04-07T19:46:39.431066", "level": "INFO", "logger": "tools", "message": "Archivo 'TODO.md' escrito exitosamente."}
+{"timestamp": "2026-04-07T19:51:57.531216", "level": "INFO", "logger": "tools", "message": "Path moved from 'code_navigator.py' to 'scripts/code_navigator.py'."}
+{"timestamp": "2026-04-07T19:53:43.077397", "level": "INFO", "logger": "tools", "message": "Path moved from 'scripts/code_navigator.py' to 'paser/code_navigator.py'."}
+{"timestamp": "2026-04-07T19:54:51.306256", "level": "INFO", "logger": "tools", "message": "Path moved from 'paser/code_navigator.py' to 'paser/tools/code_navigator.py'."}
+{"timestamp": "2026-04-07T20:12:31.285804", "level": "INFO", "logger": "tools", "message": "Archivo '/mnt/DataSD/sandbox/charla/test_nav.py' escrito exitosamente."}
+{"timestamp": "2026-04-07T20:13:56.489759", "level": "INFO", "logger": "tools", "message": "Archivo '/mnt/DataSD/sandbox/charla/utils.py' escrito exitosamente."}
+{"timestamp": "2026-04-07T20:15:33.792044", "level": "INFO", "logger": "tools", "message": "Archivo '/mnt/DataSD/sandbox/charla/main.py' escrito exitosamente."}
+{"timestamp": "2026-04-07T20:21:27.690543", "level": "INFO", "logger": "tools", "message": "Archivo '/mnt/DataSD/sandbox/charla/paser/tools/registry_positional.json' escrito exitosamente."}
+{"timestamp": "2026-04-07T20:28:56.581366", "level": "INFO", "logger": "tools", "message": "Archivo '/mnt/DataSD/sandbox/charla/TODO.md' escrito exitosamente."}
+{"timestamp": "2026-04-07T20:31:53.934551", "level": "INFO", "logger": "tools", "message": "Archivo '/mnt/DataSD/sandbox/charla/README.md' escrito exitosamente."}
+{"timestamp": "2026-04-07T20:41:47.747935", "level": "ERROR", "logger": "tools", "message": "Error leyendo /mnt/DataSD/sandbox/charla/assets/mascot.png: 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte"}
+{"timestamp": "2026-04-07T20:41:50.152477", "level": "ERROR", "logger": "tools", "message": "Error leyendo /mnt/DataSD/sandbox/charla/paser/assets/type.wav: 'utf-8' codec can't decode byte 0xe8 in position 4: invalid continuation byte"}
