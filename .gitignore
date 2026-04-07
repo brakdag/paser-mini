@@ -8,4 +8,6 @@ projects/
 .chat_history
 paser.egg-info/
 sessions/
+.paser_events.json
+.paser_events_test.json
 
