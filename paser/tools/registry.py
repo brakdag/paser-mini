@@ -54,7 +54,9 @@ STRICT Rules:
    - First, complete tasks and write the final response.
    - Then, check terminal focus with `is_window_in_focus`.
    - If False, call `notify_user` to signal completion.
-   - NEVER notify before writing the final result.
+    - NEVER notify before writing the final result.
+    
+    4. Timer Rule: `set_timer` is for scheduling tasks. Use short, descriptive names like 'Check database' instead of 'Timer finished'.
 """
 
 

@@ -76,12 +76,13 @@ def is_window_in_focus(**kwargs) -> str:
 from paser.core.event_manager import event_manager
 
 def set_timer(seconds: int, message: str = None) -> str:
-    """Sets a timer that will inject an event directly into the agent's event queue."""
+    """Sets a timer that will inject an event directly into the agent's event queue.
+    Use a descriptive name for the task (e.g., 'Revisar logs'), NOT 'Timer finished'."""
     if message is None:
-        message = "Timer timeout"
+        message = "Timer"
     
     try:
         event_manager.add_event(seconds, message)
-        return f"Timer set for {seconds} seconds: {message}"
+        return f"Timer scheduled for {seconds} seconds with message: {message}"
     except Exception as e:
         return f"Failed to set timer: {str(e)}"

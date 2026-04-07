@@ -1,10 +1,10 @@
 # TODO List - Paser
 
 ## 🐛 Bugs
-- [ ] **Interface Bug in `read_files` Tool**
+- [x] **Interface Bug in `read_files` Tool**
     - **Issue:** The tool reports that the `paths` parameter must be a list even when a list is provided. This indicates a type-checking failure in the tool's implementation or its bridge to the agent.
     - **Goal:** Fix the parameter validation in `file_tools.py` to correctly handle list inputs.
-- [ ] **False Positive Error Detection in Executor**
+- [x] **False Positive Error Detection in Executor**
     - **Issue:** The `AutonomousExecutor` marks a tool call as failed if the result string contains words like "Error", "failed", or "invalid". This causes false positives when reading source code that contains these words.
     - **Plan:** 
         1. Modify `AutonomousExecutor` to rely on exceptions for error detection instead of string matching.

@@ -34,6 +34,10 @@ class ChatManager:
     NOTIFICATION_TOOLS = {
         "notify_user": ("Notificación", "󰋃"),
     }
+    
+    TIMER_TOOLS = {
+        "set_timer": ("Temporizador", "󰔟"),
+    }
 
     SYSTEM_TOOLS = {
         "is_window_in_focus": ("Verificando foco", "󰇄"),
@@ -97,6 +101,17 @@ class ChatManager:
             mensaje = args.get("mensaje", "")
             console.print(f"  {icon} {verb}: {mensaje} {status_icon}", style="dim yellow")
         
+        elif tool_name in self.TIMER_TOOLS:
+            verb, icon = self.TIMER_TOOLS[tool_name]
+            status_icon = "󰄵" if success else "󰅚"
+            # Extraemos info para feedback
+            if "with message:" in result:
+                msg_part = result.split("with message:")[1].strip()
+            else:
+                msg_part = args.get("message", "Timer")
+            
+            console.print(f"  {icon} Programado: {msg_part} ({args.get('seconds', '?')}s) {status_icon}", style="dim yellow")
+        
         elif tool_name in self.SYSTEM_TOOLS:
             verb, icon = self.SYSTEM_TOOLS[tool_name]
             status_icon = "󰄵" if success else "󰅚"
@@ -106,10 +121,14 @@ class ChatManager:
         """Hilo de fondo que revisa eventos expirados e inyecta mensajes al agente."""
         while True:
             try:
+                # DEBUG: Imprimir hora actual y eventos
+                # print(f"DEBUG: Checking events... {time.time()}")
                 expired_events = self.event_manager.check_expired_events()
                 for msg in expired_events:
-                    sys_msg = f"[SISTEMA: El temporizador '{msg}' ha expirado. Por favor, reacciona]."
-                    console.print(f"\n\udb80\udec3 [EVENTO] {msg}", style="bold magenta")
+                    # Usamos una representación segura del mensaje para evitar UnicodeEncodeError
+                    safe_msg = msg.encode('ascii', 'replace').decode('ascii')
+                    sys_msg = f"[SISTEMA: El temporizador '{safe_msg}' ha expirado. Por favor, reacciona]."
+                    console.print(f"\n[EVENTO] {safe_msg}", style="bold magenta")
                     with SpinnerContext("Procesando evento", "magenta"):
                         res = self.executor.execute(user_input=sys_msg, thinking_enabled=self.thinking_enabled, get_confirmation_callback=get_input)
                     if res:
@@ -120,8 +139,12 @@ class ChatManager:
                         rcl = '</' + 'TOOL_RESPONSE' + '>'
                         cleaned = res.replace(op, '').replace(cl, '').replace(rop, '').replace(rcl, '')
                         if cleaned.strip(): print_model_response(cleaned)
-                time.sleep(5)
-            except Exception:
+                time.sleep(1) # Cambiado de 5 a 1 para mayor frecuencia de chequeo
+            except Exception as e:
+                # Logging más detallado
+                import traceback
+                print(f"DEBUG: Event loop error: {e}")
+                traceback.print_exc()
                 time.sleep(10)
 
     def run(self):

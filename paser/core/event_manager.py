@@ -27,8 +27,15 @@ class EventManager:
 
     def add_event(self, seconds: int, message: str):
         """Programa un evento para el futuro."""
+        # Aseguramos que seconds sea un número válido
+        try:
+            seconds = int(seconds)
+        except ValueError:
+            seconds = 0
+            
         events = self._load_events()
-        execution_time = time.time() + seconds
+        # Si segundos es 0 o menos, el evento expira inmediatamente
+        execution_time = time.time() + max(seconds, 0)
         events.append({
             "execution_time": execution_time,
             "message": message,

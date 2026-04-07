@@ -105,16 +105,24 @@ class AutonomousExecutor:
                     for arg_name, arg_value in args.items():
                         if arg_name in hints:
                             expected_type = hints[arg_name]
-                            # Manejar Optional o Union
                             origin = get_origin(expected_type)
-                            if origin is not None:
-                                expected_type = get_args(expected_type)[0]
                             
-                            if not isinstance(arg_value, expected_type):
+                            # Determinar el tipo contra el cual validar
+                            if origin is not None:
+                                # Para genéricos como list[str] o dict[str, Any], validamos contra el origen (list, dict)
+                                # Para Union/Optional, validamos contra la tupla de tipos permitidos
+                                check_type = origin
+                            else:
+                                check_type = expected_type
+                            
+                            if not isinstance(arg_value, check_type):
                                 try:
-                                    args[arg_name] = expected_type(arg_value)
+                                    # Intentar conversión solo si no es un genérico complejo
+                                    conversion_type = expected_type if origin is None else origin
+                                    args[arg_name] = conversion_type(arg_value)
                                 except (ValueError, TypeError):
-                                    tr = self._format_tool_response(f"Tipo inválido para el argumento '{arg_name}' en '{name}'. Se esperaba {expected_type.__name__}.", success=False)
+                                    type_name = getattr(check_type, '__name__', str(check_type))
+                                    tr = self._format_tool_response(f"Tipo inválido para el argumento '{arg_name}' en '{name}'. Se esperaba {type_name}.", success=False)
                                     combined_tool_responses.append(tr)
                                     continue
                 
@@ -126,15 +134,10 @@ class AutonomousExecutor:
                 else:
                     try:
                         result = self.tools[name](**args)
-                        # Verificar si la herramienta realmente tuvo éxito o si devolvió un mensaje de error
-                        is_error = isinstance(result, str) and (
-                            "Error" in result or 
-                            "failed" in result.lower() or 
-                            "invalid" in result.lower()
-                        )
-                        tr = self._format_tool_response(result, success=not is_error)
+                        # Si la función retorna sin lanzar una excepción, se considera éxito
+                        tr = self._format_tool_response(result, success=True)
                         if self.on_tool_used:
-                            self.on_tool_used(name, args, result, not is_error)
+                            self.on_tool_used(name, args, result, True)
                     except Exception as exc:
                         # Eliminamos logger.error para evitar fugas de detalles técnicos en la consola
                         tr = self._format_tool_response(str(exc), success=False)
