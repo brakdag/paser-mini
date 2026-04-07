@@ -61,6 +61,15 @@ paser
  *   `listar_archivos(path)`
  *   `mover_archivo(origen, destino)`: Mueve o renombra un archivo/directorio.
  *   `crear_carpeta(path)`: Crea un directorio (incluye directorios padres).
- *   `buscar_en_internet(query)`: Búsqueda vía DuckDuckGo.
+ *   `buscar_en_internet(query)`: Bóqueda vía DuckDuckGo.
  *   `leer_url(url)`: Lectura de contenido de páginas web.
  *   `obtener_directorio_actual()`: Devuelve la ruta absoluta del directorio de trabajo actual.
+
+## 󰒊 Protocolos Internos del Agente (Mitigación de Errores)
+
+Para garantizar la integridad del código y evitar errores de escritura, el agente sigue estas reglas estrictas:
+
+1.  **Sobrescritura Total para Cambios Estructurales**: Se evita el uso de `replace_block` en cambios de arquitectura o indentación. Se prefiere `write_file` con el contenido completo para asegurar la consistencia del código.
+2.  **Sustituciones Atómicas**: `replace_text` se utiliza exclusivamente para cambios de cadenas simples y flags, minimizando el riesgo de fallos por espacios invisibles.
+3.  **Lectura Secuencial**: Debido a bugs conocidos en la interfaz de `read_files`, el agente realiza lecturas individuales mediante `read_file` para garantizar la obtención de datos.
+4.  **Validación Previa**: Lectura obligatoria del archivo inmediatamente antes de cualquier operación de escritura para evitar conflictos de versión en la memoria del modelo.

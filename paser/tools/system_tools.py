@@ -73,36 +73,15 @@ def is_window_in_focus(**kwargs) -> str:
     except Exception:
         return "False: Could not determine window focus (xdotool missing?)."
 
-def set_timer(seconds: int, message: str = "Timer finished") -> str:
-    """Sets a timer that will trigger a system notification after 'seconds' seconds in the background."""
-    import platform
-    import subprocess
-    import os
-    import sys
+from paser.core.event_manager import event_manager
 
-    # We'll use a small python one-liner to run in the background.
-    # It will sleep and then try to use system commands to notify.
+def set_timer(seconds: int, message: str = None) -> str:
+    """Sets a timer that will inject an event directly into the agent's event queue."""
+    if message is None:
+        message = "Timer timeout"
     
-    python_exe = sys.executable
-    
-    # Constructing the command to run in background
-    # We want to: sleep(seconds) -> notify
-    
-    if platform.system() == "Linux":
-        # Use notify-send if available, otherwise just print bell
-        cmd = f"import time; time.sleep({seconds}); import subprocess; subprocess.run(['notify-send', {repr(message)}])"
-    elif platform.system() == "Darwin":
-        # Use osascript for macOS
-        cmd = f"import time; time.sleep({seconds}); import subprocess; subprocess.run(['osascript', '-e', 'display notification ' + {repr(message)} + ' with title \"Paser Timer\"'])"
-    elif platform.system() == "Windows":
-        # Use PowerShell for Windows. Escape single quotes in the message.
-        escaped_message = message.replace("'", "''")
-        cmd = f"import time; time.sleep({seconds}); import subprocess; subprocess.run(['powershell', '-Command', \"Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('{escaped_message}', 'Paser Timer')\"])"
-    else:
-        cmd = f"import time; time.sleep({seconds}); print('\a')"
-
     try:
-        subprocess.Popen([python_exe, "-c", cmd], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        event_manager.add_event(seconds, message)
         return f"Timer set for {seconds} seconds: {message}"
     except Exception as e:
         return f"Failed to set timer: {str(e)}"

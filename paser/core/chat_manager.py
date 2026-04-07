@@ -8,6 +8,9 @@ from paser.core.commands import CommandHandler
 from paser.core.executor import AutonomousExecutor
 from prompt_toolkit.history import FileHistory
 from rich.box import ROUNDED
+import threading
+import time
+from paser.core.event_manager import EventManager, event_manager
 
 class ChatManager:
     # Herramientas que producen feedback de archivo
@@ -46,6 +49,7 @@ class ChatManager:
         self.temperature = self.config.get("default_temperature", 0.7)
         
         self.command_handler = CommandHandler(self)
+        self.event_manager = event_manager
         self.executor = AutonomousExecutor(
             self.assistant,
             self.tools,
@@ -98,8 +102,34 @@ class ChatManager:
             status_icon = "󰄵" if success else "󰅚"
             console.print(f"  {icon} {verb} {status_icon}", style="dim yellow")
     
+    def _event_monitor_loop(self):
+        """Hilo de fondo que revisa eventos expirados e inyecta mensajes al agente."""
+        while True:
+            try:
+                expired_events = self.event_manager.check_expired_events()
+                for msg in expired_events:
+                    sys_msg = f"[SISTEMA: El temporizador '{msg}' ha expirado. Por favor, reacciona]."
+                    console.print(f"\n\udb80\udec3 [EVENTO] {msg}", style="bold magenta")
+                    with SpinnerContext("Procesando evento", "magenta"):
+                        res = self.executor.execute(user_input=sys_msg, thinking_enabled=self.thinking_enabled, get_confirmation_callback=get_input)
+                    if res:
+                        # Limpieza simple para evitar conflictos con el parser del sistema
+                        op = '<' + 'TOOL_CALL' + '>'
+                        cl = '</' + 'TOOL_CALL' + '>'
+                        rop = '<' + 'TOOL_RESPONSE' + '>'
+                        rcl = '</' + 'TOOL_RESPONSE' + '>'
+                        cleaned = res.replace(op, '').replace(cl, '').replace(rop, '').replace(rcl, '')
+                        if cleaned.strip(): print_model_response(cleaned)
+                time.sleep(5)
+            except Exception:
+                time.sleep(10)
+
     def run(self):
         self._initialize_chat()
+        
+        # Iniciar hilo de monitoreo de eventos
+        monitor_thread = threading.Thread(target=self._event_monitor_loop, daemon=True)
+        monitor_thread.start()
         
         # Welcome panel
         model_name = self.assistant.current_model or "Desconocido"
@@ -119,8 +149,21 @@ class ChatManager:
             except (EOFError, KeyboardInterrupt):
                 break
                 
-            if not user_input: 
+            if not user_input:
                 continue
+
+            # Interceptar eventos de sistema (JSON)
+            try:
+                event_data = json.loads(user_input)
+                if isinstance(event_data, dict) and event_data.get("type") == "timer_event":
+                    msg = event_data.get("message", "Timer timeout")
+                    # Renderizado especial con icono de reloj (Nerd Font)
+                    console.print(f"\n\udb80\udec3 [SISTEMA] {msg}", style="bold magenta")
+                    # Convertimos el JSON en una instrucción clara para el modelo
+                    user_input = f"[SISTEMA: El temporizador '{msg}' ha expirado. Por favor, reacciona]."
+            except json.JSONDecodeError:
+                pass
+
             if user_input.strip() == ':q': 
                 print_panel("Adiós", "¡Hasta la próxima! ", style="green")
                 break

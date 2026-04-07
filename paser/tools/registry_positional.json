@@ -21,5 +21,6 @@
 ["glob_search","Search files by pattern",{"pattern":"string"}],
 ["global_search","Search string in all files",{"query":"string"}],
 ["notify_user","System notification",{"mensaje":"string"}],
-["is_window_in_focus","Check terminal focus",{"action":"string"}]
+["is_window_in_focus","Check terminal focus",{"action":"string"}],
+["set_timer","Set a timer that triggers a notification after N seconds",{"seconds":"int","message":"string"}]
 ]
