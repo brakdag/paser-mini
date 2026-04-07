@@ -1,4 +1,6 @@
 from typing import Generator, Optional, Any
+import time
+import json
 from google import genai
 from google.genai import types
 from google.genai.errors import ClientError
@@ -9,10 +11,47 @@ class GeminiAdapter(IAIAssistant):
         self.client = genai.Client()
         self.chat: Any = None
         self._current_model: Optional[str] = None
+        self.max_retries = 5
+        self.default_retry_delay = 5
 
     @property
     def current_model(self) -> Optional[str]:
         return self._current_model
+
+    def _get_retry_delay(self, error: ClientError) -> float:
+        """Extrae el retryDelay del error si está disponible, sino retorna el default."""
+        try:
+            error_msg = str(error)
+            # Intentamos parsear como JSON primero para una extracción más robusta
+            try:
+                import json
+                data = json.loads(error_msg)
+                def find_key(obj, key):
+                    if isinstance(obj, dict):
+                        if key in obj: return obj[key]
+                        for v in obj.values():
+                            res = find_key(v, key)
+                            if res: return res
+                    elif isinstance(obj, list):
+                        for item in obj:
+                            res = find_key(item, key)
+                            if res: return res
+                    return None
+                
+                delay = find_key(data, 'retryDelay')
+                if delay is not None:
+                    return float(delay)
+            except Exception:
+                pass
+
+            # Fallback: Búsqueda con regex en el mensaje de error
+            import re
+            match = re.search(r'"retryDelay":\s*(\d+)', error_msg)
+            if match:
+                return float(match.group(1))
+        except Exception:
+            pass
+        return self.default_retry_delay
 
     def start_chat(self, model_name: str, system_instruction: str, temperature: float):
         self._current_model = model_name
@@ -25,18 +64,10 @@ class GeminiAdapter(IAIAssistant):
         config_params = {"temperature": temperature}
         history = []
         
-        # Intentar aplicar system_instruction de manera segura
-        try:
+        # Determinar si usar system_instruction en la config o en el historial
+        if 'gemini' in model_name.lower():
             config_params["system_instruction"] = system_instruction
-            # Intentar crear chat para verificar compatibilidad de system_instruction
-            self.client.chats.create(
-                model=model_name,
-                config=types.GenerateContentConfig(**config_params),
-                history=[]
-            )
-        except Exception:
-            # Si falla, probablemente sea Gemma u otro modelo que no admite system_instruction en la config
-            config_params["system_instruction"] = None
+        else:
             history = [
                 types.Content(
                     role="user",
@@ -61,27 +92,67 @@ class GeminiAdapter(IAIAssistant):
         if not self.chat:
             yield ""
             return
-        try:
-            response = self.chat.send_message_stream(message)
-            for chunk in response:
-                if hasattr(chunk, 'text') and chunk.text:
-                    yield chunk.text
-        except ClientError as e:
-            if getattr(e, 'status_code', None) == 429 or '429' in str(e):
-                yield f"\n⚠️ Error: Cuota de API excedida (429). Por favor, espera un momento o cambia el modelo. {e}"
-            else:
-                raise e
+
+        retries = 0
+        while retries <= self.max_retries:
+            try:
+                response = self.chat.send_message_stream(message)
+                for chunk in response:
+                    if hasattr(chunk, 'text') and chunk.text:
+                        yield chunk.text
+                return # Éxito, salimos del loop
+            except Exception as e:
+                # Capturamos Exception general para analizar si es un error de cuota/TPM
+                error_msg = str(e)
+                is_quota_error = (
+                    isinstance(e, ClientError) or 
+                    getattr(e, 'status_code', None) == 429 or 
+                    '429' in error_msg or 
+                    'quota' in error_msg.lower() or 
+                    'resource exhausted' in error_msg.lower() or
+                    'tpm' in error_msg.lower()
+                )
+
+                if is_quota_error:
+                    retries += 1
+                    if retries > self.max_retries:
+                        yield f"\n⚠️ Error: Cuota de API excedida tras {self.max_retries} reintentos. {e}"
+                        return
+                    
+                    delay = self._get_retry_delay(e)
+                    time.sleep(delay)
+                    continue
+                else:
+                    raise e
 
     def send_message(self, message: str) -> Any:
         if not self.chat:
             return None
-        try:
-            return self.chat.send_message(message)
-        except ClientError as e:
-            if getattr(e, 'status_code', None) == 429 or '429' in str(e):
-                # Retornamos un string que el AutonomousExecutor._extract_text pueda manejar
-                return f"⚠️ Error: Cuota de API excedida (429). Por favor, espera un momento o cambia el modelo. {e}"
-            raise e
+
+        retries = 0
+        while retries <= self.max_retries:
+            try:
+                return self.chat.send_message(message)
+            except Exception as e:
+                error_msg = str(e)
+                is_quota_error = (
+                    isinstance(e, ClientError) or 
+                    getattr(e, 'status_code', None) == 429 or 
+                    '429' in error_msg or 
+                    'quota' in error_msg.lower() or 
+                    'resource exhausted' in error_msg.lower() or
+                    'tpm' in error_msg.lower()
+                )
+
+                if is_quota_error:
+                    retries += 1
+                    if retries > self.max_retries:
+                        return f"⚠️ Error: Cuota de API excedida tras {self.max_retries} reintentos. {e}"
+                    
+                    delay = self._get_retry_delay(e)
+                    time.sleep(delay)
+                    continue
+                raise e
 
     def get_history(self) -> list:
         if not self.chat:
