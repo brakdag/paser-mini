@@ -8,7 +8,7 @@
 
 El cambio de nombre de "Passer" a "Paser" simplifica la escritura en la terminal, manteniendo la raíz del nombre original y el significado vinculado al gorrión, un ave muy común en el sur mendocino.
 
-## 󰏖 Instalación
+## 📦 Instalación
 
 Puedes elegir entre clonar el repositorio (para desarrollo) o ejecutar el script de instalación directamente:
 
@@ -27,7 +27,7 @@ git clone https://github.com/brakdag/paser.git && cd paser && chmod +x install.s
 export GOOGLE_API_KEY="tu_clave_api_aquí"
 ```
 
-## 󰒓 Ejecución
+## 🚀 Ejecución
 
 Una vez instalado, puedes ejecutar la aplicación simplemente usando:
 
@@ -35,7 +35,7 @@ Una vez instalado, puedes ejecutar la aplicación simplemente usando:
 paser
 ```
 
-## 󰇚 Características Principales
+## 🛠️ Características Principales
 
 1.  **Function Calling Local (Manual):**
     *   No utiliza herramientas nativas de la SDK de Google.
@@ -51,25 +51,25 @@ paser
     *   **Pensamientos:** Permite alternar la visibilidad de los pensamientos del modelo (líneas que comienzan con `*`) mediante el comando `/thinking`.
     *   **Directorio de Trabajo:** Permite cambiar el directorio de trabajo del agente mediante `/cd <ruta>`.
 
-## 󰍃 Herramientas Disponibles
+## 🔧 Herramientas Disponibles
 
-### 󰈚 Archivos y Directorios
+### 📂 Archivos y Directorios
 * `read_file(path)`, `read_files(paths)`, `read_lines(...)`, `read_head(...)`: Lectura de archivos.
 * `write_file(path, contenido)`, `update_line(...)`, `replace_text(...)`, `replace_block(...)`: Escritura y edición.
 * `list_dir(path)`, `make_dir(path)`, `rename_path(origen, destino)`, `remove_file(path)`: Gestión de rutas.
-* `global_search(query)`, `glob_search(pattern)`, `global_replace(...)`: Búsqueda y reemplazo masivo.
+* `global_search(query)`, `glob_search(pattern)`, `global_replace(path, search_text, replace_text, extensiones)`: Búsqueda y reemplazo masivo.
 
-### 󰍃 Utilidades y Web
+### 🌐 Utilidades y Web
 * `web_search(query)`, `fetch_url(url)`: Acceso a información externa.
 * `get_time(zona_horaria)`, `calculate(operacion)`, `get_cwd()`: Herramientas básicas.
 
-### 󰇄 Sistema y Notificaciones
+### 💻 Sistema y Notificaciones
 * `analyze_pyright(path)`: Análisis estático de Python.
-* `notify_user(mensaje)`, `notify_mobile(mensaje)`: Notificaciones al usuario.
+* `notify_user()`: Notificación simple al usuario.
 * `set_timer(seconds, message)`: Programación de tareas.
 * `is_window_in_focus(action)`: Verificación de estado de la terminal.
 
-## 󰒊 Protocolos Internos del Agente (Mitigación de Errores)
+## 📜 Protocolos Internos del Agente (Mitigación de Errores)
 
 Para garantizar la integridad del código y evitar errores de escritura, el agente sigue estas reglas estrictas:
 

@@ -178,18 +178,18 @@ def replace_block_regex(path: str, pattern: str, replace_text: str) -> str:
     os.replace(temp_path, safe_path)
     return "Regex block replaced successfully."
 
-def global_replace(path: str, search_text: str, replace_text: str, extensions: list = None) -> str:
+def global_replace(path: str, search_text: str, replace_text: str, extensiones: list = None) -> str:
     safe_base_path = context.get_safe_path(path)
     if not os.path.isdir(safe_base_path):
          raise NotADirectoryError(f"'{path}' is not a valid directory.")
     modificados = []
-    if extensions is None:
-        extensions = [".py", ".md", ".txt", ".json"]
+    if extensiones is None:
+        extensiones = [".py", ".md", ".txt", ".json"]
     for root, dirs, files in os.walk(safe_base_path):
         if any(part in root.split(os.sep) for part in ['.git', 'venv', '__pycache__']):
             continue
         for file in files:
-            if extensions and not any(file.endswith(ext) for ext in extensions):
+            if extensiones and not any(file.endswith(ext) for ext in extensiones):
                 continue
             file_path = os.path.join(root, file)
             if os.path.getsize(file_path) > FILE_SIZE_LIMIT:
@@ -211,17 +211,17 @@ def global_replace(path: str, search_text: str, replace_text: str, extensions: l
                 logger.error(f"Error processing {file_path}: {e}")
     return f"Global replacement completed in {len(modificados)} files: {json.dumps(modificados)}"
 
-def rename_path(source: str, destination: str) -> str:
-    safe_origen = context.get_safe_path(source)
-    safe_destino = context.get_safe_path(destination)
+def rename_path(origen: str, destino: str) -> str:
+    safe_origen = context.get_safe_path(origen)
+    safe_destino = context.get_safe_path(destino)
     if not os.path.exists(safe_origen):
-        raise FileNotFoundError(f"'{source}' does not exist.")
+        raise FileNotFoundError(f"'{origen}' does not exist.")
     directorio_destino = os.path.dirname(safe_destino)
     if directorio_destino:
         os.makedirs(directorio_destino, exist_ok=True)
     os.rename(safe_origen, safe_destino)
-    logger.info(f"Path moved from '{source}' to '{destination}'.")
-    return f"Path moved from '{source}' to '{destination}' successfully."
+    logger.info(f"Path moved from '{origen}' to '{destino}'.")
+    return f"Path moved from '{origen}' to '{destino}' successfully."
 
 def make_dir(path: str) -> str:
     safe_path = context.get_safe_path(path)

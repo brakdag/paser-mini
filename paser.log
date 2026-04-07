@@ -90,3 +90,36 @@
 {"timestamp": "2026-04-07T16:28:16.065514", "level": "INFO", "logger": "tools", "message": "Archivo 'website/index.html' escrito exitosamente."}
 {"timestamp": "2026-04-07T16:34:11.915606", "level": "INFO", "logger": "tools", "message": "Archivo 'docs/index.html' escrito exitosamente."}
 {"timestamp": "2026-04-07T16:34:30.221254", "level": "INFO", "logger": "tools", "message": "Archivo 'website/index.html' borrado."}
+{"timestamp": "2026-04-07T16:39:02.606449", "level": "ERROR", "logger": "tools", "message": "Error leyendo /mnt/DataSD/sandbox/charla/assets/mascot.png: 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte"}
+{"timestamp": "2026-04-07T16:39:05.741752", "level": "ERROR", "logger": "tools", "message": "Error leyendo /mnt/DataSD/sandbox/charla/paser/assets/type.wav: 'utf-8' codec can't decode byte 0xe8 in position 4: invalid continuation byte"}
+{"timestamp": "2026-04-07T16:39:27.117681", "level": "ERROR", "logger": "tools", "message": "Error leyendo /mnt/DataSD/sandbox/charla/assets/mascot.png: 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte"}
+{"timestamp": "2026-04-07T16:39:27.337979", "level": "ERROR", "logger": "tools", "message": "Error leyendo /mnt/DataSD/sandbox/charla/paser/assets/type.wav: 'utf-8' codec can't decode byte 0xe8 in position 4: invalid continuation byte"}
+{"timestamp": "2026-04-07T16:40:36.967642", "level": "ERROR", "logger": "tools", "message": "Error leyendo /mnt/DataSD/sandbox/charla/assets/mascot.png: 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte"}
+{"timestamp": "2026-04-07T16:40:37.321054", "level": "ERROR", "logger": "tools", "message": "Error leyendo /mnt/DataSD/sandbox/charla/paser/assets/type.wav: 'utf-8' codec can't decode byte 0xe8 in position 4: invalid continuation byte"}
+{"timestamp": "2026-04-07T16:42:00.393167", "level": "INFO", "logger": "tools", "message": "Archivo 'paser/tools/registry_compact.json' escrito exitosamente."}
+{"timestamp": "2026-04-07T16:45:52.199906", "level": "INFO", "logger": "tools", "message": "Archivo 'README.md' escrito exitosamente."}
+{"timestamp": "2026-04-07T16:47:51.852886", "level": "INFO", "logger": "tools", "message": "Carpeta 'test/sandbox' creada."}
+{"timestamp": "2026-04-07T16:48:26.454945", "level": "DEBUG", "logger": "tools", "message": "Calculando: 2 + 2 * 5"}
+{"timestamp": "2026-04-07T16:48:38.806088", "level": "INFO", "logger": "tools", "message": "Archivo 'test/sandbox/test_file.txt' escrito exitosamente."}
+{"timestamp": "2026-04-07T16:49:08.344891", "level": "INFO", "logger": "tools", "message": "Archivo 'test/sandbox/test_file_2.txt' escrito exitosamente."}
+{"timestamp": "2026-04-07T16:50:05.645564", "level": "INFO", "logger": "tools", "message": "Path moved from 'test/sandbox/test_file_2.txt' to 'test/sandbox/test_file_renamed.txt'."}
+{"timestamp": "2026-04-07T16:50:46.243611", "level": "INFO", "logger": "tools", "message": "Archivo 'test/sandbox/test_file_renamed.txt' borrado."}
+{"timestamp": "2026-04-07T16:51:35.042061", "level": "INFO", "logger": "tools", "message": "Archivo 'test/sandbox/test_file.txt' borrado."}
+{"timestamp": "2026-04-07T16:53:38.289482", "level": "INFO", "logger": "tools", "message": "Archivo 'test/sandbox/search1.txt' escrito exitosamente."}
+{"timestamp": "2026-04-07T16:53:41.429821", "level": "INFO", "logger": "tools", "message": "Archivo 'test/sandbox/search2.txt' escrito exitosamente."}
+{"timestamp": "2026-04-07T16:53:44.103988", "level": "ERROR", "logger": "tools", "message": "Error leyendo /mnt/DataSD/sandbox/charla/assets/mascot.png: 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte"}
+{"timestamp": "2026-04-07T16:53:46.065440", "level": "ERROR", "logger": "tools", "message": "Error leyendo /mnt/DataSD/sandbox/charla/paser/assets/type.wav: 'utf-8' codec can't decode byte 0xe8 in position 4: invalid continuation byte"}
+{"timestamp": "2026-04-07T16:59:18.488325", "level": "INFO", "logger": "tools", "message": "Carpeta 'test/sandbox2' creada."}
+{"timestamp": "2026-04-07T16:59:40.501861", "level": "INFO", "logger": "tools", "message": "Archivo 'test/sandbox2/test_file.txt' escrito exitosamente."}
+{"timestamp": "2026-04-07T16:59:40.508060", "level": "DEBUG", "logger": "tools", "message": "Calculando: 2 + 2 * 5"}
+{"timestamp": "2026-04-07T17:00:17.630312", "level": "INFO", "logger": "tools", "message": "Archivo 'test/sandbox2/test_code.py' escrito exitosamente."}
+{"timestamp": "2026-04-07T17:00:17.643622", "level": "INFO", "logger": "tools", "message": "Archivo 'test/sandbox2/regex_test.txt' escrito exitosamente."}
+{"timestamp": "2026-04-07T17:00:52.555301", "level": "INFO", "logger": "tools", "message": "Archivo 'test/sandbox2/search1.txt' escrito exitosamente."}
+{"timestamp": "2026-04-07T17:00:52.575332", "level": "INFO", "logger": "tools", "message": "Archivo 'test/sandbox2/search2.txt' escrito exitosamente."}
+{"timestamp": "2026-04-07T17:00:52.591051", "level": "INFO", "logger": "tools", "message": "Archivo 'test/sandbox2/delete_me.txt' escrito exitosamente."}
+{"timestamp": "2026-04-07T17:00:52.610843", "level": "INFO", "logger": "tools", "message": "Archivo 'test/sandbox2/rename_me.txt' escrito exitosamente."}
+{"timestamp": "2026-04-07T17:00:52.637479", "level": "ERROR", "logger": "tools", "message": "Error leyendo /mnt/DataSD/sandbox/charla/assets/mascot.png: 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte"}
+{"timestamp": "2026-04-07T17:00:52.886985", "level": "ERROR", "logger": "tools", "message": "Error leyendo /mnt/DataSD/sandbox/charla/paser/assets/type.wav: 'utf-8' codec can't decode byte 0xe8 in position 4: invalid continuation byte"}
+{"timestamp": "2026-04-07T17:00:52.923427", "level": "INFO", "logger": "tools", "message": "Path moved from 'test/sandbox2/rename_me.txt' to 'test/sandbox2/renamed.txt'."}
+{"timestamp": "2026-04-07T17:00:52.925745", "level": "INFO", "logger": "tools", "message": "Archivo 'test/sandbox2/delete_me.txt' borrado."}
+{"timestamp": "2026-04-07T17:01:29.929384", "level": "INFO", "logger": "tools", "message": "Archivo 'test/sandbox2/ANALISIS.md' escrito exitosamente."}
