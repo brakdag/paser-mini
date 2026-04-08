@@ -109,26 +109,23 @@ class AutonomousExecutor:
                             
                             # Determinar el tipo contra el cual validar
                             is_valid = True
-                            if origin is Union:
-                                # Para Union/Optional, validamos si es instancia de alguno de los tipos
-                                check_type = get_args(expected_type)
-                                is_valid = isinstance(arg_value, check_type)
-                            elif origin is not None:
-                                # Para genéricos, validamos contra el origen (list, dict, etc)
-                                is_valid = isinstance(arg_value, origin)
-                            else:
-                                is_valid = isinstance(arg_value, expected_type)
+                            # Validación simplificada para evitar errores con genéricos
+                            try:
+                                if origin is Union:
+                                    check_types = get_args(expected_type)
+                                    is_valid = isinstance(arg_value, check_types)
+                                elif origin is not None:
+                                    is_valid = isinstance(arg_value, origin)
+                                else:
+                                    is_valid = isinstance(arg_value, expected_type)
+                            except TypeError:
+                                # Fallback si la validación falla por tipos complejos
+                                is_valid = True
                             
                             if not is_valid:
-                                try:
-                                    # Intentar conversión solo si no es un genérico complejo
-                                    conversion_type = expected_type if origin is None else origin
-                                    args[arg_name] = conversion_type(arg_value)
-                                except (ValueError, TypeError):
-                                    type_name = getattr(check_type, '__name__', str(check_type))
-                                    tr = self._format_tool_response(f"Tipo inválido para el argumento '{arg_name}' en '{name}'. Se esperaba {type_name}.", success=False)
-                                    combined_tool_responses.append(tr)
-                                    continue
+                                tr = self._format_tool_response(f"Tipo inválido para el argumento '{arg_name}' en '{name}'.", success=False)
+                                combined_tool_responses.append(tr)
+                                continue
                 
                 # Validación básica de argumentos
                 if not isinstance(args, dict):

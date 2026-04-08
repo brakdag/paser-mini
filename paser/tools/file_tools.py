@@ -32,6 +32,26 @@ def read_files(paths: list[str]) -> str:
     for path in paths:
         content = read_file(path)
         results.append(f"--- ARCHIVO: {path} ---\n{content}\n--- FIN ARCHIVO ---")
+
+    files_str = " ".join(paths)
+    if len(paths) > 5 or len(files_str) > 60:
+        summary = f"Se han leído {len(paths)} archivos."
+    else:
+        summary = f"Archivos leídos: {files_str}"
+        
+    return f"{summary}\n\n" + "\n\n".join(results)
+    files_str = " ".join(paths)
+    if len(paths) > 5 or len(files_str) > 60:
+        summary = f"Se han leído {len(paths)} archivos."
+    else:
+        summary = f"Archivos leídos: {files_str}"
+        
+    return f"{summary}\n\n" + "\n\n".join(results)
+    
+    results = []
+    for path in paths:
+        content = read_file(path)
+        results.append(f"--- ARCHIVO: {path} ---\n{content}\n--- FIN ARCHIVO ---")
         
     return "\n\n".join(results)
 

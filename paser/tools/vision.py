@@ -34,19 +34,15 @@ def see_image(path: str, crop: Optional[List[int]] = None) -> dict:
                     raise ValueError("El parámetro 'crop' debe ser una lista de 4 enteros: [left, top, right, bottom].")
                 img = img.crop(crop)
 
-            # 4. Optimización de resolución (112p)
-            # Definimos 112px como la dimensión del lado más corto para mantener detalle
-            # pero reducir drásticamente el consumo de tokens.
+            # 4. Optimización de resolución: Redimensionamos a 112p para minimizar consumo de tokens.
             width, height = img.size
             aspect_ratio = width / height
-            
             if width < height:
                 new_width = 112
                 new_height = int(112 / aspect_ratio)
             else:
                 new_height = 112
                 new_width = int(112 * aspect_ratio)
-            
             img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
 
             # 5. Conversión a RGB (elimina canal alfa de PNGs, etc.)
