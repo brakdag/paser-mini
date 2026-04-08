@@ -1,6 +1,6 @@
 [
 ["get_time","Get current time",{"zona_horaria":"string"}],
-["calculate","Evaluate math expression",{"operacion":"string"}],
+
 ["read_file","Read file content",{"path":"string"}],
 ["read_files","Read multiple files",{"paths":"list"}],
 ["write_file","Write content to file",{"path":"string","contenido":"string"}],
@@ -27,5 +27,6 @@
 ["set_timer","Set a timer that triggers a notification after N seconds",{"seconds":"int","message":"string"}],
 ["list_symbols","List all classes and functions in a file",{"file_path":"string"}],
 ["get_definition","Find the definition of a symbol",{"symbol_name":"string","file_path":"string"}],
-["get_references","Find all references to a symbol",{"symbol_name":"string","file_path":"string"}]
+["get_references","Find all references to a symbol",{"symbol_name":"string","file_path":"string"}],
+["execute_python","Execute Python code in a secure sandbox",{"code":"string"}]
 ]

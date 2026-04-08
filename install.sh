@@ -22,6 +22,15 @@ echo "📦 Instalando dependencias..."
 "$PROJECT_ROOT/venv/bin/pip" install --upgrade pip > /dev/null
 "$PROJECT_ROOT/venv/bin/pip" install -e . > /dev/null
 
+# 4. Instalar Wasmer Runtime
+echo "📦 Instalando Wasmer Runtime..."
+curl https://get.wasmer.io -sSfL | sh
+
+# 5. Descargar binario de Python WASM
+echo "📂 Descargando python.wasm..."
+mkdir -p "$PROJECT_ROOT/assets"
+curl -L https://github.com/vmware-labs/python-wasm/releases/latest/download/python.wasm -o "$PROJECT_ROOT/assets/python.wasm"
+
 # 4. Crear enlace simbólico
 echo "🔗 Configurando comando 'paser'..."
 mkdir -p "$HOME/.local/bin"

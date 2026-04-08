@@ -1,6 +1,6 @@
 [
   {"name":"get_time","desc":"Get current time","params":{"type":"object","properties":{"zona_horaria":{"type":"string"}},"required":["zona_horaria"]}},
-  {"name":"calculate","desc":"Evaluate math expression","params":{"type":"object","properties":{"operacion":{"type":"string"}},"required":["operacion"]}},
+
   {"name":"read_file","desc":"Read file content","params":{"type":"object","properties":{"path":{"type":"string"}},"required":["path"]}},
   {"name":"read_files","desc":"Read multiple files","params":{"type":"object","properties":{"paths":{"type":"array","items":{"type":"string"}}},"required":["paths"]}},
   {"name":"write_file","desc":"Write content to file","params":{"type":"object","properties":{"path":{"type":"string"},"contenido":{"type":"string"}},"required":["path","contenido"]}},
@@ -21,5 +21,6 @@
   {"name":"glob_search","desc":"Search files by pattern","params":{"type":"object","properties":{"pattern":{"type":"string"}},"required":["pattern"]}},
   {"name":"global_search","desc":"Search string in all files","params":{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}},
   {"name":"notify_user","desc":"System notification","params":{"type":"object","properties":{"mensaje":{"type":"string"}},"required":["mensaje"]}},
-  {"name":"is_window_in_focus","desc":"Check terminal focus","params":{"type":"object","properties":{"action":{"type":"string"}},"required":["action"]}}
+  {"name":"is_window_in_focus","desc":"Check terminal focus","params":{"type":"object","properties":{"action":{"type":"string"}},"required":["action"]}},
+  {"name":"execute_python","desc":"Execute Python code in a secure sandbox","params":{"type":"object","properties":{"code":{"type":"string"}},"required":["code"]}}
 ]

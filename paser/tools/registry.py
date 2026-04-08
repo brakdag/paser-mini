@@ -5,12 +5,13 @@ from paser.tools import system_tools as st
 from paser.tools import util_tools as ut
 from paser.tools import mqtt_tools as mt
 from paser.tools import code_navigator as cn
+from paser.tools import wasm_tools as wt_wasm
 
 nav = cn.CodeNavigator()
 
 AVAILABLE_TOOLS = {
     "get_time": ut.get_time,
-    "calculate": ut.calculate,
+    
     "read_file": ft.read_file,
     "read_files": ft.read_files,
     "write_file": ft.write_file,
@@ -38,7 +39,8 @@ AVAILABLE_TOOLS = {
     "notify_mobile": mt.notify_mobile,
     "list_symbols": nav.list_symbols,
     "get_definition": nav.get_definition,
-    "get_references": nav.get_references
+    "get_references": nav.get_references,
+    "execute_python": wt_wasm.execute_python
 }
 
 with open(os.path.join(os.path.dirname(__file__), "registry_positional.json"), "r") as f:

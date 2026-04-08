@@ -73,7 +73,7 @@ paser
 ### 🌐 Utilidades y Web
 
 - `web_search(query)`, `fetch_url(url)`: Acceso a información externa.
-- `get_time(zona_horaria)`, `calculate(operacion)`, `get_cwd()`: Herramientas básicas.
+- `get_time(zona_horaria)`, `get_cwd()`: Herramientas básicas.
 
 ### 💻 Sistema y Notificaciones
 

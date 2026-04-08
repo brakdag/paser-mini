@@ -2,12 +2,15 @@ import json
 import re
 import os
 import datetime
+import logging
 from paser.core.interfaces import IAIAssistant
 from paser.core.ui import console, print_panel, get_input, print_model_response, SpinnerContext
 from paser.core.commands import CommandHandler
 from paser.core.executor import AutonomousExecutor
 from prompt_toolkit.history import FileHistory
 from rich.box import ROUNDED
+from rich.live import Live
+from rich.panel import Panel
 import threading
 import time
 from paser.core.event_manager import EventManager, event_manager
@@ -59,6 +62,10 @@ class ChatManager:
             self.tools,
             on_tool_used=self._on_tool_used,
         )
+        
+        # Lazy loading synchronization
+        self._initialized_event = threading.Event()
+        self._init_error = None
 
     def _load_config(self):
         try:
@@ -143,37 +150,47 @@ class ChatManager:
                 time.sleep(10)
 
     def run(self):
-        try:
-            self._initialize_chat()
-        except Exception as e:
-            console.print(f"\n[bold red]⚠ Error de inicialización:[/bold red] {e}", style="red")
-            print_panel("Error de Conexión", "No se pudo conectar con la API de Gemini. Por favor, verifica tu internet y reinicia la aplicación.", style="red")
-            return
+        # Iniciar inicialización en segundo plano (Lazy Loading)
+        init_thread = threading.Thread(target=self._initialize_chat, daemon=True)
+        init_thread.start()
         
         # Iniciar hilo de monitoreo de eventos
         monitor_thread = threading.Thread(target=self._event_monitor_loop, daemon=True)
         monitor_thread.start()
         
-        # Welcome panel
-        model_name = self.assistant.current_model or "Desconocido"
-        temp_str = f"{self.temperature:.1f}"
-        print_panel(
-            "󰛩 Passer",
-            f"Modelo: {model_name}  |  Temperatura: {temp_str}",
-            box_type=ROUNDED,
-            style="cyan",
-        )
+
         
+        # La sincronización ahora ocurre dentro del loop para permitir el prompt inmediato
+        initialized_notified = False
+
         history = FileHistory(".chat_history")
         
         while True:
             try:
-                user_input = get_input("<ansigreen>│</ansigreen>  ", history=history)
+                user_input = get_input("│  ", history=history)
             except (EOFError, KeyboardInterrupt):
                 break
                 
             if not user_input:
+                if not initialized_notified and self._initialized_event.is_set():
+                    console.print(f"\n[bold green]\u2713[/bold green] Modelo cargado: [cyan]{self.assistant.current_model}[/cyan] | Temp: {self.temperature:.1f}", style="dim")
+                    initialized_notified = True
                 continue
+
+            # Sincronización: Esperar a que la API esté lista antes de procesar cualquier input
+            if not self._initialized_event.is_set():
+                with SpinnerContext("Conectando con la API...", "cyan"):
+                    while not self._initialized_event.is_set() and self._init_error is None:
+                        time.sleep(0.1)
+            
+            if self._init_error:
+                console.print(f"\n[bold red]\u26a0 Error de inicialización:[/bold red] {self._init_error}", style="red")
+                print_panel("Error de Conexión", "No se pudo conectar con la API de Gemini. Por favor, verifica tu internet y reinicia la aplicación.", style="red")
+                break
+
+            if not initialized_notified:
+                console.print(f"\n[bold green]\u2713[/bold green] Modelo cargado: [cyan]{self.assistant.current_model}[/cyan] | Temp: {self.temperature:.1f}", style="dim")
+                initialized_notified = True
 
             # Interceptar eventos de sistema (JSON)
             try:
@@ -213,8 +230,13 @@ class ChatManager:
                     print_model_response(cleaned)
     
     def _initialize_chat(self):
-        model = self.config.get("model_name", "models/gemma-2-27B-it")
-        self.assistant.start_chat(model, self.system_instruction, self.temperature)
+        try:
+            model = self.config.get("model_name", "models/gemma-2-27B-it")
+            self.assistant.start_chat(model, self.system_instruction, self.temperature)
+            self._initialized_event.set()
+        except Exception as e:
+            self._init_error = e
+            logger.error(f"Background initialization failed: {e}")
     
     def save_session(self, name: str = None):
         if not name:

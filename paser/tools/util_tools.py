@@ -29,27 +29,3 @@ def get_cwd() -> str:
     import os
     return os.getcwd()
 
-def calculate(operacion: str) -> str:
-    logger.debug(f"Calculando: {operacion}")
-    operators = {
-        ast.Add: operator.add, 
-        ast.Sub: operator.sub, 
-        ast.Mult: operator.mul,
-        ast.Div: operator.truediv, 
-        ast.Pow: operator.pow, 
-        ast.USub: operator.neg
-    }
-
-    def _eval(node):
-        if isinstance(node, ast.Constant): # Python 3.8+
-            return node.value
-        elif isinstance(node, ast.BinOp):
-            return operators[type(node.op)](_eval(node.left), _eval(node.right))
-        elif isinstance(node, ast.UnaryOp):
-            return operators[type(node.op)](_eval(node.operand))
-        else:
-            raise TypeError(f"Operación no soportada: {type(node)}")
-
-    tree = ast.parse(operacion, mode='eval')
-    result = _eval(tree.body)
-    return f"Resultado: {result}"

@@ -65,14 +65,13 @@ def get_input(prompt_text: str, history=None) -> str:
         '': '#00FF00',
         'prompt': '#00FF00 bold',
     })
-    # Usamos HTML para permitir colores específicos dentro del prompt
-    return prompt(HTML(prompt_text), history=history, style=style)
+    return prompt(prompt_text, history=history, style=style)
 
 
-from yaspin import yaspin
+
 
 @contextmanager
 def SpinnerContext(message: str = "", color: str = "cyan"):
-    """Muestra un spinner profesional usando yaspin."""
-    with yaspin(text=message, color=color) as spinner:
-        yield spinner
+    """Muestra un spinner profesional usando rich.console.status."""
+    with console.status(f"[{color}]{message}[/{color}]", spinner="dots"):
+        yield
