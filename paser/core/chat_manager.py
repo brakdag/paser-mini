@@ -143,7 +143,12 @@ class ChatManager:
                 time.sleep(10)
 
     def run(self):
-        self._initialize_chat()
+        try:
+            self._initialize_chat()
+        except Exception as e:
+            console.print(f"\n[bold red]⚠ Error de inicialización:[/bold red] {e}", style="red")
+            print_panel("Error de Conexión", "No se pudo conectar con la API de Gemini. Por favor, verifica tu internet y reinicia la aplicación.", style="red")
+            return
         
         # Iniciar hilo de monitoreo de eventos
         monitor_thread = threading.Thread(target=self._event_monitor_loop, daemon=True)

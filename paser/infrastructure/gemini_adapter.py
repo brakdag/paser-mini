@@ -35,6 +35,9 @@ class GeminiAdapter(IAIAssistant):
             return True
         if any(code in error_msg for code in ['500', '503', '504']) or 'internal error' in error_msg or 'service unavailable' in error_msg:
             return True
+        # Errores de red/conectividad
+        if any(kw in error_msg for kw in ['connection', 'network', 'unreachable', 'timeout', 'dns', 'socket']):
+            return True
         return False
 
     def _get_retry_delay(self, error: Exception, retries: int) -> float:
@@ -83,13 +86,24 @@ class GeminiAdapter(IAIAssistant):
         if isinstance(e, ClientError) or getattr(e, 'status_code', None) == 429 or '429' in error_msg:
             delay = self._get_retry_delay(e, 0)
             return f"Cuota de API excedida. Por favor, espera {delay}s antes de intentar nuevamente."
+        
+        if any(kw in error_msg for kw in ['connection', 'network', 'unreachable', 'timeout', 'dns', 'socket']):
+            return "No se ha detectado conexión a internet. Por favor, verifica tu red."
+            
         return str(e)
 
     def start_chat(self, model_name: str, system_instruction: str, temperature: float):
         self._current_model = model_name
         
         # Validar el modelo antes de iniciar
-        available_models = self.get_available_models()
+        try:
+            available_models = self.get_available_models()
+        except Exception as e:
+            # Si get_available_models ya lanza ConnectionError, lo dejamos pasar
+            if isinstance(e, ConnectionError):
+                raise e
+            raise ConnectionError(f"Error de conectividad al validar modelos: {e}")
+
         if model_name not in available_models:
             raise ValueError(f"Modelo no disponible: {model_name}. Use /models para ver los disponibles.")
         
@@ -117,7 +131,9 @@ class GeminiAdapter(IAIAssistant):
                 config=types.GenerateContentConfig(**config_params),
                 history=self.history
             )
-        except ClientError as e:
+        except Exception as e:
+            if self._is_retryable_error(e):
+                raise ConnectionError(self._format_api_error(e))
             raise RuntimeError(f"Error al iniciar chat con el modelo {model_name}: {e}")
 
     def send_message_stream(self, message: str) -> Generator[str, None, None]:
@@ -224,9 +240,14 @@ class GeminiAdapter(IAIAssistant):
         )
 
     def get_available_models(self) -> list:
-        # Relaxed filtering to ensure models appear
-        models = self.client.models.list()
-        return [m.name for m in models if m.name and ('gemini' in m.name.lower() or 'gemma' in m.name.lower())]
+        try:
+            # Relaxed filtering to ensure models appear
+            models = self.client.models.list()
+            return [m.name for m in models if m.name and ('gemini' in m.name.lower() or 'gemma' in m.name.lower())]
+        except Exception as e:
+            if self._is_retryable_error(e):
+                raise ConnectionError(self._format_api_error(e))
+            raise e
 
     def count_tokens(self, contents: Any) -> int:
         """Cuenta los tokens de un contenido dado utilizando la API de Gemini."""
