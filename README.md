@@ -4,7 +4,7 @@
   <img src="assets/mascot.png" alt="Paser Mascot" width="200"/>
 </div>
 
-**Paser** (originalmente llamado "Passer", por _Passer domesticus_) es un agente autónomo utilizando el modelo Gemini de Google (vía `google-genai` SDK) que emplea el patrón **ReAct (Reasoning and Acting)** para ejecutar funciones locales de forma transparente para el usuario.
+**Paser** (originalmente llamado "Passer", por _Passer domesticus_) es un agente autónomo utilizando el modelo Gemini de Google (vía `google-genai` SDK) que emplea el patrón **ReAct (Reasoning and Acting)** para ejecutar funciones locales de forma transparente para el usuario. Diseñado y optimizado para sistemas **Debian/Linux**.
 
 El cambio de nombre de "Passer" a "Paser" simplifica la escritura en la terminal, manteniendo la raíz del nombre original y el significado vinculado al gorrión, un ave muy común en el sur mendocino.
 

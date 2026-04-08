@@ -19,11 +19,9 @@ def analyze_pyright(path: str = ".") -> str:
 
 def notify_user() -> str:
     """Triggers a system notification with a sound alert."""
-    import platform
     import subprocess
     import os
 
-    system = platform.system()
     current_file = os.path.abspath(__file__)
     tools_dir = os.path.dirname(current_file)
     paser_dir = os.path.dirname(tools_dir)
@@ -34,20 +32,16 @@ def notify_user() -> str:
         logger.warning(f"Sound file not found: {sound_path}")
         return "Visual notification delivered (sound file missing)."
 
-    if system == "Linux":
+    try:
+        # Default to Linux/ALSA/PulseAudio
+        subprocess.Popen(["paplay", sound_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except:
         try:
-            subprocess.Popen(["paplay", sound_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        except:
             subprocess.Popen(["aplay", sound_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    elif system == "Darwin":
-        subprocess.Popen(["afplay", sound_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    elif system == "Windows":
-        import winsound
-        winsound.PlaySound(sound_path, winsound.SND_FILENAME | winsound.SND_ASYNC)
-    else:
-        print('\a', end='', flush=True)
+        except:
+            print('\a', end='', flush=True)
 
-    return "Notificación enviada con éxito. El usuario ha sido alertado. No es necesario repetir esta acción."
+    return "Notificación enviada con éxito. El usuario ha sido alertado."
 
 def is_window_in_focus(**kwargs) -> str:
     """Verifica si la ventana de la terminal tiene el foco actual del sistema."""
