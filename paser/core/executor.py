@@ -10,7 +10,7 @@ from paser.core.interfaces import IAIAssistant
 logger = logging.getLogger(__name__)
 
 class AutonomousExecutor:
-    def __init__(self, assistant: IAIAssistant, tools: dict, on_tool_used=None, max_turns: int = 10):
+    def __init__(self, assistant: IAIAssistant, tools: dict, on_tool_used=None, max_turns: int = 100):
         self.assistant = assistant
         self.tools = tools
         self.repetition_detector = RepetitionDetector(n=3, max_repeats=3)

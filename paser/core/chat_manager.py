@@ -140,7 +140,12 @@ class ChatManager:
                     sys_msg = f"[SISTEMA: El temporizador '{safe_msg}' ha expirado. Por favor, reacciona]."
                     console.print(f"\n[EVENTO] {safe_msg}", style="bold magenta")
                     with SpinnerContext("Procesando evento", "magenta"):
-                        res = self.executor.execute(user_input=sys_msg, thinking_enabled=self.thinking_enabled, get_confirmation_callback=get_input)
+                        res = await asyncio.to_thread(
+                            self.executor.execute,
+                            user_input=sys_msg,
+                            thinking_enabled=self.thinking_enabled,
+                            get_confirmation_callback=get_input
+                        )
                     if res:
                         # Limpieza de etiquetas de herramientas
                         cleaned = re.sub(r'<(?:TOOL_CALL|TOOL_RESPONSE)>.*?</(?:TOOL_CALL|TOOL_RESPONSE)>', '', res, flags=re.DOTALL)
@@ -183,7 +188,7 @@ class ChatManager:
             if not self._initialized_event.is_set():
                 with SpinnerContext("Conectando con la API...", "cyan"):
                     while not self._initialized_event.is_set() and self._init_error is None:
-                        time.sleep(0.1)
+                        await asyncio.sleep(0.1)
             
             if self._init_error:
                 console.print(f"\n[bold red]\u26a0 Error de inicialización:[/bold red] {self._init_error}", style="red")
@@ -213,12 +218,13 @@ class ChatManager:
             # El input ya se mostró por prompt_toolkit con su estilo
             
             # Intentar procesar como comando
-            if self.command_handler.handle(user_input):
+            if await self.command_handler.handle(user_input):
                 continue
             
             # Ejecución autónoma con spinner
             with SpinnerContext("", "cyan"):
-                result = self.executor.execute(
+                result = await asyncio.to_thread(
+                    self.executor.execute,
                     user_input=user_input,
                     thinking_enabled=self.thinking_enabled,
                     get_confirmation_callback=get_input

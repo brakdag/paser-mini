@@ -152,3 +152,26 @@
 {"timestamp": "2026-04-08T17:22:43.600048", "level": "INFO", "logger": "tools", "message": "WASM Python runtime (Wasmer CLI) is available."}
 {"timestamp": "2026-04-08T17:24:04.892772", "level": "INFO", "logger": "tools", "message": "WASM Python runtime (Wasmer CLI) is available."}
 {"timestamp": "2026-04-08T17:25:23.951540", "level": "INFO", "logger": "tools", "message": "WASM Python runtime (Wasmer CLI) is available."}
+{"timestamp": "2026-04-08T17:47:17.782873", "level": "INFO", "logger": "tools", "message": "WASM Python runtime (Wasmer CLI) is available."}
+{"timestamp": "2026-04-08T20:49:26.112369", "level": "WARNING", "message": "API Retry 1/5 in 5s (Quota exceeded)", "module": "gemini_adapter"}
+{"timestamp": "2026-04-08T20:49:32.856825", "level": "WARNING", "message": "API Retry 2/5 in 10s (Quota exceeded)", "module": "gemini_adapter"}
+{"timestamp": "2026-04-08T17:52:12.549575", "level": "INFO", "logger": "tools", "message": "WASM Python runtime (Wasmer CLI) is available."}
+{"timestamp": "2026-04-08T17:56:25.111956", "level": "INFO", "logger": "tools", "message": "WASM Python runtime (Wasmer CLI) is available."}
+{"timestamp": "2026-04-08T18:03:09.447531", "level": "ERROR", "logger": "tools", "message": "Error leyendo /mnt/DataSD/sandbox/charla/assets/mascot.png: 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte"}
+{"timestamp": "2026-04-08T18:03:13.030617", "level": "ERROR", "logger": "tools", "message": "Error leyendo /mnt/DataSD/sandbox/charla/tests/images/parrilla.png: 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte"}
+{"timestamp": "2026-04-08T18:03:13.040011", "level": "ERROR", "logger": "tools", "message": "Error leyendo /mnt/DataSD/sandbox/charla/tests/images/parrilla2.png: 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte"}
+{"timestamp": "2026-04-08T18:03:13.087846", "level": "ERROR", "logger": "tools", "message": "Error leyendo /mnt/DataSD/sandbox/charla/paser/assets/type.wav: 'utf-8' codec can't decode byte 0xe8 in position 4: invalid continuation byte"}
+{"timestamp": "2026-04-08T18:04:36.465012", "level": "INFO", "logger": "tools", "message": "WASM Python runtime (Wasmer CLI) is available."}
+{"timestamp": "2026-04-08T18:05:14.544422", "level": "ERROR", "logger": "tools", "message": "Error leyendo /mnt/DataSD/sandbox/charla/assets/mascot.png: 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte"}
+{"timestamp": "2026-04-08T18:05:14.787158", "level": "ERROR", "logger": "tools", "message": "Error leyendo /mnt/DataSD/sandbox/charla/tests/images/parrilla.png: 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte"}
+{"timestamp": "2026-04-08T18:05:14.787699", "level": "ERROR", "logger": "tools", "message": "Error leyendo /mnt/DataSD/sandbox/charla/tests/images/parrilla2.png: 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte"}
+{"timestamp": "2026-04-08T18:05:14.792569", "level": "ERROR", "logger": "tools", "message": "Error leyendo /mnt/DataSD/sandbox/charla/paser/assets/type.wav: 'utf-8' codec can't decode byte 0xe8 in position 4: invalid continuation byte"}
+{"timestamp": "2026-04-08T21:06:32.646524", "level": "WARNING", "message": "API Retry 1/5 in 5s due to: 500 INTERNAL. {'error': {'code': 500, 'message': 'Internal error encountered.', 'status': 'INTERNAL'}}", "module": "gemini_adapter"}
+{"timestamp": "2026-04-08T21:06:42.154392", "level": "WARNING", "message": "API Retry 2/5 in 10s due to: 500 INTERNAL. {'error': {'code': 500, 'message': 'Internal error encountered.', 'status': 'INTERNAL'}}", "module": "gemini_adapter"}
+{"timestamp": "2026-04-08T18:07:21.012062", "level": "INFO", "logger": "tools", "message": "WASM Python runtime (Wasmer CLI) is available."}
+{"timestamp": "2026-04-08T18:13:06.813989", "level": "ERROR", "logger": "tools", "message": "Error leyendo /mnt/DataSD/sandbox/charla/assets/mascot.png: 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte"}
+{"timestamp": "2026-04-08T18:13:07.044768", "level": "ERROR", "logger": "tools", "message": "Error leyendo /mnt/DataSD/sandbox/charla/tests/images/parrilla.png: 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte"}
+{"timestamp": "2026-04-08T18:13:07.045253", "level": "ERROR", "logger": "tools", "message": "Error leyendo /mnt/DataSD/sandbox/charla/tests/images/parrilla2.png: 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte"}
+{"timestamp": "2026-04-08T18:13:07.049729", "level": "ERROR", "logger": "tools", "message": "Error leyendo /mnt/DataSD/sandbox/charla/paser/assets/type.wav: 'utf-8' codec can't decode byte 0xe8 in position 4: invalid continuation byte"}
+{"timestamp": "2026-04-08T18:30:04.267133", "level": "INFO", "logger": "tools", "message": "WASM Python runtime (Wasmer CLI) is available."}
+{"timestamp": "2026-04-08T18:31:48.065577", "level": "INFO", "logger": "tools", "message": "Archivo 'PLAN.md' borrado."}

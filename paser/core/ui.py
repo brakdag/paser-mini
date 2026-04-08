@@ -74,11 +74,3 @@ def SpinnerContext(message: str = "", color: str = "cyan"):
     """Muestra un spinner profesional usando rich.console.status."""
     with console.status(f"[{color}]{message}[/{color}]", spinner="dots"):
         yield
-
-
-
-@contextmanager
-def SpinnerContext(message: str = "", color: str = "cyan"):
-    """Muestra un spinner profesional usando rich.console.status."""
-    with console.status(f"[{color}]{message}[/{color}]", spinner="dots"):
-        yield

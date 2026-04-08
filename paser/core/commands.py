@@ -13,7 +13,7 @@ class CommandHandler:
     def log_tool(self, name, status):
         self.history.append({"name": name, "status": status})
 
-    def handle(self, user_input):
+    async def handle(self, user_input):
         input_stripped = user_input.strip()
         
         if input_stripped.startswith('/cd '):
@@ -50,7 +50,7 @@ class CommandHandler:
             for i, s in enumerate(sessions):
                 console.print(f"{i}: {s}")
             
-            choice = get_input("Selecciona sesión (o 'c' para cancelar): ")
+            choice = await get_input("Selecciona sesión (o 'c' para cancelar): ")
             if choice == 'c': return True
             
             try:
@@ -79,11 +79,11 @@ class CommandHandler:
             for i, m in enumerate(models): 
                 console.print(f"{i}: {m}")
             
-            choice = get_input("Modelo: ")
+            choice = await get_input("Modelo: ")
             try:
                 idx = int(choice)
                 model_name = models[idx]
-                temp_input = get_input(f"Temp (0-1, default {self.chat_manager.temperature}): ")
+                temp_input = await get_input(f"Temp (0-1, default {self.chat_manager.temperature}): ")
                 new_temp = float(temp_input or self.chat_manager.temperature)
                 
                 # commands.py está en paser/core/, subimos dos niveles para llegar a la raíz
@@ -107,6 +107,21 @@ class CommandHandler:
                 print_panel("Modelo cambiado", f"󰄵 {model_name} | Temperatura: {new_temp}", style="green")
             except Exception as e:
                 console.print(f"Error: {e}", style="red")
+            return True
+
+        elif input_stripped.startswith('/max_turns'):
+            parts = input_stripped.split()
+            if len(parts) < 2:
+                console.print("Uso: /max_turns [número]", style="red")
+                return True
+            try:
+                new_max = int(parts[1])
+                if new_max <= 0:
+                    raise ValueError
+                self.chat_manager.executor.max_turns = new_max
+                console.print(f"Límite de turnos actualizado a: {new_max}", style="green")
+            except ValueError:
+                console.print("Por favor, proporciona un número entero positivo.", style="red")
             return True
 
         elif input_stripped == '/t':
