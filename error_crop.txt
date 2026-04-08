@@ -1,0 +1,22 @@
+Traceback (most recent call last):
+  File "/home/gustavo/.local/bin/paser", line 6, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "/mnt/DataSD/sandbox/charla/paser/main.py", line 15, in main
+    chat_manager.run()
+    ~~~~~~~~~~~~~~~~^^
+  File "/mnt/DataSD/sandbox/charla/paser/core/chat_manager.py", line 219, in run
+    result = self.executor.execute(
+        user_input=user_input,
+        thinking_enabled=self.thinking_enabled,
+        get_confirmation_callback=get_input
+    )
+  File "/mnt/DataSD/sandbox/charla/paser/core/executor.py", line 115, in execute
+    is_valid = isinstance(arg_value, check_type)
+  File "/usr/lib/python3.13/typing.py", line 1375, in __instancecheck__
+    return self.__subclasscheck__(type(obj))
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "/usr/lib/python3.13/typing.py", line 1378, in __subclasscheck__
+    raise TypeError("Subscripted generics cannot be used with"
+                    " class and instance checks")
+TypeError: Subscripted generics cannot be used with class and instance checks

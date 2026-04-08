@@ -24,15 +24,21 @@ curl -fsSL https://raw.githubusercontent.com/brakdag/paser/main/install.sh | bas
 git clone https://github.com/brakdag/paser.git && cd paser && chmod +x install.sh && ./install.sh
 ```
 
-### 3. Configura tu clave de API
+## 🔑 Configuración de Credenciales
+
+Para que Paser pueda interactuar con los servicios externos, debes configurar las siguientes variables de entorno en tu archivo `.bashrc` o `.zshrc`:
 
 ```bash
-export GOOGLE_API_KEY="tu_clave_api_aquí"
+# API Key para el modelo Gemini
+export GOOGLE_API_KEY="tu_clave_api_google_aquí"
+
+# Token de acceso personal para GitHub (necesario para gestionar issues)
+export GITHUB_TOKEN="tu_token_github_aquí"
 ```
 
 ## 🚀 Ejecución
 
-Una vez instalado, puedes ejecutar la aplicación simplemente usando:
+Una vez instalado y configurado, puedes ejecutar la aplicación simplemente usando:
 
 ```bash
 paser
@@ -57,14 +63,14 @@ paser
 
 ## 🔧 Herramientas Disponibles
 
-### 📂 Archivos y Directorios
+### 📁 Archivos y Directorios
 
 - `read_file(path)`, `read_files(paths)`, `read_lines(...)`, `read_head(...)`: Lectura de archivos.
 - `write_file(path, contenido)`, `update_line(...)`, `replace_text(...)`, `replace_block(...)`: Escritura y edición.
 - `list_dir(path)`, `make_dir(path)`, `rename_path(origen, destino)`, `remove_file(path)`: Gestión de rutas.
 - `global_search(query)`, `glob_search(pattern)`, `global_replace(path, search_text, replace_text, extensiones)`: Búsqueda y reemplazo masivo.
 
-### 🔡 Navegación de Código
+### 🔢 Navegación de Código
 
 - `list_symbols(file_path)`: Lista todas las clases y funciones definidas en un archivo.
 - `get_definition(symbol_name, file_path)`: Localiza la línea y columna donde se define un símbolo.
@@ -82,4 +88,3 @@ paser
 - `set_timer(seconds, message)`: Programación de tareas.
 - `is_window_in_focus(action)`: Verificación de estado de la terminal.
 - `list_issues(repo)`, `create_issue(repo, title, body)`, `close_issue(repo, issue_number)`: Gestión de GitHub Issues.
-
