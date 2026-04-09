@@ -81,7 +81,7 @@ class AutonomousExecutor:
 
         self.turn_count += 1
         if self.turn_count > self.max_turns:
-            return "Límite de turnos excedido"
+            return "Límite de turnos excedido: El agente ha alcanzado el máximo de iteraciones permitidas para evitar bucles infinitos. Por favor, intenta resumir el progreso actual y comienza una nueva sesión."
             
         if not self.repetition_detector.add_text(user_input):
             return "Detección de texto repetitivo: posible bucle infinito."
@@ -104,7 +104,7 @@ class AutonomousExecutor:
             
             self.turn_count += 1
             if self.turn_count > self.max_turns:
-                return "Límite de turnos excedido"
+                return "Límite de turnos excedido: El agente ha alcanzado el máximo de iteraciones permitidas para evitar bucles infinitos. Por favor, intenta resumir el progreso actual y comienza una nueva sesión."
 
             combined_tool_responses = []
             for call_data, raw_content in calls:
@@ -167,7 +167,7 @@ class AutonomousExecutor:
                             self.on_tool_used(name, args, result, True)
                     except Exception as exc:
                         # Eliminamos logger.error para evitar fugas de detalles técnicos en la consola
-                        tr = self._format_tool_response(str(exc), success=False)
+                        tr = self._format_tool_response(f"Error en herramienta '{name}': {str(exc)}", success=False)
                         if self.on_tool_used:
                             self.on_tool_used(name, args, str(exc), False)
                 combined_tool_responses.append(tr)

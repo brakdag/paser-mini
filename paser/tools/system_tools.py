@@ -2,6 +2,7 @@ import subprocess
 import os
 import logging
 from .core_tools import context
+from paser.core.ui import print_info
 
 logger = logging.getLogger("tools")
 
@@ -18,30 +19,28 @@ def analyze_pyright(path: str = ".") -> str:
     return result.stdout
 
 def notify_user() -> str:
-    """Triggers a system notification with a sound alert."""
-    import subprocess
-    import os
+    """Triggers a visual notification in the chat interface."""
+    print_info("🔔 Notificación del Sistema: Una acción importante ha sido completada exitosamente.")
+    return "Notificación visual enviada al chat. El usuario ha sido alertado."
 
-    current_file = os.path.abspath(__file__)
-    tools_dir = os.path.dirname(current_file)
-    paser_dir = os.path.dirname(tools_dir)
-    sound_path = os.path.join(paser_dir, "assets", "type.wav")
+def alert_sound() -> str:
+    """Plays a system alert sound to get the user's attention."""
+    sound_path = os.path.join(context.root, "assets", "type.wav")
 
     if not os.path.exists(sound_path):
         print('\a', end='', flush=True)
-        logger.warning(f"Sound file not found: {sound_path}")
-        return "Visual notification delivered (sound file missing)."
+        return "Sound file not found, sent ASCII bell alert."
 
     try:
         # Default to Linux/ALSA/PulseAudio
         subprocess.Popen(["paplay", sound_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    except:
+    except Exception:
         try:
             subprocess.Popen(["aplay", sound_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        except:
+        except Exception:
             print('\a', end='', flush=True)
 
-    return "Notificación enviada con éxito. El usuario ha sido alertado."
+    return "Alert sound played successfully."
 
 def is_window_in_focus(**kwargs) -> str:
     """Verifica si la ventana de la terminal tiene el foco actual del sistema."""
@@ -63,7 +62,9 @@ def is_window_in_focus(**kwargs) -> str:
 
 from paser.core.event_manager import event_manager
 
-def set_timer(seconds: int, message: str = None) -> str:
+from typing import Optional
+
+def set_timer(seconds: int, message: Optional[str] = None) -> str:
     """Sets a timer that will inject an event directly into the agent's event queue.
     Use a descriptive name for the task (e.g., 'Revisar logs'), NOT 'Timer finished'."""
     if message is None:

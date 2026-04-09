@@ -9,7 +9,7 @@ async def my_async_func():
 
 def thread_target():
     print("Thread started")
-    my_async_func()
+    asyncio.run(my_async_func())
     print("Thread finished")
 
 def test():

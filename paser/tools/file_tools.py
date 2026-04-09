@@ -29,11 +29,14 @@ def read_file(path: str) -> str:
     if is_binary_file(safe_path):
         raise ValueError(f"El archivo '{path}' es un archivo binario y no puede ser leído como texto.")
     
-    with open(safe_path, 'r', encoding='utf-8') as f:
-        content = f.read()
-        if not content:
-            return f"El archivo '{path}' está vacío."
-        return content
+    try:
+        with open(safe_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+            if not content:
+                return f"El archivo '{path}' está vacío."
+            return content
+    except UnicodeDecodeError:
+        raise ValueError(f"El archivo '{path}' contiene caracteres no compatibles con UTF-8 y no puede ser leído como texto.")
 
 def read_files(paths: list[str]) -> str:
     if not isinstance(paths, list):
@@ -95,12 +98,15 @@ def read_lines(path: str, inicio: int, fin: int) -> str:
     if is_binary_file(safe_path):
         raise ValueError(f"El archivo '{path}' es un archivo binario y no puede ser leído como texto.")
     resultado = []
-    with open(safe_path, 'r', encoding='utf-8') as f:
-        for i, linea in enumerate(f, 1):
-            if i >= inicio and i <= fin:
-                resultado.append(linea)
-            if i > fin:
-                break
+    try:
+        with open(safe_path, 'r', encoding='utf-8') as f:
+            for i, linea in enumerate(f, 1):
+                if i >= inicio and i <= fin:
+                    resultado.append(linea)
+                if i > fin:
+                    break
+    except UnicodeDecodeError:
+        raise ValueError(f"El archivo '{path}' contiene caracteres no compatibles con UTF-8 y no puede ser leído como texto.")
     return "".join(resultado)
 
 def read_head(path: str, cantidad_lineas: int) -> str:
@@ -218,7 +224,9 @@ def replace_block_regex(path: str, pattern: str, replace_text: str) -> str:
     os.replace(temp_path, safe_path)
     return "Regex block replaced successfully."
 
-def global_replace(path: str, search_text: str, replace_text: str, extensiones: list = None) -> str:
+from typing import Optional
+
+def global_replace(path: str, search_text: str, replace_text: str, extensiones: Optional[list] = None) -> str:
     safe_base_path = context.get_safe_path(path)
     if not os.path.isdir(safe_base_path):
          raise NotADirectoryError(f"'{path}' is not a valid directory.")

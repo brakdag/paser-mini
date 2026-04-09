@@ -1,9 +1,9 @@
 import logging
 import re
 import base64
-from typing import Generator, Optional, Any
 import time
 import json
+from typing import Generator, Optional, Any
 from google import genai
 from google.genai import types
 from google.genai.errors import ClientError
@@ -154,7 +154,7 @@ class GeminiAdapter(IAIAssistant):
         if model_name not in available_models:
             raise ValueError(f"Modelo no disponible: {model_name}. Use /models para ver los disponibles.")
         
-        config_params = {"temperature": temperature}
+        config_params: dict[str, Any] = {"temperature": temperature}
         self.history = []
         
         # Determinar si usar system_instruction en la config o en el historial

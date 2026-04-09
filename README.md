@@ -1,90 +1,97 @@
-# Paser (Sistema Autónomo de Function Calling - ReAct Pattern)
+# Paser (Autonomous Function Calling System - ReAct Pattern)
 
 <div align="center">
   <img src="assets/mascot.png" alt="Paser Mascot" width="200"/>
 </div>
 
-**Paser** (originalmente llamado "Passer", por _Passer domesticus_) es un agente autónomo utilizando el modelo Gemini de Google (vía `google-genai` SDK) que emplea el patrón **ReAct (Reasoning and Acting)** para ejecutar funciones locales de forma transparente para el usuario. Diseñado y optimizado para sistemas **Debian/Linux**.
+**Paser** (originally called "Passer", after _Passer domesticus_) is an autonomous agent powered by Google's Gemini model (via the `google-genai` SDK) that employs the **ReAct (Reasoning and Acting)** pattern to execute local functions transparently for the user. Designed and optimized for **Debian/Linux** systems.
 
-El cambio de nombre de "Passer" a "Paser" simplifica la escritura en la terminal, manteniendo la raíz del nombre original y el significado vinculado al gorrión, un ave muy común en el sur mendocino.
+The name change from "Passer" to "Paser" simplifies terminal typing while maintaining the root of the original name and the meaning linked to the house sparrow, a very common bird in southern Mendoza.
 
-## 📦 Instalación
+## 📦 Installation
 
-Puedes elegir entre clonar el repositorio (para desarrollo) o ejecutar el script de instalación directamente:
+You can choose between cloning the repository (for development) or running the installation script directly:
 
-### Opción 1: Instalación rápida (Recomendada)
+### Option 1: Quick Installation (Recommended)
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/brakdag/paser/main/install.sh | bash
 ```
 
-### Opción 2: Clonar desde el repositorio (Para desarrollo)
+### Option 2: Clone from Repository (For Development)
 
 ```bash
 git clone https://github.com/brakdag/paser.git && cd paser && chmod +x install.sh && ./install.sh
 ```
 
-## 🔑 Configuración de Credenciales
+## 🔑 Credentials Configuration
 
-Para que Paser pueda interactuar con los servicios externos, debes configurar las siguientes variables de entorno en tu archivo `.bashrc` o `.zshrc`:
+To allow Paser to interact with external services, you must configure the following environment variables in your `.bashrc` or `.zshrc` file:
 
 ```bash
-# API Key para el modelo Gemini
-export GOOGLE_API_KEY="tu_clave_api_google_aquí"
+# API Key for the Gemini model
+export GOOGLE_API_KEY="your_google_api_key_here"
 
-# Token de acceso personal para GitHub (necesario para gestionar issues)
-export GITHUB_TOKEN="tu_token_github_aquí"
+# Personal access token for GitHub (required for managing issues)
+export GITHUB_TOKEN="your_github_token_here"
 ```
 
-## 🚀 Ejecución
+## 🚀 Execution
 
-Una vez instalado y configurado, puedes ejecutar la aplicación simplemente usando:
+Once installed and configured, you can run the application simply by using:
 
 ```bash
 paser
 ```
 
-## 🛠️ Características Principales
+## 🛠️ Main Features
 
-1.  **Function Calling Local (Manual):**
-    - No utiliza herramientas nativas de la SDK de Google.
-    - Utiliza _System Instruction_ para obligar al modelo a emitir llamadas estructuradas (`<TOOL_CALL>`).
-    - El script actúa como un _middleware_ que intercepta estas llamadas, ejecuta la función local, y devuelve el resultado en formato `<TOOL_RESPONSE>` al historial del modelo.
+1.  **Local Function Calling (Manual):**
+    - Does not use native Google SDK tools.
+    - Uses _System Instructions_ to force the model to emit structured calls (`<TOOL_CALL>`).
+    - The script acts as a _middleware_ that intercepts these calls, executes the local function, and returns the result in `<TOOL_RESPONSE>` format to the model's history.
 
-2.  **Seguridad y Control de Archivos:**
-    - Todas las operaciones de archivo (leer, escribir, borrar) están restringidas al directorio de trabajo actual definido por `PROJECT_ROOT` mediante una función de validación de rutas segura (`get_safe_path`).
-    - Borrado de archivos requiere confirmación interactiva (`y/n`).
+2.  **Security and File Control:**
+    - All file operations (read, write, delete) are restricted to the current working directory defined by `PROJECT_ROOT` through a secure path validation function (`get_safe_path`).
+    - File deletion requires interactive confirmation (`y/n`).
 
-3.  **Configuración Dinámica:**
-    - **Temperatura:** Permite ajustar la creatividad del modelo al seleccionar un modelo (`/models`).
-    - **Pensamientos:** Permite alternar la visibilidad de los pensamientos del modelo (líneas que comienzan con `*`) mediante el comando `/thinking`.
-    - **Directorio de Trabajo:** Permite cambiar el directorio de trabajo del agente mediante `/cd <ruta>`.
-    - Tokens en ventana de contexto: /t retorna en un mensaje el numero de tokens.
+3.  **Dynamic Configuration:**
+    - **Temperature:** Allows adjusting the model's creativity when selecting a model (`/models`).
+    - **Thoughts:** Allows toggling the visibility of the model's thoughts (lines starting with `*`) via the `/thinking` command.
+    - **Working Directory:** Allows changing the agent's working directory via `/cd <path>`.
+    - **Context Window Tokens:** `/t` returns the number of tokens in a message.
 
-## 🔧 Herramientas Disponibles
+## 🔧 Available Tools
 
-### 📁 Archivos y Directorios
+### 📁 Files and Directories
 
-- `read_file(path)`, `read_files(paths)`, `read_lines(...)`, `read_head(...)`: Lectura de archivos.
-- `write_file(path, contenido)`, `update_line(...)`, `replace_text(...)`, `replace_block(...)`: Escritura y edición.
-- `list_dir(path)`, `make_dir(path)`, `rename_path(origen, destino)`, `remove_file(path)`: Gestión de rutas.
-- `global_search(query)`, `glob_search(pattern)`, `global_replace(path, search_text, replace_text, extensiones)`: Búsqueda y reemplazo masivo.
+- `read_file(path)`, `read_files(paths)`, `read_lines(...)`, `read_head(...)`: File reading.
+- `write_file(path, content)`, `update_line(...)`, `replace_text(...)`, `replace_block(...)`, `replace_text_regex(...)`, `replace_block_regex(...)`: Writing and editing.
+- `list_dir(path)`, `make_dir(path)`, `rename_path(origin, destination)`, `remove_file(path)`: Path management.
+- `global_search(query)`, `glob_search(pattern)`, `global_replace(path, search_text, replace_text, extensions)`: Mass search and replace.
 
-### 🔢 Navegación de Código
+### 🔢 Code Navigation
 
-- `list_symbols(file_path)`: Lista todas las clases y funciones definidas en un archivo.
-- `get_definition(symbol_name, file_path)`: Localiza la línea y columna donde se define un símbolo.
-- `get_references(symbol_name, file_path)`: Busca todas las referencias a un símbolo en el archivo.
+- `list_symbols(file_path)`: Lists all classes and functions defined in a file.
+- `get_definition(symbol_name, file_path)`: Locates the line and column where a symbol is defined.
+- `get_references(symbol_name, file_path)`: Searches for all references to a symbol in the file.
 
-### 🌐 Utilidades y Web
+### 🌐 Utilities and Web
 
-- `web_search(query)`, `fetch_url(url)`: Acceso a información externa.
-- `get_time(zona_horaria)`, `get_cwd()`: Herramientas básicas.
+- `web_search(query)`, `fetch_url(url)`: Access to external information.
+- `get_time(timezone)`, `get_cwd()`: Basic tools.
 
-### 💻 Sistema y Notificaciones
+### 💠 Computing and Vision
 
-- `analyze_pyright(path)`: Análisis estático de Python.
-- `notify_user()`: Notificación simple al usuario.
-- `set_timer(seconds, message)`: Programación de tareas.
-- `is_window_in_focus(action)`: Verificación de estado de la terminal.
-- `list_issues(repo)`, `create_issue(repo, title, body)`, `close_issue(repo, issue_number)`: Gestión de GitHub Issues.
+- `execute_python(code)`: Executes Python code in a secure sandbox.
+- `see_image(path)`: Analyzes the content of an image.
+
+### 💻 System, Notifications and GitHub
+
+- `analyze_pyright(path)`: Static analysis for Python.
+- `notify_user()`: Visual notification in the terminal.
+- `notify_mobile(message)`: Sends mobile notification via MQTT.
+- `set_timer(seconds, message)`: Task scheduling.
+- `is_window_in_focus(action)`: Terminal window focus verification.
+- `git_diff()`, `get_remote_repo()`: Local Git integration.
+- `list_issues(repo)`, `create_issue(repo, title, body)`, `close_issue(repo, issue_number)`: GitHub Issues management.

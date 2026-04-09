@@ -27,7 +27,9 @@ if not logger.handlers:
 
 # Gestión de PROJECT_ROOT
 class ProjectContext:
-    def __init__(self, root: str = None):
+    from typing import Optional
+
+    def __init__(self, root: Optional[str] = None):
         self._root = os.path.abspath(root or os.getcwd())
 
     @property

@@ -62,7 +62,7 @@ class ChatManager:
         self.thinking_enabled = True
         
         self.config = self._load_config()
-        self.temperature = self.config.get("default_temperature", 0.7)
+        self.temperature = float(self.config.get("default_temperature", 0.7))
         
         self.command_handler = CommandHandler(self)
         self.event_manager = event_manager
@@ -270,7 +270,7 @@ class ChatManager:
     
     def _initialize_chat(self):
         try:
-            model = self.config.get("model_name", "models/gemma-2-27B-it")
+            model = str(self.config.get("model_name", "models/gemma-2-27B-it"))
             self.assistant.start_chat(model, self.system_instruction, self.temperature)
             self._initialized_event.set()
         except Exception as e:
@@ -302,7 +302,7 @@ class ChatManager:
         with open(path, "r") as f:
             session_data = json.load(f)
             
-        self.temperature = session_data["temperature"]
+        self.temperature = float(session_data["temperature"])
         self.assistant.load_history(
             session_data["history"],
             session_data["model_name"],

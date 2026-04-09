@@ -28,5 +28,13 @@ class IAIAssistant(ABC):
         pass
 
     @abstractmethod
+    def get_history(self) -> list:
+        pass
+
+    @abstractmethod
+    def load_history(self, history_data: list, model_name: str, temperature: float):
+        pass
+
+    @abstractmethod
     def count_tokens(self, contents: Any) -> int:
         pass
