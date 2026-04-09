@@ -36,5 +36,6 @@
   ["see_image", "See image content", {"path": "string"}],
   ["list_issues", "List repo issues", {"repo": "string"}],
   ["create_issue", "Create repo issue", {"repo": "string", "title": "string", "body": "string"}],
-  ["close_issue", "Close repo issue", {"repo": "string", "issue_number": "integer"}]
+  ["close_issue", "Close repo issue", {"repo": "string", "issue_number": "integer"}],
+  ["edit_issue", "Edit a repo issue", {"issue_number": "integer", "repo": "string", "title": "string", "body": "string"}]
 ]

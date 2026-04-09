@@ -53,7 +53,8 @@ AVAILABLE_TOOLS = {
     "see_image": vt.see_image,
     "list_issues": gh.list_issues,
     "create_issue": gh.create_issue,
-    "close_issue": gh.close_issue
+    "close_issue": gh.close_issue,
+    "edit_issue": gh.edit_issue
 }
 
 import json
