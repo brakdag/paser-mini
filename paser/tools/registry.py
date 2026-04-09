@@ -44,6 +44,7 @@ AVAILABLE_TOOLS = {
     "is_window_in_focus": st.is_window_in_focus,
     "notify_mobile": mt.notify_mobile,
     "git_diff": gt.git_diff,
+    "revert_file": gt.revert_file,
     "get_current_repo": gt.get_current_repo,
     "get_definition": nav.get_definition,
     "get_references": nav.get_references,
@@ -60,9 +61,7 @@ import json
 with open(os.path.join(os.path.dirname(__file__), "registry_positional.json"), "r") as f:
     full_catalog = json.load(f)
 
-CORE_TOOLS = ["read_file", "list_dir","web_search","list_tools"]
-core_catalog_list = [tool for tool in full_catalog if tool[0] in CORE_TOOLS]
-TOOL_CATALOG = json.dumps(core_catalog_list, indent=2)
+TOOL_CATALOG = json.dumps(full_catalog, indent=2)
 
 SYSTEM_INSTRUCTION = f"""
 You are an autonomous agent.

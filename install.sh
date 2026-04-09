@@ -30,10 +30,10 @@ else
     echo "✅ Wasmer ya está instalado. Saltando..."
 fi
 
-# 5. Descargar binario de Python WASM
-echo "📂 Descargando python.wasm..."
-mkdir -p "$PROJECT_ROOT/assets"
-curl -L https://github.com/vmware-labs/python-wasm/releases/latest/download/python.wasm -o "$PROJECT_ROOT/assets/python.wasm"
+# 5. Descargar binario de Python WASM (NOTA: La URL anterior está rota, por favor actualízala)
+echo "📂 Descargando python.wasm... (NOTA: La URL original estaba rota, por favor configura una válida)"
+# curl -L https://github.com/vmware-labs/python-wasm/releases/latest/download/python.wasm -o "$PROJECT_ROOT/assets/python.wasm"
+echo "❌ Error: La URL de descarga para python.wasm está rota. Por favor, descarga un binario válido y colócalo en 'assets/python.wasm'."
 
 # 4. Crear enlace simbólico
 echo "🔗 Configurando comando 'paser'..."
