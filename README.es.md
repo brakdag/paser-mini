@@ -8,7 +8,7 @@
 
 El cambio de nombre de "Passer" a "Paser" simplifica la escritura en la terminal, manteniendo la raíz del nombre original y el significado vinculado al gorrión, un ave muy común en el sur mendocino.
 
-## 🚀 Instalación
+## Instalación
 
 Puedes elegir entre clonar el repositorio (para desarrollo) o ejecutar el script de instalación directamente:
 
@@ -24,7 +24,7 @@ curl -fsSL https://raw.githubusercontent.com/brakdag/paser/main/install.sh | bas
 git clone https://github.com/brakdag/paser.git && cd paser && chmod +x install.sh && ./install.sh
 ```
 
-## 🔐 Configuración de Credenciales
+## Configuración de Credenciales
 
 Para que Paser pueda interactuar con los servicios externos, debes configurar las siguientes variables de entorno en tu archivo `.bashrc` o `.zshrc`:
 
@@ -36,7 +36,7 @@ export GOOGLE_API_KEY="tu_clave_api_google_aquí"
 export GITHUB_TOKEN="tu_token_github_aquí"
 ```
 
-## ⚡ Ejecución
+## Ejecución
 
 Una vez instalado y configurado, puedes ejecutar la aplicación simplemente usando:
 
@@ -44,7 +44,7 @@ Una vez instalado y configurado, puedes ejecutar la aplicación simplemente usan
 paser
 ```
 
-## ✨ Características Principales
+## Características Principales
 
 1.  **Function Calling Local (Manual):**
     - No utiliza herramientas nativas de la SDK de Google.
@@ -61,32 +61,32 @@ paser
     - **Directorio de Trabajo:** Permite cambiar el directorio de trabajo del agente mediante `/cd <ruta>`.
     - Tokens en ventana de contexto: /t retorna en un mensaje el numero de tokens.
 
-## 🧰 Herramientas Disponibles
+## Herramientas Disponibles
 
-### 📂 Archivos y Directorios
+### Archivos y Directorios
 
 - `read_file(path)`, `read_files(paths)`, `read_lines(...)`, `read_head(...)`: Lectura de archivos.
 - `write_file(path, contenido)`, `update_line(...)`, `replace_text(...)`, `replace_block(...)`, `replace_text_regex(...)`, `replace_block_regex(...)`: Escritura y edición.
 - `list_dir(path)`, `make_dir(path)`, `rename_path(origen, destino)`, `remove_file(path)`: Gestión de rutas.
 - `global_search(query)`, `glob_search(pattern)`, `global_replace(path, search_text, replace_text, extensiones)`: Búsqueda y reemplazo masivo.
 
-### 🔍 Navegación de Código
+### Navegación de Código
 
 - `list_symbols(file_path)`: Lista todas las clases y funciones definidas en un archivo.
 - `get_definition(symbol_name, file_path)`: Localiza la línea y columna donde se define un símbolo.
 - `get_references(symbol_name, file_path)`: Busca todas las referencias a un símbolo en el archivo.
 
-### 🌐 Utilidades y Web
+### Utilidades y Web
 
 - `web_search(query)`, `fetch_url(url)`: Acceso a información externa.
 - `get_time(zona_horaria)`, `get_cwd()`: Herramientas básicas.
 
-### 🧠 Cómputo y Visión
+### Cómputo y Visión
 
 - `execute_python(code)`: Ejecuta código Python en un sandbox seguro.
 - `see_image(path)`: Analiza el contenido de una imagen.
 
-### 🖥️ Sistema, Notificaciones y GitHub
+### Sistema, Notificaciones y GitHub
 
 - `analyze_pyright(path)`: Análisis estático de Python.
 - `notify_user()`: Notificación visual en la terminal.
