@@ -2,10 +2,12 @@ import json
 import re
 import logging
 import ast
+import asyncio
 from typing import Any, Optional, Union, get_type_hints, get_origin, get_args
 
 from paser.core.repetition_detector import RepetitionDetector
 from paser.core.interfaces import IAIAssistant
+from paser.core.ui import async_get_confirmation
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +76,7 @@ class AutonomousExecutor:
         payload = {"status": "success" if success else "error", "data": data}
         return f"<TOOL_RESPONSE>{json.dumps(payload)}</TOOL_RESPONSE>"
 
-    def execute(self, user_input: str, thinking_enabled: bool = True, get_confirmation_callback=None) -> str:
+    async def execute(self, user_input: str, thinking_enabled: bool = True, get_confirmation_callback=None) -> str:
         self.stop_requested = False  # Reset al inicio de cada ejecución
         if self.stop_requested:
             return "Ejecución interrumpida por el usuario."
@@ -87,7 +89,7 @@ class AutonomousExecutor:
             return "Detección de texto repetitivo: posible bucle infinito."
 
         if thinking_enabled:
-            response = self.assistant.send_message(user_input)
+            response = await asyncio.to_thread(self.assistant.send_message, user_input)
             response_text = self._extract_text(response)
         else:
             response_text = user_input
@@ -152,6 +154,13 @@ class AutonomousExecutor:
                     tr = self._format_tool_response(f"Herramienta desconocida: {name}", success=False)
                 else:
                     try:
+                        # Security check for execute_python
+                        if name == "execute_python":
+                            if not await async_get_confirmation(f"The agent wants to execute Python code:\n{args.get('code', 'No code provided')}\nAllow execution?"):
+                                tr = self._format_tool_response("User denied execution of Python code.", success=False)
+                                combined_tool_responses.append(tr)
+                                continue
+
                         ctx = None
                         if self.on_tool_start:
                             ctx = self.on_tool_start(name, args)
@@ -173,7 +182,7 @@ class AutonomousExecutor:
                 combined_tool_responses.append(tr)
 
             combined_message = "".join(combined_tool_responses)
-            response_obj = self.assistant.send_message(combined_message)
+            response_obj = await asyncio.to_thread(self.assistant.send_message, combined_message)
             response_text = self._extract_text(response_obj)
 
         return response_text

@@ -157,8 +157,7 @@ class ChatManager:
                     sys_msg = f"[SISTEMA: El temporizador '{safe_msg}' ha expirado. Por favor, reacciona]."
                     console.print(f"\n[EVENTO] {safe_msg}", style="bold magenta")
                     with SpinnerContext("Procesando evento", "magenta"):
-                        res = await asyncio.to_thread(
-                            self.executor.execute,
+                        res = await self.executor.execute(
                             user_input=sys_msg,
                             thinking_enabled=self.thinking_enabled,
                             get_confirmation_callback=get_input
@@ -229,7 +228,7 @@ class ChatManager:
                 pass
 
             if user_input.strip() == ':q': 
-                print_panel("Adiós", "¡Hasta la próxima! ", style="green")
+
                 break
             
             # El input ya se mostró por prompt_toolkit con su estilo
@@ -242,12 +241,13 @@ class ChatManager:
             execution_task = None
             try:
                 with SpinnerContext("", "cyan"):
-                    execution_task = asyncio.create_task(asyncio.to_thread(
-                        self.executor.execute,
-                        user_input=user_input,
-                        thinking_enabled=self.thinking_enabled,
-                        get_confirmation_callback=get_input
-                    ))
+                    execution_task = asyncio.create_task(
+                        self.executor.execute(
+                            user_input=user_input,
+                            thinking_enabled=self.thinking_enabled,
+                            get_confirmation_callback=get_input
+                        )
+                    )
                     result = await execution_task
             except (KeyboardInterrupt, asyncio.CancelledError):
                 self.executor.stop_requested = True

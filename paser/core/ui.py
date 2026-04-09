@@ -60,6 +60,13 @@ def print_tool_result(tool_name: str, result: str):
     )
 
 
+
+
+async def async_get_confirmation(message: str) -> bool:
+    """Asynchronous confirmation prompt for security-sensitive tools."""
+    response = await get_input(f"{message} (y/n): ")
+    return response.lower().strip() == 'y'
+
 async def get_input(prompt_text: str, history=None) -> str:
     style = Style.from_dict({
         '': '#00FF00',
