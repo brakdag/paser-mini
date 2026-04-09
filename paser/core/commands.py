@@ -67,11 +67,20 @@ class CommandHandler:
             console.print(f"Pensamientos: {'Visible' if self.chat_manager.thinking_enabled else 'Oculto'}", style="bold")
             return True
             
-        elif input_stripped == '/reset':
+        elif input_stripped == '/new':
             # Guardar sesión antes de reiniciar
             path = self.chat_manager.save_session("last_session")
-            print_panel("Reiniciando...", f"Guardando sesión en {path}...", style="yellow")
-            os.execv(sys.executable, [sys.executable] + sys.argv)
+            
+            # Soft Reset: Reiniciar la sesión del asistente y el estado del executor
+            self.chat_manager.assistant.start_chat(
+                self.chat_manager.assistant.current_model,
+                self.chat_manager.system_instruction,
+                self.chat_manager.temperature
+            )
+            self.chat_manager.executor.turn_count = 0
+            self.history = []
+            
+            print_panel("Sesión Reiniciada", f"Historial limpiado y sesión guardada en {path}", style="green")
             return True
             
         elif input_stripped == '/models':

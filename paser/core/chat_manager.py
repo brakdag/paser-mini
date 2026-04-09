@@ -15,6 +15,8 @@ from prompt_toolkit.history import FileHistory
 from rich.box import ROUNDED
 from rich.live import Live
 from rich.panel import Panel
+from rich.text import Text
+from rich.markdown import Markdown
 import threading
 import time
 from paser.core.event_manager import EventManager, event_manager
@@ -59,7 +61,8 @@ class ChatManager:
         self.assistant = assistant
         self.tools = tools
         self.system_instruction = system_instruction
-        self.thinking_enabled = True
+        self.config = self._load_config()
+        self.thinking_enabled = self.config.get("thinking_enabled", True)
         
         self.config = self._load_config()
         self.temperature = float(self.config.get("default_temperature", 0.7))
@@ -71,6 +74,7 @@ class ChatManager:
             self.tools,
             on_tool_used=self._on_tool_used,
             on_tool_start=self._on_tool_start,
+            on_thought=self._on_thought,
         )
         
         # Lazy loading synchronization
@@ -86,6 +90,16 @@ class ChatManager:
         except Exception:
             return {}
 
+    def _on_thought(self, thought_text: str):
+        """Callback ejecutado por el executor cuando el modelo genera razonamiento."""
+        if not self.thinking_enabled:
+            return
+        
+        console.print("[bold magenta]Thinking...[/bold magenta]")
+        # Usamos Markdown y estilo dim para un color más claro y soporte de formato
+        console.print(Markdown(thought_text), style="dim")
+
+
     def _on_tool_start(self, tool_name: str, args: dict):
         """Callback ejecutado por el executor justo antes de iniciar una herramienta."""
         if tool_name in self.COMPUTE_TOOLS:
@@ -93,8 +107,8 @@ class ChatManager:
             if tool_name == "see_image":
                 path = args.get("path", "desconocido")
                 filename = os.path.basename(path)
-                return SpinnerContext(f"{icon} {verb} {filename}...", color="yellow")
-            return SpinnerContext(f"{icon} {verb}...", color="yellow")
+                return SpinnerContext(f"{icon} {verb} {filename}...", color="yellow", newline=True)
+            return SpinnerContext(f"{icon} {verb}...", color="yellow", newline=True)
         return None
 
     def _on_tool_used(self, tool_name: str, args: dict, result: str, success: bool):
@@ -156,7 +170,7 @@ class ChatManager:
                     safe_msg = msg.encode('ascii', 'replace').decode('ascii')
                     sys_msg = f"[SISTEMA: El temporizador '{safe_msg}' ha expirado. Por favor, reacciona]."
                     console.print(f"\n[EVENTO] {safe_msg}", style="bold magenta")
-                    with SpinnerContext("Procesando evento", "magenta"):
+                    with SpinnerContext("Procesando evento", "magenta", newline=True):
                         res = await self.executor.execute(
                             user_input=sys_msg,
                             thinking_enabled=self.thinking_enabled,
@@ -202,7 +216,7 @@ class ChatManager:
 
             # Sincronización: Esperar a que la API esté lista antes de procesar cualquier input
             if not self._initialized_event.is_set():
-                with SpinnerContext("Conectando con la API...", "cyan"):
+                with SpinnerContext("Conectando con la API...", "cyan", newline=True):
                     while not self._initialized_event.is_set() and self._init_error is None:
                         await asyncio.sleep(0.1)
             
@@ -240,7 +254,7 @@ class ChatManager:
             # Ejecución autónoma con spinner
             execution_task = None
             try:
-                with SpinnerContext("", "cyan"):
+                with SpinnerContext("", "cyan", newline=True):
                     execution_task = asyncio.create_task(
                         self.executor.execute(
                             user_input=user_input,

@@ -77,7 +77,9 @@ async def get_input(prompt_text: str, history=None) -> str:
 
 
 @contextmanager
-def SpinnerContext(message: str = "", color: str = "cyan"):
+def SpinnerContext(message: str = "", color: str = "cyan", newline: bool = False):
     """Muestra un spinner profesional usando rich.console.status."""
-    with console.status(f"[{color}]{message}[/{color}]", spinner="dots"):
+    if newline:
+        console.print()
+    with console.status(f"[{color}]{message}[/{color}]", spinner="material"):
         yield

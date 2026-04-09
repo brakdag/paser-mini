@@ -12,27 +12,25 @@ from paser.core.ui import async_get_confirmation
 logger = logging.getLogger(__name__)
 
 class AutonomousExecutor:
-    def __init__(self, assistant: IAIAssistant, tools: dict, on_tool_used=None, on_tool_start=None, max_turns: int = 100):
+    def __init__(self, assistant: IAIAssistant, tools: dict, on_tool_used=None, on_tool_start=None, on_thought=None, max_turns: int = 100):
         self.assistant = assistant
         self.tools = tools
         self.repetition_detector = RepetitionDetector(n=3, max_repeats=3)
         self.on_tool_used = on_tool_used
         self.on_tool_start = on_tool_start
+        self.on_thought = on_thought
         self.max_turns = max_turns
         self.turn_count = 0
         self.stop_requested = False
 
     def _parse_call_content(self, raw_content: str) -> Optional[dict[str, Any]]:
         """Intenta parsear el contenido de un TOOL_CALL usando múltiples estrategias."""
-        # Estrategia 1: Intentar JSON directamente
         try:
             data = json.loads(raw_content)
         except json.JSONDecodeError:
-            # Estrategia 2: Intentar evaluar como literal de Python (más seguro que reemplazar comillas)
             try:
                 data = ast.literal_eval(raw_content)
             except (ValueError, SyntaxError, TypeError):
-                # Estrategia 3: Intento desesperado de arreglar comillas (solo si las anteriores fallan)
                 try:
                     s_double = raw_content.replace("'", '"')
                     data = json.loads(s_double)
@@ -42,30 +40,24 @@ class AutonomousExecutor:
         if not isinstance(data, dict) or "name" not in data:
             return None
         
-        # Asegurar que 'args' siempre exista para evitar errores de KeyError
         if "args" not in data:
             data["args"] = {}
             
         return data
 
     def _extract_tool_calls(self, text: str) -> list[tuple[Optional[dict[str, Any]], str]]:
-        # Regex para capturar <TOOL_CALL> o <tool_call>, manejando espacios
         pattern = r"<(?:TOOL_CALL|tool_call)\s*>(.*?)</(?:TOOL_CALL|tool_call)>"
         calls: list[tuple[Optional[dict[str, Any]], str]] = []
         
-        # 1. Capturar llamadas completas
         for match in re.finditer(pattern, text, re.IGNORECASE | re.DOTALL):
             raw = match.group(1).strip()
             data = self._parse_call_content(raw)
             calls.append((data, raw))
         
-        # 2. Capturar llamada truncada al final (sin etiqueta de cierre)
-        # Buscamos la última apertura de etiqueta
         all_opens = list(re.finditer(r"<(?:TOOL_CALL|tool_call)\s*>", text, re.IGNORECASE))
         if all_opens:
             last_open = all_opens[-1]
             remaining = text[last_open.end():].strip()
-            # Si no hay etiqueta de cierre y el contenido comienza con '{', es probablemente una llamada truncada
             if not re.search(r"</(?:TOOL_CALL|tool_call)>", remaining, re.IGNORECASE) and remaining.startswith('{'):
                 data = self._parse_call_content(remaining)
                 calls.append((data, remaining))
@@ -77,22 +69,19 @@ class AutonomousExecutor:
         return f"<TOOL_RESPONSE>{json.dumps(payload)}</TOOL_RESPONSE>"
 
     async def execute(self, user_input: str, thinking_enabled: bool = True, get_confirmation_callback=None) -> str:
-        self.stop_requested = False  # Reset al inicio de cada ejecución
+        self.stop_requested = False
         if self.stop_requested:
             return "Ejecución interrumpida por el usuario."
 
         self.turn_count += 1
         if self.turn_count > self.max_turns:
-            return "Límite de turnos excedido: El agente ha alcanzado el máximo de iteraciones permitidas para evitar bucles infinitos. Por favor, intenta resumir el progreso actual y comienza una nueva sesión."
+            return "Límite de turnos excedido: El agente ha alcanzado el máximo de iteraciones permitidas para evitar bucles infinitos."
             
         if not self.repetition_detector.add_text(user_input):
             return "Detección de texto repetitivo: posible bucle infinito."
 
-        if thinking_enabled:
-            response = await asyncio.to_thread(self.assistant.send_message, user_input)
-            response_text = self._extract_text(response)
-        else:
-            response_text = user_input
+        response = await asyncio.to_thread(self.assistant.send_message, user_input)
+        response_text = self._extract_text(response)
 
         while True:
             if self.stop_requested:
@@ -101,24 +90,30 @@ class AutonomousExecutor:
                 return "Detección de texto repetitivo: posible bucle infinito."
 
             calls = self._extract_tool_calls(response_text)
+            
+            thought_match = re.split(r'<(?:TOOL_CALL|tool_call)\s*>', response_text, maxsplit=1, flags=re.IGNORECASE)
+            thought_text = thought_match[0].strip()
+
+            if thought_text and thinking_enabled and self.on_thought:
+                self.on_thought(thought_text)
+
             if not calls:
                 break
             
             self.turn_count += 1
             if self.turn_count > self.max_turns:
-                return "Límite de turnos excedido: El agente ha alcanzado el máximo de iteraciones permitidas para evitar bucles infinitos. Por favor, intenta resumir el progreso actual y comienza una nueva sesión."
+                return "Límite de turnos excedido."
 
             combined_tool_responses = []
             for call_data, raw_content in calls:
                 if call_data is None:
-                    tr = self._format_tool_response(f"Error de sintaxis: El TOOL_CALL '{raw_content}' no es un JSON válido o está mal formado.", success=False)
+                    tr = self._format_tool_response(f"Error de sintaxis: El TOOL_CALL '{raw_content}' no es un JSON válido.", success=False)
                     combined_tool_responses.append(tr)
                     continue
 
                 name = call_data.get("name")
                 args = call_data.get("args", {})
                 
-                # Validación de tipos de argumentos basada en hints de la función
                 if name in self.tools:
                     func = self.tools[name]
                     hints = get_type_hints(func)
@@ -126,10 +121,7 @@ class AutonomousExecutor:
                         if arg_name in hints:
                             expected_type = hints[arg_name]
                             origin = get_origin(expected_type)
-                            
-                            # Determinar el tipo contra el cual validar
                             is_valid = True
-                            # Validación simplificada para evitar errores con genéricos
                             try:
                                 if origin is Union:
                                     check_types = get_args(expected_type)
@@ -139,7 +131,6 @@ class AutonomousExecutor:
                                 else:
                                     is_valid = isinstance(arg_value, expected_type)
                             except TypeError:
-                                # Fallback si la validación falla por tipos complejos
                                 is_valid = True
                             
                             if not is_valid:
@@ -147,14 +138,12 @@ class AutonomousExecutor:
                                 combined_tool_responses.append(tr)
                                 continue
                 
-                # Validación básica de argumentos
                 if not isinstance(args, dict):
-                    tr = self._format_tool_response(f"Argumentos inválidos para {name}", success=False)
+                    tr = self._format_tool_response(f"Argumentos invñlidos para {name}", success=False)
                 elif name not in self.tools:
                     tr = self._format_tool_response(f"Herramienta desconocida: {name}", success=False)
                 else:
                     try:
-                        # Security check for execute_python
                         if name == "execute_python":
                             if not await async_get_confirmation(f"The agent wants to execute Python code:\n{args.get('code', 'No code provided')}\nAllow execution?"):
                                 tr = self._format_tool_response("User denied execution of Python code.", success=False)
@@ -175,7 +164,6 @@ class AutonomousExecutor:
                         if self.on_tool_used:
                             self.on_tool_used(name, args, result, True)
                     except Exception as exc:
-                        # Eliminamos logger.error para evitar fugas de detalles técnicos en la consola
                         tr = self._format_tool_response(f"Error en herramienta '{name}': {str(exc)}", success=False)
                         if self.on_tool_used:
                             self.on_tool_used(name, args, str(exc), False)

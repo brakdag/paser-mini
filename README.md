@@ -55,11 +55,16 @@ paser
     - All file operations (read, write, delete) are restricted to the current working directory defined by `PROJECT_ROOT` through a secure path validation function (`get_safe_path`).
     - File deletion requires interactive confirmation (`y/n`).
 
-3.  **Dynamic Configuration:**
-    - **Temperature:** Allows adjusting the model's creativity when selecting a model (`/models`).
-    - **Thoughts:** Allows toggling the visibility of the model's thoughts (lines starting with `*`) via the `/thinking` command.
-    - **Working Directory:** Allows changing the agent's working directory via `/cd <path>`.
-    - **Context Window Tokens:** `/t` returns the number of tokens in a message.
+3.  **User Commands:**
+    - `/models`: Change the AI model and adjust temperature.
+    - `/thinking`: Toggle the visibility of the model's internal reasoning (thoughts).
+    - `/cd <path>`: Change the agent's working directory.
+    - `/t`: Display the current context window token count.
+    - `/history`: Show a summary of tools executed during the session.
+    - `/session`: List and load previously saved sessions.
+    - `/reset`: Save the current session and restart the application.
+    - `/max_turns <n>`: Set the maximum number of autonomous turns to prevent infinite loops.
+    - `/clear` or `/cls`: Clear the terminal screen.
 
 ## Available Tools
 
