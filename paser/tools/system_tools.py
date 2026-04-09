@@ -2,6 +2,7 @@ import subprocess
 import os
 import logging
 from .core_tools import context
+from paser.core.ui import print_info, notify_user
 from paser.core.ui import print_info
 
 logger = logging.getLogger("tools")
@@ -18,10 +19,10 @@ def analyze_pyright(path: str = ".") -> str:
         return "No se encontraron errores de tipo."
     return result.stdout
 
-def notify_user() -> str:
-    """Triggers a visual notification in the chat interface."""
-    print_info("🔔 Notificación del Sistema: Una acción importante ha sido completada exitosamente.")
-    return "Notificación visual enviada al chat. El usuario ha sido alertado."
+def notify_user(message: str = "Una acción importante ha sido completada exitosamente.") -> str:
+    """Triggers a visual notification in the chat interface with a custom message."""
+    print_info(f"🔔 Notificación del Sistema: {message}")
+    return f"Notificación visual enviada: {message}"
 
 def alert_sound() -> str:
     """Plays a system alert sound to get the user's attention."""
@@ -44,15 +45,11 @@ def alert_sound() -> str:
 
 def is_window_in_focus(**kwargs) -> str:
     """Verifica si la ventana de la terminal tiene el foco actual del sistema."""
-    # Intentamos obtener el nombre de la ventana activa usando xdotool
     try:
         result = subprocess.run(["xdotool", "getactivewindow", "getwindowname"], 
                                 capture_output=True, text=True, check=True)
         window_name = result.stdout.strip().lower()
-        
-        # Palabras clave comunes de terminales
         terminal_keywords = ["terminal", "console", "kitty", "alacritty", "konsole", "gnome-terminal", "iterm", "hyper"]
-        
         if any(kw in window_name for kw in terminal_keywords):
             return "True: The terminal is in focus."
         else:
@@ -61,15 +58,12 @@ def is_window_in_focus(**kwargs) -> str:
         return "False: Could not determine window focus (xdotool missing?)."
 
 from paser.core.event_manager import event_manager
-
 from typing import Optional
 
 def set_timer(seconds: int, message: Optional[str] = None) -> str:
-    """Sets a timer that will inject an event directly into the agent's event queue.
-    Use a descriptive name for the task (e.g., 'Revisar logs'), NOT 'Timer finished'."""
+    """Sets a timer that will inject an event directly into the agent's event queue."""
     if message is None:
         message = "Timer"
-    
     try:
         event_manager.add_event(seconds, message)
         return f"Timer scheduled for {seconds} seconds with message: {message}"

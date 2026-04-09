@@ -44,7 +44,7 @@ AVAILABLE_TOOLS = {
     "is_window_in_focus": st.is_window_in_focus,
     "notify_mobile": mt.notify_mobile,
     "git_diff": gt.git_diff,
-    "get_remote_repo": gt.get_remote_repo,
+    "get_current_repo": gt.get_current_repo,
     "get_definition": nav.get_definition,
     "get_references": nav.get_references,
     "list_symbols": nav.list_symbols,

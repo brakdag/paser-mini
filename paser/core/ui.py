@@ -14,8 +14,9 @@ from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.styles import Style
 from contextlib import contextmanager
-import threading
-import time
+import logging
+
+logger = logging.getLogger("ui")
 
 console = Console()
 
@@ -27,7 +28,7 @@ class UIState:
     
     def __init__(self):
         self.mode = self.INSERT
-        self.scroll_offset = 0
+        self.last_cursor_pos = 0
 
 ui_state = UIState()
 
@@ -45,37 +46,49 @@ kb = KeyBindings()
 
 @kb.add('escape')
 def _(event):
+    ui_state.last_cursor_pos = event.current_buffer.cursor_position
     ui_state.mode = UIState.NORMAL
 
 @kb.add('i')
 def _(event):
     if ui_state.mode == UIState.NORMAL:
         ui_state.mode = UIState.INSERT
+        event.current_buffer.cursor_position = ui_state.last_cursor_pos
     else:
         event.current_buffer.insert_text('i')
 
 @kb.add('j')
 def _(event):
     if ui_state.mode == UIState.NORMAL:
-        # Send ANSI escape sequence for Cursor Down / Scroll Down
-        sys.stdout.write('\x1b[B')
-        sys.stdout.flush()
+        event.current_buffer.cursor_down()
     else:
         event.current_buffer.insert_text('j')
 
 @kb.add('k')
 def _(event):
     if ui_state.mode == UIState.NORMAL:
-        # Send ANSI escape sequence for Cursor Up / Scroll Up
-        sys.stdout.write('\x1b[A')
-        sys.stdout.flush()
+        event.current_buffer.cursor_up()
     else:
         event.current_buffer.insert_text('k')
+
+@kb.add('h')
+def _(event):
+    if ui_state.mode == UIState.NORMAL:
+        event.current_buffer.cursor_left()
+    else:
+        event.current_buffer.insert_text('h')
+
+@kb.add('l')
+def _(event):
+    if ui_state.mode == UIState.NORMAL:
+        event.current_buffer.cursor_right()
+    else:
+        event.current_buffer.insert_text('l')
 
 def get_bottom_toolbar():
     """Returns the status bar based on the current UI mode."""
     if ui_state.mode == UIState.NORMAL:
-        return HTML('<ansiyellow> <b>— NORMAL —</b> </ansiyellow> (j/k: scroll, i: insert)')
+        return HTML('<ansiyellow> <b>— NORMAL —</b> </ansiyellow> (h/j/k/l: navigate, i: insert)')
     return HTML('<ansigreen> <b>— INSERT —</b> </ansigreen> (Esc: normal)')
 
 # --- UI Helpers ---
@@ -128,7 +141,6 @@ async def get_input(prompt_text: str, history=None) -> str:
     
     session = get_session(history=history)
     
-    # We use prompt_async with our custom key bindings and bottom toolbar
     return await session.prompt_async(
         prompt_text, 
         style=style, 
@@ -136,27 +148,23 @@ async def get_input(prompt_text: str, history=None) -> str:
         bottom_toolbar=get_bottom_toolbar
     )
 
+def notify_user(message: str = "Una acción importante ha sido completada exitosamente.") -> str:
+    """Triggers a visual notification in the chat interface with a custom message."""
+    print_info(f"🔔 Notificación del Sistema: {message}")
+    return f"Notificación visual enviada: {message}"
+
 @contextmanager
 def SpinnerContext(message: str = "", color: str = "cyan", newline: bool = False):
-    """
-    Muestra un spinner profesional usando rich.console.status.
-    Sincroniza el modo de la UI a NORMAL y restaura el modo previo al finalizar.
-    """
-    # Guardamos el modo actual para restaurarlo después
     previous_mode = ui_state.mode
     ui_state.mode = UIState.NORMAL
     
     if newline:
         console.print()
         
-    # Construimos el mensaje para que parezca parte de la barra inferior
-    # \u2014 es el em-dash usado en get_bottom_toolbar
     status_msg = f"[bold yellow]\u2014 NORMAL \u2014[/bold yellow] [{color}]{message}[/{color}]"
     
     try:
         with console.status(status_msg, spinner="material"):
             yield
     finally:
-        # Restauramos el modo original DESPUÉS de que el contexto de rich haya cerrado
-        # Esto evita que prompt_toolkit se confunda con el estado del terminal
         ui_state.mode = previous_mode
