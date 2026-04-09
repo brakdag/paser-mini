@@ -58,7 +58,7 @@ import json
 with open(os.path.join(os.path.dirname(__file__), "registry_positional.json"), "r") as f:
     full_catalog = json.load(f)
 
-CORE_TOOLS = ["read_files","see_image", "list_tools", "list_dir"]
+CORE_TOOLS = ["read_file", "list_dir","list_tools"]
 core_catalog_list = [tool for tool in full_catalog if tool[0] in CORE_TOOLS]
 TOOL_CATALOG = json.dumps(core_catalog_list, indent=2)
 
