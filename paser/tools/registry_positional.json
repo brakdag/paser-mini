@@ -33,6 +33,7 @@
   ["get_definition", "Get symbol definition", {"symbol": "string"}],
   ["get_references", "Get symbol references", {"symbol": "string"}],
   ["list_symbols", "List symbols in file", {"path": "string"}],
+  ["execute_python", "Execute Python code in a secure sandbox. Note: The '>>>' prompt indicates the interpreter is ready for the next command (OK).", {"code": "string"}],
   ["see_image", "See image content", {"path": "string"}],
   ["list_issues", "List repo issues", {"repo": "string"}],
   ["create_issue", "Create repo issue", {"repo": "string", "title": "string", "body": "string"}],

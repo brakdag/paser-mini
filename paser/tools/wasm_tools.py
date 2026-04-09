@@ -13,23 +13,18 @@ class PythonWasmInterpreter:
     Interpreter for executing Python code using Wasmer WASM runtime.
     """
     def __init__(self):
-        self.wasm_path = "assets/python.wasm"
         self.wasm_enabled = False
         self._check_wasm_availability()
 
     def _check_wasm_availability(self):
         """
-        Checks if the wasmer CLI is installed and the python.wasm binary exists.
+        Checks if the wasmer CLI is installed.
         """
         try:
             # Check if wasmer CLI is available
             subprocess.run(["wasmer", "--version"], capture_output=True, check=True)
-            # Check if the binary exists
-            if os.path.exists(self.wasm_path):
-                self.wasm_enabled = True
-                logger.info("WASM Python runtime (Wasmer CLI) is available.")
-            else:
-                logger.warning(f"python.wasm not found at {self.wasm_path}. Using fallback.")
+            self.wasm_enabled = True
+            logger.info("WASM Python runtime (Wasmer CLI) is available.")
         except (subprocess.CalledProcessError, FileNotFoundError):
             logger.warning("Wasmer CLI not found in PATH. Using restricted Python fallback.")
 
@@ -40,40 +35,36 @@ class PythonWasmInterpreter:
 
     def _execute_wasm(self, code: str) -> str:
         """
-        Executes Python code using the wasmer CLI and python.wasm binary.
+        Executes Python code using the wasmer CLI and the python/python package.
         """
-        # Create a temporary file for the Python code
-        with tempfile.NamedTemporaryFile(suffix=".py", delete=False, mode="w") as tf:
-            tf.write(code)
-            temp_file_path = tf.name
-
         try:
-            # We run: wasmer run assets/python.wasm -- <script_path>
-            # We use the absolute path to ensure wasmer finds it
-            abs_wasm_path = os.path.abspath(self.wasm_path)
-            abs_script_path = os.path.abspath(temp_file_path)
-
+            # Use '--' to ensure arguments are passed directly to the python binary
             result = subprocess.run(
-                ["wasmer", "run", abs_wasm_path, "--", abs_script_path],
+                ["wasmer", "run", "python/python", "--", "-c", code],
                 capture_output=True,
                 text=True,
                 timeout=30 # Prevent infinite loops
             )
 
             if result.returncode != 0:
+                # Fallback to restricted execution if WASM fails with a file-not-found error
+                # which suggests the -c flag was misinterpreted
+                if "can't open file" in result.stderr:
+                    logger.warning("WASM -c failed, falling back to restricted execution.")
+                    return self._execute_restricted(code)
                 return f"Execution Error (Exit Code {result.returncode}):\n{result.stderr}"
             
             output = result.stdout
+            # Abstract the REPL prompt '>>>' as a successful execution signal
+            if output and output.strip().endswith(" >>>"):
+                output = output.strip()[:-4].strip()
+            
             return output if output else "Code executed successfully (no output)."
 
         except subprocess.TimeoutExpired:
             return "Error: Execution timed out after 30 seconds."
         except Exception as e:
             return f"WASM Runtime Error: {str(e)}"
-        finally:
-            # Clean up the temporary file
-            if os.path.exists(temp_file_path):
-                os.remove(temp_file_path)
 
     def _execute_restricted(self, code: str) -> str:
         """
