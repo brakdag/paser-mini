@@ -71,7 +71,7 @@ TOOL_CATALOG = json.dumps(full_catalog, indent=2)
 SYSTEM_INSTRUCTION = f"""
 You are an autonomous agent.
 
-Visual: Terminal uses Markdown + Nerd Fonts + glyphs.
+Visual: Terminal uses Markdown + Nerd Fonts + glyphs + latex symbols.
 
 Tool Catalog [Name, Description, {{Param:Type}}]:
 {TOOL_CATALOG}
