@@ -4,6 +4,7 @@ Interfaz de consola con Rich y prompt_toolkit con soporte para modos Vim.
 """
 
 import sys
+import re
 from rich.console import Console
 from rich.panel import Panel
 from rich.markdown import Markdown
@@ -91,6 +92,108 @@ def get_bottom_toolbar():
         return HTML('<ansiyellow> <b>— NORMAL —</b> </ansiyellow> (h/j/k/l: navigate, i: insert)')
     return HTML('<ansigreen> <b>— INSERT —</b> </ansigreen> (Esc: normal)')
 
+# Mapping of LaTeX commands to Unicode characters
+LATEX_TO_UNICODE = {
+    # Greek Alphabet (Lowercase)
+    r"\alpha": "\u03b1",
+    r"\beta": "\u03b2",
+    r"\gamma": "\u03b3",
+    r"\delta": "\u03b4",
+    r"\epsilon": "\u03b5",
+    r"\zeta": "\u03b6",
+    r"\eta": "\u03b7",
+    r"\theta": "\u03b8",
+    r"\iota": "\u03b9",
+    r"\kappa": "\u03ba",
+    r"\lambda": "\u03bb",
+    r"\mu": "\u03bc",
+    r"\nu": "\u03bd",
+    r"\xi": "\u03be",
+    r"\pi": "\u03c0",
+    r"\rho": "\u03c1",
+    r"\sigma": "\u03c3",
+    r"\tau": "\u03c4",
+    r"\upsilon": "\u03c5",
+    r"\phi": "\u03c6",
+    r"\chi": "\u03c7",
+    r"\psi": "\u03c8",
+    r"\omega": "\u03c9",
+    # Greek Alphabet (Uppercase)
+    r"\Gamma": "\u0393",
+    r"\Delta": "\u2206",
+    r"\Theta": "\u0398",
+    r"\Lambda": "\u039b",
+    r"\Sigma": "\u03a3",
+    r"\Phi": "\u03a6",
+    r"\Psi": "\u03a8",
+    r"\Omega": "\u03a9",
+    # Logical & Set Operators
+    r"\forall": "\u2200",
+    r"\exists": "\u2203",
+    r"\in": "\u2208",
+    r"\notin": "\u2209",
+    r"\subset": "\u2282",
+    r"\supset": "\u2283",
+    r"\cup": "\u222a",
+    r"\cap": "\u2229",
+    r"\emptyset": "\u2205",
+    r"\wedge": "\u2227",
+    r"\vee": "\u2228",
+    r"\neg": "\u00ac",
+    r"\implies": "\u21d2",
+    r"\iff": "\u21d4",
+    # Arrows & Relations
+    r"\rightarrow": "\u2192",
+    r"\leftarrow": "\u2190",
+    r"\leftrightarrow": "\u2194",
+    r"\Rightarrow": "\u21d2",
+    r"\Leftarrow": "\u21d0",
+    r"\Leftrightarrow": "\u21d4",
+    r"\approx": "\u2248",
+    r"\sim": "\u223c",
+    r"\equiv": "\u2261",
+    r"\propto": "\u221d",
+    r"\neq": "\u2260",
+    r"\le": "\u2264",
+    r"\ge": "\u2265",
+    # Operators
+    r"\times": "\u00d7",
+    r"\div": "\u00f7",
+    r"\pm": "\u00b1",
+    r"\mp": "\u2213",
+    r"\cdot": "\u22c5",
+    r"\ast": "\u2217",
+    # Calculus & Analysis
+    r"\int": "\u222b",
+    r"\sum": "\u2211",
+    r"\prod": "\u220f",
+    r"\partial": "\u2202",
+    r"\nabla": "\u2207",
+    r"\infty": "\u221e",
+    # Number Sets
+    r"\mathbb{R}": "\u211d",
+    r"\mathbb{Z}": "\u2124",
+    r"\mathbb{N}": "\u2115",
+    r"\mathbb{Q}": "\u211a",
+    r"\mathbb{C}": "\u2102",
+}
+
+# Sort keys by length descending to prevent overlapping prefix matches (e.g., \int vs \in)
+_SORTED_KEYS = sorted(LATEX_TO_UNICODE.keys(), key=len, reverse=True)
+_COMMAND_PATTERN = re.compile("|".join(re.escape(k) for k in _SORTED_KEYS))
+# Regex to find LaTeX blocks $...$
+_BLOCK_PATTERN = re.compile(r"\$(.*?)\$")
+
+def translate_latex_to_unicode(text: str) -> str:
+    """Replaces LaTeX blocks with their Unicode equivalents."""
+    def replace_block(match):
+        content = match.group(1)
+        # Translate commands within the block
+        translated = _COMMAND_PATTERN.sub(lambda m: LATEX_TO_UNICODE[m.group(0)], content)
+        return translated
+
+    return _BLOCK_PATTERN.sub(replace_block, text)
+
 # --- UI Helpers ---
 
 def print_panel(title: str, message: str, box_type=ROUNDED, style: str = "none"):
@@ -103,6 +206,7 @@ def print_info(message: str):
     console.print(Panel(message, title="󰋽 Info", border_style="blue"))
 
 def print_model_response(text: str):
+    text = translate_latex_to_unicode(text)
     try:
         md = Markdown(text)
         console.print(md)

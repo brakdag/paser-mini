@@ -2,7 +2,7 @@ import json
 import os
 import sys
 from rich.table import Table
-from paser.core.ui import get_input, console, print_panel
+from paser.core.ui import get_input, console, print_panel, LATEX_TO_UNICODE
 from paser.tools import core_tools
 
 class CommandHandler:
@@ -31,6 +31,18 @@ class CommandHandler:
             table.add_column("Status", style="green")
             for entry in self.history:
                 table.add_row(entry["name"], entry["status"])
+            console.print(table)
+            return True
+
+        elif input_stripped == '/latex':
+            table = Table(title="Símbolos LaTeX Soportados", show_lines=True)
+            table.add_column("LaTeX", style="cyan")
+            table.add_column("Unicode", style="green")
+            
+            # Sort by LaTeX command for better readability
+            for latex, unicode_char in sorted(LATEX_TO_UNICODE.items()):
+                table.add_row(latex, unicode_char)
+            
             console.print(table)
             return True
 
