@@ -99,23 +99,37 @@ class ChatManager:
         # Usamos Markdown y estilo dim para un color más claro y soporte de formato
         console.print(Markdown(thought_text), style="dim")
 
+    def _get_tool_metadata(self, tool_name: str) -> tuple[str, str]:
+        """Busca el verbo e icono de una herramienta en todas las categorías disponibles."""
+        categories = [
+            self.FILE_TOOLS, 
+            self.COMPUTE_TOOLS, 
+            self.TIMER_TOOLS, 
+            self.SYSTEM_TOOLS, 
+            self.NOTIFICATION_TOOLS
+        ]
+        for cat in categories:
+            if tool_name in cat:
+                return cat[tool_name]
+        return ("Ejecutando", "󰍃") # Fallback genérico
 
     def _on_tool_start(self, tool_name: str, args: dict):
         """Callback ejecutado por el executor justo antes de iniciar una herramienta."""
-        if tool_name in self.COMPUTE_TOOLS:
-            verb, icon = self.COMPUTE_TOOLS[tool_name]
-            if tool_name == "see_image":
-                path = args.get("path", "desconocido")
-                filename = os.path.basename(path)
-                return SpinnerContext(f"{icon} {verb} {filename}...", color="yellow", newline=True)
-            return SpinnerContext(f"{icon} {verb}...", color="yellow", newline=True)
-        return None
+        verb, icon = self._get_tool_metadata(tool_name)
+        
+        if tool_name == "see_image":
+            path = args.get("path", "desconocido")
+            filename = os.path.basename(path)
+            return SpinnerContext(f"{icon} {verb} {filename}...", color="yellow", newline=True)
+        
+        return SpinnerContext(f"{icon} {verb}...", color="yellow", newline=True)
 
     def _on_tool_used(self, tool_name: str, args: dict, result: str, success: bool):
         """Callback ejecutado por el executor cuando se usa una herramienta."""
+        status_icon = "󰄵" if success else "󰅚"
+        
         if tool_name in self.FILE_TOOLS:
             verb, icon = self.FILE_TOOLS[tool_name]
-            status_icon = "󰄵" if success else "󰅚"
             
             # Personalización de mensaje según herramienta
             if tool_name == "rename_path":
@@ -139,12 +153,10 @@ class ChatManager:
         
         elif tool_name in self.NOTIFICATION_TOOLS:
             verb, icon = self.NOTIFICATION_TOOLS[tool_name]
-            status_icon = "󰄵" if success else "󰅚"
             console.print(f"  {icon} {verb} {status_icon}", style="dim yellow")
         
         elif tool_name in self.TIMER_TOOLS:
             verb, icon = self.TIMER_TOOLS[tool_name]
-            status_icon = "󰄵" if success else "󰅚"
             # Extraemos info para feedback
             if "with message:" in result:
                 msg_part = result.split("with message:")[1].strip()
@@ -155,7 +167,11 @@ class ChatManager:
         
         elif tool_name in self.SYSTEM_TOOLS:
             verb, icon = self.SYSTEM_TOOLS[tool_name]
-            status_icon = "󰄵" if success else "󰅚"
+            console.print(f"  {icon} {verb} {status_icon}", style="dim yellow")
+        
+        else:
+            # Fallback para cualquier otra herramienta no categorizada
+            verb, icon = self._get_tool_metadata(tool_name)
             console.print(f"  {icon} {verb} {status_icon}", style="dim yellow")
     
     async def _event_monitor_loop(self):

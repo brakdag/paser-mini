@@ -30,10 +30,10 @@ def notify_user(message: str = "Una acción importante ha sido completada exitos
 
 def alert_sound() -> str:
     """Plays a system alert sound to get the user's attention."""
-    sound_path = os.path.join(context.root, "assets", "type.wav")
+    sound_path = os.path.join(context.root, "paser", "assets", "type.wav")
 
     if not os.path.exists(sound_path):
-        print('\a', end='', flush=True)
+        return f"Sound file not found at: {sound_path}. Sent ASCII bell alert."
         return "Sound file not found, sent ASCII bell alert."
 
     try:
