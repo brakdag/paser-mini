@@ -13,6 +13,7 @@ from paser.core.config_manager import ConfigManager
 from paser.core.event_monitor import EventMonitor
 from prompt_toolkit.history import FileHistory
 from rich.markdown import Markdown
+from rich.panel import Panel
 
 logger = setup_logger()
 
@@ -45,22 +46,56 @@ class ChatManager:
         console.print("[bold magenta]Thinking...[/bold magenta]")
         console.print(Markdown(thought_text), style="dim")
 
+    def _get_tool_detail(self, tool_name, args):
+        """Extracts a human-readable detail from tool arguments."""
+        if not args:
+            return ""
+        
+        # Priority keys for better feedback
+        priority_keys = ['path', 'url', 'query', 'symbol', 'repo', 'mensaje']
+        for key in priority_keys:
+            if key in args:
+                val = args[key]
+                # Shorten paths for cleaner UI
+                if key == 'path' and isinstance(val, str):
+                    val = os.path.basename(val) if len(val) > 30 else val
+                return f": {val}"
+        
+        # Fallback to first argument
+        first_val = next(iter(args.values())) if args else ""
+        return f": {first_val}" if first_val else ""
+
     def _on_tool_start(self, tool_name, args):
         verb, icon = get_tool_metadata(tool_name)
-        return SpinnerContext(f"{icon} {verb}...", color="yellow", newline=True)
+        detail = self._get_tool_detail(tool_name, args)
+        return SpinnerContext(f"{icon} {verb}{detail}...", color="yellow", newline=True)
 
     def _on_tool_used(self, tool_name, args, result, success):
         status_icon = "✓" if success else "✗"
         verb, icon = get_tool_metadata(tool_name)
-        console.print(f"  {icon} {verb} {status_icon}", style="dim yellow")
+        detail = self._get_tool_detail(tool_name, args)
+        console.print(f"  {icon} {verb}{detail} {status_icon}", style="dim yellow")
 
     async def run(self):
         asyncio.create_task(asyncio.to_thread(self._initialize_chat))
         asyncio.create_task(self.event_monitor.monitor_loop(self.thinking_enabled))
+        
+        # Welcome Message (#115)
+        model = self.config_manager.get("model_name", "Unknown")
+        console.print(
+            Panel(
+                f"[bold cyan]🤖 Paser Autonomous Agent[/bold cyan]\n"
+                f"[dim]Model: {model} | Temp: {self.temperature}[/dim]",
+                title="🤖 System Ready",
+                border_style="magenta",
+                expand=False
+            )
+        )
+
         history = FileHistory(".chat_history")
         while True:
             try:
-                user_input = await get_input("│ ➜ ", history=history)
+                user_input = await get_input("\u2502 \u279c ", history=history)
             except: break
             if not user_input: continue
             if await self.command_handler.handle(user_input): continue
