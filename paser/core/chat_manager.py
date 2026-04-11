@@ -166,10 +166,6 @@ class ChatManager:
             import re
             audio_bytes = base64.b64decode(base64_audio)
             
-            # Guardar copia local para debugging (/play_last)
-            with open("last_voice.wav", "wb") as f:
-                f.write(audio_bytes)
-
             with SpinnerContext("Processing audio...", "magenta", newline=True):
                 # Usamos el executor en lugar del asistente directamente para habilitar Tools y Thinking
                 result = await self.executor.execute(

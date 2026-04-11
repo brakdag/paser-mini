@@ -166,12 +166,6 @@ class CommandHandler:
                 except Exception as e: console.print(f"Error: {e}", style="red")
             return True
 
-        elif input_stripped == '/play_last':
-            if os.path.exists("last_voice.wav"):
-                console.print("\u23f0 Reproduciendo última grabación...", style="cyan")
-                os.system("aplay last_voice.wav")
-            else:
-                console.print("No hay grabaciones previas para reproducir.", style="yellow")
-            return True
+
             
         return False
