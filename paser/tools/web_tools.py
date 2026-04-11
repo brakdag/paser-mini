@@ -4,6 +4,8 @@ import re
 import html2text
 import logging
 import json
+import subprocess
+import os
 from .util_tools import retry_request
 
 logger = logging.getLogger("tools")
@@ -38,3 +40,34 @@ def fetch_url(url: str) -> str:
     h.ignore_links = True
     h.ignore_images = True
     return h.handle(html)[:3000]
+
+def render_web_page(url: str) -> str:
+    """
+    Renders a web page using elinks -dump to return a clean, human-readable text version.
+    """
+    try:
+        # Set environment to ensure UTF-8 output
+        env = os.environ.copy()
+        env["LANG"] = "en_US.UTF-8"
+        
+        result = subprocess.run(
+            ["elinks", "-dump", "-no-references", url],
+            capture_output=True,
+            text=True,
+            env=env,
+            timeout=15,
+            encoding='utf-8',
+            errors='ignore'
+        )
+        
+        if result.returncode != 0:
+            logger.error(f"Elinks error: {result.stderr}")
+            return f"Error rendering page: {result.stderr}"
+            
+        return result.stdout
+    except subprocess.TimeoutExpired:
+        logger.error(f"Elinks timeout for URL: {url}")
+        return "Error: The page took too long to render."
+    except Exception as e:
+        logger.error(f"Unexpected error rendering page {url}: {str(e)}")
+        return f"Error rendering page: {str(e)}"

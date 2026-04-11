@@ -10,6 +10,7 @@ from paser.tools import wasm_tools as wt_wasm
 from paser.tools import vision as vt
 from paser.tools import git_tools as gt
 from paser.tools import github_tools as gh
+from paser.tools import api_tools as at
 
 nav = cn.CodeNavigator()
 
@@ -22,7 +23,7 @@ AVAILABLE_TOOLS = {
     "remove_file": ft.remove_file,
     "list_dir": ft.list_dir,
     "web_search": wt.web_search,
-    "fetch_url": wt.fetch_url,
+    "fetch_url": wt.fetch_url, "render_web_page": wt.render_web_page,
     "get_cwd": ut.get_cwd,
     "read_lines": ft.read_lines,
     "read_head": ft.read_head,
@@ -58,7 +59,8 @@ AVAILABLE_TOOLS = {
     "create_issue": gh.create_issue,
     "close_issue": gh.close_issue,
     "edit_issue": gh.edit_issue,
-    "compile_latex": st.compile_latex
+    "compile_latex": st.compile_latex,
+    "api_request": at.api_request
 }
 
 import json

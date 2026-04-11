@@ -7,8 +7,8 @@ def test_executor_multiple_tool_calls():
     class MockAssistant:
         def send_message(self, text):
             if "TOOL_RESPONSE" in text:
-                return "Finalizado"
-            return "<TOOL_CALL{'name': 'obtener_hora_actual', 'args': {}}> <TOOL_CALL{'name': 'calculadora_basica', 'args': {'operacion': '5 + 3'}}>"
+                return text
+            return "<TOOL_CALL>{\"name\": \"obtener_hora_actual\", \"args\": {}}</TOOL_CALL> <TOOL_CALL>{\"name\": \"calculadora_basica\", \"args\": {\"operacion\": \"5 + 3\"}}</TOOL_CALL>"
 
     tools = {
         "obtener_hora_actual": lambda: "2026-04-05 14:30:00",
@@ -28,13 +28,11 @@ def test_executor_max_turns():
     """Test termination when max_turns is exceeded."""
     class MockAssistant:
         def send_message(self, _):
-            return "<TOOL_CALL{'name': 'dummy', 'args': {}}>"
+            return "<TOOL_CALL>{\"name\": \"dummy\", \"args\": {}}</TOOL_CALL>"
 
     executor = AutonomousExecutor(assistant=MockAssistant(),
                                  tools={},
                                  max_turns=3)
-    for _ in range(3):
-        asyncio.run(executor.execute("dummy input"))
     result = asyncio.run(executor.execute("dummy input"))
     assert "Límite de turnos excedido" in result
 
@@ -43,13 +41,13 @@ def test_executor_tool_error_handling():
     class MockAssistant:
         def send_message(self, text):
             if "TOOL_RESPONSE" in text:
-                return "Finalizado"
-            return "<TOOL_CALL{'name': 'obtener_hora_actual', 'args': {}}>"
+                return text
+            return "<TOOL_CALL>{\"name\": \"obtener_hora_actual\", \"args\": {}}</TOOL_CALL>"
 
     tools = {"obtener_hora_actual": lambda: "error"}
     executor = AutonomousExecutor(assistant=MockAssistant(),
                                  tools=tools,
                                  max_turns=10)
     
-    result = asyncio.run(executor.execute("<TOOL_CALL{'name': 'obtener_hora_actual', 'args': {}}>"))
+    result = asyncio.run(executor.execute("<TOOL_CALL>{\"name\": \"obtener_hora_actual\", \"args\": {}}</TOOL_CALL>"))
     assert "error" in result.lower()

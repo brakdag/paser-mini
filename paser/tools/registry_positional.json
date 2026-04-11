@@ -8,6 +8,7 @@
   ["list_dir", "List directory contents", {"path": "string"}],
   ["web_search", "Search the web", {"query": "string"}],
   ["fetch_url", "Get URL content", {"url": "string"}],
+  ["render_web_page", "Render a web page as clean text using ELinks", {"url": "string"}],
   ["get_cwd", "Get current working directory", {}],
   ["read_lines", "Read specific file lines", {"path": "string", "inicio": "integer", "fin": "integer"}],
   ["read_head", "Read first N file lines", {"path": "string", "cantidad_lineas": "integer"}],
@@ -34,7 +35,7 @@
   ["get_definition", "Get symbol definition", {"symbol": "string"}],
   ["get_references", "Get symbol references", {"symbol": "string"}],
   ["list_symbols", "List symbols in file", {"path": "string"}],
-  ["execute_python", "Execute Python code in a secure sandbox. Note: The '>>>' prompt indicates the interpreter is ready for the next command (OK).", {"code": "string"}],
+  ["execute_python", "Execute Python code in a secure sandbox. Note: The sandbox is isolated and does NOT have access to the project's local file system. Use file-specific tools for disk operations. The '>>>' prompt indicates the interpreter is ready for the next command (OK).", {"code": "string"}],
   ["format_code", "Apply standard Python formatting (Black) to a file", {"path": "string"}],
   ["get_tree", "Return the directory structure in a visual tree format with depth control and filters", {"path": "string", "max_depth": "integer", "exclude_patterns": "array[string]"}],
   ["see_image", "See image content", {"path": "string"}],
@@ -42,5 +43,6 @@
   ["create_issue", "Create repo issue", {"repo": "string", "title": "string", "body": "string"}],
   ["close_issue", "Close repo issue", {"repo": "string", "issue_number": "integer"}],
   ["edit_issue", "Edit a repo issue", {"issue_number": "integer", "repo": "string", "title": "string", "body": "string"}],
-  ["compile_latex", "Compila un archivo LaTeX y devuelve las rutas del PDF y Log generados", {"path": "string"}]
+  ["compile_latex", "Compila un archivo LaTeX y devuelve las rutas del PDF y Log generados", {"path": "string"}],
+  ["api_request", "Make an HTTP request to a specified URL (GET, POST, PUT, DELETE, PATCH)", {"url": "string", "method": "string", "headers": "object", "body": "any"}]
 ]

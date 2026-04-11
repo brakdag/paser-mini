@@ -6,7 +6,7 @@
 
 **Paser** (originally called "Passer", after _Passer domesticus_) is an autonomous agent powered by Google's Gemini model (via the `google-genai` SDK) that employs the **ReAct (Reasoning and Acting)** pattern to execute local functions transparently for the user. Designed and optimized for **Debian/Linux** systems.
 
-The name change from "Passer" to "Paser" simplifies terminal typing while maintaining the root of the original name and the meaning linked to the house sparrow, a very common bird in southern Mendoza.
+The name change from "Passer" to "Paser" (repository: `brakdag/passer`) simplifies terminal typing while maintaining the root of the original name and the meaning linked to the house sparrow, a very common bird in southern Mendoza.
 
 ## Installation
 

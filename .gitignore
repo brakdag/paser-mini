@@ -12,3 +12,14 @@ sessions/
 .paser_events_test.json
 TODO.md
 paser.log
+
+# LaTeX artifacts
+*.aux
+*.log
+*.out
+*.toc
+*.pdf
+*.tex
+
+# Test artifacts
+tests/*.png
