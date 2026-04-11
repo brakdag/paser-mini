@@ -65,14 +65,16 @@ def _(event):
 @kb.add('j')
 def _(event):
     if ui_state.mode == UIState.NORMAL:
-        event.current_buffer.history_backward()
+        sys.stdout.write('\x1b[6~') # Page Down
+        sys.stdout.flush()
     else:
         event.current_buffer.insert_text('j')
 
 @kb.add('k')
 def _(event):
     if ui_state.mode == UIState.NORMAL:
-        event.current_buffer.history_forward()
+        sys.stdout.write('\x1b[5~') # Page Up
+        sys.stdout.flush()
     else:
         event.current_buffer.insert_text('k')
 

@@ -1,7 +1,7 @@
 import re
 
 class RepetitionDetector:
-    def __init__(self, n=4, max_repeats=3):
+    def __init__(self, n=20, max_repeats=50):
         """
         n: Tamaño de la secuencia de palabras a monitorear (n-grama).
         max_repeats: Cuántas veces puede repetirse la secuencia antes de cortar.
@@ -43,7 +43,7 @@ class RepetitionDetector:
                         break
                 
                 if count >= self.max_repeats:
-                    return False
+                    return " ".join(current_ngram)
         
         return True
 

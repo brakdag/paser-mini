@@ -85,8 +85,10 @@ class AutonomousExecutor:
             return "Límite de turnos excedido: El agente ha alcanzado el máximo de iteraciones permitidas para evitar bucles infinitos."
             
         # Solo aplicamos detector de repetición si la entrada es texto
-        if isinstance(user_input, str) and not self.repetition_detector.add_text(user_input):
-            return "Detección de texto repetitivo: posible bucle infinito."
+        if isinstance(user_input, str):
+            rep_res = self.repetition_detector.add_text(user_input)
+            if rep_res is not True:
+                return f"Detección de texto repetitivo: posible bucle infinito. Secuencia: '{rep_res}'"
 
         self.quota_tracker.increment_and_get(self.assistant.current_model)
         response = await asyncio.to_thread(self.assistant.send_message, user_input)
@@ -95,8 +97,9 @@ class AutonomousExecutor:
         while True:
             if self.stop_requested:
                 return "Ejecución interrumpida por el usuario."
-            if not self.repetition_detector.add_text(response_text):
-                return "Detección de texto repetitivo: posible bucle infinito."
+            rep_res = self.repetition_detector.add_text(response_text)
+            if rep_res is not True:
+                return f"Detección de texto repetitivo: posible bucle infinito. Secuencia: '{rep_res}'"
 
             calls = self._extract_tool_calls(response_text)
             
