@@ -2,6 +2,8 @@ import json
 import os
 from datetime import datetime, timedelta
 from typing import Dict, Any
+from zoneinfo import ZoneInfo
+from paser.tools.core_tools import context
 
 class QuotaTracker:
     """
@@ -9,7 +11,8 @@ class QuotaTracker:
     Also manages known RPD limits for each model.
     """
     def __init__(self, storage_path: str = ".paser_quota.json"):
-        self.storage_path = storage_path
+        # Ensure the quota file is always stored in the project root
+        self.storage_path = context.get_safe_path(storage_path)
         # Default limits based on AI Studio / User Screenshot
         self.default_limits = {
             "models/gemini-3.1-flash-lite": 500,
@@ -28,17 +31,17 @@ class QuotaTracker:
         }
 
     def _get_quota_date(self) -> any:
-        now = datetime.now()
-        if now.hour < 5:
-            return (now - timedelta(days=1)).date()
-        return now.date()
+        # Reset based on Google's server time (Pacific Time)
+        return datetime.now(ZoneInfo("America/Los_Angeles")).date()
 
     def increment_and_get(self, model_name: str) -> int:
         quota_date = self._get_quota_date()
         data = self._load()
         
+        # Reset counts if the date has changed, but preserve limits
         if data.get("last_quota_date") != str(quota_date):
-            data = {"last_quota_date": str(quota_date), "counts": {}, "limits": self.default_limits}
+            data["last_quota_date"] = str(quota_date)
+            data["counts"] = {}
         
         counts = data.get("counts", {})
         counts[model_name] = counts.get(model_name, 0) + 1
