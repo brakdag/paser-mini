@@ -25,16 +25,21 @@ fi
 echo "Verificando dependencias de sistema..."
 install_apt_package "elinks"
 install_apt_package "imagemagick"
+install_apt_package "portaudio19-dev"
 
 # 3. Instalación condicional de LaTeX
-echo ""
-read -p "LaTeX es un paquete muy pesado. ¿Deseas instalarlo para habilitar el soporte de compilación de LaTeX? (y/n): " install_latex
-if [[ "$install_latex" =~ ^[Yy]$ ]]; then
-    echo "[INSTALL] Instalando LaTeX (esto puede tardar un tiempo)..."
-    sudo apt-get update -qq
-    sudo apt-get install -y -qq texlive-latex-extra
+if command -v pdflatex &> /dev/null; then
+    echo "[OK] LaTeX ya está instalado."
 else
-    echo "[SKIP] Saltando instalación de LaTeX."
+    echo ""
+    read -p "LaTeX es un paquete muy pesado. ¿Deseas instalarlo para habilitar el soporte de compilación de LaTeX? (y/n): " install_latex
+    if [[ "$install_latex" =~ ^[Yy]$ ]]; then
+        echo "[INSTALL] Instalando LaTeX (esto puede tardar un tiempo)..."
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq texlive-latex-extra
+    else
+        echo "[SKIP] Saltando instalación de LaTeX."
+    fi
 fi
 
 # Get project root (donde se ejecute el script)

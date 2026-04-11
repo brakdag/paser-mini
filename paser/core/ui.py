@@ -14,6 +14,7 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.styles import Style
+from prompt_toolkit.buffer import Buffer, Document
 from contextlib import contextmanager
 import logging
 
@@ -26,12 +27,15 @@ console = Console()
 class UIState:
     INSERT = "INSERT"
     NORMAL = "NORMAL"
+    AUDIO = "AUDIO"
     
     def __init__(self):
         self.mode = self.INSERT
         self.last_cursor_pos = 0
 
 ui_state = UIState()
+
+
 
 # Global session to maintain state and bindings
 _session = None
@@ -85,6 +89,53 @@ def _(event):
         event.current_buffer.cursor_right()
     else:
         event.current_buffer.insert_text('l')
+
+import string
+
+# Callback global para el sistema de audio
+audio_callback = None
+
+# Registrar bindings para bloquear la escritura en modo NORMAL
+special_vim_keys = {'h', 'j', 'k', 'l', 'i'}
+# Caracteres a bloquear en modo NORMAL (incluyendo variantes de AltGr+V)
+# Excluimos la 'v' de aquí para que su binding especial tenga control total
+chars_to_block = (string.ascii_letters + string.digits + " " + "„¥√").replace('v', '').replace('V', '')
+for char in chars_to_block:
+    if char.lower() in special_vim_keys:
+        continue
+    
+    @kb.add(char)
+    def _(event, c=char):
+        if ui_state.mode == UIState.NORMAL:
+            return # Bloquea la escritura
+        event.current_buffer.insert_text(c)
+
+@kb.add('v')
+def _(event):
+    # Si estamos en modo NORMAL o AUDIO, la 'v' gestiona el micrófono
+    if ui_state.mode in (UIState.NORMAL, UIState.AUDIO):
+        if audio_callback:
+            audio_callback()
+    # Solo si estamos en modo INSERT, la 'v' escribe la letra
+    else:
+        event.current_buffer.insert_text('v')
+
+class VimBuffer(Buffer):
+    """Buffer personalizado que bloquea la inserción de texto en modo NORMAL."""
+    def handle_input(self, key):
+        if ui_state.mode == UIState.NORMAL:
+            # Definimos las teclas que SÍ están permitidas en modo NORMAL
+            # Incluimos las de navegación y la tecla 'i' para volver a INSERT
+            allowed_keys = ['h', 'j', 'k', 'l', 'i', 'escape']
+            
+            # Si la tecla no es una de las permitidas, la ignoramos
+            if hasattr(key, 'char') and key.char not in allowed_keys:
+                return
+            if not hasattr(key, 'char') and key not in allowed_keys:
+                # Para teclas especiales (como Esc), permitimos que pasen
+                pass
+        
+        return super().handle_input(key)
 
 def get_bottom_toolbar():
     """Returns the status bar based on the current UI mode."""

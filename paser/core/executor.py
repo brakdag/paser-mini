@@ -48,22 +48,22 @@ class AutonomousExecutor:
         return data
 
     def _extract_tool_calls(self, text: str) -> list[tuple[Optional[dict[str, Any]], str]]:
-        pattern = r"<(?:TOOL_CALL|tool_call)\s*>(.*?)</(?:TOOL_CALL|tool_call)>"
-        calls: list[tuple[Optional[dict[str, Any]], str]] = []
-        
-        for match in re.finditer(pattern, text, re.IGNORECASE | re.DOTALL):
+        calls = []
+        md_pattern = r'```(?:json)?\s*(.*?)\s*```'
+        for match in re.finditer(md_pattern, text, re.DOTALL):
+            content = match.group(1).strip()
+            data = self._parse_call_content(content)
+            if data: calls.append((data, content))
+        tag_pattern = r'<(?:TOOL_CALL|tool_call)\s*>(.*?)</(?:TOOL_CALL|tool_call)>'
+        for match in re.finditer(tag_pattern, text, re.IGNORECASE | re.DOTALL):
             raw = match.group(1).strip()
-            data = self._parse_call_content(raw)
-            calls.append((data, raw))
-        
-        all_opens = list(re.finditer(r"<(?:TOOL_CALL|tool_call)\s*>", text, re.IGNORECASE))
-        if all_opens:
-            last_open = all_opens[-1]
-            remaining = text[last_open.end():].strip()
-            if not re.search(r"</(?:TOOL_CALL|tool_call)>", remaining, re.IGNORECASE) and remaining.startswith('{'):
-                data = self._parse_call_content(remaining)
-                calls.append((data, remaining))
-                    
+            calls.append((self._parse_call_content(raw), raw))
+        if not calls:
+            json_pattern = r'\{(?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*\}'
+            for match in re.finditer(json_pattern, text, re.DOTALL):
+                raw = match.group(0).strip()
+                data = self._parse_call_content(raw)
+                if data and 'name' in data: calls.append((data, raw))
         return calls
 
     def _format_tool_response(self, data: Any, success: bool = True) -> str:
@@ -74,7 +74,7 @@ class AutonomousExecutor:
         }
         return f"<TOOL_RESPONSE>{json.dumps(payload)}</TOOL_RESPONSE>"
 
-    async def execute(self, user_input: str, thinking_enabled: bool = True, get_confirmation_callback=None) -> str:
+    async def execute(self, user_input: Union[str, bytes], thinking_enabled: bool = True, get_confirmation_callback=None) -> str:
         self.stop_requested = False
         self.turn_count = 0  # Reset turn count for the new task
         if self.stop_requested:
@@ -84,7 +84,8 @@ class AutonomousExecutor:
         if self.turn_count > self.max_turns:
             return "Límite de turnos excedido: El agente ha alcanzado el máximo de iteraciones permitidas para evitar bucles infinitos."
             
-        if not self.repetition_detector.add_text(user_input):
+        # Solo aplicamos detector de repetición si la entrada es texto
+        if isinstance(user_input, str) and not self.repetition_detector.add_text(user_input):
             return "Detección de texto repetitivo: posible bucle infinito."
 
         self.quota_tracker.increment_and_get(self.assistant.current_model)

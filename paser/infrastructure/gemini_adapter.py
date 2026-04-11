@@ -3,7 +3,7 @@ import re
 import base64
 import time
 import json
-from typing import Generator, Optional, Any
+from typing import Generator, Optional, Any, Union
 from google import genai
 from google.genai import types
 from google.genai.errors import ClientError
@@ -227,15 +227,21 @@ class GeminiAdapter(IAIAssistant):
                     logger.exception(f"Non-retryable API error: {e}")
                     raise e
 
-    def send_message(self, message: str) -> Any:
+    def send_message(self, message: Union[str, bytes]) -> Any:
         if not self.chat:
             return None
 
         retries = 0
         while retries <= self.max_retries:
             try:
-                # Convert string message to multimodal parts if necessary
-                parts = self._prepare_message_parts(message)
+                # Si el mensaje es bytes, lo tratamos como audio Base64
+                if isinstance(message, bytes):
+                    audio_bytes = message
+                    parts = [types.Part.from_bytes(data=audio_bytes, mime_type="audio/wav")]
+                else:
+                    # Si es string, usamos la lógica de partes multimodales existente
+                    parts = self._prepare_message_parts(message)
+                
                 response = self.chat.send_message(parts)
                 
                 # Actualizar historial
@@ -253,7 +259,6 @@ class GeminiAdapter(IAIAssistant):
                         return f"⚠️ Error: {formatted_error}"
                     
                     delay = self._get_retry_delay(e, retries - 1)
-                    # Log more discreetly for 429s
                     if isinstance(e, ClientError) or getattr(e, 'status_code', None) == 429 or '429' in str(e).lower():
                         logger.warning(f"API Retry {retries}/{self.max_retries} in {delay}s (Quota exceeded)")
                     else:
@@ -264,6 +269,33 @@ class GeminiAdapter(IAIAssistant):
                 
                 logger.exception(f"Non-retryable API error: {e}")
                 raise e
+
+    def send_audio_message(self, base64_audio: str) -> Any:
+        """
+        Envía un mensaje de audio codificado en Base64 a la API de Gemini.
+        """
+        if not self.chat:
+            return None
+
+        try:
+            audio_bytes = base64.b64decode(base64_audio)
+            # Crear la parte de audio (WAV es aceptado por Gemini)
+            audio_part = types.Part.from_bytes(
+                data=audio_bytes,
+                mime_type="audio/wav"
+            )
+            
+            response = self.chat.send_message([audio_part])
+            
+            # Actualizar historial
+            self.history.append(types.Content(role="user", parts=[audio_part]))
+            if hasattr(response, 'text') and response.text:
+                self.history.append(types.Content(role="model", parts=[types.Part.from_text(text=response.text)]))
+            
+            return response
+        except Exception as e:
+            logger.exception(f"Error sending audio message: {e}")
+            raise e
 
     def get_chat_history(self) -> Any:
         """Devuelve el objeto de historial bruto para el conteo de tokens."""
