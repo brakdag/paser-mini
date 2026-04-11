@@ -9,3 +9,4 @@ venv
 paser.log
 .chat_history
 tests/test_results.json
+.paser_quota.json

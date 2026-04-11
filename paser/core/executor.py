@@ -8,6 +8,7 @@ from typing import Any, Optional, Union, get_type_hints, get_origin, get_args
 from paser.core.repetition_detector import RepetitionDetector
 from paser.core.interfaces import IAIAssistant
 from paser.core.ui import async_get_confirmation
+from paser.core.quota_tracker import QuotaTracker
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,7 @@ class AutonomousExecutor:
         self.max_turns = max_turns
         self.turn_count = 0
         self.stop_requested = False
+        self.quota_tracker = QuotaTracker()
 
     def _parse_call_content(self, raw_content: str) -> Optional[dict[str, Any]]:
         """Intenta parsear el contenido de un TOOL_CALL usando múltiples estrategias."""
@@ -85,6 +87,7 @@ class AutonomousExecutor:
         if not self.repetition_detector.add_text(user_input):
             return "Detección de texto repetitivo: posible bucle infinito."
 
+        self.quota_tracker.increment_and_get(self.assistant.current_model)
         response = await asyncio.to_thread(self.assistant.send_message, user_input)
         response_text = self._extract_text(response)
 
@@ -171,6 +174,7 @@ class AutonomousExecutor:
                 combined_tool_responses.append(tr)
 
             combined_message = "".join(combined_tool_responses)
+            self.quota_tracker.increment_and_get(self.assistant.current_model)
             response_obj = await asyncio.to_thread(self.assistant.send_message, combined_message)
             response_text = self._extract_text(response_obj)
 

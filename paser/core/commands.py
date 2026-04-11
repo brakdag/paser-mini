@@ -137,6 +137,24 @@ class CommandHandler:
                 else: console.print("No hay una sesión de chat activa.", style="red")
             except Exception as e: console.print(f"Error estimando tokens: {e}", style="red")
             return True
+
+        elif input_stripped == '/quota':
+            try:
+                model = self.chat_manager.executor.assistant.current_model
+                count = self.chat_manager.executor.quota_tracker.get_current_count(model)
+                limit = self.chat_manager.executor.quota_tracker.get_limit(model)
+                
+                if limit > 0:
+                    usage_str = f"{count} / {limit}"
+                    percent = (count / limit) * 100
+                    status = f" ({percent:.1f}%)"
+                else:
+                    usage_str = f"{count} (sin límite conocido)"
+                    status = ""
+                
+                console.print(f"[bold cyan]󰋃 Consumo de API hoy ({model}):[/bold cyan] {usage_str}{status}", style="yellow")
+            except Exception as e: console.print(f"Error consultando cuota: {e}", style="red")
+            return True
         
         elif input_stripped.startswith('/close_issue'):
             parts = input_stripped.split()
