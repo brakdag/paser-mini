@@ -15,6 +15,10 @@ class CommandHandler:
     async def handle(self, user_input):
         input_stripped = user_input.strip()
         
+        if input_stripped.lower() in (':q', '/q', '/quit', '/exit'):
+            self.chat_manager.should_exit = True
+            return True
+
         if input_stripped.startswith('/cd '):
             path = input_stripped[4:]
             try:

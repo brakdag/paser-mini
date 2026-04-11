@@ -37,6 +37,7 @@ class ChatManager:
             on_thought=self._on_thought
         )
         self.event_monitor = EventMonitor(event_manager, self.executor)
+        self.should_exit = False
         
         self._initialized_event = threading.Event()
         self._init_error = None
@@ -84,7 +85,7 @@ class ChatManager:
         model = self.config_manager.get("model_name", "Unknown")
         console.print(
             Panel(
-                f"[bold cyan]🤖 Paser Autonomous Agent[/bold cyan]\n"
+                f"[bold cyan]🤖 Paser Autonomous Agent (Debug Mode)[/bold cyan]\n"
                 f"[dim]Model: {model} | Temp: {self.temperature}[/dim]",
                 title="🤖 System Ready",
                 border_style="magenta",
@@ -93,7 +94,7 @@ class ChatManager:
         )
 
         history = FileHistory(".chat_history")
-        while True:
+        while not self.should_exit:
             try:
                 user_input = await get_input("\u2502 \u279c ", history=history)
             except: break
