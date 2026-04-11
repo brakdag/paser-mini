@@ -1,3 +1,6 @@
+# WARNING: Refer to Issue #110 before editing this file.
+# The SYSTEM_INSTRUCTION construction is mandatory to avoid interceptor issues.
+
 import os
 import json
 from paser.tools import (

@@ -25,7 +25,7 @@
   ["search_text_global", "Search string in all files", {"query": "string"}],
   ["notify_user", "System notification", {"mensaje": "string"}],
   ["alert_sound", "Play alert sound", {}],
-  ["set_timer", "Set a timer", {"seconds": "integer"}],
+  ["set_timer", "Set a timer", {"seconds": "integer", "message": "string"}],
   ["is_window_in_focus", "Check terminal focus", {"action": "string"}],
   ["convert_image", "Convert an image or PDF page to another format using ImageMagick. Supports extra ImageMagick flags via 'extra_args' (e.g., -resize, -crop). Use '-help' in extra_args for more info.", {"input_path": "string", "output_path": "string", "extra_args": "string"}],
   ["notify_mobile", "Send mobile notification", {"mensaje": "string"}],

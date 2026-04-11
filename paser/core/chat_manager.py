@@ -209,12 +209,12 @@ class ChatManager:
             verb, icon = self.TIMER_TOOLS[tool_name]
             # Extraemos info para feedback
             if "with message:" in result:
-                msg_part = result.split("with message:")[1].strip()
-            else:
                 msg_part = args.get("message", "Timer")
-            
-            console.print(f"  {icon} Programado: {msg_part} ({args.get('seconds', '?')}s) {status_icon}", style="dim yellow")
-        
+            #
+            #
+            #
+            #
+            #
         elif tool_name in self.SYSTEM_TOOLS:
             verb, icon = self.SYSTEM_TOOLS[tool_name]
             console.print(f"  {icon} {verb} {status_icon}", style="dim yellow")
