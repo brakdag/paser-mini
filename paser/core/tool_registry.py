@@ -21,6 +21,13 @@ FILE_TOOLS = {
     "get_tree": ("Generó árbol", "󰉋"),
     "search_files_pattern": ("Buscó archivos", "󰍃"),
     "search_text_global": ("Buscó texto", "󰍃"),
+    "read_file_with_lines": ("Leyó con líneas", "󰈚"),
+    "copy_lines": ("Copió líneas", "󰈚"),
+    "cut_lines": ("Cortó líneas", "󰈚"),
+    "paste_lines": ("Pegó líneas", "󰈚"),
+    "replace_string_at_line": ("Reemplazó en línea", "󰑐"),
+    "validate_json": ("Validó JSON", "󰈚"),
+    "validate_json_file": ("Validó archivo JSON", "󰈚"),
 }
 
 NOTIFICATION_TOOLS = {
@@ -46,6 +53,9 @@ COMPUTE_TOOLS = {
 WEB_TOOLS = {
     "web_search": ("Buscando en la web", "󰍃"),
     "fetch_url": ("Obteniendo URL", "󰈚"),
+    "render_web_page": ("Renderizando página", "󰈚"),
+    "api_request": ("Petición API", "󰈚"),
+    "query_ai": ("Consultando IA", "󰍃"),
 }
 
 GIT_TOOLS = {
@@ -67,10 +77,23 @@ CODE_TOOLS = {
     "get_definition": ("Buscando definición", "󰍃"),
     "get_references": ("Buscando referencias", "󰍃"),
     "list_symbols": ("Listando símbolos", "󰈚"),
+    "manage_imports": ("Gestionando imports", "󰑐"),
+    "find_all_calls": ("Buscando llamadas", "󰍃"),
+    "get_detailed_symbols": ("Símbolos detallados", "󰈚"),
+    "get_imports": ("Listando imports", "󰈚"),
+    "find_missing_type_hints": ("Auditando tipos", "󰍃"),
+    "get_lsp_completions": ("Obteniendo completados", "󰈚"),
+    "get_object_methods": ("Métodos de objeto", "󰈚"),
 }
 
 LATEX_TOOLS = {
     "compile_latex": ("Compilando LaTeX", "󰈚"),
+}
+
+MEDIA_TOOLS = {
+    "play_music": ("Reproduciendo música", "󰍃"),
+    "stop_music": ("Deteniendo música", "󰍃"),
+    "speak_text": ("Hablando", "󰍃"),
 }
 
 UTIL_TOOLS = {
@@ -81,11 +104,11 @@ UTIL_TOOLS = {
 
 ALL_CATEGORIES = [
     FILE_TOOLS, COMPUTE_TOOLS, TIMER_TOOLS, SYSTEM_TOOLS, NOTIFICATION_TOOLS,
-    WEB_TOOLS, GIT_TOOLS, GITHUB_TOOLS, CODE_TOOLS, LATEX_TOOLS, UTIL_TOOLS
+    WEB_TOOLS, GIT_TOOLS, GITHUB_TOOLS, CODE_TOOLS, LATEX_TOOLS, UTIL_TOOLS, MEDIA_TOOLS
 ]
 
 def get_tool_metadata(tool_name: str) -> Tuple[str, str]:
-    """Busca el verbo e icono de una herramienta en todas las categorías disponibles."""
+    """Busca el verbo e icono de una herramienta en todas las categoráas disponibles."""
     for cat in ALL_CATEGORIES:
         if tool_name in cat:
             return cat[tool_name]
