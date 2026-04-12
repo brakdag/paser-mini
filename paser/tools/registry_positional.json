@@ -44,6 +44,9 @@
   ["close_issue", "Close repo issue", {"repo": "string", "issue_number": "integer"}],
   ["edit_issue", "Edit a repo issue", {"issue_number": "integer", "repo": "string", "title": "string", "body": "string"}],
   ["compile_latex", "Compila un archivo LaTeX y devuelve las rutas del PDF y Log generados", {"path": "string"}],
+  ["play_music", "Search and play a song from archive.org using mpv", {"query": "string"}],
+  ["stop_music", "Stop the current music playback", {}],
+  ["speak_text", "Convert text to speech and play it", {"text": "string", "lang": "string"}],
   ["api_request", "Make an HTTP request to a specified URL (GET, POST, PUT, DELETE, PATCH)", {"url": "string", "method": "string", "headers": "object", "body": "any"}],
   ["query_ai", "Queries another AI instance for a second opinion, alternative perspectives, or to break reasoning loops.", {"prompt": "string", "temperature": "float", "model": "string", "context": "string"}]
 ]

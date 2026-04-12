@@ -68,6 +68,9 @@ AVAILABLE_TOOLS = {
     "close_issue": gh.close_issue,
     "edit_issue": gh.edit_issue,
     "compile_latex": st.compile_latex,
+    "play_music": st.play_music,
+    "stop_music": st.stop_music,
+    "speak_text": st.speak_text,
     "api_request": at.api_request,
     "query_ai": ut.query_ai
 }
