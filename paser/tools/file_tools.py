@@ -238,53 +238,6 @@ def paste_lines(path: str, line_number: int) -> str:
     
     return f"Contenido del portapapeles pegado en '{path}' en la línea {line_number}."
 
-def replace_function(path: str, function_name: str, new_content: str) -> str:
-    """Replaces a function in a Python file using AST to find exact boundaries."""
-    safe_path = context.get_safe_path(path)
-    with open(safe_path, 'r', encoding='utf-8') as f:
-        source = f.read()
-    
-    try:
-        tree = ast.parse(source)
-    except SyntaxError as e:
-        raise ValueError(f"Syntax error in file {path}: {e}")
-
-    target_node = None
-    if '.' in function_name:
-        class_name, method_name = function_name.split('.', 1)
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef) and node.name == class_name:
-                for subnode in ast.walk(node):
-                    if isinstance(subnode, (ast.FunctionDef, ast.AsyncFunctionDef)) and subnode.name == method_name:
-                        target_node = subnode
-                        break
-                if target_node: break
-    else:
-        for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == function_name:
-                target_node = node
-                break
-
-    if not target_node:
-        raise ValueError(f"Function '{function_name}' not found in {path}.")
-
-    start_line = target_node.lineno
-    end_line = getattr(target_node, 'end_lineno', start_line)
-
-    with open(safe_path, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-
-    # Ensure new_content ends with newline
-    if not new_content.endswith('\n'):
-        new_content += '\n'
-
-    # Replace the range [start_line-1 : end_line]
-    lines[start_line-1 : end_line] = [new_content]
-
-    with open(safe_path, 'w', encoding='utf-8') as f:
-        f.writelines(lines)
-
-    return f"Function '{function_name}' replaced successfully in {path}."
 
 def manage_imports(path: str, add_imports: list[str] = [], remove_imports: list[str] = []) -> str:
     """Manages Python imports by adding new ones and removing unwanted ones semantically."""

@@ -88,12 +88,28 @@ paser
     - `/max_turns <n>`: Set the maximum number of autonomous turns to prevent infinite loops.
     - `/clear` or `/cls`: Clear the terminal screen.
 
+## Tool Management
+
+To maintain system stability and ensure the LLM correctly identifies available capabilities, follow these procedures when modifying the toolset:
+
+### Adding a New Tool
+1. **Implementation**: Define the Python function in the appropriate module within `paser/tools/` (e.g., `file_tools.py`, `web_tools.py`). Ensure strict type hinting for all arguments.
+2. **Registry Mapping**: Add the tool to the `AVAILABLE_TOOLS` dictionary in `paser/tools/registry.py`, mapping the tool name (used by the LLM) to the actual function object.
+3. **Metadata Definition**: Add the tool's metadata (name, description, and parameter types) to `paser/tools/registry_positional.json`. This file is used to generate the `TOOL_CATALOG` in the system prompt.
+4. **Refresh**: Restart the application to reload the registry and update the system instructions sent to the model.
+
+### Removing a Tool
+1. **Registry Removal**: Delete the tool's entry from the `AVAILABLE_TOOLS` dictionary in `paser/tools/registry.py`.
+2. **Metadata Cleanup**: Remove the corresponding entry from `paser/tools/registry_positional.json`.
+3. **Code Cleanup**: (Optional) Delete the function implementation from the source file to keep the codebase clean.
+4. **Refresh**: Restart the application.
+
 ## Available Tools
 
 ### Files and Directories
 
 - `read_file(path)`, `read_files(paths)`, `read_lines(...)`, `read_head(...)`: File reading.
-- `write_file(path, content)`, `update_line(...)`, `replace_string(...)`, `replace_function(...)`, `manage_imports(...)`, `global_replace(...)`: Writing and editing. **Note: These tools implement strict validation and throw errors if the target string/line is not found or the operation is invalid.**
+- `write_file(path, content)`, `update_line(...)`, `replace_string(...)`, `manage_imports(...)`, `global_replace(...)`: Writing and editing. **Note: These tools implement strict validation and throw errors if the target string/line is not found or the operation is invalid.**
 - `list_dir(path)`, `create_dir(path)`, `rename_path(origin, destination)`, `remove_file(path)`: Path management.
 - `search_files_pattern(pattern)`, `search_text_global(query)`: Search and discovery.
 

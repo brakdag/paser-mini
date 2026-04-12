@@ -156,8 +156,6 @@ class AutonomousExecutor:
                     tr = self._format_tool_response(f"Herramienta desconocida: {name}", success=False)
                 else:
                     try:
-                        # Confirmation removed for execute_python
-
                         ctx = None
                         if self.on_tool_start:
                             ctx = self.on_tool_start(name, args)
@@ -172,6 +170,7 @@ class AutonomousExecutor:
                         if self.on_tool_used:
                             self.on_tool_used(name, args, result, True)
                     except Exception as exc:
+                        logger.exception(f"Error executing tool {name} with args {args}: {exc}")
                         tr = self._format_tool_response(f"Error en herramienta '{name}': {str(exc)}", success=False)
                         if self.on_tool_used:
                             self.on_tool_used(name, args, str(exc), False)

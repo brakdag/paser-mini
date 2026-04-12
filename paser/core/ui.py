@@ -126,7 +126,7 @@ class VimBuffer(Buffer):
     """Buffer personalizado que bloquea la inserción de texto en modo NORMAL."""
     def handle_input(self, key):
         if ui_state.mode == UIState.NORMAL:
-            # Definimos las teclas que SÍ están permitidas en modo NORMAL
+            # Definimos las teclas que sí están permitidas en modo NORMAL
             # Incluimos las de navegación y la tecla 'i' para volver a INSERT
             allowed_keys = ['h', 'j', 'k', 'l', 'i', 'escape']
             
@@ -213,7 +213,7 @@ LATEX_TO_UNICODE = {
     r"\times": "\u00d7",
     r"\div": "\u00f7",
     r"\pm": "\u00b1",
-    r"\mp": "\u2213",
+    r"\mp": "\u00b1",
     r"\cdot": "\u22c5",
     r"\ast": "\u2217",
     # Calculus & Analysis
@@ -310,18 +310,28 @@ def notify_user(message: str = "Una acción importante ha sido completada exitos
     print_info(f"🔔 Notificación del Sistema: {message}")
     return f"Notificación visual enviada: {message}"
 
-@contextmanager
-def SpinnerContext(message: str = "", color: str = "cyan", newline: bool = False):
-    previous_mode = ui_state.mode
-    ui_state.mode = UIState.NORMAL
-    
-    if newline:
-        console.print()
+class SpinnerContext:
+    """Context manager for displaying a loading spinner in the console."""
+    def __init__(self, message: str = "", color: str = "cyan", newline: bool = False):
+        self.message = message
+        self.color = color
+        self.newline = newline
+        self.previous_mode = None
+        self._status = None
+
+    def __enter__(self):
+        self.previous_mode = ui_state.mode
+        ui_state.mode = UIState.NORMAL
         
-    status_msg = f"[bold yellow]\u2014 NORMAL \u2014[/bold yellow] [{color}]{message}[/{color}]"
-    
-    try:
-        with console.status(status_msg, spinner="material"):
-            yield
-    finally:
-        ui_state.mode = previous_mode
+        if self.newline:
+            console.print()
+            
+        status_msg = f"[{self.color}]{self.message}[/{self.color}]" if self.color else self.message
+        
+        self._status = console.status(status_msg, spinner="material")
+        return self._status.__enter__()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self._status:
+            self._status.__exit__(exc_type, exc_val, exc_tb)
+        ui_state.mode = self.previous_mode

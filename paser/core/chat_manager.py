@@ -44,8 +44,8 @@ class ChatManager:
 
     def _on_thought(self, thought_text):
         if not self.thinking_enabled: return
-        console.print("[bold magenta]Thinking...[/bold magenta]")
-        console.print(Markdown(thought_text), style="dim")
+        console.print("Thinking...")
+        console.print(Markdown(thought_text))
 
     def _get_tool_detail(self, tool_name, args):
         """Extracts a highly representative human-readable detail from tool arguments."""
@@ -91,11 +91,7 @@ class ChatManager:
         verb, icon = get_tool_metadata(tool_name)
         detail = self._get_tool_detail(tool_name, args)
         
-        # Color dinámico según el tipo de herramienta
-        from paser.core.tool_registry import FILE_TOOLS
-        color = "yellow" if tool_name in FILE_TOOLS else "cyan"
-        
-        return SpinnerContext(f"{icon} {tool_name}{detail}...", color=color, newline=True)
+        return SpinnerContext(f"{icon} {tool_name}{detail}...", color="", newline=True)
 
     def _on_tool_used(self, tool_name, args, result, success):
         status_icon = "✓" if success else "✗"
@@ -109,16 +105,13 @@ class ChatManager:
             if match:
                 detail = f": #{match.group(1)}"
 
-        # Diferenciación visual por tipo de herramienta
+        # Eliminamos estilos de color para evitar ruido visual en terminales no compatibles
+        prefix = "󰈚" if tool_name in (lambda: [])() else "󰍃" # Simplificado
+        # Nota: Para mantener la lógica de FILE_TOOLS sin importar el módulo aquí:
         from paser.core.tool_registry import FILE_TOOLS
-        if tool_name in FILE_TOOLS:
-            style = "bold yellow"
-            prefix = "󰈚"
-        else:
-            style = "cyan"
-            prefix = "󰍃"
+        prefix = "󰈚" if tool_name in FILE_TOOLS else "󰍃"
 
-        console.print(f"  {prefix} [bold]{style}{icon} {tool_name}{detail}[/bold] {status_icon}", style=style)
+        console.print(f"  {prefix} {icon} {tool_name}{detail} {status_icon}")
 
     async def run(self):
         loop = asyncio.get_running_loop()

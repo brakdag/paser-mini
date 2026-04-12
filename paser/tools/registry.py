@@ -39,8 +39,7 @@ AVAILABLE_TOOLS = {
     "read_head": ft.read_head,
     "update_line": ft.update_line,
     "replace_string": ft.replace_string,
-    "replace_function": ft.replace_function,
-    "manage_imports": ft.manage_imports,
+        "manage_imports": ft.manage_imports,
 
     "analyze_pyright": st.analyze_pyright,
     "replace_string_at_line": ft.replace_string_at_line,

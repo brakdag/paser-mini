@@ -111,15 +111,6 @@
     }
   ],
   [
-    "replace_function",
-    "Replaces a function in a Python file using AST to find exact boundaries",
-    {
-      "path": "string",
-      "function_name": "string",
-      "new_content": "string"
-    }
-  ],
-  [
     "manage_imports",
     "Manages Python imports by adding new ones and removing unwanted ones semantically",
     {
