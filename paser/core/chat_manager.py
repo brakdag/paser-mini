@@ -48,23 +48,44 @@ class ChatManager:
         console.print(Markdown(thought_text), style="dim")
 
     def _get_tool_detail(self, tool_name, args):
-        """Extracts a human-readable detail from tool arguments."""
+        """Extracts a highly representative human-readable detail from tool arguments."""
         if not args:
             return ""
         
-        # Priority keys for better feedback
-        priority_keys = ['issue_number', 'path', 'url', 'query', 'symbol', 'repo', 'mensaje']
+        # 1. Special cases for complex tools
+        if tool_name == 'rename_path':
+            orig = os.path.basename(args.get('origen', 'unknown'))
+            dest = os.path.basename(args.get('destino', 'unknown'))
+            return f": {orig} \u2192 {dest}"
+        
+        if tool_name == 'create_issue':
+            return f": {args.get('repo', 'repo')} / {args.get('title', 'issue')[:20]}..."
+
+        # 2. Path-based tools (The most common case)
+        # We look for any key that looks like a path
+        path_keys = ['path', 'filepath', 'origen', 'destino', 'input_path']
+        for pk in path_keys:
+            if pk in args and isinstance(args[pk], str):
+                return f": {os.path.basename(args[pk])}"
+
+        # 3. Other representative keys
+        priority_keys = ['query', 'url', 'symbol', 'repo', 'mensaje', 'issue_number']
         for key in priority_keys:
             if key in args:
-                val = args[key]
-                # Shorten paths for cleaner UI
-                if key == 'path' and isinstance(val, str):
-                    val = os.path.basename(val) if len(val) > 30 else val
+                val = str(args[key])
+                # Truncate long strings (e.g. queries or messages)
+                if len(val) > 40:
+                    val = val[:37] + "..."
                 return f": {val}"
         
-        # Fallback to first argument
-        first_val = next(iter(args.values())) if args else ""
-        return f": {first_val}" if first_val else ""
+        # 4. Fallback: First argument, truncated
+        try:
+            first_val = str(next(iter(args.values())))
+            if len(first_val) > 40:
+                first_val = first_val[:37] + "..."
+            return f": {first_val}"
+        except StopIteration:
+            return ""
 
     def _on_tool_start(self, tool_name, args):
         verb, icon = get_tool_metadata(tool_name)
@@ -74,7 +95,7 @@ class ChatManager:
         from paser.core.tool_registry import FILE_TOOLS
         color = "yellow" if tool_name in FILE_TOOLS else "cyan"
         
-        return SpinnerContext(f"{icon} {verb}{detail}...", color=color, newline=True)
+        return SpinnerContext(f"{icon} {tool_name}{detail}...", color=color, newline=True)
 
     def _on_tool_used(self, tool_name, args, result, success):
         status_icon = "✓" if success else "✗"
@@ -97,7 +118,7 @@ class ChatManager:
             style = "cyan"
             prefix = "󰍃"
 
-        console.print(f"  {prefix} [bold]{style}{icon} {verb}{detail}[/bold] {status_icon}", style=style)
+        console.print(f"  {prefix} [bold]{style}{icon} {tool_name}{detail}[/bold] {status_icon}", style=style)
 
     async def run(self):
         loop = asyncio.get_running_loop()
@@ -173,7 +194,7 @@ class ChatManager:
     async def handle_audio_input(self, base64_audio: str):
         """
         Procesa la entrada de audio proveniente del PTT Listener,
-        integrándola en el ciclo de ejecución autónoma.
+        integróndola en el ciclo de ejecución autónoma.
         """
         try:
             import base64
