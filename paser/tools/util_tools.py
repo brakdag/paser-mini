@@ -7,6 +7,9 @@ import json
 import os
 from typing import Optional
 from paser.infrastructure.gemini_adapter import GeminiAdapter
+from .core_tools import context
+from .validation import validate_args
+from .schemas import ValidateJsonSchema, ValidateJsonFileSchema
 
 logger = logging.getLogger("tools")
 
@@ -33,7 +36,27 @@ def get_cwd() -> str:
     import os
     return os.getcwd()
 
-def query_ai(prompt: str, temperature: float = 0.9, model: str = None, context: str = None) -> str:
+@validate_args(ValidateJsonSchema)
+def validate_json(json_string: str) -> str:
+    """Validates if a string is a valid JSON."""
+    try:
+        json.loads(json_string)
+        return "✅ El JSON es válido."
+    except json.JSONDecodeError as e:
+        return f"❌ JSON inválido: {str(e)}"
+
+@validate_args(ValidateJsonFileSchema)
+def validate_json_file(path: str) -> str:
+    """Validates if a file contains valid JSON."""
+    try:
+        safe_path = context.get_safe_path(path)
+        with open(safe_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return validate_json(json_string=content)
+    except Exception as e:
+        return f"❌ Error al leer el archivo: {str(e)}"
+
+def query_ai(prompt: str, temperature: float = 0.9, model: str = None, context_str: str = None) -> str:
     """
     Queries another AI instance for a second opinion, alternative perspectives, or to break reasoning loops.
     By default, it uses the same model as the agent but with a high temperature (0.9) for 'out-of-the-box' thinking.
@@ -62,8 +85,8 @@ def query_ai(prompt: str, temperature: float = 0.9, model: str = None, context: 
 
         # Construct the prompt with context if provided
         full_prompt = prompt
-        if context:
-            full_prompt = f"Context:\n{context}\n\nQuestion: {prompt}"
+        if context_str:
+            full_prompt = f"Context:\n{context_str}\n\nQuestion: {prompt}"
 
         # System instruction for the reflection agent
         system_instruction = (

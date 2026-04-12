@@ -1,61 +1,462 @@
 [
-  ["get_time", "Get current time", {"zona_horaria": "string"}],
-  ["list_tools", "List available tools by category", {"category": "string"}],
-  ["read_file", "Read file content", {"path": "string"}],
-  ["read_files", "Read multiple files", {"paths": "array[string]"}],
-  ["write_file", "Write content to file", {"path": "string", "contenido": "string"}],
-  ["remove_file", "Delete file. Throws FileNotFoundError if the file does not exist.", {"path": "string"}],
-  ["list_dir", "List directory contents", {"path": "string"}],
-  ["web_search", "Search the web", {"query": "string"}],
-  ["fetch_url", "Get URL content", {"url": "string"}],
-  ["render_web_page", "Render a web page as clean text using ELinks", {"url": "string"}],
-  ["get_cwd", "Get current working directory", {}],
-  ["read_lines", "Read specific file lines", {"path": "string", "inicio": "integer", "fin": "integer"}],
-  ["read_head", "Read first N file lines", {"path": "string", "cantidad_lineas": "integer"}],
-  ["update_line", "Modify specific line. Throws IndexError if line_number is out of range.", {"path": "string", "line_number": "integer", "new_content": "string"}],
-  ["replace_string", "Search and replace string. Throws ValueError if search_text is not found.", {"path": "string", "search_text": "string", "replace_text": "string"}],
-  ["replace_function", "Replaces a function in a Python file using AST to find exact boundaries", {"path": "string", "function_name": "string", "new_content": "string"}],
-  ["manage_imports", "Manages Python imports by adding new ones and removing unwanted ones semantically", {"path": "string", "add_imports": "array[string]", "remove_imports": "array[string]"}],
-  ["analyze_pyright", "Run pyright analysis", {"path": "string"}],
-  ["global_replace", "Replace string in directory. Throws ValueError if no occurrences are found in any file.", {"path": "string", "search_text": "string", "replace_text": "string", "extensiones": "array[string]"}],
-  ["rename_path", "Move/Rename path. Throws FileNotFoundError if the origin path does not exist.", {"origen": "string", "destino": "string"}],
-  ["create_dir", "Create directory", {"path": "string"}],
-  ["search_files_pattern", "Search files by pattern", {"pattern": "string"}],
-  ["search_text_global", "Search string in all files", {"query": "string"}],
-  ["notify_user", "System notification", {"mensaje": "string"}],
-  ["alert_sound", "Play alert sound", {}],
-  ["set_timer", "Set a timer", {"seconds": "integer", "message": "string"}],
-  ["is_window_in_focus", "Check terminal focus", {"action": "string"}],
-  ["convert_image", "Convert an image or PDF page to another format using ImageMagick. Supports extra ImageMagick flags via 'extra_args' (e.g., -resize, -crop). Use '-help' in extra_args for more info.", {"input_path": "string", "output_path": "string", "extra_args": "string"}],
-  ["notify_mobile", "Send mobile notification", {"mensaje": "string"}],
-  ["git_diff", "Show git diff", {}],
-  ["revert_file", "Revert file changes", {"path": "string"}],
-  ["get_current_repo", "Get current repo name", {}],
-  ["get_definition", "Get symbol definition", {"symbol": "string"}],
-  ["get_references", "Get symbol references", {"symbol": "string"}],
-  ["list_symbols", "List symbols in file", {"path": "string"}],
-  ["find_all_calls", "Find all calls to a specific function or method in a file or the whole project", {"symbol_name": "string", "file_path": "string"}],
-  ["get_detailed_symbols", "Get detailed information about symbols in a file, including signatures and decorators", {"path": "string"}],
-  ["get_imports", "Lists all imports in a file, including aliases", {"path": "string"}],
-  ["find_missing_type_hints", "Finds functions and arguments missing type hints in a file", {"path": "string"}],
-  ["get_lsp_completions", "Returns LSP-like completions for a specific position in a file", {"filepath": "string", "line": "integer", "column": "integer"}],
-  ["get_object_methods", "Finds the available methods/attributes for a specific object name in a file", {"object_name": "string", "filepath": "string"}],
-  ["execute_python", "Execute Python code in a secure sandbox. Note: The sandbox is isolated and does NOT have access to the project's local file system. Use file-specific tools for disk operations. The '>>>' prompt indicates the interpreter is ready for the next command (OK).", {"code": "string"}],
-  ["format_code", "Apply standard Python formatting (Black) to a file", {"path": "string"}],
-  ["get_tree", "Return the directory structure in a visual tree format with depth control and filters", {"path": "string", "max_depth": "integer", "exclude_patterns": "array[string]"}],
-  ["see_image", "See image content", {"path": "string"}],
-  ["list_issues", "List repo issues", {"repo": "string"}],
-  ["create_issue", "Create repo issue", {"repo": "string", "title": "string", "body": "string"}],
-  ["close_issue", "Close repo issue", {"repo": "string", "issue_number": "integer"}],
-  ["edit_issue", "Edit a repo issue", {"issue_number": "integer", "repo": "string", "title": "string", "body": "string"}],
-  ["compile_latex", "Compila un archivo LaTeX y devuelve las rutas del PDF y Log generados", {"path": "string"}],
-  ["play_music", "Search and play a song using yt-dlp and mpv", {"query": "string"}],
-  ["stop_music", "Stop the current music playback", {}],
-  ["speak_text", "Convert text to speech and play it", {"text": "string", "lang": "string"}],
-  ["api_request", "Make an HTTP request to a specified URL (GET, POST, PUT, DELETE, PATCH)", {"url": "string", "method": "string", "headers": "object", "body": "any"}],
-  ["query_ai", "Queries another AI instance for a second opinion, alternative perspectives, or to break reasoning loops.", {"prompt": "string", "temperature": "float", "model": "string", "context": "string"}],
-  ["read_file_with_lines", "Read a file and return its content with line numbers prefixed to each line", {"path": "string"}],
-  ["copy_lines", "Copy a range of lines from a file to the internal clipboard", {"path": "string", "start_line": "integer", "end_line": "integer"}],
-  ["cut_lines", "Copy a range of lines and remove them from the source file", {"path": "string", "start_line": "integer", "end_line": "integer"}],
-  ["paste_lines", "Insert the clipboard content into the specified file at the given line number", {"path": "string", "line_number": "integer"}]
+  [
+    "get_time",
+    "Get current time",
+    {
+      "zona_horaria": "string"
+    }
+  ],
+  [
+    "list_tools",
+    "List available tools by category",
+    {
+      "category": "string"
+    }
+  ],
+  [
+    "read_file",
+    "Read file content",
+    {
+      "path": "string"
+    }
+  ],
+  [
+    "read_files",
+    "Read multiple files",
+    {
+      "paths": "array[string]"
+    }
+  ],
+  [
+    "write_file",
+    "Write content to file",
+    {
+      "path": "string",
+      "contenido": "string"
+    }
+  ],
+  [
+    "remove_file",
+    "Delete file. Throws FileNotFoundError if the file does not exist.",
+    {
+      "path": "string"
+    }
+  ],
+  [
+    "list_dir",
+    "List directory contents",
+    {
+      "path": "string"
+    }
+  ],
+  [
+    "web_search",
+    "Search the web",
+    {
+      "query": "string"
+    }
+  ],
+  [
+    "fetch_url",
+    "Get URL content",
+    {
+      "url": "string"
+    }
+  ],
+  [
+    "render_web_page",
+    "Render a web page as clean text using ELinks",
+    {
+      "url": "string"
+    }
+  ],
+  [
+    "get_cwd",
+    "Get current working directory",
+    {}
+  ],
+  [
+    "read_lines",
+    "Read specific file lines",
+    {
+      "path": "string",
+      "inicio": "integer",
+      "fin": "integer"
+    }
+  ],
+  [
+    "read_head",
+    "Read first N file lines",
+    {
+      "path": "string",
+      "cantidad_lineas": "integer"
+    }
+  ],
+  [
+    "update_line",
+    "Modify specific line. Throws IndexError if line_number is out of range.",
+    {
+      "path": "string",
+      "line_number": "integer",
+      "new_content": "string"
+    }
+  ],
+  [
+    "replace_string",
+    "Search and replace string. Throws ValueError if search_text is not found.",
+    {
+      "path": "string",
+      "search_text": "string",
+      "replace_text": "string"
+    }
+  ],
+  [
+    "replace_function",
+    "Replaces a function in a Python file using AST to find exact boundaries",
+    {
+      "path": "string",
+      "function_name": "string",
+      "new_content": "string"
+    }
+  ],
+  [
+    "manage_imports",
+    "Manages Python imports by adding new ones and removing unwanted ones semantically",
+    {
+      "path": "string",
+      "add_imports": "array[string]",
+      "remove_imports": "array[string]"
+    }
+  ],
+  [
+    "analyze_pyright",
+    "Run pyright analysis",
+    {
+      "path": "string"
+    }
+  ],
+  [
+    "rename_path",
+    "Move/Rename path. Throws FileNotFoundError if the origin path does not exist.",
+    {
+      "origen": "string",
+      "destino": "string"
+    }
+  ],
+  [
+    "create_dir",
+    "Create directory",
+    {
+      "path": "string"
+    }
+  ],
+  [
+    "search_files_pattern",
+    "Search files by pattern",
+    {
+      "pattern": "string"
+    }
+  ],
+  [
+    "search_text_global",
+    "Search string in all files",
+    {
+      "query": "string"
+    }
+  ],
+  [
+    "notify_user",
+    "System notification",
+    {
+      "mensaje": "string"
+    }
+  ],
+  [
+    "alert_sound",
+    "Play alert sound",
+    {}
+  ],
+  [
+    "set_timer",
+    "Set a timer",
+    {
+      "seconds": "integer",
+      "message": "string"
+    }
+  ],
+  [
+    "is_window_in_focus",
+    "Check terminal focus",
+    {
+      "action": "string"
+    }
+  ],
+  [
+    "convert_image",
+    "Convert an image or PDF page to another format using ImageMagick. Supports extra ImageMagick flags via 'extra_args' (e.g., -resize, -crop). Use '-help' in extra_args for more info.",
+    {
+      "input_path": "string",
+      "output_path": "string",
+      "extra_args": "string"
+    }
+  ],
+  [
+    "notify_mobile",
+    "Send mobile notification",
+    {
+      "mensaje": "string"
+    }
+  ],
+  [
+    "git_diff",
+    "Show git diff",
+    {}
+  ],
+  [
+    "revert_file",
+    "Revert file changes",
+    {
+      "path": "string"
+    }
+  ],
+  [
+    "get_current_repo",
+    "Get current repo name",
+    {}
+  ],
+  [
+    "get_definition",
+    "Get symbol definition",
+    {
+      "symbol": "string"
+    }
+  ],
+  [
+    "get_references",
+    "Get symbol references",
+    {
+      "symbol": "string"
+    }
+  ],
+  [
+    "list_symbols",
+    "List symbols in file",
+    {
+      "path": "string"
+    }
+  ],
+  [
+    "find_all_calls",
+    "Find all calls to a specific function or method in a file or the whole project",
+    {
+      "symbol_name": "string",
+      "file_path": "string"
+    }
+  ],
+  [
+    "get_detailed_symbols",
+    "Get detailed information about symbols in a file, including signatures and decorators",
+    {
+      "path": "string"
+    }
+  ],
+  [
+    "get_imports",
+    "Lists all imports in a file, including aliases",
+    {
+      "path": "string"
+    }
+  ],
+  [
+    "find_missing_type_hints",
+    "Finds functions and arguments missing type hints in a file",
+    {
+      "path": "string"
+    }
+  ],
+  [
+    "get_lsp_completions",
+    "Returns LSP-like completions for a specific position in a file",
+    {
+      "filepath": "string",
+      "line": "integer",
+      "column": "integer"
+    }
+  ],
+  [
+    "get_object_methods",
+    "Finds the available methods/attributes for a specific object name in a file",
+    {
+      "object_name": "string",
+      "filepath": "string"
+    }
+  ],
+  [
+    "execute_python",
+    "Execute Python code in a secure sandbox. Note: The sandbox is isolated and does NOT have access to the project's local file system. Use file-specific tools for disk operations. The '>>>' prompt indicates the interpreter is ready for the next command (OK).",
+    {
+      "code": "string"
+    }
+  ],
+  [
+    "format_code",
+    "Apply standard Python formatting (Black) to a file",
+    {
+      "path": "string"
+    }
+  ],
+  [
+    "get_tree",
+    "Return the directory structure in a visual tree format with depth control and filters",
+    {
+      "path": "string",
+      "max_depth": "integer",
+      "exclude_patterns": "array[string]"
+    }
+  ],
+  [
+    "see_image",
+    "See image content",
+    {
+      "path": "string"
+    }
+  ],
+  [
+    "list_issues",
+    "List repo issues",
+    {
+      "repo": "string"
+    }
+  ],
+  [
+    "create_issue",
+    "Create repo issue",
+    {
+      "repo": "string",
+      "title": "string",
+      "body": "string"
+    }
+  ],
+  [
+    "close_issue",
+    "Close repo issue",
+    {
+      "repo": "string",
+      "issue_number": "integer"
+    }
+  ],
+  [
+    "edit_issue",
+    "Edit a repo issue",
+    {
+      "issue_number": "integer",
+      "repo": "string",
+      "title": "string",
+      "body": "string"
+    }
+  ],
+  [
+    "compile_latex",
+    "Compila un archivo LaTeX y devuelve las rutas del PDF y Log generados",
+    {
+      "path": "string"
+    }
+  ],
+  [
+    "play_music",
+    "Search and play a song using yt-dlp and mpv",
+    {
+      "query": "string"
+    }
+  ],
+  [
+    "stop_music",
+    "Stop the current music playback",
+    {}
+  ],
+  [
+    "speak_text",
+    "Convert text to speech and play it",
+    {
+      "text": "string",
+      "lang": "string"
+    }
+  ],
+  [
+    "api_request",
+    "Make an HTTP request to a specified URL (GET, POST, PUT, DELETE, PATCH)",
+    {
+      "url": "string",
+      "method": "string",
+      "headers": "object",
+      "body": "any"
+    }
+  ],
+  [
+    "query_ai",
+    "Queries another AI instance for a second opinion, alternative perspectives, or to break reasoning loops.",
+    {
+      "prompt": "string",
+      "temperature": "float",
+      "model": "string",
+      "context": "string"
+    }
+  ],
+  [
+    "read_file_with_lines",
+    "Read a file and return its content with line numbers prefixed to each line",
+    {
+      "path": "string"
+    }
+  ],
+  [
+    "copy_lines",
+    "Copy a range of lines from a file to the internal clipboard",
+    {
+      "path": "string",
+      "start_line": "integer",
+      "end_line": "integer"
+    }
+  ],
+  [
+    "cut_lines",
+    "Copy a range of lines and remove them from the source file",
+    {
+      "path": "string",
+      "start_line": "integer",
+      "end_line": "integer"
+    }
+  ],
+  [
+    "paste_lines",
+    "Insert the clipboard content into the specified file at the given line number",
+    {
+      "path": "string",
+      "line_number": "integer"
+    }
+  ],
+  [
+    "replace_string_at_line",
+    "Surgical replacement of a string at a specific line. Only replaces if search_text is found on that line.",
+    {
+      "path": "string",
+      "line_number": "integer",
+      "search_text": "string",
+      "replace_text": "string"
+    }
+  ],
+  [
+    "validate_json",
+    "Validates if a string is a valid JSON",
+    {
+      "json_string": "string"
+    }
+  ],
+  [
+    "validate_json_file",
+    "Validates if a file contains valid JSON",
+    {
+      "path": "string"
+    }
+  ]
 ]

@@ -69,7 +69,12 @@ class ChatManager:
     def _on_tool_start(self, tool_name, args):
         verb, icon = get_tool_metadata(tool_name)
         detail = self._get_tool_detail(tool_name, args)
-        return SpinnerContext(f"{icon} {verb}{detail}...", color="yellow", newline=True)
+        
+        # Color dinámico según el tipo de herramienta
+        from paser.core.tool_registry import FILE_TOOLS
+        color = "yellow" if tool_name in FILE_TOOLS else "cyan"
+        
+        return SpinnerContext(f"{icon} {verb}{detail}...", color=color, newline=True)
 
     def _on_tool_used(self, tool_name, args, result, success):
         status_icon = "✓" if success else "✗"
@@ -83,7 +88,16 @@ class ChatManager:
             if match:
                 detail = f": #{match.group(1)}"
 
-        console.print(f"  {icon} {verb}{detail} {status_icon}", style="dim yellow")
+        # Diferenciación visual por tipo de herramienta
+        from paser.core.tool_registry import FILE_TOOLS
+        if tool_name in FILE_TOOLS:
+            style = "bold yellow"
+            prefix = "󰈚"
+        else:
+            style = "cyan"
+            prefix = "󰍃"
+
+        console.print(f"  {prefix} [bold]{style}{icon} {verb}{detail}[/bold] {status_icon}", style=style)
 
     async def run(self):
         loop = asyncio.get_running_loop()

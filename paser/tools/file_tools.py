@@ -10,7 +10,7 @@ from pathlib import Path
 from .core_tools import context
 from .validation import validate_args
 from .schemas import (
-    ReadFileSchema, WriteFileSchema, ReadFilesSchema, ReplaceStringSchema, 
+    ReadFileSchema, WriteFileSchema, ReadFilesSchema, ReplaceStringSchema, ReplaceStringAtLineSchema,
     RemoveFileSchema, CreateDirSchema, ReadFileWithLinesSchema, 
     CopyLinesSchema, CutLinesSchema, PasteLinesSchema
 )
@@ -103,34 +103,32 @@ def replace_string(path: str, search_text: str, replace_text: str) -> str:
     if search_text not in content:
         raise ValueError(f"La cadena '{search_text}' no fue encontrada en el archivo '{path}'.")
     
-    with open(safe_path, 'w', encoding='utf-8') as f:
-        f.write(content.replace(search_text, replace_text))
-    return f"Reemplazo completado exitosamente en '{path}'."
-
-
-
-
-def global_replace(path: str, search_text: str, replace_text: str, extensiones: Optional[list] = None) -> str:
-    safe_base_path = context.get_safe_path(path)
-    modificados = []
-    for root, _, files in os.walk(safe_base_path):
-        for file in files:
-            if extensiones and not any(file.endswith(ext) for ext in extensiones): continue
-            file_path = os.path.join(root, file)
-            try:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                if search_text in content:
-                    with open(file_path, 'w', encoding='utf-8') as f:
-                        f.write(content.replace(search_text, replace_text))
-                    modificados.append(file_path)
-            except (UnicodeDecodeError, PermissionError):
-                continue
+    # Reemplazar solo la primera ocurrencia para evitar colisiones masivas accidentales
+    new_content = content.replace(search_text, replace_text, 1)
     
-    if not modificados:
-        raise ValueError(f"No se encontró la cadena '{search_text}' en ningún archivo válido dentro de '{path}'.")
-        
-    return f"Reemplazo global completado exitosamente en {len(modificados)} archivos."
+    with open(safe_path, 'w', encoding='utf-8') as f:
+        f.write(new_content)
+    return f"Primera ocurrencia de '{search_text}' reemplazada exitosamente en '{path}'."
+
+@validate_args(ReplaceStringAtLineSchema)
+def replace_string_at_line(path: str, line_number: int, search_text: str, replace_text: str) -> str:
+    safe_path = context.get_safe_path(path)
+    with open(safe_path, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+    
+    if line_number < 1 or line_number > len(lines):
+        raise IndexError(f"La línea {line_number} está fuera de rango. El archivo tiene {len(lines)} líneas.")
+    
+    target_line = lines[line_number-1]
+    if search_text not in target_line:
+        raise ValueError(f"La cadena '{search_text}' no fue encontrada en la línea {line_number} de '{path}'.")
+    
+    lines[line_number-1] = target_line.replace(search_text, replace_text)
+    
+    with open(safe_path, 'w', encoding='utf-8') as f:
+        f.writelines(lines)
+    return f"Reemplazo quirúrgico exitoso en la línea {line_number} de '{path}'."
+
 
 def rename_path(origen: str, destino: str) -> str:
     try:

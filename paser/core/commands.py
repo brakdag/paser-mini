@@ -215,4 +215,8 @@ class CommandHandler:
                 console.print(f"[bold red]Error crítico en /snapshot:[/bold red] {e}", style="red")
                 return True
 
+        if input_stripped.startswith('/') or input_stripped.startswith(':'):
+            console.print("Comando no válido", style="red")
+            return True
+
         return False

@@ -43,7 +43,7 @@ AVAILABLE_TOOLS = {
     "manage_imports": ft.manage_imports,
 
     "analyze_pyright": st.analyze_pyright,
-    "global_replace": ft.global_replace,
+    "replace_string_at_line": ft.replace_string_at_line,
     "search_text_global": ft.search_text_global,
     "search_files_pattern": ft.search_files_pattern,
     "rename_path": ft.rename_path,
@@ -83,7 +83,9 @@ AVAILABLE_TOOLS = {
     "api_request": at.api_request,
     "query_ai": ut.query_ai,
     "get_lsp_completions": lsp.lsp_nav.get_lsp_completions,
-    "get_object_methods": lsp.lsp_nav.get_object_methods
+    "get_object_methods": lsp.lsp_nav.get_object_methods,
+    "validate_json": ut.validate_json,
+    "validate_json_file": ut.validate_json_file
 }
 
 # Load tool definitions (descriptions and params) for the LLM prompt

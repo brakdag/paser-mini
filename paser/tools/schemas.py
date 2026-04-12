@@ -16,6 +16,11 @@ class ReplaceStringSchema(BaseModel):
     search_text: str = Field(..., description="Texto a buscar")
     replace_text: str = Field(..., description="Texto de reemplazo")
 
+class ReplaceStringAtLineSchema(BaseModel):
+    path: str = Field(..., description="Ruta del archivo")
+    line_number: int = Field(..., description="Línea donde debe encontrarse el texto (1-indexed)")
+    search_text: str = Field(..., description="Texto exacto a buscar en esa línea")
+    replace_text: str = Field(..., description="Texto de reemplazo")
 
 class RemoveFileSchema(BaseModel):
     path: str = Field(..., description="Ruta del archivo a borrar")
@@ -39,3 +44,9 @@ class CutLinesSchema(BaseModel):
 class PasteLinesSchema(BaseModel):
     path: str = Field(..., description="Ruta del archivo destino")
     line_number: int = Field(..., description="Línea donde insertar el contenido (1-indexed)")
+
+class ValidateJsonSchema(BaseModel):
+    json_string: str = Field(..., description="Cadena JSON a validar")
+
+class ValidateJsonFileSchema(BaseModel):
+    path: str = Field(..., description="Ruta del archivo JSON a validar")
