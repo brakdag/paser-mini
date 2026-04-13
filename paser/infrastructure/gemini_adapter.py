@@ -25,6 +25,7 @@ class GeminiAdapter(IAIAssistant):
         # Initialize call counter for langchain saving
         self.save_dir = "save_langchain"
         self.call_count = self._initialize_call_count()
+        self.save_langchain_enabled = True  # Default to True, will be overridden by ChatManager
 
     def _initialize_call_count(self) -> int:
         """Finds the last used number in save_langchain to continue numbering."""
@@ -40,6 +41,8 @@ class GeminiAdapter(IAIAssistant):
 
     def _save_payload(self, current_message: Union[str, bytes]):
         """Saves the full prompt (system + history + current) to disk."""
+        if not getattr(self, 'save_langchain_enabled', True):
+            return
         try:
             self.call_count += 1
             filename = f"lang_chang_{self.call_count}.text"

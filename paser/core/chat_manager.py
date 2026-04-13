@@ -29,6 +29,11 @@ class ChatManager:
         self.thinking_enabled = self.config_manager.get("thinking_enabled", True)
         self.temperature = float(self.config_manager.get("default_temperature", 0.7))
         
+        # Langchain saving toggle (default False as requested)
+        self.save_langchain_enabled = self.config_manager.get("save_langchain_enabled", False)
+        if hasattr(self.assistant, 'save_langchain_enabled'):
+            self.assistant.save_langchain_enabled = self.save_langchain_enabled
+        
         self.command_handler = CommandHandler(self)
         self.executor = AutonomousExecutor(
             self.assistant, self.tools,
@@ -183,6 +188,41 @@ class ChatManager:
             self.assistant.start_chat(self.config_manager.get("model_name", "models/gemma-2-27B-it"), self.system_instruction, self.temperature)
             self._initialized_event.set()
         except Exception as e: self._init_error = e
+
+    def save_session(self, name):
+        """Saves the current chat history and config to a JSON file."""
+        session_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'sessions')
+        os.makedirs(session_dir, exist_ok=True)
+        filepath = os.path.join(session_dir, f"{name}.json")
+        
+        history = self.assistant.get_history()
+        data = {
+            "model": self.assistant.current_model,
+            "temperature": self.temperature,
+            "history": history
+        }
+        
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4)
+        return filepath
+
+    def load_session(self, name):
+        """Loads a chat history and config from a JSON file."""
+        session_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'sessions')
+        filepath = os.path.join(session_dir, f"{name}.json")
+        
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"Sesión {name} no encontrada.")
+            
+        with open(filepath, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            
+        self.temperature = data.get("temperature", self.temperature)
+        self.assistant.load_history(
+            data["history"], 
+            data["model"], 
+            self.temperature
+        )
 
     async def handle_audio_input(self, base64_audio: str):
         """

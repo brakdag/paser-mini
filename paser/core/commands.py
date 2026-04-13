@@ -77,6 +77,18 @@ class CommandHandler:
             return True
             
         elif input_stripped == '/new':
+            # 1. Generar resumen de la sesión actual
+            summary_prompt = "Por favor, genera un resumen conciso de nuestra conversación hasta ahora en aproximadamente 200 palabras."
+            with SpinnerContext("Generando resumen de la sesión...", "magenta", newline=True):
+                try:
+                    response = self.chat_manager.assistant.send_message(summary_prompt)
+                    summary_text = response.text if hasattr(response, 'text') else str(response)
+                except Exception as e:
+                    summary_text = f"No se pudo generar el resumen: {e}"
+            
+            print_panel("Resumen de la Sesión", summary_text, style="cyan")
+            
+            # 2. Guardar y Reiniciar
             path = self.chat_manager.save_session("last_session")
             self.chat_manager.assistant.start_chat(self.chat_manager.assistant.current_model, self.chat_manager.system_instruction, self.chat_manager.temperature)
             self.chat_manager.executor.turn_count = 0
@@ -167,6 +179,23 @@ class CommandHandler:
                     from paser.tools.github_tools import close_issue
                     console.print(close_issue(parts[1], int(parts[2])), style="green")
                 except Exception as e: console.print(f"Error: {e}", style="red")
+            return True
+
+        elif input_stripped == '/save_langchain':
+            # Toggle the state
+            current_state = getattr(self.chat_manager.assistant, 'save_langchain_enabled', False)
+            new_state = not current_state
+            
+            # Update assistant
+            if hasattr(self.chat_manager.assistant, 'save_langchain_enabled'):
+                self.chat_manager.assistant.save_langchain_enabled = new_state
+            
+            # Update ChatManager state and persist to config
+            self.chat_manager.save_langchain_enabled = new_state
+            self.chat_manager.config_manager.set("save_langchain_enabled", new_state)
+            
+            status = "Activado" if new_state else "Desactivado"
+            console.print(f"Guardado de LangChain: {status}", style="green")
             return True
 
         elif input_stripped == '/snapshot':

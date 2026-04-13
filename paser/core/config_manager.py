@@ -17,3 +17,13 @@ class ConfigManager:
 
     def get(self, key, default=None):
         return self.config.get(key, default)
+
+    def set(self, key, value):
+        """Sets a configuration value and persists it to the config file."""
+        self.config[key] = value
+        try:
+            with open(self.config_path, "w") as f:
+                json.dump(self.config, f, indent=4)
+        except Exception as e:
+            # We use a simple print or logger here as we are in the config manager
+            print(f"Error saving config: {e}")

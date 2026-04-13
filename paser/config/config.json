@@ -3,5 +3,6 @@
     "default_temperature": 0.3,
     "mqtt_host": "192.168.100.18",
     "mqtt_port": 1883,
-    "mqtt_topic": "paser/message"
+    "mqtt_topic": "paser/message",
+    "save_langchain_enabled": false
 }
