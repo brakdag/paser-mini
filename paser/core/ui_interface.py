@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any, Optional, ContextManager
 
 class UserInterface(ABC):
     """
@@ -58,7 +58,7 @@ class UserInterface(ABC):
         pass
 
     @abstractmethod
-    def get_spinner(self, message: str, color: str = "cyan", newline: bool = False):
+    def get_spinner(self, message: str, color: str = "cyan", newline: bool = False) -> ContextManager[Any]:
         """
         Returns a context manager for displaying a loading spinner.
         Usage: with ui.get_spinner("Loading..."):

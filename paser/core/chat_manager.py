@@ -3,6 +3,7 @@ import re
 import os
 import asyncio
 import threading
+import contextlib
 from typing import Any, Optional
 
 from paser.core.logging import setup_logger
@@ -154,7 +155,8 @@ class ChatManager:
             if not user_input: continue
             if await self.command_handler.handle(user_input): continue
             try:
-                with self.ui.get_spinner("", "#b4befe", newline=True):
+                spinner = self.ui.get_spinner("", "#b4befe", newline=True)
+                with (spinner if spinner is not None else contextlib.nullcontext()):
                     result = await self.executor.execute(
                         user_input=user_input, 
                         thinking_enabled=self.thinking_enabled, 
@@ -210,7 +212,8 @@ class ChatManager:
             import base64
             audio_bytes = base64.b64decode(base64_audio)
             
-            with self.ui.get_spinner("Processing audio...", "magenta", newline=True):
+            spinner = self.ui.get_spinner("Processing audio...", "magenta", newline=True)
+            with (spinner if spinner is not None else contextlib.nullcontext()):
                 result = await self.executor.execute(
                     user_input=audio_bytes, 
                     thinking_enabled=self.thinking_enabled, 
