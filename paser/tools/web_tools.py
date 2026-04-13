@@ -94,7 +94,7 @@ def render_web_page(url: str) -> str:
         env["LANG"] = "en_US.UTF-8"
         
         result = subprocess.run(
-            ["elinks", "-dump", "-no-references", "--", url],
+            ["elinks", "-dump", "-no-references", url],
             capture_output=True,
             text=True,
             env=env,
