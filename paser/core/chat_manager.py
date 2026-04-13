@@ -88,8 +88,8 @@ class ChatManager:
 
     def _on_tool_start(self, tool_name, args):
         detail = self._get_tool_detail(tool_name, args)
-        # We use the UI's spinner context manager
-        return self.ui.get_spinner(f"{tool_name}{detail}...", color="", newline=True)
+        # Quitamos newline=True porque ya hay un spinner global activo en ChatManager.run
+        return self.ui.get_spinner(f"{tool_name}{detail}...", color="#cba6f7", newline=False)
 
     def _on_tool_used(self, tool_name, args, result, success):
         detail = self._get_tool_detail(tool_name, args)
@@ -153,7 +153,7 @@ class ChatManager:
             if not user_input: continue
             if await self.command_handler.handle(user_input): continue
             try:
-                with self.ui.get_spinner("", "cyan", newline=True):
+                with self.ui.get_spinner("", "#b4befe", newline=True):
                     result = await self.executor.execute(
                         user_input=user_input, 
                         thinking_enabled=self.thinking_enabled, 

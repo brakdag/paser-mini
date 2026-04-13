@@ -13,6 +13,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.markdown import Markdown
 from rich.text import Text
+from rich.status import Status
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.formatted_text import FormattedText
@@ -36,6 +37,18 @@ class TerminalUI(UserInterface):
         self.audio_callback = None
         self.kb = KeyBindings()
         self.current_spinner_message: Optional[str] = None
+        
+        # Paleta de colores estilo Catppuccin Machiato definida globalmente
+        self.style = Style.from_dict({
+            '': '#cad3f5',              # Texto general
+            'prompt': '#a6e3a1 bold',   # El prompt │ ➜
+            'thinking': '#b4befe bold', # Estado Thinking
+            'normal': '#f9e2af bold',   # Modo Normal
+            'insert': '#a6e3a1 bold',   # Modo Insert
+            'spinner_msg': '#cba6f7',   # Mensaje del spinner
+            'dim': '#9399b2',           # Texto de ayuda
+        })
+        
         self._setup_key_bindings()
 
     def _setup_key_bindings(self):
@@ -101,14 +114,19 @@ class TerminalUI(UserInterface):
 
     def _get_bottom_toolbar(self):
         parts = []
+        
+        # Si hay un spinner activo, mostramos el estado de THINKING
         if self.current_spinner_message:
-            parts.append(('ansicyan', f' ⌛ {self.current_spinner_message} '))
+            parts.append(('#cba6f7', f' ⌛ {self.current_spinner_message} '))
+            parts.append(('#b4befe bold', ' — THINKING — '))
+        
         if self.mode == UIState.NORMAL:
-            parts.append(('ansiyellow bold', ' — NORMAL — '))
-            parts.append((' ', ' (h/j/k/l: navigate, i: insert)'))
+            parts.append(('#f9e2af bold', ' — NORMAL — '))
+            parts.append(('#9399b2', ' (h/j/k/l: navigate, i: insert)'))
         else:
-            parts.append(('ansigreen bold', ' — INSERT — '))
-            parts.append((' ', ' (Esc: normal)'))
+            parts.append(('#a6e3a1 bold', ' — INSERT — '))
+            parts.append(('#9399b2', ' (Esc: normal)'))
+            
         return FormattedText(parts)
 
     def _translate_latex(self, text: str) -> str:
@@ -145,9 +163,9 @@ class TerminalUI(UserInterface):
     async def request_input(self, prompt: str, history: Optional[Any] = None) -> str:
         if self._session is None:
             self._session = PromptSession(history=history)
-        style = Style.from_dict({'': '#00FF00', 'prompt': '#00FF00 bold'})
+        
         return await self._session.prompt_async(
-            prompt, style=style, key_bindings=self.kb, bottom_toolbar=self._get_bottom_toolbar
+            prompt, style=self.style, key_bindings=self.kb, bottom_toolbar=self._get_bottom_toolbar
         )
 
     def display_message(self, text: str):
@@ -205,14 +223,39 @@ class TerminalSpinner:
     def __init__(self, ui: TerminalUI, message: str, color: str, newline: bool):
         self.ui = ui
         self.message = message
+        self.color = color
         self.newline = newline
+        self.status = None
 
     def __enter__(self):
+        # Guardamos el estado previo
         self.previous_mode = self.ui.mode
+        
+        # Solo imprimimos newline si es el spinner raíz
+        if self.newline and self.ui.current_spinner_message is None:
+            self.ui.console.print()
+
+        # Actualizamos el estado de la UI
         self.ui.mode = UIState.NORMAL
         self.ui.current_spinner_message = self.message
+            
+        # Construimos una "barra de estado simulada" usando colores de fondo
+        # Fondo: #494d64 (Catppuccin Surface) | Texto: Lavender y Mauve
+        display_msg = self.message if self.message else "Thinking..."
+        
+        # Creamos la estructura de la barra: [ — THINKING — ] [ ⟳ mensaje ]
+        # Usamos 'on #494d64' para crear el efecto de barra sólida
+        bar_content = f"[on #494d64][bold #b4befe] — THINKING — [/][#cba6f7] ⌛ {display_msg} [/][/]"
+        
+        # Para que la barra ocupe todo el ancho, podemos añadir espacios al final
+        # pero Rich Status maneja el renderizado. Para un efecto de barra real,
+        # usamos el texto formateado.
+        self.status = Status(bar_content, console=self.ui.console)
+        self.status.start()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.status:
+            self.status.stop()
         self.ui.current_spinner_message = None
         self.ui.mode = self.previous_mode
