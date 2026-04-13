@@ -7,13 +7,15 @@ import sys
 import re
 import string
 import logging
+from datetime import datetime
 from typing import Any, Optional
 
 from rich.console import Console
 from rich.panel import Panel
 from rich.markdown import Markdown
 from rich.text import Text
-from rich.status import Status
+from rich.live import Live
+from rich.text import Text
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.formatted_text import FormattedText
@@ -219,43 +221,64 @@ class TerminalUI(UserInterface):
         response = await self.request_input(f"{message} (y/n): ")
         return response.lower().strip() == 'y'
 
+class SpinnerRenderable:
+    """Renderizador personalizado para controlar la posición del spinner y la hora."""
+    def __init__(self, ui, message):
+        self.ui = ui
+        self.message = message
+        self.frames = ["◊", "○", "◔", "◐", "◘", "◔"]
+        self.frame_idx = 0
+
+    def __rich__(self):
+        frame = self.frames[self.frame_idx]
+        self.frame_idx = (self.frame_idx + 1) % len(self.frames)
+        
+        label = " — THINKING — "
+        time_str = datetime.now().strftime("%H:%M:%S ")
+        display_msg = self.message if self.message else "Thinking..."
+        
+        # Usamos self.ui.console para obtener el ancho
+        console_width = self.ui.console.width
+        
+        # Cálculo de ancho para evitar el wrap
+        available_width = console_width - len(label) - len(time_str) - 5
+        truncated_msg = (display_msg[:available_width-3] + "...") if len(display_msg) > available_width else display_msg
+        
+        # Construcción de la línea con padding dinámico
+        current_content_len = len(label) + len(truncated_msg) + 3
+        padding = " " * max(0, console_width - current_content_len - len(time_str))
+        
+        # Creamos el objeto Text con estilos específicos por rango
+        line = Text(f"{label} {frame} {truncated_msg}{padding}{time_str}", style="on #494d64")
+        line.stylize("#b4befe bold", 0, len(label))
+        line.stylize("#cba6f7", len(label), len(label) + len(truncated_msg) + 2)
+        line.stylize("#9399b2", -len(time_str), None)
+        
+        return line
+
 class TerminalSpinner:
     def __init__(self, ui: TerminalUI, message: str, color: str, newline: bool):
         self.ui = ui
         self.message = message
         self.color = color
         self.newline = newline
-        self.status = None
+        self.live = None
 
     def __enter__(self):
-        # Guardamos el estado previo
         self.previous_mode = self.ui.mode
-        
-        # Solo imprimimos newline si es el spinner raíz
         if self.newline and self.ui.current_spinner_message is None:
             self.ui.console.print()
 
-        # Actualizamos el estado de la UI
         self.ui.mode = UIState.NORMAL
         self.ui.current_spinner_message = self.message
             
-        # Construimos una "barra de estado simulada" usando colores de fondo
-        # Fondo: #494d64 (Catppuccin Surface) | Texto: Lavender y Mauve
-        display_msg = self.message if self.message else "Thinking..."
-        
-        # Creamos la estructura de la barra: [ — THINKING — ] [ ⟳ mensaje ]
-        # Usamos 'on #494d64' para crear el efecto de barra sólida
-        bar_content = f"[on #494d64][bold #b4befe] — THINKING — [/][#cba6f7] ⌛ {display_msg} [/][/]"
-        
-        # Para que la barra ocupe todo el ancho, podemos añadir espacios al final
-        # pero Rich Status maneja el renderizado. Para un efecto de barra real,
-        # usamos el texto formateado.
-        self.status = Status(bar_content, console=self.ui.console)
-        self.status.start()
+        # Usamos Live en lugar de Status para control total de la línea
+        self.live = Live(SpinnerRenderable(self.ui, self.message), console=self.ui.console, auto_refresh=True, transient=True)
+        self.live.start()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.status:
-            self.status.stop()
+        if self.live:
+            self.live.stop()
         self.ui.current_spinner_message = None
         self.ui.mode = self.previous_mode
