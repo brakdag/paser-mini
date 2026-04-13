@@ -114,11 +114,15 @@ class CommandHandler:
             
             print_panel("Resumen de la Sesión", summary_text, style="cyan")
             
-            # 2. Reiniciar
+            # 2. Guardar Snapshot y Reiniciar
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
+            snapshot_name = f"LS_{timestamp}"
+            path = self.chat_manager.save_session(snapshot_name)
+            
             self.chat_manager.assistant.start_chat(self.chat_manager.assistant.current_model, self.chat_manager.system_instruction, self.chat_manager.temperature)
             self.chat_manager.executor.turn_count = 0
             self.history = []
-            print_panel("Sesión Reiniciada", "Historial limpiado. No se ha guardado la sesión.", style="green")
+            print_panel("Sesión Reiniciada", f"Historial limpiado. Snapshot guardado como: {snapshot_name}\nPath: {path}", style="green")
             return True
             
         elif input_stripped == '/models':
