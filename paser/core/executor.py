@@ -7,7 +7,6 @@ from typing import Any, Optional, Union, get_type_hints, get_origin, get_args
 
 from paser.core.repetition_detector import RepetitionDetector
 from paser.core.interfaces import IAIAssistant
-from paser.core.ui import async_get_confirmation
 from paser.core.quota_tracker import QuotaTracker
 from paser.tools.core_tools import ToolError
 

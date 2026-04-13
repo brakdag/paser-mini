@@ -3,8 +3,10 @@ import re
 import os
 import asyncio
 import threading
+from typing import Any, Optional
+
 from paser.core.logging import setup_logger
-from paser.core.ui import console, get_input, print_model_response, SpinnerContext
+from paser.core.ui_interface import UserInterface
 from paser.core.commands import CommandHandler
 from paser.core.executor import AutonomousExecutor
 from paser.core.event_manager import event_manager
@@ -12,16 +14,15 @@ from paser.core.tool_registry import get_tool_metadata
 from paser.core.config_manager import ConfigManager
 from paser.core.event_monitor import EventMonitor
 from prompt_toolkit.history import FileHistory
-from rich.markdown import Markdown
-from rich.panel import Panel
 
 logger = setup_logger()
 
 class ChatManager:
-    def __init__(self, assistant, tools, system_instruction):
+    def __init__(self, assistant, tools, system_instruction, ui: UserInterface):
         self.assistant = assistant
         self.tools = tools
         self.system_instruction = system_instruction
+        self.ui = ui
         
         config_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'config.json')
         self.config_manager = ConfigManager(config_path)
@@ -29,7 +30,7 @@ class ChatManager:
         self.thinking_enabled = self.config_manager.get("thinking_enabled", True)
         self.temperature = float(self.config_manager.get("default_temperature", 0.7))
         
-        # Langchain saving toggle (default False as requested)
+        # Langchain saving toggle
         self.save_langchain_enabled = self.config_manager.get("save_langchain_enabled", False)
         if hasattr(self.assistant, 'save_langchain_enabled'):
             self.assistant.save_langchain_enabled = self.save_langchain_enabled
@@ -49,15 +50,13 @@ class ChatManager:
 
     def _on_thought(self, thought_text):
         if not self.thinking_enabled: return
-        console.print("Thinking...")
-        console.print(Markdown(thought_text))
+        self.ui.display_thought(thought_text)
 
     def _get_tool_detail(self, tool_name, args):
         """Extracts a highly representative human-readable detail from tool arguments."""
         if not args:
             return ""
         
-        # 1. Special cases for complex tools
         if tool_name == 'rename_path':
             orig = os.path.basename(args.get('origen', 'unknown'))
             dest = os.path.basename(args.get('destino', 'unknown'))
@@ -66,24 +65,19 @@ class ChatManager:
         if tool_name == 'create_issue':
             return f": {args.get('repo', 'repo')} / {args.get('title', 'issue')[:20]}..."
 
-        # 2. Path-based tools (The most common case)
-        # We look for any key that looks like a path
         path_keys = ['path', 'filepath', 'origen', 'destino', 'input_path']
         for pk in path_keys:
             if pk in args and isinstance(args[pk], str):
                 return f": {os.path.basename(args[pk])}"
 
-        # 3. Other representative keys
         priority_keys = ['query', 'url', 'symbol', 'repo', 'mensaje', 'issue_number']
         for key in priority_keys:
             if key in args:
                 val = str(args[key])
-                # Truncate long strings (e.g. queries or messages)
                 if len(val) > 40:
                     val = val[:37] + "..."
                 return f": {val}"
         
-        # 4. Fallback: First argument, truncated
         try:
             first_val = str(next(iter(args.values())))
             if len(first_val) > 40:
@@ -93,95 +87,83 @@ class ChatManager:
             return ""
 
     def _on_tool_start(self, tool_name, args):
-        verb, icon = get_tool_metadata(tool_name)
         detail = self._get_tool_detail(tool_name, args)
-        
-        return SpinnerContext(f"{icon} {tool_name}{detail}...", color="", newline=True)
+        # We use the UI's spinner context manager
+        return self.ui.get_spinner(f"{tool_name}{detail}...", color="", newline=True)
 
     def _on_tool_used(self, tool_name, args, result, success):
-        status_icon = "✓" if success else "✗"
-        verb, icon = get_tool_metadata(tool_name)
         detail = self._get_tool_detail(tool_name, args)
         
-        # Special case: if create_issue succeeded, use the issue number from the result
         if tool_name == 'create_issue' and success and isinstance(result, str):
             import re
             match = re.search(r'#(\d+)', result)
             if match:
                 detail = f": #{match.group(1)}"
 
-        # Eliminamos estilos de color para evitar ruido visual en terminales no compatibles
-        prefix = "󰈚" if tool_name in (lambda: [])() else "󰍃" # Simplificado
-        # Nota: Para mantener la lógica de FILE_TOOLS sin importar el módulo aquí:
-        from paser.core.tool_registry import FILE_TOOLS
-        prefix = "󰈚" if tool_name in FILE_TOOLS else "󰍃"
-
-        console.print(f"  {prefix} {icon} {tool_name}{detail} {status_icon}")
+        self.ui.display_tool_status(tool_name, success, detail)
 
     async def run(self):
         loop = asyncio.get_running_loop()
         asyncio.create_task(asyncio.to_thread(self._initialize_chat))
         asyncio.create_task(self.event_monitor.monitor_loop(self.thinking_enabled))
         
-        # Initialize Audio Toggle
-        from paser.core.ui import audio_callback
         from paser.core.audio_manager import AudioManager
-        
         self.audio_manager = AudioManager()
         self.is_recording = False
         
-        # Definimos la función que se ejecutará al presionar 'v'
         def toggle_audio():
             if not self.is_recording:
                 self.is_recording = True
-                from paser.core.ui import ui_state, UIState
-                ui_state.mode = UIState.AUDIO
+                self.ui.set_ui_mode("AUDIO")
                 try:
                     self.audio_manager.start_recording()
-                    console.print("\n[bold red]🎙️ Recording... (Press 'v' to stop)[/bold red]")
+                    self.ui.display_message("\n[bold red]🎤 Recording... (Press 'v' to stop)[/bold red]")
                 except Exception as e:
-                    console.print(f"Audio Error: {e}")
+                    self.ui.display_error(f"Audio Error: {e}")
                     self.is_recording = False
-                    ui_state.mode = UIState.NORMAL
+                    self.ui.set_ui_mode("NORMAL")
             else:
                 self.is_recording = False
-                from paser.core.ui import ui_state, UIState
-                ui_state.mode = UIState.NORMAL
+                self.ui.set_ui_mode("NORMAL")
                 base64_audio = self.audio_manager.stop_recording()
                 if base64_audio:
                     asyncio.create_task(self.handle_audio_input(base64_audio))
 
-        # Asignamos el callback a la UI
-        import paser.core.ui as ui_mod
-        ui_mod.audio_callback = toggle_audio
-        console.print("[bold green]🎙️ Voice Mode active (Press 'v' in NORMAL mode to toggle)[/bold green]")
+        # Inyectamos el callback en la UI (si es TerminalUI)
+        if hasattr(self.ui, 'set_audio_callback'):
+            self.ui.set_audio_callback(toggle_audio)
+        
+        self.ui.display_message("[bold green]🎤 Voice Mode active (Press 'v' in NORMAL mode to toggle)[/bold green]")
 
-        # Welcome Message (#115)
         model = self.config_manager.get("model_name", "Unknown")
-        console.print(
-            Panel(
-                f"[bold cyan]🤖 Paser Autonomous Agent (Debug Mode)[/bold cyan]\n"
-                f"[dim]Model: {model} | Temp: {self.temperature}[/dim]",
-                title="🤖 System Ready",
-                border_style="magenta",
-                expand=False
-            )
+        self.ui.display_panel(
+            title="🤖 System Ready",
+            message=f"[bold cyan]🤖 Paser Autonomous Agent (Debug Mode)[/bold cyan]\n"
+                    f"[dim]Model: {model} | Temp: {self.temperature}[/dim]",
+            style="magenta"
         )
 
         history = FileHistory(".chat_history")
         while not self.should_exit:
             try:
-                user_input = await get_input("\u2502 \u279c ", history=history)
+                user_input = await self.ui.request_input("\u2502 \u279c ", history=history)
             except Exception as e:
-                console.print(f"[bold red]Critical UI Error: {e}[/bold red]")
+                self.ui.display_error(f"Critical UI Error: {e}")
                 break
             if not user_input: continue
             if await self.command_handler.handle(user_input): continue
             try:
-                with SpinnerContext("", "cyan", newline=True):
-                    result = await self.executor.execute(user_input=user_input, thinking_enabled=self.thinking_enabled, get_confirmation_callback=get_input)
-                if result: print_model_response(re.sub(r'<[^>]+>.*?</[^>]+>', '', result, flags=re.DOTALL))
-            except Exception as e: console.print(f"Error: {e}", style="red")
+                with self.ui.get_spinner("", "cyan", newline=True):
+                    result = await self.executor.execute(
+                        user_input=user_input, 
+                        thinking_enabled=self.thinking_enabled, 
+                        get_confirmation_callback=self.ui.request_input
+                    )
+                if result:
+                    cleaned_result = re.sub(r'<[^>]+>.*?</[^>]+>', '', result, flags=re.DOTALL)
+                    self.ui.display_message(cleaned_result)
+            except Exception as e: 
+                self.ui.display_error(f"Error: {e}")
 
     def _initialize_chat(self):
         try:
@@ -190,7 +172,6 @@ class ChatManager:
         except Exception as e: self._init_error = e
 
     def save_session(self, name):
-        """Saves the current chat history and config to a JSON file."""
         session_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'sessions')
         os.makedirs(session_dir, exist_ok=True)
         filepath = os.path.join(session_dir, f"{name}.json")
@@ -207,7 +188,6 @@ class ChatManager:
         return filepath
 
     def load_session(self, name):
-        """Loads a chat history and config from a JSON file."""
         session_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'sessions')
         filepath = os.path.join(session_dir, f"{name}.json")
         
@@ -225,28 +205,21 @@ class ChatManager:
         )
 
     async def handle_audio_input(self, base64_audio: str):
-        """
-        Procesa la entrada de audio proveniente del PTT Listener,
-        integróndola en el ciclo de ejecución autónoma.
-        """
         try:
             import base64
-            import re
             audio_bytes = base64.b64decode(base64_audio)
             
-            with SpinnerContext("Processing audio...", "magenta", newline=True):
-                # Usamos el executor en lugar del asistente directamente para habilitar Tools y Thinking
+            with self.ui.get_spinner("Processing audio...", "magenta", newline=True):
                 result = await self.executor.execute(
                     user_input=audio_bytes, 
                     thinking_enabled=self.thinking_enabled, 
-                    get_confirmation_callback=get_input
+                    get_confirmation_callback=self.ui.request_input
                 )
                 
                 if result:
-                    # Limpiamos tags de herramientas del resultado final y formateamos con Rich
                     cleaned_result = re.sub(r'<[^>]+>.*?</[^>]+>', '', result, flags=re.DOTALL)
-                    print_model_response(cleaned_result)
+                    self.ui.display_message(cleaned_result)
                 else:
-                    console.print("No se pudo obtener una respuesta del audio.", style="yellow")
+                    self.ui.display_message("No se pudo obtener una respuesta del audio.")
         except Exception as e:
-            console.print(f"Error processing audio: {e}", style="red")
+            self.ui.display_error(f"Error processing audio: {e}")

@@ -6,6 +6,7 @@ import json
 import os
 from paser.infrastructure.gemini_adapter import GeminiAdapter
 from paser.core.chat_manager import ChatManager
+from paser.core.terminal_ui import TerminalUI
 from paser.tools.registry import AVAILABLE_TOOLS, SYSTEM_INSTRUCTION
 
 async def main():
@@ -38,7 +39,8 @@ async def main():
         sys.exit(0 if result.wasSuccessful() else 1)
 
     assistant = GeminiAdapter()
-    chat_manager = ChatManager(assistant, AVAILABLE_TOOLS, SYSTEM_INSTRUCTION)
+    ui = TerminalUI()
+    chat_manager = ChatManager(assistant, AVAILABLE_TOOLS, SYSTEM_INSTRUCTION, ui)
     await chat_manager.run()
 
 def cli():
