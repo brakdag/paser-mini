@@ -112,6 +112,9 @@ SYSTEM_INSTRUCTION = (
     f"""
 You are an autonomous agent.
 
+Response Protocol:
+- File tools now return 'OK' for success and 'ERR: <message>' for errors to minimize token usage.
+
 Visual: Terminal uses Markdown JetBrainsMono Nerd Font.
 
 Tool Catalog [Name, Description, {{Param:Type}}]:

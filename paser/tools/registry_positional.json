@@ -27,7 +27,7 @@
   ],
   [
     "write_file",
-    "Write content to file",
+    "Write content to file. Returns 'OK' on success.",
     {
       "path": "string",
       "contenido": "string"
@@ -35,7 +35,7 @@
   ],
   [
     "remove_file",
-    "Delete file. Throws FileNotFoundError if the file does not exist.",
+    "Delete file. Returns 'OK' on success. Throws ERR if not found.",
     {
       "path": "string"
     }
@@ -101,7 +101,7 @@
   ],
   [
     "replace_string",
-    "Search and replace string. Throws ValueError if search_text is not found.",
+    "Search and replace string. Returns 'OK' on success. Throws ERR if not found.",
     {
       "path": "string",
       "search_text": "string",
@@ -126,7 +126,7 @@
   ],
   [
     "rename_path",
-    "Move/Rename path. Throws FileNotFoundError if the origin path does not exist.",
+    "Move/Rename path. Returns 'OK' on success. Throws ERR if origin not found.",
     {
       "origen": "string",
       "destino": "string"
@@ -134,7 +134,7 @@
   ],
   [
     "create_dir",
-    "Create directory",
+    "Create directory. Returns 'OK' on success.",
     {
       "path": "string"
     }

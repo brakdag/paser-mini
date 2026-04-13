@@ -20,7 +20,7 @@ def get_current_repo() -> str:
 def revert_file(path: str) -> str:
     """Reverts changes to a file using git restore."""
     try:
-        subprocess.run(["git", "restore", path], check=True, capture_output=True, text=True)
+        subprocess.run(["git", "restore", "--", path], check=True, capture_output=True, text=True)
         return f"File '{path}' successfully reverted."
     except subprocess.CalledProcessError as e:
         return f"Error reverting file '{path}': {e.stderr}"

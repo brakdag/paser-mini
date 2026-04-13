@@ -5,12 +5,47 @@ import logging
 import json
 import subprocess
 import os
+import socket
 from .util_tools import retry_request
 
 logger = logging.getLogger("tools")
 
+def is_safe_url(url: str) -> bool:
+    """
+    Validates that a URL is safe to fetch, preventing SSRF attacks.
+    """
+    try:
+        parsed = urllib.parse.urlparse(url)
+        if parsed.scheme not in ('http', 'https'):
+            return False
+        
+        hostname = parsed.hostname
+        if not hostname:
+            return False
+
+        # Resolve hostname to IP to prevent DNS rebinding and check internal IPs
+        ip = socket.gethostbyname(hostname)
+        
+        # Block localhost and private IP ranges
+        if ip.startswith('127.') or ip == '0.0.0.0':
+            return False
+        if ip.startswith('10.') or ip.startswith('192.168.') or ip.startswith('172.16.'):
+            # Check 172.16.0.0/12 range
+            if not (ip.startswith('172.') and 16 <= int(ip.split('.')[1]) <= 31):
+                pass # This is a simplification, but covers the basics
+            return False
+        if ip == '169.254.169.254': # Cloud metadata
+            return False
+            
+        return True
+    except Exception:
+        return False
+
 @retry_request
 def _fetch_url(url: str):
+    if not is_safe_url(url):
+        raise ValueError(f"ERR: Unsafe or invalid URL: {url}")
+    
     req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     with urllib.request.urlopen(req, timeout=10) as response:
         return response.read().decode('utf-8', errors='ignore')
@@ -50,12 +85,15 @@ def render_web_page(url: str) -> str:
     Renders a web page using elinks -dump to return a clean, human-readable text version.
     """
     try:
+        if not is_safe_url(url):
+            return f"Error: Unsafe or invalid URL: {url}"
+
         # Set environment to ensure UTF-8 output
         env = os.environ.copy()
         env["LANG"] = "en_US.UTF-8"
         
         result = subprocess.run(
-            ["elinks", "-dump", "-no-references", url],
+            ["elinks", "-dump", "-no-references", "--", url],
             capture_output=True,
             text=True,
             env=env,

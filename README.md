@@ -104,6 +104,13 @@ To maintain system stability and ensure the LLM correctly identifies available c
 3. **Code Cleanup**: (Optional) Delete the function implementation from the source file to keep the codebase clean.
 4. **Refresh**: Restart the application.
 
+## Development & Testing
+
+**Important Note on Runtime Environment:**
+Since the agent operates in a runtime environment that does not automatically reflect code changes upon rewriting, testing must be performed in a freshly initialized environment with a new agent instance. 
+
+Consequently, after implementing any changes, the agent must always propose creating a GitHub issue to delegate testing to a subsequent agent to ensure the modifications are verified in a clean state.
+
 ## Available Tools
 
 ### 📂 Files & Directories

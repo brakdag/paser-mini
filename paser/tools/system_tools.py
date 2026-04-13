@@ -165,7 +165,7 @@ def convert_image(input_path: str, output_path: str, extra_args: Optional[str] =
         if extra_args:
             cmd.extend(shlex.split(extra_args))
         
-        cmd.extend([in_safe, out_safe])
+        cmd.extend(["--", in_safe, out_safe])
 
         # Ejecutamos convert
         result = subprocess.run(

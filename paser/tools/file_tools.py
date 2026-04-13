@@ -1,11 +1,8 @@
-import os
 import json
 import tempfile
 import logging
-import re
-import fnmatch
 import ast
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from pathlib import Path
 from .core_tools import context
 from .validation import validate_args
@@ -15,304 +12,239 @@ from .schemas import (
     CopyLinesSchema, CutLinesSchema, PasteLinesSchema
 )
 
-logger = logging.getLogger("tools")
-
+logger = logging.getLogger('tools')
 FILE_SIZE_LIMIT = 5 * 1024 * 1024
+MAX_LIST_RESULTS = 100
+READ_PREVIEW_LIMIT = 20 * 1024
 
-def is_binary_file(path: str) -> bool:
+def is_binary_file(path: Path) -> bool:
     try:
-        with open(path, 'rb') as f:
+        with path.open('rb') as f:
             return b'\0' in f.read(1024)
     except Exception:
         return True
 
 @validate_args(ReadFileSchema)
 def read_file(path: str) -> str:
-    safe_path = context.get_safe_path(path)
-    if not os.path.isfile(safe_path):
-        raise FileNotFoundError(f"Archivo no encontrado en '{path}'.")
-    file_size = os.path.getsize(safe_path)
-    if file_size > FILE_SIZE_LIMIT:
-        raise ValueError(f"El archivo '{path}' es demasiado grande.")
+    safe_path = Path(context.get_safe_path(path))
+    if not safe_path.is_file():
+        raise FileNotFoundError(f'ERR: Not found: {path}')
+    
+    size = safe_path.stat().st_size
+    if size > FILE_SIZE_LIMIT:
+        raise ValueError(f'ERR: Too large: {path}')
     if is_binary_file(safe_path):
-        raise ValueError(f"El archivo '{path}' es binario.")
-    with open(safe_path, 'r', encoding='utf-8') as f:
-        return f.read() or f"El archivo '{path}' está vacío."
+        raise ValueError(f'ERR: Binary: {path}')
+    
+    if size > READ_PREVIEW_LIMIT:
+        content = safe_path.read_text(encoding='utf-8')
+        lines = content.splitlines()
+        preview = "\n".join(lines[:100])
+        return f"[PREVIEW - First 100 lines of {size} bytes]\n{preview}\n\n[TRUNCATED - Use read_lines for more]"
+    
+    return safe_path.read_text(encoding='utf-8') or f'ERR: Empty: {path}'
 
 @validate_args(ReadFilesSchema)
-def read_files(paths: list[str]) -> str:
+def read_files(paths: List[str]) -> str:
     results = []
     for path in paths:
         try:
             content = read_file(path=path)
-            results.append(f"--- ARCHIVO: {path} ---\n{content}\n--- FIN ARCHIVO ---")
+            results.append(f'--- {path} ---\n{content}')
         except Exception as e:
-            results.append(f"--- ARCHIVO: {path} ---\nError: {str(e)}\n--- FIN ARCHIVO ---")
-    return "\n\n".join(results)
+            results.append(f'--- {path} ---\n{str(e)}')
+    return '\n\n'.join(results)
 
 @validate_args(WriteFileSchema)
 def write_file(path: str, contenido: str) -> str:
-    safe_path = context.get_safe_path(path)
-    os.makedirs(os.path.dirname(safe_path), exist_ok=True)
-    with tempfile.NamedTemporaryFile('w', dir=os.path.dirname(safe_path), delete=False, encoding='utf-8') as tf:
+    safe_path = Path(context.get_safe_path(path))
+    safe_path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile('w', dir=safe_path.parent, delete=False, encoding='utf-8') as tf:
         tf.write(contenido)
-        temp_path = tf.name
-    os.replace(temp_path, safe_path)
-    return f"Archivo '{path}' creado/actualizado exitosamente."
+        temp_name = tf.name
+    Path(temp_name).replace(safe_path)
+    return 'OK'
 
 @validate_args(RemoveFileSchema)
 def remove_file(path: str) -> str:
-    safe_path = context.get_safe_path(path)
+    safe_path = Path(context.get_safe_path(path))
     try:
-        os.remove(safe_path)
-        return f"Archivo '{path}' borrado exitosamente."
+        safe_path.unlink()
+        return 'OK'
     except FileNotFoundError:
-        raise FileNotFoundError(f"No se pudo borrar el archivo '{path}' porque no existe.")
+        raise FileNotFoundError(f'ERR: Not found: {path}')
 
-def list_dir(path: str = ".") -> str:
-    return json.dumps(os.listdir(context.get_safe_path(path)))
+def list_dir(path: str = '.') -> str:
+    safe_path = Path(context.get_safe_path(path))
+    items = [p.name for p in safe_path.iterdir()]
+    if len(items) > MAX_LIST_RESULTS:
+        return json.dumps({"results": items[:MAX_LIST_RESULTS], "total": len(items), "warning": f"Truncated to {MAX_LIST_RESULTS} items"})
+    return json.dumps(items)
 
 def read_lines(path: str, inicio: int, fin: int) -> str:
-    safe_path = context.get_safe_path(path)
-    with open(safe_path, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-        return "".join(lines[inicio-1:fin])
+    safe_path = Path(context.get_safe_path(path))
+    lines = safe_path.read_text(encoding='utf-8').splitlines(keepends=True)
+    return ''.join(lines[inicio-1:fin])
 
 def read_head(path: str, cantidad_lineas: int) -> str:
     return read_lines(path, 1, cantidad_lineas)
 
 def update_line(path: str, line_number: int, new_content: str) -> str:
-    safe_path = context.get_safe_path(path)
-    with open(safe_path, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-    
-    if line_number < 1 or line_number > len(lines):
-        raise IndexError(f"La línea {line_number} está fuera de rango. El archivo tiene {len(lines)} líneas.")
-    
-    lines[line_number-1] = new_content + "\n"
-    with open(safe_path, 'w', encoding='utf-8') as f:
-        f.writelines(lines)
-    return f"Línea {line_number} de '{path}' modificada exitosamente."
+    safe_path = Path(context.get_safe_path(path))
+    lines = safe_path.read_text(encoding='utf-8').splitlines(keepends=True)
+    if not (1 <= line_number <= len(lines)):
+        raise IndexError(f'ERR: Line {line_number} out of range')
+    lines[line_number-1] = new_content + '\n'
+    safe_path.write_text(''.join(lines), encoding='utf-8')
+    return 'OK'
 
 @validate_args(ReplaceStringSchema)
 def replace_string(path: str, search_text: str, replace_text: str) -> str:
-    safe_path = context.get_safe_path(path)
-    with open(safe_path, 'r', encoding='utf-8') as f:
-        content = f.read()
-    
+    safe_path = Path(context.get_safe_path(path))
+    content = safe_path.read_text(encoding='utf-8')
     if search_text not in content:
-        raise ValueError(f"La cadena '{search_text}' no fue encontrada en el archivo '{path}'.")
-    
-    # Reemplazar solo la primera ocurrencia para evitar colisiones masivas accidentales
-    new_content = content.replace(search_text, replace_text, 1)
-    
-    with open(safe_path, 'w', encoding='utf-8') as f:
-        f.write(new_content)
-    return f"Primera ocurrencia de '{search_text}' reemplazada exitosamente en '{path}'."
+        raise ValueError(f'ERR: Not found in {path}')
+    safe_path.write_text(content.replace(search_text, replace_text, 1), encoding='utf-8')
+    return 'OK'
 
 @validate_args(ReplaceStringAtLineSchema)
 def replace_string_at_line(path: str, line_number: int, search_text: str, replace_text: str) -> str:
-    safe_path = context.get_safe_path(path)
-    with open(safe_path, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-    
-    if line_number < 1 or line_number > len(lines):
-        raise IndexError(f"La línea {line_number} está fuera de rango. El archivo tiene {len(lines)} líneas.")
-    
+    safe_path = Path(context.get_safe_path(path))
+    lines = safe_path.read_text(encoding='utf-8').splitlines(keepends=True)
+    if not (1 <= line_number <= len(lines)):
+        raise IndexError(f'ERR: Line {line_number} out of range')
     target_line = lines[line_number-1]
     if search_text not in target_line:
-        raise ValueError(f"La cadena '{search_text}' no fue encontrada en la línea {line_number} de '{path}'.")
-    
+        raise ValueError(f'ERR: Not found in line {line_number}')
     lines[line_number-1] = target_line.replace(search_text, replace_text)
-    
-    with open(safe_path, 'w', encoding='utf-8') as f:
-        f.writelines(lines)
-    return f"Reemplazo quirúrgico exitoso en la línea {line_number} de '{path}'."
-
+    safe_path.write_text(''.join(lines), encoding='utf-8')
+    return 'OK'
 
 def rename_path(origen: str, destino: str) -> str:
     try:
-        os.rename(context.get_safe_path(origen), context.get_safe_path(destino))
-        return f"Ruta '{origen}' movida/renombrada a '{destino}' exitosamente."
+        Path(context.get_safe_path(origen)).rename(context.get_safe_path(destino))
+        return 'OK'
     except FileNotFoundError:
-        raise FileNotFoundError(f"El archivo o directorio de origen '{origen}' no existe.")
+        raise FileNotFoundError(f'ERR: Origin not found: {origen}')
 
 @validate_args(CreateDirSchema)
 def create_dir(path: str) -> str:
-    os.makedirs(context.get_safe_path(path), exist_ok=True)
-    return f"Carpeta '{path}' creada exitosamente."
+    Path(context.get_safe_path(path)).mkdir(parents=True, exist_ok=True)
+    return 'OK'
 
 def search_files_pattern(pattern: str) -> str:
-    return json.dumps([str(p.relative_to(context.get_safe_path("."))) for p in Path(context.get_safe_path(".")).glob(pattern)])
+    root = Path(context.get_safe_path('.'))
+    results = [str(p.relative_to(root)) for p in root.rglob(pattern)]
+    if len(results) > MAX_LIST_RESULTS:
+        return json.dumps({"results": results[:MAX_LIST_RESULTS], "total": len(results), "warning": f"Truncated to {MAX_LIST_RESULTS} items"})
+    return json.dumps(results)
 
 def search_text_global(query: str) -> str:
-    results = []
-    for root, _, files in os.walk(context.get_safe_path(".")):
-        for file in files:
-            file_path = os.path.join(root, file)
-            try:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    for i, line in enumerate(f, 1):
-                        if query in line:
-                            results.append({"file": file, "line": i, "text": line.strip()})
-            except (UnicodeDecodeError, PermissionError):
-                continue
-    return json.dumps(results)
+    import subprocess
+    root_path = context.get_safe_path(".")
+    try:
+        result = subprocess.run(
+            ['grep', '-rIn', '--', query, root_path], 
+            capture_output=True, 
+            text=True, 
+            encoding='utf-8', 
+            errors='replace'
+        )
+        if not result.stdout:
+            return json.dumps([])
+        parsed_results = []
+        for line in result.stdout.splitlines():
+            parts = line.split(':', 2)
+            if len(parts) == 3:
+                file_path, line_num, text = parts
+                parsed_results.append({
+                    "file": str(Path(file_path).absolute()),
+                    "line": int(line_num),
+                    "text": text.strip()
+                })
+        if len(parsed_results) > MAX_LIST_RESULTS:
+            return json.dumps({"results": parsed_results[:MAX_LIST_RESULTS], "total": len(parsed_results), "warning": f"Truncated to {MAX_LIST_RESULTS} items"})
+        return json.dumps(parsed_results)
+    except Exception as e:
+        return json.dumps([f"ERR: Search failed: {str(e)}"])
 
 def format_code(path: str) -> str:
     import subprocess
-    subprocess.run(['black', context.get_safe_path(path)])
-    return "Formateado con Black."
+    subprocess.run(['black', '--', context.get_safe_path(path)], check=True)
+    return 'OK'
 
-def get_tree(path: str = ".", max_depth: Optional[int] = None, exclude_patterns: Optional[list[str]] = None) -> str:
-    return "Tree structure generated."
+def get_tree(path: str = '.', max_depth: Optional[int] = None, exclude_patterns: Optional[List[str]] = None) -> str:
+    return 'Tree structure generated.'
 
 @validate_args(ReadFileWithLinesSchema)
 def read_file_with_lines(path: str) -> str:
-    safe_path = context.get_safe_path(path)
-    if not os.path.isfile(safe_path):
-        raise FileNotFoundError(f"Archivo no encontrado en '{path}'.")
-    with open(safe_path, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-        return "".join([f"{i+1}: {line}" for i, line in enumerate(lines)])
+    safe_path = Path(context.get_safe_path(path))
+    if not safe_path.is_file():
+        raise FileNotFoundError(f'ERR: Not found: {path}')
+    lines = safe_path.read_text(encoding='utf-8').splitlines()
+    return ''.join([f'{i+1}: {line}\n' for i, line in enumerate(lines)])
 
 @validate_args(CopyLinesSchema)
 def copy_lines(path: str, start_line: int, end_line: int) -> str:
-    safe_path = context.get_safe_path(path)
-    with open(safe_path, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-    
-    if start_line < 1 or end_line > len(lines) or start_line > end_line:
-        raise IndexError(f"Rango de líneas {start_line}-{end_line} fuera de rango. El archivo tiene {len(lines)} líneas.")
-    
-    context.clipboard = "".join(lines[start_line-1:end_line])
-    
-    return f"Líneas {start_line} a {end_line} de '{path}' copiadas al portapapeles."
+    safe_path = Path(context.get_safe_path(path))
+    lines = safe_path.read_text(encoding='utf-8').splitlines(keepends=True)
+    if not (1 <= start_line <= end_line <= len(lines)):
+        raise IndexError(f'ERR: Range {start_line}-{end_line} out of bounds')
+    context.clipboard = ''.join(lines[start_line-1:end_line])
+    return 'OK'
 
 @validate_args(CutLinesSchema)
 def cut_lines(path: str, start_line: int, end_line: int) -> str:
-    safe_path = context.get_safe_path(path)
-    with open(safe_path, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-    
-    if start_line < 1 or end_line > len(lines) or start_line > end_line:
-        raise IndexError(f"Rango de líneas {start_line}-{end_line} fuera de rango. El archivo tiene {len(lines)} líneas.")
-    
-    context.clipboard = "".join(lines[start_line-1:end_line])
-    remaining_lines = lines[:start_line-1] + lines[end_line:]
-    
-    # Actualizar archivo
-    with open(safe_path, 'w', encoding='utf-8') as f:
-        f.writelines(remaining_lines)
-    
-    return f"Líneas {start_line} a {end_line} de '{path}' cortadas y movidas al portapapeles."
+    safe_path = Path(context.get_safe_path(path))
+    lines = safe_path.read_text(encoding='utf-8').splitlines(keepends=True)
+    if not (1 <= start_line <= end_line <= len(lines)):
+        raise IndexError(f'ERR: Range {start_line}-{end_line} out of bounds')
+    context.clipboard = ''.join(lines[start_line-1:end_line])
+    remaining = lines[:start_line-1] + lines[end_line:]
+    safe_path.write_text(''.join(remaining), encoding='utf-8')
+    return 'OK'
 
 @validate_args(PasteLinesSchema)
 def paste_lines(path: str, line_number: int) -> str:
     if not context.clipboard:
-        raise ValueError("El portapapeles está vacío.")
-    
-    clipboard_content = context.clipboard
-    
-    safe_path = context.get_safe_path(path)
-    if not os.path.isfile(safe_path):
-        # Si el archivo no existe, lo creamos
-        with open(safe_path, 'w', encoding='utf-8') as f:
-            f.write(clipboard_content)
-        return f"Contenido pegado en nuevo archivo '{path}'."
+        raise ValueError('ERR: Clipboard empty')
+    safe_path = Path(context.get_safe_path(path))
+    content = context.clipboard
+    if content and not content.endswith('\n'):
+        content += '\n'
+    if not safe_path.is_file():
+        safe_path.write_text(content, encoding='utf-8')
+        return 'OK'
+    lines = safe_path.read_text(encoding='utf-8').splitlines(keepends=True)
+    if not (1 <= line_number <= len(lines) + 1):
+        raise IndexError(f'ERR: Line {line_number} out of range')
+    lines.insert(line_number-1, content)
+    safe_path.write_text(''.join(lines), encoding='utf-8')
+    return 'OK'
 
-    with open(safe_path, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-    
-    if line_number < 1 or line_number > len(lines) + 1:
-        raise IndexError(f"Línea de inserción {line_number} fuera de rango. El archivo tiene {len(lines)} líneas.")
-    
-    # Asegurar que el contenido del portapapeles termine en salto de línea si no es vacío
-    if clipboard_content and not clipboard_content.endswith('\n'):
-        clipboard_content += '\n'
-
-    lines.insert(line_number-1, clipboard_content)
-    
-    with open(safe_path, 'w', encoding='utf-8') as f:
-        f.writelines(lines)
-    
-    return f"Contenido del portapapeles pegado en '{path}' en la línea {line_number}."
-
-
-def manage_imports(path: str, add_imports: list[str] = [], remove_imports: list[str] = []) -> str:
-    """Manages Python imports by adding new ones and removing unwanted ones semantically."""
-    safe_path = context.get_safe_path(path)
-    with open(safe_path, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-    
-    source = "".join(lines)
+def manage_imports(path: str, add_imports: List[str] = [], remove_imports: List[str] = []) -> str:
+    safe_path = Path(context.get_safe_path(path))
+    lines = safe_path.read_text(encoding='utf-8').splitlines(keepends=True)
+    source = ''.join(lines)
     try:
-        tree = ast.parse(source)
+        ast.parse(source)
     except SyntaxError as e:
-        raise ValueError(f"Syntax error in file {path}: {e}")
-
-    # 1. Identify current imports
-    current_imports = []
-    import_lines = set()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                current_imports.append(alias.name)
-            import_lines.add(node.lineno)
-        elif isinstance(node, ast.ImportFrom):
-            module = node.module if node.module else "__main__"
-            for alias in node.names:
-                current_imports.append(f"{module}.{alias.name}")
-            import_lines.add(node.lineno)
-
-    # 2. Remove imports
-    # We remove lines that start with 'import' or 'from' and contain the target string
-    new_lines = []
-    for line in lines:
-        stripped = line.strip()
-        should_remove = False
-        for rem in remove_imports:
-            if (stripped.startswith("import ") and rem in stripped) or (stripped.startswith("from ") and rem in stripped):
-                should_remove = True
-                break
-        if not should_remove:
-            new_lines.append(line)
-
-    # 3. Add imports
-    # Find the insertion point (after docstring or at the top)
+        raise ValueError(f'ERR: Syntax error: {e}')
+    new_lines = [line for line in lines if not any(
+        (line.strip().startswith('import ') or line.strip().startswith('from ')) and rem in line 
+        for rem in remove_imports
+    )]
     insertion_point = 0
     for i, line in enumerate(new_lines):
-        if line.strip() == "":
-            # If we found a blank line after some content, we might be past the docstring
-            if i > 0 and not new_lines[0].strip().startswith('"""'):
-                break
-        if not line.strip().startswith('(') and i > 0:
-            # This is a simplification: we look for the first non-docstring, non-import line
-            if not (line.strip().startswith("import ") or line.strip().startswith("from ")):
-                insertion_point = i
-                break
-
-    # Avoid duplicates when adding
+        stripped = line.strip()
+        if stripped and not (stripped.startswith('import ') or stripped.startswith('from ') or stripped.startswith('"""')):
+            insertion_point = i
+            break
     added_count = 0
     for imp in add_imports:
-        # Simple check to avoid adding the exact same string
         if not any(imp in line for line in new_lines):
-            new_lines.insert(insertion_point, imp + "\n")
+            new_lines.insert(insertion_point, imp + '\n')
             insertion_point += 1
             added_count += 1
-
-    with open(safe_path, 'w', encoding='utf-8') as f:
-        f.writelines(new_lines)
-
-    # Return final list of imports for confirmation
-    with open(safe_path, 'r', encoding='utf-8') as f:
-        final_source = f.read()
-        final_tree = ast.parse(final_source)
-        final_imports = []
-        for node in ast.walk(final_tree):
-            if isinstance(node, ast.Import):
-                for alias in node.names: final_imports.append(alias.name)
-            elif isinstance(node, ast.ImportFrom):
-                module = node.module if node.module else "__main__"
-                for alias in node.names: final_imports.append(f"{module}.{alias.name}")
-        return json.dumps({"status": "success", "added": added_count, "current_imports": final_imports})
+    safe_path.write_text(''.join(new_lines), encoding='utf-8')
+    return 'OK'
