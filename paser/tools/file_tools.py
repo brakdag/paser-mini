@@ -185,13 +185,49 @@ def format_code(path: str) -> str:
     return 'OK'
 
 def get_tree(path: str = '.', max_depth: Optional[int] = None, exclude_patterns: Optional[List[str]] = None) -> str:
-    return 'Tree structure generated.'
+    safe_root = Path(context.get_safe_path(path))
+    if not safe_root.exists():
+        raise ToolError(f'Path not found: {path}')
+    
+    exclude_patterns = exclude_patterns or []
+    
+    def _build_tree(current_dir: Path, depth: int, prefix: str = "") -> str:
+        if max_depth is not None and depth > max_depth:
+            return ""
+        
+        lines = []
+        try:
+            # Sort entries: directories first, then files
+            entries = sorted(list(current_dir.iterdir()), key=lambda x: (x.is_file(), x.name.lower()))
+        except PermissionError:
+            return f"{prefix}└── [Permission Denied]"
+
+        # Filter excluded patterns
+        entries = [e for e in entries if not any(p in e.name for p in exclude_patterns)]
+        
+        for i, entry in enumerate(entries):
+            is_last = (i == len(entries) - 1)
+            connector = "└─ " if is_last else "├─ "
+            
+            lines.append(f"{prefix}{connector}{entry.name}")
+            
+            if entry.is_dir():
+                new_prefix = prefix + ("    " if is_last else "│   ")
+                subtree = _build_tree(entry, depth + 1, new_prefix)
+                if subtree:
+                    lines.append(subtree)
+        
+        return "\n".join(lines)
+
+    tree_content = _build_tree(safe_root, 0)
+    return f"{safe_root.name}/
+{tree_content}"
 
 @validate_args(ReadFileWithLinesSchema)
 def read_file_with_lines(path: str) -> str:
     safe_path = Path(context.get_safe_path(path))
     if not safe_path.is_file():
-        raise FileNotFoundError(f'ERR: Not found: {path}')
+        raise ToolError(f'Not found: {path}')
     lines = safe_path.read_text(encoding='utf-8').splitlines()
     return ''.join([f'{i+1}: {line}\n' for i, line in enumerate(lines)])
 
@@ -228,7 +264,7 @@ def paste_lines(path: str, line_number: int) -> str:
         return 'OK'
     lines = safe_path.read_text(encoding='utf-8').splitlines(keepends=True)
     if not (1 <= line_number <= len(lines) + 1):
-        raise IndexError(f'ERR: Line {line_number} out of range')
+        raise ToolError(f'Line {line_number} out of range')
     lines.insert(line_number-1, content)
     safe_path.write_text(''.join(lines), encoding='utf-8')
     return 'OK'
