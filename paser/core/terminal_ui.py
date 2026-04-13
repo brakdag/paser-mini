@@ -119,17 +119,17 @@ class TerminalUI(UserInterface):
         
         # Si hay un spinner activo, mostramos el estado de THINKING
         if self.current_spinner_message:
-            parts.append(('#cba6f7', f' ⌛ {self.current_spinner_message} '))
-            parts.append(('#b4befe bold', ' — THINKING — '))
+            parts.append(('#cba6f7 bg:#494d64', f' ⌛ {self.current_spinner_message} '))
+            parts.append(('#b4befe bold bg:#494d64', ' — THINKING — '))
         
         if self.mode == UIState.NORMAL:
-            parts.append(('#f9e2af bold', ' — NORMAL — '))
-            parts.append(('#9399b2', ' (h/j/k/l: navigate, i: insert)'))
+            parts.append(('#f9e2af bold bg:#494d64', ' — NORMAL — '))
+            parts.append(('#9399b2 bg:#494d64', ' (h/j/k/l: navigate, i: insert)'))
         else:
-            parts.append(('#a6e3a1 bold', ' — INSERT — '))
-            parts.append(('#9399b2', ' (Esc: normal)'))
+            parts.append(('#a6e3a1 bold bg:#494d64', ' — INSERT — '))
+            parts.append(('#9399b2 bg:#494d64', ' (Esc: normal)'))
             
-        return FormattedText(parts)
+        return FormattedText(parts + [('#9399b2 bg:#494d64', f' {datetime.now().strftime("%H:%M:%S")} ')])
 
     def _translate_latex(self, text: str) -> str:
         LATEX_TO_UNICODE = {

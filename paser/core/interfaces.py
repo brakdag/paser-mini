@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Generator, Any, Optional
+from typing import Generator, Any, Optional, Union
 
 class IAIAssistant(ABC):
     @property
@@ -16,7 +16,7 @@ class IAIAssistant(ABC):
         pass
     
     @abstractmethod
-    def send_message(self, message: str) -> Any:
+    def send_message(self, message: Union[str, bytes]) -> Any:
         pass
         
     @abstractmethod

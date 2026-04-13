@@ -90,7 +90,7 @@ class AutonomousExecutor:
             if rep_res is not True:
                 return f"Detección de texto repetitivo: posible bucle infinito. Secuencia: '{rep_res}'"
 
-        self.quota_tracker.increment_and_get(self.assistant.current_model)
+        self.quota_tracker.increment_and_get(self.assistant.current_model or "unknown_model")
         response = await asyncio.to_thread(self.assistant.send_message, user_input)
         response_text = self._extract_text(response)
 
@@ -181,7 +181,7 @@ class AutonomousExecutor:
                 combined_tool_responses.append(tr)
 
             combined_message = "".join(combined_tool_responses)
-            self.quota_tracker.increment_and_get(self.assistant.current_model)
+            self.quota_tracker.increment_and_get(self.assistant.current_model or "unknown_model")
             response_obj = await asyncio.to_thread(self.assistant.send_message, combined_message)
             response_text = self._extract_text(response_obj)
 
