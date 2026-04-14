@@ -8,11 +8,10 @@ from typing import Generator, Optional, Any, Union
 from google import genai
 from google.genai import types
 from google.genai.errors import ClientError
-from paser.core.interfaces import IAIAssistant
 
 logger = logging.getLogger(__name__)
 
-class GeminiAdapter(IAIAssistant):
+class GeminiAdapter:
     def __init__(self):
         self.client = genai.Client()
         self.chat: Any = None
@@ -25,7 +24,7 @@ class GeminiAdapter(IAIAssistant):
         # Initialize call counter for langchain saving
         self.save_dir = "save_langchain"
         self.call_count = self._initialize_call_count()
-        self.save_langchain_enabled = True  # Default to True, will be overridden by ChatManager
+        self.save_langchain_enabled = False  # Default to False, enabled via /s
 
     def _initialize_call_count(self) -> int:
         """Finds the last used number in save_langchain to continue numbering."""
@@ -41,8 +40,6 @@ class GeminiAdapter(IAIAssistant):
 
     def _save_payload(self, current_message: Union[str, bytes]):
         """Saves the full prompt (system + history + current) to disk."""
-        if not getattr(self, 'save_langchain_enabled', True):
-            return
         try:
             self.call_count += 1
             filename = f"lang_chang_{self.call_count}.text"
@@ -74,15 +71,38 @@ class GeminiAdapter(IAIAssistant):
                 lines.append("[Audio/Binary Data]")
             else:
                 lines.append(current_message)
+
+            # If the last message in history is from the model, append it as the response
+            if self.history and self.history[-1].role.lower() == 'model':
+                last_resp = self.history[-1]
+                resp_text = " ".join([p.text for p in last_resp.parts if hasattr(p, 'text') and p.text])
+                lines.append("\n" + "="*30 + "\n")
+                lines.append("=== MODEL RESPONSE ===")
+                lines.append(resp_text)
             
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write("\n".join(lines))
         except Exception as e:
             logger.error(f"Failed to save langchain payload: {e}")
 
-    @property
-    def current_model(self) -> Optional[str]:
-        return self._current_model
+    def save_snapshot(self):
+        """Saves the last interaction to disk."""
+        if not self.history:
+            return False
+        
+        # Find the last user message to use as 'current_message'
+        last_user_msg = None
+        for content in reversed(self.history):
+            if content.role.lower() == 'user':
+                # Extract text from parts
+                text_parts = [p.text for p in content.parts if hasattr(p, 'text') and p.text]
+                last_user_msg = "\n".join(text_parts)
+                break
+        
+        if last_user_msg:
+            self._save_payload(last_user_msg)
+            return True
+        return False
 
     def _prepare_message_parts(self, message: str) -> list[types.Part]:
         """
@@ -250,8 +270,6 @@ class GeminiAdapter(IAIAssistant):
             yield ""
             return
 
-        self._save_payload(message)
-
         retries = 0
         while retries <= self.max_retries:
             try:
@@ -293,8 +311,6 @@ class GeminiAdapter(IAIAssistant):
     def send_message(self, message: Union[str, bytes]) -> Any:
         if not self.chat:
             return None
-
-        self._save_payload(message)
 
         retries = 0
         while retries <= self.max_retries:
@@ -350,9 +366,6 @@ class GeminiAdapter(IAIAssistant):
                 mime_type="audio/wav"
             )
             
-            # Guardamos el payload antes de enviar
-            self._save_payload(audio_bytes)
-
             response = self.chat.send_message([audio_part])
             
             # Actualizar historial

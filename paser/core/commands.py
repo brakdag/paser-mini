@@ -17,6 +17,14 @@ class CommandHandler:
             self.chat_manager.should_exit = True
             return True
 
+        # Guardado de historial (Langchain)
+        elif input_stripped == '/s':
+            if self.chat_manager.assistant.save_snapshot():
+                print(f"\n[SAVE] Last interaction saved to save_langchain/")
+            else:
+                print(f"\n[SAVE] No interaction found to save.")
+            return True
+
         # Configuración del Agente
         elif input_stripped == '/models':
             models = self.chat_manager.assistant.get_available_models()
@@ -31,13 +39,8 @@ class CommandHandler:
                 new_temp = float(temp_input or self.chat_manager.temperature)
                 
                 # Persistir en config
-                config_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'config.json')
-                try:
-                    with open(config_path, "r") as f: config = json.load(f)
-                except Exception: config = {}
-                config["model_name"] = model_name
-                config["default_temperature"] = new_temp
-                with open(config_path, "w") as f: json.dump(config, f, indent=4)
+                self.chat_manager.save_config("model_name", model_name)
+                self.chat_manager.save_config("default_temperature", new_temp)
                 
                 self.chat_manager.temperature = new_temp
                 self.chat_manager.assistant.start_chat(model_name, self.chat_manager.system_instruction, new_temp)

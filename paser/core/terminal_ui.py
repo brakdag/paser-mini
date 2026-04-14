@@ -14,7 +14,6 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.styles import Style
 
-from paser.core.interfaces import UserInterface
 
 logger = logging.getLogger("ui")
 
@@ -22,7 +21,7 @@ class UIState:
     INSERT = "INSERT"
     NORMAL = "NORMAL"
 
-class TerminalUI(UserInterface):
+class TerminalUI:
     def __init__(self):
         self.mode = UIState.INSERT
         self.last_cursor_pos = 0
