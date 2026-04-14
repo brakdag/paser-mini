@@ -69,9 +69,12 @@ def list_dir(path: str = '.') -> str:
 def replace_string(path: str, search_text: str, replace_text: str) -> str:
     safe_path = context.get_safe_path(path)
     content = safe_path.read_text(encoding='utf-8')
-    if search_text not in content:
+    count = content.count(search_text)
+    if count == 0:
         raise ToolError(f'Not found in {path}')
-    safe_path.write_text(content.replace(search_text, replace_text, 1), encoding='utf-8')
+    if count > 1:
+        raise ToolError(f'Ambiguous replacement: {count} occurrences found in {path}. Please provide more context to ensure a unique match.')
+    safe_path.write_text(content.replace(search_text, replace_text), encoding='utf-8')
     return 'OK'
 
 def rename_path(origen: str, destino: str) -> str:

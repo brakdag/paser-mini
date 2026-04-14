@@ -45,7 +45,7 @@ paser-mini
 ```text
 . 
 ├── paser/                # Core application package
-│   ├── core/             # ReAct engine and state management
+│   ├── core/             # Unified ReAct engine and state management
 │   ├── tools/            # Minimalist toolset and registry
 │   │   ├── file_tools.py # Essential file operations
 │   │   ├── system_tools.py # Basic system analysis (Pyright)
@@ -61,17 +61,23 @@ paser-mini
 
 ## Main Features
 
-1.  **Pure ReAct Engine:**
+1.  **Absolute Minimalist UI:**
+    - **Zero Formatting**: No colors, no Markdown, no panels. Pure plain text output.
+    - **Silent Execution**: No tool-call logs, no "Working" indicators. The agent works in total silence until the final response.
+    - **Minimal Prompt**: A simple `> ` prompt for a distraction-free experience.
+
+2.  **Pure ReAct Engine:**
     - Uses structured `<TOOL_CALL>` emissions via System Instructions.
     - Optimized for low latency and minimal token consumption.
-    - **Silent Mode**: Reasoning/Thinking is disabled by default for a cleaner terminal experience.
 
-2.  **Secure File Access:**
+3.  **Secure File Access:**
     - All operations are restricted to `PROJECT_ROOT` via `get_safe_path` validation.
 
-3.  **Essential User Commands:**
-    - `/models`: Change AI model and adjust temperature.
-    - `/q`, `/quit`, `/exit`: Exit the application.
+## Essential User Commands
+
+- `/models`: Change AI model and adjust temperature.
+- `/s`: Save a snapshot of the last interaction (System + History + Last Message + Response) to the current directory as a `.text` file.
+- `/q`, `/quit`, `/exit`: Exit the application.
 
 ## Minimal Toolset
 

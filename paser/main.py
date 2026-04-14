@@ -13,6 +13,8 @@ async def main():
     parser = argparse.ArgumentParser(description="Paser Mini: Minimalist Autonomous Agent")
     parser.add_argument("--version", action="version", version="paser-mini 0.1.0")
     parser.add_argument("--unit_tests", action="store_true", help="Run unit tests")
+    parser.add_argument("-si", "--system_instruction", help="Custom system instructions")
+    parser.add_argument("-m", "--message", help="Initial message to send (one-shot mode)")
     parser.add_argument("input", nargs="?", help="Input text to process (one-shot mode)")
     
     args = parser.parse_args()
@@ -36,14 +38,19 @@ async def main():
         
         sys.exit(0 if result.wasSuccessful() else 1)
 
+    # Determine which system instruction to use
+    sys_instr = args.system_instruction if args.system_instruction else SYSTEM_INSTRUCTION
+    # Determine which input message to use
+    user_input = args.message if args.message else args.input
+
     assistant = GeminiAdapter()
     ui = TerminalUI()
-    chat_manager = ChatManager(assistant, AVAILABLE_TOOLS, SYSTEM_INSTRUCTION, ui)
+    chat_manager = ChatManager(assistant, AVAILABLE_TOOLS, sys_instr, ui)
 
-    if args.input:
+    if user_input:
         # One-shot mode: process input and exit
-        await chat_manager._initialize_chat()
-        result = await chat_manager.execute_single(args.input)
+        chat_manager._initialize_chat()
+        result = await chat_manager.execute_single(user_input)
         print(result)
     else:
         # REPL mode
