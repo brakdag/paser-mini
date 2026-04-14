@@ -20,7 +20,7 @@ class CommandHandler:
         # Guardado de historial (Langchain)
         elif input_stripped == '/s':
             if self.chat_manager.assistant.save_snapshot():
-                print(f"\n[SAVE] Last interaction saved to save_langchain/")
+                print(f"\n[SAVE] Last interaction saved to current directory")
             else:
                 print(f"\n[SAVE] No interaction found to save.")
             return True

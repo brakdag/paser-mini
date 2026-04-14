@@ -22,7 +22,7 @@ class GeminiAdapter:
         self.system_instruction: Optional[str] = None
         
         # Initialize call counter for langchain saving
-        self.save_dir = "save_langchain"
+        self.save_dir = "."
         self.call_count = self._initialize_call_count()
         self.save_langchain_enabled = False  # Default to False, enabled via /s
 

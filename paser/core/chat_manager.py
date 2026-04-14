@@ -143,7 +143,7 @@ class ChatManager:
                     except ToolError as te:
                         tr = self._format_tool_response(f"ERR: {str(te)}", call_id=call_data.get("id"), success=False)
                     except Exception as exc:
-                        tr = self._format_tool_response(f"ERR: Unexpected error: {str(exc)}", call_id=call_data.get("id", success=False))
+                        tr = self._format_tool_response(f"ERR: Unexpected error: {str(exc)}", call_id=call_data.get("id"), success=False)
                 else:
                     tr = self._format_tool_response(f"Herramienta desconocida: {name}", call_id=call_data.get("id"), success=False)
                 combined_tool_responses.append(tr)
