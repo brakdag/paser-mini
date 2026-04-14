@@ -6,31 +6,23 @@ import json
 from paser.tools import (
     file_tools as ft,
     system_tools as st,
-    util_tools as ut,
-    discovery as disc
+    util_tools as ut
 )
 
 # Mapping of tool names to their executable Python functions
 AVAILABLE_TOOLS = {
-    "discover_capabilities": disc.discover_capabilities,
     "read_file": ft.read_file,
-    "read_files": ft.read_files,
     "write_file": ft.write_file,
     "remove_file": ft.remove_file,
     "list_dir": ft.list_dir,
     "get_cwd": ut.get_cwd,
-    "read_lines": ft.read_lines,
-    "read_head": ft.read_head,
     "replace_string": ft.replace_string,
     "analyze_pyright": st.analyze_pyright,
     "search_text_global": ft.search_text_global,
     "search_files_pattern": ft.search_files_pattern,
     "rename_path": ft.rename_path,
     "create_dir": ft.create_dir,
-    "get_tree": ft.get_tree,
-    "read_file_with_lines": ft.read_file_with_lines,
-    "validate_json": ut.validate_json,
-    "validate_json_file": ut.validate_json_file
+    "validate_json": ut.validate_json
 }
 
 # Load tool definitions (descriptions and params) for the LLM prompt
@@ -38,15 +30,8 @@ _registry_path = os.path.join(os.path.dirname(__file__), "registry_positional.js
 with open(_registry_path, "r") as f:
     full_catalog = json.load(f)
 
-# Hybrid Tooling: Only inject basic tools into the system prompt to save tokens
-BASIC_TOOLS = {
-    "read_file", "write_file", "replace_string", 
-    "list_dir", "create_dir", "rename_path", "remove_file", "get_cwd",
-    "discover_capabilities"
-}
-
-filtered_catalog = [tool for tool in full_catalog if tool[0] in BASIC_TOOLS]
-TOOL_CATALOG = json.dumps(filtered_catalog, indent=2)
+# All tools are now injected into the system prompt for maximum visibility
+TOOL_CATALOG = json.dumps(full_catalog, indent=2)
 
 # Bypassing interceptor by fragmenting the forbidden strings
 _S = chr(60) + "TOOL" + "_CALL" + chr(62)

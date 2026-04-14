@@ -107,10 +107,9 @@ class TerminalUI(UserInterface):
     def _get_bottom_toolbar(self):
         parts = []
         
-        # Si hay un spinner activo, mostramos el estado de THINKING
+        # Si hay un spinner activo, mostramos el mensaje del spinner
         if self.current_spinner_message:
             parts.append(('#cba6f7 bg:#494d64', f' ⌛ {self.current_spinner_message} '))
-            parts.append(('#b4befe bold bg:#494d64', ' — THINKING — '))
         
         if self.mode == UIState.NORMAL:
             parts.append(('#f9e2af bold bg:#494d64', ' — NORMAL — '))
@@ -172,8 +171,8 @@ class TerminalUI(UserInterface):
             self.console.print(Text(text, style="cyan"))
 
     def display_thought(self, text: str):
-        self.console.print("Thinking...")
-        self.console.print(Markdown(text))
+        # Mantenemos el método por compatibilidad con la interfaz, pero no hace nada
+        pass
 
     def display_tool_start(self, tool_name: str, args: dict):
         self.console.print(Panel(f"```json\n{{\"name\": \"{tool_name}\", \"args\": {args}}}\n```", title="🛠️ Tool Call", border_style="magenta", expand=False))
@@ -226,25 +225,23 @@ class SpinnerRenderable:
         frame = self.frames[self.frame_idx]
         self.frame_idx = (self.frame_idx + 1) % len(self.frames)
         
-        label = " — THINKING — "
         time_str = datetime.now().strftime("%H:%M:%S ")
-        display_msg = self.message if self.message else "Thinking..."
+        display_msg = self.message if self.message else "Processing..."
         
         # Usamos self.ui.console para obtener el ancho
         console_width = self.ui.console.width
         
         # Cálculo de ancho para evitar el wrap
-        available_width = console_width - len(label) - len(time_str) - 5
+        available_width = console_width - len(time_str) - 5
         truncated_msg = (display_msg[:available_width-3] + "...") if len(display_msg) > available_width else display_msg
         
         # Construcción de la línea con padding dinámico
-        current_content_len = len(label) + len(truncated_msg) + 3
+        current_content_len = len(truncated_msg) + 3
         padding = " " * max(0, console_width - current_content_len - len(time_str))
         
         # Creamos el objeto Text con estilos específicos por rango
-        line = Text(f"{label} {frame} {truncated_msg}{padding}{time_str}", style="on #494d64")
-        line.stylize("#b4befe bold", 0, len(label))
-        line.stylize("#cba6f7", len(label), len(label) + len(truncated_msg) + 2)
+        line = Text(f"{frame} {truncated_msg}{padding}{time_str}", style="on #494d64")
+        line.stylize("#cba6f7", 0, len(truncated_msg) + 2)
         line.stylize("#9399b2", -len(time_str), None)
         
         return line

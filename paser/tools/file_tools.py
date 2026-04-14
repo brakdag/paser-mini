@@ -6,8 +6,8 @@ from pathlib import Path
 from .core_tools import context, ToolError
 from .validation import validate_args
 from .schemas import (
-    ReadFileSchema, WriteFileSchema, ReadFilesSchema, ReplaceStringSchema,
-    RemoveFileSchema, CreateDirSchema, ReadFileWithLinesSchema
+    ReadFileSchema, WriteFileSchema, ReplaceStringSchema,
+    RemoveFileSchema, CreateDirSchema
 )
 
 logger = logging.getLogger('tools')
@@ -48,17 +48,6 @@ def read_file(path: str) -> str:
     
     return f"--- HASH: {file_hash} ---\n{content}" if content else f"--- HASH: {file_hash} ---\nERR: Empty: {path}"
 
-@validate_args(ReadFilesSchema)
-def read_files(paths: List[str]) -> str:
-    results = []
-    for path in paths:
-        try:
-            content = read_file(path=path)
-            results.append(f'--- {path} ---\n{content}')
-        except Exception as e:
-            results.append(f'--- {path} ---\n{str(e)}')
-    return '\n\n'.join(results)
-
 @validate_args(WriteFileSchema)
 def write_file(path: str, contenido: str) -> str:
     safe_path = Path(context.get_safe_path(path))
@@ -84,14 +73,6 @@ def list_dir(path: str = '.') -> str:
     if len(items) > MAX_LIST_RESULTS:
         return json.dumps({"results": items[:MAX_LIST_RESULTS], "total": len(items), "warning": f"Truncated to {MAX_LIST_RESULTS} items"})
     return json.dumps(items)
-
-def read_lines(path: str, inicio: int, fin: int) -> str:
-    safe_path = Path(context.get_safe_path(path))
-    lines = safe_path.read_text(encoding='utf-8').splitlines(keepends=True)
-    return ''.join(lines[inicio-1:fin])
-
-def read_head(path: str, cantidad_lineas: int) -> str:
-    return read_lines(path, 1, cantidad_lineas)
 
 @validate_args(ReplaceStringSchema)
 def replace_string(path: str, search_text: str, replace_text: str) -> str:
@@ -160,49 +141,3 @@ def search_text_global(query: str) -> str:
         raise
     except Exception as e:
         raise ToolError(f"Search failed: {str(e)}")
-
-def get_tree(path: str = '.', max_depth: Optional[int] = None, exclude_patterns: Optional[List[str]] = None) -> str:
-    safe_root = Path(context.get_safe_path(path))
-    if not safe_root.exists():
-        raise ToolError(f'Path not found: {path}')
-    
-    exclude_patterns = exclude_patterns or []
-    
-    def _build_tree(current_dir: Path, depth: int, prefix: str = "") -> str:
-        if max_depth is not None and depth > max_depth:
-            return ""
-        
-        lines = []
-        try:
-            # Sort entries: directories first, then files
-            entries = sorted(list(current_dir.iterdir()), key=lambda x: (x.is_file(), x.name.lower()))
-        except OSError as e:
-            return f"{prefix}└── [Error: {e.strerror or str(e)}]"
-
-        # Filter excluded patterns
-        entries = [e for e in entries if not any(p in e.name for p in exclude_patterns)]
-        
-        for i, entry in enumerate(entries):
-            is_last = (i == len(entries) - 1)
-            connector = "└─ " if is_last else "├─ "
-            
-            lines.append(f"{prefix}{connector}{entry.name}")
-            
-            if entry.is_dir():
-                new_prefix = prefix + ("    " if is_last else "│   ")
-                subtree = _build_tree(entry, depth + 1, new_prefix)
-                if subtree:
-                    lines.append(subtree)
-        
-        return "\n".join(lines)
-
-    tree_content = _build_tree(safe_root, 0)
-    return f"{safe_root.name}/\n{tree_content}"
-
-@validate_args(ReadFileWithLinesSchema)
-def read_file_with_lines(path: str) -> str:
-    safe_path = Path(context.get_safe_path(path))
-    if not safe_path.is_file():
-        raise ToolError(f'Not found: {path}')
-    lines = safe_path.read_text(encoding='utf-8').splitlines()
-    return ''.join([f'{i+1}: {line}\n' for i, line in enumerate(lines)])

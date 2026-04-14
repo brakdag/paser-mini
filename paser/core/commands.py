@@ -17,11 +17,6 @@ class CommandHandler:
             return True
 
         # ⚙️ Configuración del Agente
-        if input_stripped == '/thinking':
-            self.chat_manager.thinking_enabled = not self.chat_manager.thinking_enabled
-            console.print(f"Pensamientos: {'Visible' if self.chat_manager.thinking_enabled else 'Oculto'}", style="bold")
-            return True
-            
         elif input_stripped == '/models':
             models = self.chat_manager.assistant.get_available_models()
             for i, m in enumerate(models): console.print(f"{i}: {m}")

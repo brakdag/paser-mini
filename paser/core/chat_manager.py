@@ -28,31 +28,22 @@ class ChatManager:
         config_path = os.path.join(os.path.dirname(__file__), '..', 'config', 'config.json')
         self.config_manager = ConfigManager(config_path)
         
-        self.thinking_enabled = self.config_manager.get("thinking_enabled", True)
+        # Pensamientos desactivados por defecto
+        self.thinking_enabled = self.config_manager.get("thinking_enabled", False)
         self.temperature = float(self.config_manager.get("default_temperature", 0.7))
-        
-        # Langchain saving toggle
-        self.save_langchain_enabled = self.config_manager.get("save_langchain_enabled", False)
-        if hasattr(self.assistant, 'save_langchain_enabled'):
-            self.assistant.save_langchain_enabled = self.save_langchain_enabled
         
         self.command_handler = CommandHandler(self)
         self.executor = AutonomousExecutor(
             self.assistant, self.tools,
             on_tool_used=self._on_tool_used,
-            on_tool_start=self._on_tool_start,
-            on_thought=self._on_thought
+            on_tool_start=self._on_tool_start
+            # on_thought eliminado para no procesar pensamientos
         )
         self.event_monitor = EventMonitor(event_manager, self.executor)
-        self.recurring_tasks = {}
         self.should_exit = False
         
         self._initialized_event = threading.Event()
         self._init_error = None
-
-    def _on_thought(self, thought_text):
-        if not self.thinking_enabled: return
-        self.ui.display_thought(thought_text)
 
     def _get_tool_detail(self, tool_name, args):
         """Extracts a highly representative human-readable detail from tool arguments."""
@@ -63,9 +54,6 @@ class ChatManager:
             orig = os.path.basename(args.get('origen', 'unknown'))
             dest = os.path.basename(args.get('destino', 'unknown'))
             return f": {orig} \u2192 {dest}"
-        
-        if tool_name == 'create_issue':
-            return f": {args.get('repo', 'repo')} / {args.get('title', 'issue')[:20]}..."
 
         path_keys = ['path', 'filepath', 'origen', 'destino', 'input_path']
         for pk in path_keys:
@@ -94,13 +82,6 @@ class ChatManager:
 
     def _on_tool_used(self, tool_name, args, result, success):
         detail = self._get_tool_detail(tool_name, args)
-        
-        if tool_name == 'create_issue' and success and isinstance(result, str):
-            import re
-            match = re.search(r'#(\d+)', result)
-            if match:
-                detail = f": #{match.group(1)}"
-
         self.ui.display_tool_status(tool_name, success, detail)
 
     async def run(self):
@@ -144,44 +125,3 @@ class ChatManager:
             self.assistant.start_chat(self.config_manager.get("model_name", "models/gemma-2-27B-it"), self.system_instruction, self.temperature)
             self._initialized_event.set()
         except Exception as e: self._init_error = e
-
-    def save_session(self, name):
-        session_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'sessions')
-        os.makedirs(session_dir, exist_ok=True)
-        filepath = os.path.join(session_dir, f"{name}.json")
-        
-        history = self.assistant.get_history()
-        data = {
-            "model": self.assistant.current_model,
-            "temperature": self.temperature,
-            "history": history
-        }
-        
-        with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=4)
-        return filepath
-
-    def load_session(self, name):
-        session_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'sessions')
-        filepath = os.path.join(session_dir, f"{name}.json")
-        
-        if not os.path.exists(filepath):
-            raise FileNotFoundError(f"Sesión {name} no encontrada.")
-            
-        with open(filepath, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            
-        self.temperature = data.get("temperature", self.temperature)
-        self.assistant.load_history(
-            data["history"], 
-            data["model"], 
-            self.temperature
-        )
-
-    def delete_session(self, name):
-        session_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'sessions')
-        filepath = os.path.join(session_dir, f"{name}.json")
-        if os.path.exists(filepath):
-            os.remove(filepath)
-            return True
-        return False

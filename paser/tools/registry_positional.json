@@ -1,23 +1,9 @@
 [
   [
-    "discover_capabilities",
-    "List available tools by category",
-    {
-      "category": "string"
-    }
-  ],
-  [
     "read_file",
     "Read file content",
     {
       "path": "string"
-    }
-  ],
-  [
-    "read_files",
-    "Read multiple files",
-    {
-      "paths": "array[string]"
     }
   ],
   [
@@ -46,23 +32,6 @@
     "get_cwd",
     "Get current working directory",
     {}
-  ],
-  [
-    "read_lines",
-    "Read specific file lines",
-    {
-      "path": "string",
-      "inicio": "integer",
-      "fin": "integer"
-    }
-  ],
-  [
-    "read_head",
-    "Read first N file lines",
-    {
-      "path": "string",
-      "cantidad_lineas": "integer"
-    }
   ],
   [
     "replace_string",
@@ -110,33 +79,10 @@
     }
   ],
   [
-    "get_tree",
-    "Return the directory structure in a visual tree format with depth control and filters",
-    {
-      "path": "string",
-      "max_depth": "integer",
-      "exclude_patterns": "array[string]"
-    }
-  ],
-  [
-    "read_file_with_lines",
-    "Read a file and return its content with line numbers prefixed to each line",
-    {
-      "path": "string"
-    }
-  ],
-  [
     "validate_json",
     "Validates if a string is a valid JSON",
     {
       "json_string": "string"
-    }
-  ],
-  [
-    "validate_json_file",
-    "Validates if a file contains valid JSON",
-    {
-      "path": "string"
     }
   ]
 ]
