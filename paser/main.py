@@ -47,14 +47,8 @@ async def main():
     ui = TerminalUI()
     chat_manager = ChatManager(assistant, AVAILABLE_TOOLS, sys_instr, ui)
 
-    if user_input:
-        # One-shot mode: process input and exit
-        chat_manager._initialize_chat()
-        result = await chat_manager.execute_single(user_input)
-        print(result)
-    else:
-        # REPL mode
-        await chat_manager.run()
+    # Start the agent in REPL mode, processing initial input if provided
+    await chat_manager.run(initial_input=user_input)
 
 def cli():
     asyncio.run(main())

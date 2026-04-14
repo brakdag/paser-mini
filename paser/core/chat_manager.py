@@ -162,9 +162,25 @@ class ChatManager:
         )
         return re.sub(r'<[^>]+>.*?</[^>]+>', '', result, flags=re.DOTALL) if result else ""
 
-    async def run(self):
-        asyncio.create_task(asyncio.to_thread(self._initialize_chat))
+    async def run(self, initial_input: Optional[str] = None):
+        if not self._initialized_event.is_set():
+            await asyncio.to_thread(self._initialize_chat)
         
+        if initial_input:
+            try:
+                result = await self.execute(
+                    user_input=initial_input, 
+                    thinking_enabled=self.thinking_enabled, 
+                    get_confirmation_callback=self.ui.request_input
+                )
+                if result:
+                    cleaned_result = re.sub(r'<[^>]+>.*?</[^>]+>', '', result, flags=re.DOTALL)
+                    self.ui.display_message(cleaned_result)
+                print("\n")
+            except Exception as e:
+                self.ui.display_error(f"Error processing initial message: {e}")
+                print("\n")
+
         while not self.should_exit:
             try:
                 user_input = await self.ui.request_input("> ", history=None)
