@@ -3,12 +3,12 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "paser"
+name = "paser-mini"
 version = "0.1.0"
 authors = [
   { name="Author", email="author@example.com" },
 ]
-description = "Agente autónomo usando ReAct"
+description = "Agente autónomo minimalista usando ReAct"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -16,21 +16,14 @@ dependencies = [
     "rich",
     "prompt_toolkit",
     "yaspin",
-    "paho-mqtt",
-    "wasmer",
-    "Pillow",
     "requests",
     "pydantic",
     "black",
     "pynput",
-    "sounddevice",
-    "numpy",
-    "gTTS",
-    "jedi",
 ]
 
 [project.scripts]
-paser = "paser.main:cli"
+paser_mini = "paser.main:cli"
 
 [tool.setuptools]
 packages = ["paser"]

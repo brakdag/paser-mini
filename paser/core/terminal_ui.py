@@ -28,7 +28,6 @@ logger = logging.getLogger("ui")
 class UIState:
     INSERT = "INSERT"
     NORMAL = "NORMAL"
-    AUDIO = "AUDIO"
 
 class TerminalUI(UserInterface):
     def __init__(self):
@@ -36,7 +35,6 @@ class TerminalUI(UserInterface):
         self.mode = UIState.INSERT
         self.last_cursor_pos = 0
         self._session = None
-        self.audio_callback = None
         self.kb = KeyBindings()
         self.current_spinner_message: Optional[str] = None
         
@@ -97,16 +95,8 @@ class TerminalUI(UserInterface):
             else:
                 event.current_buffer.insert_text('l')
 
-        @self.kb.add('v')
-        def _(event):
-            if self.mode in (UIState.NORMAL, UIState.AUDIO):
-                if self.audio_callback:
-                    self.audio_callback()
-            else:
-                event.current_buffer.insert_text('v')
-
         special_vim_keys = {'h', 'j', 'k', 'l', 'i'}
-        chars_to_block = (string.ascii_letters + string.digits + " " + "„¥√").replace('v', '').replace('V', '')
+        chars_to_block = (string.ascii_letters + string.digits + " " + "„¥√")
         for char in chars_to_block:
             if char.lower() in special_vim_keys: continue
             @self.kb.add(char)

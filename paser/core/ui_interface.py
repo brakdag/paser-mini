@@ -68,7 +68,7 @@ class UserInterface(ABC):
 
     @abstractmethod
     def set_ui_mode(self, mode: str):
-        """Change the current UI mode (e.g., NORMAL, INSERT, AUDIO)."""
+        """Change the current UI mode (e.g., NORMAL, INSERT)."""
         pass
 
     @abstractmethod

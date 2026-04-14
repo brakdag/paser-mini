@@ -90,7 +90,6 @@ class ChatManager:
 
     def _on_tool_start(self, tool_name, args):
         detail = self._get_tool_detail(tool_name, args)
-        # Quitamos newline=True porque ya hay un spinner global activo en ChatManager.run
         return self.ui.get_spinner(f"{tool_name}{detail}...", color="#cba6f7", newline=False)
 
     def _on_tool_used(self, tool_name, args, result, success):
@@ -109,38 +108,10 @@ class ChatManager:
         asyncio.create_task(asyncio.to_thread(self._initialize_chat))
         asyncio.create_task(self.event_monitor.monitor_loop(self.thinking_enabled))
         
-        from paser.core.audio_manager import AudioManager
-        self.audio_manager = AudioManager()
-        self.is_recording = False
-        
-        def toggle_audio():
-            if not self.is_recording:
-                self.is_recording = True
-                self.ui.set_ui_mode("AUDIO")
-                try:
-                    self.audio_manager.start_recording()
-                    self.ui.display_message("\n[bold red]🎤 Recording... (Press 'v' to stop)[/bold red]")
-                except Exception as e:
-                    self.ui.display_error(f"Audio Error: {e}")
-                    self.is_recording = False
-                    self.ui.set_ui_mode("NORMAL")
-            else:
-                self.is_recording = False
-                self.ui.set_ui_mode("NORMAL")
-                base64_audio = self.audio_manager.stop_recording()
-                if base64_audio:
-                    asyncio.create_task(self.handle_audio_input(base64_audio))
-
-        # Inyectamos el callback en la UI (si es TerminalUI)
-        if hasattr(self.ui, 'set_audio_callback'):
-            self.ui.set_audio_callback(toggle_audio)
-        
-        self.ui.display_message("[bold green]🎤 Voice Mode active (Press 'v' in NORMAL mode to toggle)[/bold green]")
-
         model = self.config_manager.get("model_name", "Unknown")
         self.ui.display_panel(
             title="🤖 System Ready",
-            message=f"[bold cyan]🤖 Paser Autonomous Agent (Debug Mode)[/bold cyan]\n"
+            message=f"[bold cyan]🤖 Paser Mini Autonomous Agent[/bold cyan]\n"
                     f"[dim]Model: {model} | Temp: {self.temperature}[/dim]",
             style="magenta"
         )
@@ -214,24 +185,3 @@ class ChatManager:
             os.remove(filepath)
             return True
         return False
-
-    async def handle_audio_input(self, base64_audio: str):
-        try:
-            import base64
-            audio_bytes = base64.b64decode(base64_audio)
-            
-            spinner = self.ui.get_spinner("Processing audio...", "magenta", newline=True)
-            with (spinner if spinner is not None else contextlib.nullcontext()):
-                result = await self.executor.execute(
-                    user_input=audio_bytes, 
-                    thinking_enabled=self.thinking_enabled, 
-                    get_confirmation_callback=self.ui.request_input
-                )
-                
-                if result:
-                    cleaned_result = re.sub(r'<[^>]+>.*?</[^>]+>', '', result, flags=re.DOTALL)
-                    self.ui.display_message(cleaned_result)
-                else:
-                    self.ui.display_message("No se pudo obtener una respuesta del audio.")
-        except Exception as e:
-            self.ui.display_error(f"Error processing audio: {e}")

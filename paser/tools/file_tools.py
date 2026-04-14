@@ -1,16 +1,13 @@
 import json
 import tempfile
 import logging
-import ast
-import hashlib
-from typing import Optional, List, Dict, Any
+from typing import Optional, List
 from pathlib import Path
 from .core_tools import context, ToolError
 from .validation import validate_args
 from .schemas import (
-    ReadFileSchema, WriteFileSchema, ReadFilesSchema, ReplaceStringSchema, ReplaceStringAtLineSchema,
-    RemoveFileSchema, CreateDirSchema, ReadFileWithLinesSchema, 
-    CopyLinesSchema, CutLinesSchema, PasteLinesSchema, InsertAfterSchema, InsertBeforeSchema, VerifyFileHashSchema
+    ReadFileSchema, WriteFileSchema, ReadFilesSchema, ReplaceStringSchema,
+    RemoveFileSchema, CreateDirSchema, ReadFileWithLinesSchema
 )
 
 logger = logging.getLogger('tools')
@@ -26,6 +23,7 @@ def is_binary_file(path: Path) -> bool:
         return True
 
 def _calculate_hash(content: str) -> str:
+    import hashlib
     return hashlib.sha256(content.encode('utf-8')).hexdigest()
 
 @validate_args(ReadFileSchema)
@@ -95,15 +93,6 @@ def read_lines(path: str, inicio: int, fin: int) -> str:
 def read_head(path: str, cantidad_lineas: int) -> str:
     return read_lines(path, 1, cantidad_lineas)
 
-def update_line(path: str, line_number: int, new_content: str) -> str:
-    safe_path = Path(context.get_safe_path(path))
-    lines = safe_path.read_text(encoding='utf-8').splitlines(keepends=True)
-    if not (1 <= line_number <= len(lines)):
-        raise ToolError(f'Line {line_number} out of range')
-    lines[line_number-1] = new_content + '\n'
-    safe_path.write_text(''.join(lines), encoding='utf-8')
-    return 'OK'
-
 @validate_args(ReplaceStringSchema)
 def replace_string(path: str, search_text: str, replace_text: str) -> str:
     safe_path = Path(context.get_safe_path(path))
@@ -111,19 +100,6 @@ def replace_string(path: str, search_text: str, replace_text: str) -> str:
     if search_text not in content:
         raise ToolError(f'Not found in {path}')
     safe_path.write_text(content.replace(search_text, replace_text, 1), encoding='utf-8')
-    return 'OK'
-
-@validate_args(ReplaceStringAtLineSchema)
-def replace_string_at_line(path: str, line_number: int, search_text: str, replace_text: str) -> str:
-    safe_path = Path(context.get_safe_path(path))
-    lines = safe_path.read_text(encoding='utf-8').splitlines(keepends=True)
-    if not (1 <= line_number <= len(lines)):
-        raise ToolError(f'Line {line_number} out of range')
-    target_line = lines[line_number-1]
-    if search_text not in target_line:
-        raise ToolError(f'Not found in line {line_number}')
-    lines[line_number-1] = target_line.replace(search_text, replace_text)
-    safe_path.write_text(''.join(lines), encoding='utf-8')
     return 'OK'
 
 def rename_path(origen: str, destino: str) -> str:
@@ -185,11 +161,6 @@ def search_text_global(query: str) -> str:
     except Exception as e:
         raise ToolError(f"Search failed: {str(e)}")
 
-def format_code(path: str) -> str:
-    import subprocess
-    subprocess.run(['black', '--', context.get_safe_path(path)], check=True)
-    return 'OK'
-
 def get_tree(path: str = '.', max_depth: Optional[int] = None, exclude_patterns: Optional[List[str]] = None) -> str:
     safe_root = Path(context.get_safe_path(path))
     if not safe_root.exists():
@@ -235,99 +206,3 @@ def read_file_with_lines(path: str) -> str:
         raise ToolError(f'Not found: {path}')
     lines = safe_path.read_text(encoding='utf-8').splitlines()
     return ''.join([f'{i+1}: {line}\n' for i, line in enumerate(lines)])
-
-@validate_args(CopyLinesSchema)
-def copy_lines(path: str, start_line: int, end_line: int) -> str:
-    safe_path = Path(context.get_safe_path(path))
-    lines = safe_path.read_text(encoding='utf-8').splitlines(keepends=True)
-    if not (1 <= start_line <= end_line <= len(lines)):
-        raise ToolError(f'Range {start_line}-{end_line} out of bounds')
-    context.clipboard = ''.join(lines[start_line-1:end_line])
-    return 'OK'
-
-@validate_args(CutLinesSchema)
-def cut_lines(path: str, start_line: int, end_line: int) -> str:
-    safe_path = Path(context.get_safe_path(path))
-    lines = safe_path.read_text(encoding='utf-8').splitlines(keepends=True)
-    if not (1 <= start_line <= end_line <= len(lines)):
-        raise ToolError(f'Range {start_line}-{end_line} out of bounds')
-    context.clipboard = ''.join(lines[start_line-1:end_line])
-    remaining = lines[:start_line-1] + lines[end_line:]
-    safe_path.write_text(''.join(remaining), encoding='utf-8')
-    return 'OK'
-
-@validate_args(PasteLinesSchema)
-def paste_lines(path: str, line_number: int) -> str:
-    if not context.clipboard:
-        raise ToolError('Clipboard empty')
-    safe_path = Path(context.get_safe_path(path))
-    content = context.clipboard
-    if content and not content.endswith('\n'):
-        content += '\n'
-    if not safe_path.is_file():
-        safe_path.write_text(content, encoding='utf-8')
-        return 'OK'
-    lines = safe_path.read_text(encoding='utf-8').splitlines(keepends=True)
-    if not (1 <= line_number <= len(lines) + 1):
-        raise ToolError(f'Line {line_number} out of range')
-    lines.insert(line_number-1, content)
-    safe_path.write_text(''.join(lines), encoding='utf-8')
-    return 'OK'
-
-def manage_imports(path: str, add_imports: List[str] = [], remove_imports: List[str] = []) -> str:
-    safe_path = Path(context.get_safe_path(path))
-    lines = safe_path.read_text(encoding='utf-8').splitlines(keepends=True)
-    source = ''.join(lines)
-    try:
-        ast.parse(source)
-    except SyntaxError as e:
-        raise ToolError(f'Syntax error: {e}')
-    new_lines = [line for line in lines if not any(
-        (line.strip().startswith('import ') or line.strip().startswith('from ')) and rem in line 
-        for rem in remove_imports
-    )]
-    insertion_point = 0
-    for i, line in enumerate(new_lines):
-        stripped = line.strip()
-        if stripped and not (stripped.startswith('import ') or stripped.startswith('from ') or stripped.startswith('"""')):
-            insertion_point = i
-            break
-    added_count = 0
-    for imp in add_imports:
-        if not any(imp in line for line in new_lines):
-            new_lines.insert(insertion_point, imp + '\n')
-            insertion_point += 1
-            added_count += 1
-    safe_path.write_text(''.join(new_lines), encoding='utf-8')
-    return 'OK'
-
-def _get_indentation(path: str, search_text: str) -> str:
-    safe_path = Path(context.get_safe_path(path))
-    content = safe_path.read_text(encoding='utf-8')
-    for line in content.splitlines():
-        if search_text in line:
-            return line[:len(line) - len(line.lstrip())]
-    return ""
-
-@validate_args(InsertAfterSchema)
-def insert_after(path: str, search_text: str, content: str) -> str:
-    indent = _get_indentation(path, search_text)
-    indented_content = "\n".join([indent + line for line in content.splitlines()])
-    return replace_string(path, search_text, f"{search_text}\n{indented_content}")
-
-@validate_args(InsertBeforeSchema)
-def insert_before(path: str, search_text: str, content: str) -> str:
-    indent = _get_indentation(path, search_text)
-    indented_content = "\n".join([indent + line for line in content.splitlines()])
-    return replace_string(path, search_text, f"{indented_content}\n{search_text}")
-
-@validate_args(VerifyFileHashSchema)
-def verify_file_hash(path: str, expected_hash: str) -> str:
-    safe_path = Path(context.get_safe_path(path))
-    if not safe_path.is_file():
-        raise ToolError(f'Not found: {path}')
-    content = safe_path.read_text(encoding='utf-8')
-    actual_hash = _calculate_hash(content)
-    if actual_hash == expected_hash:
-        return 'OK: File unchanged'
-    return f'ERR: File changed. Actual hash: {actual_hash}'
