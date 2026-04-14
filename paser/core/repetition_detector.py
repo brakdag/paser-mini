@@ -22,7 +22,10 @@ class RepetitionDetector:
         tokens = re.findall(r'\w+|[\s\W]', text)
         
         for token in tokens:
-            if not token.strip(): continue # Ignoramos espacios vacíos para el análisis de repetición
+            # FILTRO CRÍTICO: Ignoramos tokens que no tengan contenido alfanumérico
+            # Esto evita que separadores como '---', '...', o espacios activen el detector
+            if not token.strip() or not any(c.isalnum() for c in token):
+                continue
             
             self.buffer.append(token)
             

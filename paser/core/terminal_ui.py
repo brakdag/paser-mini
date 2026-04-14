@@ -1,6 +1,6 @@
 """
 paser/core/terminal_ui.py
-Concrete implementation of UserInterface for the terminal using Rich and prompt_toolkit.
+Concrete implementation of UserInterface for the terminal using standard print and prompt_toolkit.
 """
 
 import sys
@@ -10,18 +10,11 @@ import logging
 from datetime import datetime
 from typing import Any, Optional
 
-from rich.console import Console
-from rich.panel import Panel
-from rich.markdown import Markdown
-from rich.text import Text
-from rich.live import Live
-from rich.text import Text
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.styles import Style
 
-from paser.core.ui_interface import UserInterface
+from paser.core.interfaces import UserInterface
 
 logger = logging.getLogger("ui")
 
@@ -31,12 +24,10 @@ class UIState:
 
 class TerminalUI(UserInterface):
     def __init__(self):
-        self.console = Console()
         self.mode = UIState.INSERT
         self.last_cursor_pos = 0
         self._session = None
         self.kb = KeyBindings()
-        self.current_spinner_message: Optional[str] = None
         
         # Paleta de colores estilo Catppuccin Machiato definida globalmente
         self.style = Style.from_dict({
@@ -104,22 +95,6 @@ class TerminalUI(UserInterface):
                 if self.mode == UIState.NORMAL: return
                 event.current_buffer.insert_text(c)
 
-    def _get_bottom_toolbar(self):
-        parts = []
-        
-        # Si hay un spinner activo, mostramos el mensaje del spinner
-        if self.current_spinner_message:
-            parts.append(('#cba6f7 bg:#494d64', f' ⌛ {self.current_spinner_message} '))
-        
-        if self.mode == UIState.NORMAL:
-            parts.append(('#f9e2af bold bg:#494d64', ' — NORMAL — '))
-            parts.append(('#9399b2 bg:#494d64', ' (h/j/k/l: navigate, i: insert)'))
-        else:
-            parts.append(('#a6e3a1 bold bg:#494d64', ' — INSERT — '))
-            parts.append(('#9399b2 bg:#494d64', ' (Esc: normal)'))
-            
-        return FormattedText(parts + [('#9399b2 bg:#494d64', f' {datetime.now().strftime("%H:%M:%S")} ')])
-
     def _translate_latex(self, text: str) -> str:
         LATEX_TO_UNICODE = {
             r"\alpha": "\u03b1", r"\beta": "\u03b2", r"\gamma": "\u03b3", r"\delta": "\u03b4",
@@ -155,52 +130,37 @@ class TerminalUI(UserInterface):
         if self._session is None:
             self._session = PromptSession(history=history)
         
-        # Añadimos un salto de línea preventivo para que el chat no empuje la barra
-        sys.stdout.write("\n")
-        sys.stdout.flush()
-        
         return await self._session.prompt_async(
-            prompt, style=self.style, key_bindings=self.kb, bottom_toolbar=self._get_bottom_toolbar
+            prompt, key_bindings=self.kb
         )
 
     def display_message(self, text: str):
         text = self._translate_latex(text)
-        try:
-            self.console.print(Markdown(text))
-        except Exception:
-            self.console.print(Text(text, style="cyan"))
+        print(text)
 
     def display_thought(self, text: str):
-        # Mantenemos el método por compatibilidad con la interfaz, pero no hace nada
         pass
 
     def display_tool_start(self, tool_name: str, args: dict):
-        self.console.print(Panel(f"```json\n{{\"name\": \"{tool_name}\", \"args\": {args}}}\n```", title="🛠️ Tool Call", border_style="magenta", expand=False))
+        pass
 
     def display_tool_result(self, tool_name: str, success: bool, result: Any, detail: str = ""):
-        status_icon = "✓" if success else "✗"
-        res_text = f"{detail} {str(result)}" if detail else str(result)
-        res_text = res_text[:200] if len(res_text) > 200 else res_text
-        self.console.print(Panel(f"{res_text} {status_icon}", title=f"📦 {tool_name}", border_style="green" if success else "red", expand=False))
+        pass
 
     def display_tool_status(self, tool_name: str, success: bool, detail: str = ""):
-        from paser.core.tool_registry import FILE_TOOLS, get_tool_metadata
-        status_icon = "✓" if success else "✗"
-        verb, icon = get_tool_metadata(tool_name)
-        prefix = "📁" if tool_name in FILE_TOOLS else "⚙️"
-        self.console.print(f"  {prefix} {icon} {tool_name}{detail} {status_icon}")
+        pass
 
     def display_panel(self, title: str, message: str, style: str = "none"):
-        self.console.print(Panel(message, title=title, expand=False, border_style=style))
+        print(f"--- {title} ---\n{message}")
 
     def display_error(self, message: str):
-        self.console.print(Panel(message, title="❌ Error", border_style="red"))
+        print(f"Error: {message}")
 
     def display_info(self, message: str):
-        self.console.print(Panel(message, title="ℹ️ Info", border_style="blue"))
+        print(f"Info: {message}")
 
     def get_spinner(self, message: str, color: str = "cyan", newline: bool = False):
-        return TerminalSpinner(self, message, color, newline)
+        return None
 
     def set_ui_mode(self, mode: str):
         self.mode = mode
@@ -212,63 +172,3 @@ class TerminalUI(UserInterface):
         """Asynchronous confirmation prompt for security-sensitive tools."""
         response = await self.request_input(f"{message} (y/n): ")
         return response.lower().strip() == 'y'
-
-class SpinnerRenderable:
-    """Renderizador personalizado para controlar la posición del spinner y la hora."""
-    def __init__(self, ui, message):
-        self.ui = ui
-        self.message = message
-        self.frames = ["◊", "○", "◔", "◐", "◘", "◔"]
-        self.frame_idx = 0
-
-    def __rich__(self):
-        frame = self.frames[self.frame_idx]
-        self.frame_idx = (self.frame_idx + 1) % len(self.frames)
-        
-        time_str = datetime.now().strftime("%H:%M:%S ")
-        display_msg = self.message if self.message else "Processing..."
-        
-        # Usamos self.ui.console para obtener el ancho
-        console_width = self.ui.console.width
-        
-        # Cálculo de ancho para evitar el wrap
-        available_width = console_width - len(time_str) - 5
-        truncated_msg = (display_msg[:available_width-3] + "...") if len(display_msg) > available_width else display_msg
-        
-        # Construcción de la línea con padding dinámico
-        current_content_len = len(truncated_msg) + 3
-        padding = " " * max(0, console_width - current_content_len - len(time_str))
-        
-        # Creamos el objeto Text con estilos específicos por rango
-        line = Text(f"{frame} {truncated_msg}{padding}{time_str}", style="on #494d64")
-        line.stylize("#cba6f7", 0, len(truncated_msg) + 2)
-        line.stylize("#9399b2", -len(time_str), None)
-        
-        return line
-
-class TerminalSpinner:
-    def __init__(self, ui: TerminalUI, message: str, color: str, newline: bool):
-        self.ui = ui
-        self.message = message
-        self.color = color
-        self.newline = newline
-        self.live = None
-
-    def __enter__(self):
-        self.previous_mode = self.ui.mode
-        if self.newline and self.ui.current_spinner_message is None:
-            self.ui.console.print()
-
-        self.ui.mode = UIState.NORMAL
-        self.ui.current_spinner_message = self.message
-            
-        # Usamos Live en lugar de Status para control total de la línea
-        self.live = Live(SpinnerRenderable(self.ui, self.message), console=self.ui.console, auto_refresh=True, transient=True)
-        self.live.start()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.live:
-            self.live.stop()
-        self.ui.current_spinner_message = None
-        self.ui.mode = self.previous_mode

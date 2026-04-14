@@ -13,13 +13,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "google-genai",
-    "rich",
     "prompt_toolkit",
-    "yaspin",
-    "requests",
-    "pydantic",
-    "black",
-    "pynput",
 ]
 
 [project.scripts]

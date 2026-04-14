@@ -3,12 +3,12 @@ import re
 import logging
 import ast
 import asyncio
+import contextlib
 from typing import Any, Optional, Union, get_type_hints, get_origin, get_args
 
 from paser.core.repetition_detector import RepetitionDetector
 from paser.core.interfaces import IAIAssistant
-from paser.core.quota_tracker import QuotaTracker
-from paser.tools.core_tools import ToolError
+from paser.tools import ToolError
 
 logger = logging.getLogger(__name__)
 
@@ -16,17 +16,15 @@ class AutonomousExecutor:
     def __init__(self, assistant: IAIAssistant, tools: dict, on_tool_used=None, on_tool_start=None, on_thought=None, max_turns: int = 100):
         self.assistant = assistant
         self.tools = tools
-        self.repetition_detector = RepetitionDetector(n=3, max_repeats=3)
+        self.repetition_detector = RepetitionDetector(n=5, max_repeats=5)
         self.on_tool_used = on_tool_used
         self.on_tool_start = on_tool_start
         self.on_thought = on_thought
         self.max_turns = max_turns
         self.turn_count = 0
         self.stop_requested = False
-        self.quota_tracker = QuotaTracker()
 
     def _parse_call_content(self, raw_content: str) -> Optional[dict[str, Any]]:
-        """Intenta parsear el contenido de un TOOL_CALL usando múltiples estrategias."""
         try:
             data = json.loads(raw_content)
         except json.JSONDecodeError:
@@ -38,13 +36,10 @@ class AutonomousExecutor:
                     data = json.loads(s_double)
                 except json.JSONDecodeError:
                     return None
-        
         if not isinstance(data, dict) or "name" not in data:
             return None
-        
         if "args" not in data:
             data["args"] = {}
-            
         return data
 
     def _extract_tool_calls(self, text: str) -> list[tuple[Optional[dict[str, Any]], str]]:
@@ -67,127 +62,61 @@ class AutonomousExecutor:
         return calls
 
     def _format_tool_response(self, data: Any, call_id: Optional[Union[int, str]] = None, success: bool = True) -> str:
-        payload = {
-            "id": call_id,
-            "status": "success" if success else "error",
-            "data": data
-        }
+        payload = {"id": call_id, "status": "success" if success else "error", "data": data}
         return f"<TOOL_RESPONSE>{json.dumps(payload)}</TOOL_RESPONSE>"
 
     async def execute(self, user_input: Union[str, bytes], thinking_enabled: bool = True, get_confirmation_callback=None) -> str:
         self.stop_requested = False
-        self.turn_count = 0  # Reset turn count for the new task
-        if self.stop_requested:
-            return "Ejecución interrumpida por el usuario."
-
+        self.turn_count = 0
         self.turn_count += 1
         if self.turn_count > self.max_turns:
-            return "Límite de turnos excedido: El agente ha alcanzado el máximo de iteraciones permitidas para evitar bucles infinitos."
-            
-        # Solo aplicamos detector de repetición si la entrada es texto
+            return "Límite de turnos excedido."
         if isinstance(user_input, str):
             rep_res = self.repetition_detector.add_text(user_input)
             if rep_res is not True:
                 return f"Detección de texto repetitivo: posible bucle infinito. Secuencia: '{rep_res}'"
-
-        self.quota_tracker.increment_and_get(self.assistant.current_model or "unknown_model")
         response = await asyncio.to_thread(self.assistant.send_message, user_input)
         response_text = self._extract_text(response)
-
         while True:
             if self.stop_requested:
                 return "Ejecución interrumpida por el usuario."
             rep_res = self.repetition_detector.add_text(response_text)
             if rep_res is not True:
                 return f"Detección de texto repetitivo: posible bucle infinito. Secuencia: '{rep_res}'"
-
             calls = self._extract_tool_calls(response_text)
-            
             thought_match = re.split(r'<(?:TOOL_CALL|tool_call)\s*>', response_text, maxsplit=1, flags=re.IGNORECASE)
             thought_text = thought_match[0].strip()
-
             if thought_text and thinking_enabled and self.on_thought:
                 self.on_thought(thought_text)
-
-            if not calls:
-                break
-            
+            if not calls: break
             self.turn_count += 1
-            if self.turn_count > self.max_turns:
-                return "Límite de turnos excedido."
-
+            if self.turn_count > self.max_turns: return "Límite de turnos excedido."
             combined_tool_responses = []
             for call_data, raw_content in calls:
                 if call_data is None:
-                    tr = self._format_tool_response(f"Error de sintaxis: El TOOL_CALL '{raw_content}' no es un JSON válido.", call_id=None, success=False)
-                    combined_tool_responses.append(tr)
+                    combined_tool_responses.append(self._format_tool_response(f"Error de sintaxis: {raw_content}", success=False))
                     continue
-
-                name = call_data.get("name")
-                args = call_data.get("args", {})
-                
+                name, args = call_data.get("name"), call_data.get("args", {})
                 if name in self.tools:
-                    func = self.tools[name]
-                    hints = get_type_hints(func)
-                    for arg_name, arg_value in args.items():
-                        if arg_name in hints:
-                            expected_type = hints[arg_name]
-                            origin = get_origin(expected_type)
-                            is_valid = True
-                            try:
-                                if origin is Union:
-                                    check_types = get_args(expected_type)
-                                    is_valid = isinstance(arg_value, check_types)
-                                elif origin is not None:
-                                    is_valid = isinstance(arg_value, origin)
-                                else:
-                                    is_valid = isinstance(arg_value, expected_type)
-                            except TypeError:
-                                is_valid = True
-                            
-                            if not is_valid:
-                                tr = self._format_tool_response(f"Tipo inválido para el argumento '{arg_name}' en '{name}'.", call_id=call_data.get("id"), success=False)
-                                combined_tool_responses.append(tr)
-                                continue
-                
-                if not isinstance(args, dict):
-                    tr = self._format_tool_response(f"Argumentos invñlidos para {name}", call_id=call_data.get("id"), success=False)
-                elif name not in self.tools:
-                    tr = self._format_tool_response(f"Herramienta desconocida: {name}", call_id=call_data.get("id"), success=False)
-                else:
                     try:
-                        ctx = None
-                        if self.on_tool_start:
-                            ctx = self.on_tool_start(name, args)
-                        
-                        if ctx:
-                            with ctx:
-                                result = self.tools[name](**args)
-                        else:
+                        ctx = self.on_tool_start(name, args) if self.on_tool_start else None
+                        with (ctx if ctx else contextlib.nullcontext()):
                             result = self.tools[name](**args)
-                        
                         tr = self._format_tool_response(result, call_id=call_data.get("id"), success=True)
-                        if self.on_tool_used:
-                            self.on_tool_used(name, args, result, True)
+                        if self.on_tool_used: self.on_tool_used(name, args, result, True)
                     except ToolError as te:
                         tr = self._format_tool_response(f"ERR: {str(te)}", call_id=call_data.get("id"), success=False)
-                        if self.on_tool_used:
-                            self.on_tool_used(name, args, str(te), False)
+                        if self.on_tool_used: self.on_tool_used(name, args, str(te), False)
                     except Exception as exc:
-                        logger.exception(f"Error executing tool {name} with args {args}: {exc}")
-                        tr = self._format_tool_response(f"ERR: Unexpected error in '{name}': {str(exc)}", call_id=call_data.get("id"), success=False)
-                        if self.on_tool_used:
-                            self.on_tool_used(name, args, str(exc), False)
+                        tr = self._format_tool_response(f"ERR: Unexpected error: {str(exc)}", call_id=call_data.get("id"), success=False)
+                        if self.on_tool_used: self.on_tool_used(name, args, str(exc), False)
+                else:
+                    tr = self._format_tool_response(f"Herramienta desconocida: {name}", call_id=call_data.get("id"), success=False)
                 combined_tool_responses.append(tr)
-
             combined_message = "".join(combined_tool_responses)
-            self.quota_tracker.increment_and_get(self.assistant.current_model or "unknown_model")
             response_obj = await asyncio.to_thread(self.assistant.send_message, combined_message)
             response_text = self._extract_text(response_obj)
-
         return response_text
 
     def _extract_text(self, response) -> str:
-        if hasattr(response, "text"):
-            return response.text or ""
-        return str(response)
+        return response.text if hasattr(response, "text") and response.text else str(response)

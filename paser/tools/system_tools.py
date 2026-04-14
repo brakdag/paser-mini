@@ -1,7 +1,7 @@
 import subprocess
 import os
 import logging
-from .core_tools import context, ToolError
+from . import context, ToolError
 
 logger = logging.getLogger("tools")
 

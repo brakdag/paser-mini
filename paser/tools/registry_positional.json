@@ -50,18 +50,10 @@
     }
   ],
   [
-    "rename_path",
-    "Move/Rename path. Returns 'OK' on success. Throws ERR if not found.",
+    "search_text_global",
+    "Search string in all files",
     {
-      "origen": "string",
-      "destino": "string"
-    }
-  ],
-  [
-    "create_dir",
-    "Create directory. Returns 'OK' on success.",
-    {
-      "path": "string"
+      "query": "string"
     }
   ],
   [
@@ -72,10 +64,18 @@
     }
   ],
   [
-    "search_text_global",
-    "Search string in all files",
+    "rename_path",
+    "Move/Rename path. Returns 'OK' on success. Throws ERR if origin not found.",
     {
-      "query": "string"
+      "origen": "string",
+      "destino": "string"
+    }
+  ],
+  [
+    "create_dir",
+    "Create directory. Returns 'OK' on success.",
+    {
+      "path": "string"
     }
   ],
   [

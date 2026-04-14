@@ -3,12 +3,7 @@ import tempfile
 import logging
 from typing import Optional, List
 from pathlib import Path
-from .core_tools import context, ToolError
-from .validation import validate_args
-from .schemas import (
-    ReadFileSchema, WriteFileSchema, ReplaceStringSchema,
-    RemoveFileSchema, CreateDirSchema
-)
+from . import context, ToolError
 
 logger = logging.getLogger('tools')
 FILE_SIZE_LIMIT = 5 * 1024 * 1024
@@ -26,9 +21,8 @@ def _calculate_hash(content: str) -> str:
     import hashlib
     return hashlib.sha256(content.encode('utf-8')).hexdigest()
 
-@validate_args(ReadFileSchema)
 def read_file(path: str) -> str:
-    safe_path = Path(context.get_safe_path(path))
+    safe_path = context.get_safe_path(path)
     if not safe_path.is_file():
         raise ToolError(f'Not found: {path}')
     
@@ -48,9 +42,8 @@ def read_file(path: str) -> str:
     
     return f"--- HASH: {file_hash} ---\n{content}" if content else f"--- HASH: {file_hash} ---\nERR: Empty: {path}"
 
-@validate_args(WriteFileSchema)
 def write_file(path: str, contenido: str) -> str:
-    safe_path = Path(context.get_safe_path(path))
+    safe_path = context.get_safe_path(path)
     safe_path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile('w', dir=safe_path.parent, delete=False, encoding='utf-8') as tf:
         tf.write(contenido)
@@ -58,9 +51,8 @@ def write_file(path: str, contenido: str) -> str:
     Path(temp_name).replace(safe_path)
     return 'OK'
 
-@validate_args(RemoveFileSchema)
 def remove_file(path: str) -> str:
-    safe_path = Path(context.get_safe_path(path))
+    safe_path = context.get_safe_path(path)
     try:
         safe_path.unlink()
         return 'OK'
@@ -68,15 +60,14 @@ def remove_file(path: str) -> str:
         raise ToolError(f'Not found: {path}')
 
 def list_dir(path: str = '.') -> str:
-    safe_path = Path(context.get_safe_path(path))
+    safe_path = context.get_safe_path(path)
     items = [p.name for p in safe_path.iterdir()]
     if len(items) > MAX_LIST_RESULTS:
         return json.dumps({"results": items[:MAX_LIST_RESULTS], "total": len(items), "warning": f"Truncated to {MAX_LIST_RESULTS} items"})
     return json.dumps(items)
 
-@validate_args(ReplaceStringSchema)
 def replace_string(path: str, search_text: str, replace_text: str) -> str:
-    safe_path = Path(context.get_safe_path(path))
+    safe_path = context.get_safe_path(path)
     content = safe_path.read_text(encoding='utf-8')
     if search_text not in content:
         raise ToolError(f'Not found in {path}')
@@ -85,19 +76,18 @@ def replace_string(path: str, search_text: str, replace_text: str) -> str:
 
 def rename_path(origen: str, destino: str) -> str:
     try:
-        Path(context.get_safe_path(origen)).rename(context.get_safe_path(destino))
+        context.get_safe_path(origen).rename(context.get_safe_path(destino))
         return 'OK'
     except FileNotFoundError:
         raise ToolError(f'Origin not found: {origen}')
 
-@validate_args(CreateDirSchema)
 def create_dir(path: str) -> str:
-    Path(context.get_safe_path(path)).mkdir(parents=True, exist_ok=True)
+    context.get_safe_path(path).mkdir(parents=True, exist_ok=True)
     return 'OK'
 
 def search_files_pattern(pattern: str) -> str:
     try:
-        root = Path(context.get_safe_path('.'))
+        root = context.get_safe_path('.')
         results = [str(p.relative_to(root)) for p in root.rglob(pattern)]
         if len(results) > MAX_LIST_RESULTS:
             return json.dumps({"results": results[:MAX_LIST_RESULTS], "total": len(results), "warning": f"Truncated to {MAX_LIST_RESULTS} items"})
@@ -116,13 +106,10 @@ def search_text_global(query: str) -> str:
             encoding='utf-8', 
             errors='replace'
         )
-        
         if result.returncode > 1:
             raise ToolError(f"Grep failed with return code {result.returncode}: {result.stderr}")
-            
         if not result.stdout:
             return json.dumps([])
-            
         parsed_results = []
         for line in result.stdout.splitlines():
             parts = line.split(':', 2)
@@ -133,7 +120,6 @@ def search_text_global(query: str) -> str:
                     "line": int(line_num),
                     "text": text.strip()
                 })
-        
         if len(parsed_results) > MAX_LIST_RESULTS:
             return json.dumps({"results": parsed_results[:MAX_LIST_RESULTS], "total": len(parsed_results), "warning": f"Truncated to {MAX_LIST_RESULTS} items"})
         return json.dumps(parsed_results)

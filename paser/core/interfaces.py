@@ -38,3 +38,56 @@ class IAIAssistant(ABC):
     @abstractmethod
     def count_tokens(self, contents: Any) -> int:
         pass
+
+class UserInterface(ABC):
+    @abstractmethod
+    async def request_input(self, prompt: str, history: Optional[Any] = None) -> str:
+        pass
+
+    @abstractmethod
+    def display_message(self, text: str):
+        pass
+
+    @abstractmethod
+    def display_thought(self, text: str):
+        pass
+
+    @abstractmethod
+    def display_tool_start(self, tool_name: str, args: dict):
+        pass
+
+    @abstractmethod
+    def display_tool_result(self, tool_name: str, success: bool, result: Any, detail: str = ""):
+        pass
+
+    @abstractmethod
+    def display_tool_status(self, tool_name: str, success: bool, detail: str = ""):
+        pass
+
+    @abstractmethod
+    def display_panel(self, title: str, message: str, style: str = "none"):
+        pass
+
+    @abstractmethod
+    def display_error(self, message: str):
+        pass
+
+    @abstractmethod
+    def display_info(self, message: str):
+        pass
+
+    @abstractmethod
+    def get_spinner(self, message: str, color: str = "cyan", newline: bool = False):
+        pass
+
+    @abstractmethod
+    def set_ui_mode(self, mode: str):
+        pass
+
+    @abstractmethod
+    def get_ui_mode(self) -> str:
+        pass
+
+    @abstractmethod
+    async def get_confirmation(self, message: str) -> bool:
+        pass
