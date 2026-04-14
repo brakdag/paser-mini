@@ -14,3 +14,4 @@ last_voice.wav
 assets/*.png
 !assets/mascot.png
 save_langchain/
+sessions/
