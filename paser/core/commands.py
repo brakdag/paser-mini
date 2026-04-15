@@ -25,6 +25,12 @@ class CommandHandler:
                 print(f"\n[SAVE] No interaction found to save.")
             return True
 
+        elif input_stripped == '/t':
+            history = self.chat_manager.assistant.get_chat_history()
+            tokens = self.chat_manager.assistant.count_tokens(history)
+            print(f"\n[TOKENS] Context window: {tokens} tokens")
+            return True
+
         # Configuración del Agente
         elif input_stripped == '/models':
             models = self.chat_manager.assistant.get_available_models()

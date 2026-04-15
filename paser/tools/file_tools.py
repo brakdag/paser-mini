@@ -18,7 +18,6 @@ def is_binary_file(path: Path) -> bool:
         return True
 
 
-
 def read_file(path: str) -> str:
     safe_path = context.get_safe_path(path)
     if not safe_path.is_file():
@@ -31,7 +30,7 @@ def read_file(path: str) -> str:
     
     content = safe_path.read_text(encoding='utf-8')
     if not content:
-        return "Empty file"
+        return ""
 
     file_hash = hashlib.sha256(content.encode('utf-8')).hexdigest()
     if file_hash in READ_CACHE:
@@ -143,7 +142,7 @@ def search_text_global(query: str) -> str:
             if len(parts) == 3:
                 file_path, line_num, text = parts
                 parsed_results.append({
-                    "file": str(Path(file_path).absolute()),
+                    "file": str(Path(file_path).relative_to(root_path)),
                     "line": int(line_num),
                     "text": text.strip()
                 })
