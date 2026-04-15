@@ -1,14 +1,14 @@
 import json
 import tempfile
-import logging
-from typing import Optional, List
+import shlex
+import itertools
+import hashlib
 from pathlib import Path
 from . import context, ToolError
-
-logger = logging.getLogger('tools')
-FILE_SIZE_LIMIT = 5 * 1024 * 1024
+FILE_SIZE_LIMIT = 1 * 1024 * 1024
+READ_CACHE = set()
 MAX_LIST_RESULTS = 100
-READ_PREVIEW_LIMIT = 20 * 1024
+
 
 def is_binary_file(path: Path) -> bool:
     try:
@@ -17,39 +17,40 @@ def is_binary_file(path: Path) -> bool:
     except Exception:
         return True
 
-def _calculate_hash(content: str) -> str:
-    import hashlib
-    return hashlib.sha256(content.encode('utf-8')).hexdigest()
+
 
 def read_file(path: str) -> str:
     safe_path = context.get_safe_path(path)
     if not safe_path.is_file():
-        raise ToolError(f'Not found: {path}')
+        raise ToolError('Not found')
     
-    size = safe_path.stat().st_size
-    if size > FILE_SIZE_LIMIT:
-        raise ToolError(f'Too large: {path}')
+    if safe_path.stat().st_size > FILE_SIZE_LIMIT:
+        raise ToolError('Too large')
     if is_binary_file(safe_path):
-        raise ToolError(f'Binary: {path}')
+        raise ToolError('Binary file')
     
     content = safe_path.read_text(encoding='utf-8')
-    file_hash = _calculate_hash(content)
+    if not content:
+        return "Empty file"
+
+    file_hash = hashlib.sha256(content.encode('utf-8')).hexdigest()
+    if file_hash in READ_CACHE:
+        raise ToolError("No changes since last read")
     
-    if size > READ_PREVIEW_LIMIT:
-        lines = content.splitlines()
-        preview = "\n".join(lines[:100])
-        return f"--- HASH: {file_hash} ---\n[PREVIEW - First 100 lines of {size} bytes]\n{preview}\n\n[TRUNCATED - Use read_lines for more]"
-    
-    return f"--- HASH: {file_hash} ---\n{content}" if content else f"--- HASH: {file_hash} ---\nERR: Empty: {path}"
+    READ_CACHE.add(file_hash)
+    return content
 
 def write_file(path: str, contenido: str) -> str:
-    safe_path = context.get_safe_path(path)
-    safe_path.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile('w', dir=safe_path.parent, delete=False, encoding='utf-8') as tf:
-        tf.write(contenido)
-        temp_name = tf.name
-    Path(temp_name).replace(safe_path)
-    return 'OK'
+    try:
+        safe_path = context.get_safe_path(path)
+        safe_path.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile('w', dir=safe_path.parent, delete=False, encoding='utf-8') as tf:
+            tf.write(contenido)
+            temp_name = tf.name
+        Path(temp_name).replace(safe_path)
+        return 'OK'
+    except OSError as e:
+        raise ToolError(f"Write error: {e.strerror}")
 
 def remove_file(path: str) -> str:
     safe_path = context.get_safe_path(path)
@@ -57,62 +58,85 @@ def remove_file(path: str) -> str:
         safe_path.unlink()
         return 'OK'
     except FileNotFoundError:
-        raise ToolError(f'Not found: {path}')
+        raise ToolError('Not found')
+    except OSError as e:
+        raise ToolError(f"Remove error: {e.strerror}")
 
 def list_dir(path: str = '.') -> str:
-    safe_path = context.get_safe_path(path)
-    items = [p.name for p in safe_path.iterdir()]
-    if len(items) > MAX_LIST_RESULTS:
-        return json.dumps({"results": items[:MAX_LIST_RESULTS], "total": len(items), "warning": f"Truncated to {MAX_LIST_RESULTS} items"})
-    return json.dumps(items)
+    try:
+        safe_path = context.get_safe_path(path)
+        # Use generator expression with islice to stop iterating immediately
+        items = list(itertools.islice((p.name for p in safe_path.iterdir()), MAX_LIST_RESULTS))
+        return json.dumps(items)
+    except OSError as e:
+        raise ToolError(f"Access error: {e.strerror}")
 
 def replace_string(path: str, search_text: str, replace_text: str) -> str:
-    safe_path = context.get_safe_path(path)
-    content = safe_path.read_text(encoding='utf-8')
-    count = content.count(search_text)
-    if count == 0:
-        raise ToolError(f'Not found in {path}')
-    if count > 1:
-        raise ToolError(f'Ambiguous replacement: {count} occurrences found in {path}. Please provide more context to ensure a unique match.')
-    safe_path.write_text(content.replace(search_text, replace_text), encoding='utf-8')
-    return 'OK'
+    try:
+        safe_path = context.get_safe_path(path)
+        content = safe_path.read_text(encoding='utf-8')
+        count = content.count(search_text)
+        if count == 0:
+            raise ToolError('Not found')
+        if count > 1:
+            raise ToolError(f'Ambiguous: {count} matches')
+        safe_path.write_text(content.replace(search_text, replace_text), encoding='utf-8')
+        return 'OK'
+    except OSError as e:
+        raise ToolError(f"Modify error: {e.strerror}")
 
 def rename_path(origen: str, destino: str) -> str:
     try:
         context.get_safe_path(origen).rename(context.get_safe_path(destino))
         return 'OK'
     except FileNotFoundError:
-        raise ToolError(f'Origin not found: {origen}')
+        raise ToolError('Origin not found')
+    except OSError as e:
+        raise ToolError(f"Rename error: {e.strerror}")
 
 def create_dir(path: str) -> str:
-    context.get_safe_path(path).mkdir(parents=True, exist_ok=True)
-    return 'OK'
+    try:
+        context.get_safe_path(path).mkdir(parents=True, exist_ok=True)
+        return 'OK'
+    except OSError as e:
+        raise ToolError(f"Create error: {e.strerror}")
 
 def search_files_pattern(pattern: str) -> str:
+    import subprocess
+    root_path = context.get_safe_path('.')
     try:
-        root = context.get_safe_path('.')
-        results = [str(p.relative_to(root)) for p in root.rglob(pattern)]
-        if len(results) > MAX_LIST_RESULTS:
-            return json.dumps({"results": results[:MAX_LIST_RESULTS], "total": len(results), "warning": f"Truncated to {MAX_LIST_RESULTS} items"})
+        # Use find with pipe to head for early termination (SIGPIPE)
+        cmd = f"find {shlex.quote(str(root_path))} -name {shlex.quote(pattern)} | head -n 10"
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, encoding='utf-8')
+        
+        if result.returncode != 0 and result.returncode != 1:
+            raise ToolError(f"Find error: {result.stderr}")
+        
+        paths = result.stdout.splitlines()
+        results = [str(Path(p).relative_to(root_path)) for p in paths if p]
         return json.dumps(results)
     except Exception as e:
-        raise ToolError(f"Error searching files with pattern '{pattern}': {str(e)}")
+        raise ToolError(f"Search error: {str(e)}")
 
 def search_text_global(query: str) -> str:
     import subprocess
     root_path = context.get_safe_path(".")
     try:
+        # Use pipe to head -n 10 for extreme efficiency
+        cmd = f"grep -rIn -- {shlex.quote(query)} {shlex.quote(str(root_path))} | head -n 10"
         result = subprocess.run(
-            ['grep', '-rIn', '--', query, root_path], 
+            cmd, 
+            shell=True, 
             capture_output=True, 
             text=True, 
             encoding='utf-8', 
             errors='replace'
         )
         if result.returncode > 1:
-            raise ToolError(f"Grep failed with return code {result.returncode}: {result.stderr}")
+            raise ToolError(f"Grep error: {result.stderr}")
         if not result.stdout:
             return json.dumps([])
+        
         parsed_results = []
         for line in result.stdout.splitlines():
             parts = line.split(':', 2)
@@ -123,10 +147,8 @@ def search_text_global(query: str) -> str:
                     "line": int(line_num),
                     "text": text.strip()
                 })
-        if len(parsed_results) > MAX_LIST_RESULTS:
-            return json.dumps({"results": parsed_results[:MAX_LIST_RESULTS], "total": len(parsed_results), "warning": f"Truncated to {MAX_LIST_RESULTS} items"})
         return json.dumps(parsed_results)
     except ToolError:
         raise
     except Exception as e:
-        raise ToolError(f"Search failed: {str(e)}")
+        raise ToolError(f"Search error: {str(e)}")
