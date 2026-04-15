@@ -47,6 +47,7 @@ paser-mini
 | `--version` | N/A | Show version information |
 | `--unit_tests` | N/A | Run the internal unit test suite |
 | `--system_instruction` | `-si` | Provide custom system instructions to the agent |
+| `--inject_system_instruction` | `-isi` | Inject instruction at the start of system prompt |
 | `--message` | `-m` | Send an initial message in one-shot mode |
 | `input` | N/A | Positional argument for input text in one-shot mode |
 

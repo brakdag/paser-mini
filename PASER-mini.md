@@ -1,3 +1,4 @@
+--- HASH: 937adf520eefe2cf1d096860f9f95d43bb1606130a7983ecb7e0d292144d0317 ---
 # Paser Mini (Extreme Minimalist Autonomous Agent)
 
 <div align="center">
@@ -47,6 +48,7 @@ paser-mini
 | `--version` | N/A | Show version information |
 | `--unit_tests` | N/A | Run the internal unit test suite |
 | `--system_instruction` | `-si` | Provide custom system instructions to the agent |
+| `--inject_system_instruction` | `-isi` | Inject instruction at the start of system prompt |
 | `--message` | `-m` | Send an initial message in one-shot mode |
 | `input` | N/A | Positional argument for input text in one-shot mode |
 
@@ -116,3 +118,5 @@ To maintain extreme lightness, only the absolute core tools are included:
 ## Development & Testing
 
 Testing must be performed in a fresh environment. After any modification, please create a GitHub issue to delegate verification to a subsequent agent instance.
+
+**Maintenance Note:** Whenever `README.md` is modified, `PASER-mini.md` must be updated with the same content to ensure consistency. This is a one-way synchronization (README $\rightarrow$ PASER-mini).

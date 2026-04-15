@@ -14,6 +14,7 @@ async def main():
     parser.add_argument("--version", action="version", version="paser-mini 0.1.0")
     parser.add_argument("--unit_tests", action="store_true", help="Run unit tests")
     parser.add_argument("-si", "--system_instruction", help="Custom system instructions")
+    parser.add_argument("-isi", "--inject_system_instruction", help="Inject instruction at the start of system prompt")
     parser.add_argument("-m", "--message", help="Initial message to send (one-shot mode)")
     parser.add_argument("input", nargs="?", help="Input text to process (one-shot mode)")
     
@@ -39,7 +40,11 @@ async def main():
         sys.exit(0 if result.wasSuccessful() else 1)
 
     # Determine which system instruction to use
-    sys_instr = args.system_instruction if args.system_instruction else SYSTEM_INSTRUCTION
+    base_instr = args.system_instruction if args.system_instruction else SYSTEM_INSTRUCTION
+    if args.inject_system_instruction:
+        sys_instr = f"{args.inject_system_instruction}\n{base_instr}"
+    else:
+        sys_instr = base_instr
     # Determine which input message to use
     user_input = args.message if args.message else args.input
 
