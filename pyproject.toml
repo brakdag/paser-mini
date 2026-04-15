@@ -14,6 +14,7 @@ requires-python = ">=3.10"
 dependencies = [
     "google-genai",
     "prompt_toolkit",
+    "rich",
 ]
 
 [project.scripts]
