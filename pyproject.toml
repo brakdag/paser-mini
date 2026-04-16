@@ -15,6 +15,7 @@ dependencies = [
     "google-genai",
     "prompt_toolkit",
     "rich",
+    "pyright",
 ]
 
 [project.scripts]
