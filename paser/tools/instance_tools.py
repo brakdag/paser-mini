@@ -3,7 +3,7 @@ import os
 from . import ToolError
 
 # Tiempo máximo de ejecución de la instancia secundaria para evitar bucles infinitos (inception)
-INSTANCE_TIMEOUT = 20
+INSTANCE_TIMEOUT = 120
 
 def run_instance(message: str = None, args: list = None) -> str:
     """
@@ -34,7 +34,7 @@ def run_instance(message: str = None, args: list = None) -> str:
         )
         
         # Preparamos el input: mensaje (si existe) + comando de salida
-        input_data = f"{message}\n/q\n" if message else "/q\n"
+        input_data = f"{message}\n" if message else ""
         
         try:
             stdout, stderr = process.communicate(input=input_data, timeout=INSTANCE_TIMEOUT)
