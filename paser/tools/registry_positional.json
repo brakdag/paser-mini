@@ -88,6 +88,6 @@
   [
     "run_instance",
     "Launch a new interactive instance of paser-mini in the current terminal to test changes.",
-    {}
+    {"message": "string"}
   ]
 ]
