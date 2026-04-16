@@ -4,7 +4,7 @@ import unittest
 import sys
 import json
 import os
-from paser.infrastructure.gemini_adapter import GeminiAdapter
+from paser.infrastructure.gemini import GeminiAdapter
 from paser.core.chat_manager import ChatManager
 from paser.core.terminal_ui import TerminalUI
 from paser.tools.registry import AVAILABLE_TOOLS, SYSTEM_INSTRUCTION
