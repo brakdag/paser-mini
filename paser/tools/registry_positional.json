@@ -29,11 +29,6 @@
     }
   ],
   [
-    "get_cwd",
-    "Get current working directory",
-    {}
-  ],
-  [
     "replace_string",
     "Search and replace string. Returns 'OK' on success. If no exact match is found, it may suggest a similar line using fuzzy matching. Throws ERR if ambiguous or not found.",
     {
@@ -69,13 +64,6 @@
     {
       "origen": "string",
       "destino": "string"
-    }
-  ],
-  [
-    "create_dir",
-    "Create directory. Returns 'OK' on success.",
-    {
-      "path": "string"
     }
   ],
   [

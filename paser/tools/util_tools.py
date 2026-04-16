@@ -6,9 +6,6 @@ from . import context, ToolError
 
 logger = logging.getLogger("tools")
 
-def get_cwd() -> str:
-    return os.getcwd()
-
 def validate_json(json_string: str) -> str:
     """Validates if a string is a valid JSON."""
     try:

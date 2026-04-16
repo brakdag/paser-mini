@@ -3,6 +3,7 @@ import tempfile
 import itertools
 import hashlib
 import difflib
+import shutil
 from pathlib import Path
 from . import context, ToolError
 
@@ -55,7 +56,10 @@ def write_file(path: str, contenido: str) -> str:
 def remove_file(path: str) -> str:
     safe_path = context.get_safe_path(path)
     try:
-        safe_path.unlink()
+        try:
+            shutil.rmtree(safe_path)
+        except NotADirectoryError:
+            safe_path.unlink()
         return 'OK'
     except FileNotFoundError:
         raise ToolError('Not found')
@@ -108,9 +112,3 @@ def rename_path(origen: str, destino: str) -> str:
     except OSError as e:
         raise ToolError(f"Rename error: {e.strerror}")
 
-def create_dir(path: str) -> str:
-    try:
-        context.get_safe_path(path).mkdir(parents=True, exist_ok=True)
-        return 'OK'
-    except OSError as e:
-        raise ToolError(f"Create error: {e.strerror}")

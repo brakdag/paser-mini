@@ -17,13 +17,11 @@ AVAILABLE_TOOLS = {
     "write_file": ft.write_file,
     "remove_file": ft.remove_file,
     "list_dir": ft.list_dir,
-    "get_cwd": ut.get_cwd,
     "replace_string": ft.replace_string,
     "analyze_pyright": st.analyze_pyright,
     "search_text_global": sr.search_text_global,
     "search_files_pattern": sr.search_files_pattern,
     "rename_path": ft.rename_path,
-    "create_dir": ft.create_dir,
     "validate_json": ut.validate_json,
     "run_instance": it.run_instance
 }
