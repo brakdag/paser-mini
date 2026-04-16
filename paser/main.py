@@ -19,9 +19,10 @@ async def main():
     parser.add_argument("input", nargs="?", help="Input text to process (one-shot mode)")
     
     args = parser.parse_args()
+    ui = TerminalUI()
 
     if args.unit_tests:
-        print("--- Running unit tests ---")
+        ui.display_info("Running unit tests")
         suite = unittest.TestLoader().discover('tests', pattern='test_*.py')
         runner = unittest.TextTestRunner(stream=sys.stdout, verbosity=2)
         result = runner.run(suite)

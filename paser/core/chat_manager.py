@@ -28,7 +28,7 @@ class ChatManager:
         self.thinking_enabled = self.config_manager.get("thinking_enabled", False)
         self.temperature = float(self.config_manager.get("default_temperature", 0.7))
         
-        self.command_handler = CommandHandler(self)
+        self.command_handler = CommandHandler(self, ui)
         
         # Executor state
         self.repetition_detector = RepetitionDetector(n=5, max_repeats=5)
@@ -58,48 +58,83 @@ class ChatManager:
             if rep_res is not True:
                 return f"Detección de texto repetitivo: posible bucle infinito. Secuencia: '{rep_res}'"
         
-        response = await asyncio.to_thread(self.assistant.send_message, user_input)
-        response_text = self._extract_text(response)
-        
-        while True:
-            if self.stop_requested:
-                return "Ejecución interrumpida por el usuario."
+        try:
+            response = await asyncio.to_thread(self.assistant.send_message, user_input)
+            response_text = self._extract_text(response)
             
-            rep_res = self.repetition_detector.add_text(response_text)
-            if rep_res is not True:
-                return f"Detección de texto repetitivo: posible bucle infinito. Secuencia: '{rep_res}'"
-            
-            calls = self.tool_parser.extract_tool_calls(response_text)
-            
-            if not calls: break
-            
-            self.turn_count += 1
-            if self.turn_count > self.max_turns: return "Límite de turnos excedido."
-            
-            combined_tool_responses = []
-            for call_data, raw_content in calls:
-                if call_data is None:
-                    combined_tool_responses.append(self.tool_parser.format_tool_response(f"Error de sintaxis: {raw_content}", success=False))
-                    continue
+            while True:
+                if self.stop_requested:
+                    return "Ejecución interrumpida por el usuario."
                 
-                name, args = call_data.get("name"), call_data.get("args", {})
-                if name in self.tools:
-                    try:
-                        result = self.tools[name](**args)
-                        tr = self.tool_parser.format_tool_response(result, call_id=call_data.get("id"), success=True)
-                    except ToolError as te:
-                        tr = self.tool_parser.format_tool_response(f"ERR: {str(te)}", call_id=call_data.get("id"), success=False)
-                    except Exception as exc:
-                        tr = self.tool_parser.format_tool_response(f"ERR: Unexpected error: {str(exc)}", call_id=call_data.get("id"), success=False)
-                else:
-                    tr = self.tool_parser.format_tool_response(f"Herramienta desconocida: {name}", call_id=call_data.get("id"), success=False)
-                combined_tool_responses.append(tr)
-            
-            combined_message = "".join(combined_tool_responses)
-            response_obj = await asyncio.to_thread(self.assistant.send_message, combined_message)
-            response_text = self._extract_text(response_obj)
-            
-        return response_text
+                rep_res = self.repetition_detector.add_text(response_text)
+                if rep_res is not True:
+                    return f"Detección de texto repetitivo: posible bucle infinito. Secuencia: '{rep_res}'"
+                
+                calls = self.tool_parser.extract_tool_calls(response_text)
+                
+                if not calls: break
+                
+                self.turn_count += 1
+                if self.turn_count > self.max_turns: return "Límite de turnos excedido."
+                
+                combined_tool_responses = []
+                for call_data, raw_content in calls:
+                    if call_data is None:
+                        combined_tool_responses.append(self.tool_parser.format_tool_response(f"Error de sintaxis: {raw_content}", success=False))
+                        continue
+                    
+                    name, args = call_data.get("name"), call_data.get("args", {})
+                    
+                    # Extract detail for monitoring
+                    detail = ""
+                    if name in ["read_file", "write_file", "remove_file", "replace_string"]:
+                        path = args.get("path", "")
+                        detail = os.path.basename(path) if path else ""
+                    elif name in ["list_dir", "create_dir"]:
+                        detail = args.get("path", "")
+                    elif name == "rename_path":
+                        orig = os.path.basename(args.get("origen", ""))
+                        dest = os.path.basename(args.get("destino", ""))
+                        detail = f"{orig} -> {dest}"
+                    
+                    self.ui.start_tool_monitoring(name, detail)
+                    
+                    # Yield to the event loop to allow the spinner to render its first frame
+                    await asyncio.sleep(0)
+                    
+                    start_time = asyncio.get_event_loop().time()
+                    
+                    if name in self.tools:
+                        try:
+                            # Execute tool in a thread to prevent blocking the spinner animation
+                            result = await asyncio.to_thread(self.tools[name], **args)
+                            tr = self.tool_parser.format_tool_response(result, call_id=call_data.get("id"), success=True)
+                            success = True
+                        except ToolError as te:
+                            tr = self.tool_parser.format_tool_response(f"ERR: {str(te)}", call_id=call_data.get("id"), success=False)
+                            success = False
+                        except Exception as exc:
+                            tr = self.tool_parser.format_tool_response(f"ERR: Unexpected error: {str(exc)}", call_id=call_data.get("id"), success=False)
+                            success = False
+                    else:
+                        tr = self.tool_parser.format_tool_response(f"Herramienta desconocida: {name}", call_id=call_data.get("id"), success=False)
+                        success = False
+                    
+                    # Ensure the spinner is visible for at least 300ms for better UX
+                    elapsed = asyncio.get_event_loop().time() - start_time
+                    if elapsed < 0.3:
+                        await asyncio.sleep(0.3 - elapsed)
+                    
+                    self.ui.end_tool_monitoring(name, success=success, detail=detail)
+                    combined_tool_responses.append(tr)
+                
+                combined_message = "".join(combined_tool_responses)
+                response_obj = await asyncio.to_thread(self.assistant.send_message, combined_message)
+                response_text = self._extract_text(response_obj)
+                
+            return response_text
+        finally:
+            self.ui.stop_all_monitoring()
 
     async def execute_single(self, user_input: str) -> str:
         result = await self.execute(
@@ -122,10 +157,10 @@ class ChatManager:
                 if result:
                     cleaned_result = self.tool_parser.clean_response(result)
                     self.ui.display_message(cleaned_result)
-                print("\n")
+                self.ui.add_spacing()
             except Exception as e:
                 self.ui.display_error(f"Error processing initial message: {e}")
-                print("\n")
+                self.ui.add_spacing()
 
         while not self.should_exit:
             try:
@@ -145,10 +180,10 @@ class ChatManager:
                     cleaned_result = self.tool_parser.clean_response(result)
                     self.ui.display_message(cleaned_result)
                 
-                print("\n")
+                self.ui.add_spacing()
             except Exception as e: 
                 self.ui.display_error(f"Error: {e}")
-                print("\n")
+                self.ui.add_spacing()
 
     def _initialize_chat(self):
         try:

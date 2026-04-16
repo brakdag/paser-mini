@@ -1,9 +1,9 @@
 ---
 name: Tech Debt
-about: Deuda técnica, refactorizaciones, optimizaciones
+about: Technical debt, refactorings, optimizations
 title: "[Tech Debt] "
 labels: tech-debt
 ---
-### Descripción de la deuda
-### ¿Por qué ahora?
-### Plan de resolución
+### Debt Description
+### Why now?
+### Resolution Plan

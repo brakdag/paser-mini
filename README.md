@@ -77,8 +77,8 @@ paser-mini "Analyze the current directory and summarize the project"
 
 ## Main Features
 
-1.  **Absolute Minimalist UI:**
-    - **Zero Formatting**: No colors, no Markdown, no panels. Pure plain text output.
+1.  **Minimalist UI:**
+    - **Enhanced Visuals**: Supports Markdown rendering, JetBrains Nerd Fonts, and basic LaTeX symbols (e.g., $\rightarrow$, $\Rightarrow$) for a clean yet expressive interface.
     - **Silent Execution**: No tool-call logs, no "Working" indicators. The agent works in total silence until the final response.
     - **Minimal Prompt**: A simple `> ` prompt for a distraction-free experience.
 

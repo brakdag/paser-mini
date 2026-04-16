@@ -3,8 +3,8 @@ import re
 class RepetitionDetector:
     def __init__(self, n=20, max_repeats=50):
         """
-        n: Tamaño de la secuencia de palabras a monitorear (n-grama).
-        max_repeats: Cuántas veces puede repetirse la secuencia antes de cortar.
+        n: Size of the word sequence to monitor (n-gram).
+        max_repeats: How many times the sequence can repeat before cutting.
         """
         self.n = n
         self.max_repeats = max_repeats
@@ -12,18 +12,18 @@ class RepetitionDetector:
 
     def add_text(self, text):
         """
-        Procesa un fragmento de texto, lo tokeniza y verifica si hay bucles.
-        Retorna True si el texto es aceptable, False si se detectó una repetición infinita.
+        Processes a text fragment, tokenizes it, and checks for loops.
+        Returns True if the text is acceptable, False if an infinite repetition is detected.
         """
         if text is None:
             return True
 
-        # Tokenizamos el texto manteniendo palabras y puntuación básica
+        # Tokenize text keeping words and basic punctuation
         tokens = re.findall(r'\w+|[\s\W]', text)
         
         for token in tokens:
-            # FILTRO CRÍTICO: Ignoramos tokens que no tengan contenido alfanumérico
-            # Esto evita que separadores como '---', '...', o espacios activen el detector
+            # CRITICAL FILTER: Ignore tokens that do not have alphanumeric content
+            # This prevents separators like '---', '...', or spaces from triggering the detector
             if not token.strip() or not any(c.isalnum() for c in token):
                 continue
             

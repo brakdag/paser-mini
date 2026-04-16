@@ -13,8 +13,10 @@ from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.text import Text
+from rich.status import Status
 
 from .latex_translator import LatexTranslator
+from .ui_interface import UserInterface
 from .ui_bindings import UIBindings
 
 logger = logging.getLogger("ui")
@@ -23,12 +25,14 @@ class UIState:
     INSERT = "INSERT"
     NORMAL = "NORMAL"
 
-class TerminalUI:
+class TerminalUI(UserInterface):
     def __init__(self):
         self.mode = UIState.INSERT
         self.last_cursor_pos = 0
         self._session = None
-        self.console = Console()
+        self.console = Console(force_terminal=True)
+        self._status = None
+        self._last_status_text = None
         
         self.style = Style.from_dict({
             '': '#cad3f5',
@@ -40,7 +44,6 @@ class TerminalUI:
             'dim': '#9399b2',
         })
         
-        # Modularized keybindings
         self.kb = UIBindings.get_bindings(self)
 
     async def request_input(self, prompt: str, history: Optional[Any] = None) -> str:
@@ -78,6 +81,53 @@ class TerminalUI:
 
     def display_info(self, message: str):
         self.console.print(Panel(Text(message, style="blue"), title="Info", border_style="blue"))
+
+    def add_spacing(self):
+        self.console.print("\n")
+
+    def start_tool_monitoring(self, tool_name: str, detail: str = ""):
+        # 1. If a spinner is already running, commit its final state to history
+        if self._status:
+            self._status.stop()
+            if self._last_status_text:
+                self.console.print(self._last_status_text)
+            self._status = None
+
+        # 2. Start new spinner for the current task
+        detail_str = f" ({detail})" if detail else ""
+        self._status = Status(
+            f"[bold cyan]🛠️ Executing {tool_name}{detail_str}...", 
+            spinner="dots", 
+            console=self.console
+        )
+        self._status.start()
+        self._last_status_text = None
+
+    def end_tool_monitoring(self, tool_name: str, success: bool, detail: str = ""):
+        if not self._status:
+            return
+        
+        color = "green" if success else "red"
+        status_text = "[OK]" if success else "[FAIL]"
+        detail_str = f" ({detail})" if detail else ""
+        
+        # Create the final text for this tool
+        final_text = Text(f"🛠️ {tool_name}{detail_str} {status_text}", style=color)
+        
+        # Update the active spinner message instead of stopping it
+        # This keeps the spinner spinning until the next tool starts or we summarize
+        self._status.update(final_text)
+        
+        # Store the text to be printed when the spinner finally stops
+        self._last_status_text = final_text
+
+    def stop_all_monitoring(self):
+        if self._status:
+            self._status.stop()
+            if self._last_status_text:
+                self.console.print(self._last_status_text)
+            self._status = None
+            self._last_status_text = None
 
     def get_spinner(self, message: str, color: str = "cyan", newline: bool = False):
         return None

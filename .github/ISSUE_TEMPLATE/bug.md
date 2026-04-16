@@ -1,9 +1,9 @@
 ---
 name: Bug Report
-about: Algo que se rompió
+about: Something broke
 title: "[Bug] "
 labels: bug
 ---
-### Descripción
-### Pasos para reproducir
-### Comportamiento esperado
+### Description
+### Steps to reproduce
+### Expected behavior
