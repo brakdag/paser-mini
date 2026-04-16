@@ -67,6 +67,14 @@
     }
   ],
   [
+    "copy_file",
+    "Copy file from origin to destination. Returns 'OK' on success.",
+    {
+      "origen": "string",
+      "destino": "string"
+    }
+  ],
+  [
     "validate_json",
     "Validates if a string is a valid JSON",
     {

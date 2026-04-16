@@ -22,6 +22,7 @@ AVAILABLE_TOOLS = {
     "search_text_global": sr.search_text_global,
     "search_files_pattern": sr.search_files_pattern,
     "rename_path": ft.rename_path,
+    "copy_file": ft.copy_file,
     "validate_json": ut.validate_json,
     "run_instance": it.run_instance
 }

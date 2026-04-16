@@ -112,3 +112,14 @@ def rename_path(origen: str, destino: str) -> str:
     except OSError as e:
         raise ToolError(f"Rename error: {e.strerror}")
 
+def copy_file(origen: str, destino: str) -> str:
+    try:
+        src = context.get_safe_path(origen)
+        dst = context.get_safe_path(destino)
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dst)
+        return 'OK'
+    except FileNotFoundError:
+        raise ToolError('Origin not found')
+    except OSError as e:
+        raise ToolError(f"Copy error: {e.strerror}")
