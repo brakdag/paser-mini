@@ -42,16 +42,17 @@ paser-mini
 
 ### Command Line Arguments
 
-| Argument | Short | Description |
-| :--- | :--- | :--- |
-| `--version` | N/A | Show version information |
-| `--unit_tests` | N/A | Run the internal unit test suite |
-| `--system_instruction` | `-si` | Provide custom system instructions to the agent |
-| `--inject_system_instruction` | `-isi` | Inject instruction at the start of system prompt |
-| `--message` | `-m` | Send an initial message in one-shot mode |
-| `input` | N/A | Positional argument for input text in one-shot mode |
+| Argument                      | Short  | Description                                         |
+| :---------------------------- | :----- | :-------------------------------------------------- |
+| `--version`                   | N/A    | Show version information                            |
+| `--unit_tests`                | N/A    | Run the internal unit test suite                    |
+| `--system_instruction`        | `-si`  | Provide custom system instructions to the agent     |
+| `--inject_system_instruction` | `-isi` | Inject instruction at the start of system prompt    |
+| `--message`                   | `-m`   | Send an initial message in one-shot mode            |
+| `input`                       | N/A    | Positional argument for input text in one-shot mode |
 
 **Example (One-shot mode):**
+
 ```bash
 paser-mini "Analyze the current directory and summarize the project"
 ```
@@ -59,7 +60,7 @@ paser-mini "Analyze the current directory and summarize the project"
 ## Project Structure
 
 ```text
-. 
+.
 ├── paser/                # Core application package
 │   ├── core/             # Unified ReAct engine and state management
 │   ├── tools/            # Minimalist toolset and registry
@@ -80,6 +81,7 @@ paser-mini "Analyze the current directory and summarize the project"
 This project follows a modular ReAct (Reasoning and Acting) architecture. Below is the detailed breakdown of the components:
 
 ### ⚙️ Core Engine (`paser/core/`)
+
 - **`chat_manager.py`**: The central orchestrator. It manages the conversation loop, handles tool execution asynchronously, and prevents infinite loops via `RepetitionDetector`.
 - **`tool_parser.py`**: Responsible for parsing `<TOOL_CALL>` tags from the LLM and formatting `<TOOL_RESPONSE>` tags for the model.
 - **`terminal_ui.py`**: A high-fidelity terminal interface using `rich` and `prompt_toolkit`, featuring real-time tool monitoring (spinners) and LaTeX rendering.
@@ -87,11 +89,13 @@ This project follows a modular ReAct (Reasoning and Acting) architecture. Below 
 - **`config_manager.py`**: Handles the persistence of user preferences (model, temperature) in `config/config.json`.
 
 ### 💠 Infrastructure (`paser/infrastructure/gemini/`)
+
 - **`adapter.py`**: The `GeminiAdapter` class abstracts the Google GenAI API, managing chat sessions, history, and model configuration.
 - **`retry_handler.py` & `errors.py`**: Provide a robust layer to handle API rate limits and connectivity issues with exponential backoff.
 - **`snapshot_manager.py`**: Allows saving and loading of interaction snapshots for debugging and persistence.
 
 ### 💡 Toolbox (`paser/tools/`)
+
 - **`registry.py`**: The source of truth for available tools and the `SYSTEM_INSTRUCTION` that defines the agent's persona and protocol.
 - **`file_tools.py`**: Implements secure file operations (read, write, replace, delete) restricted to the project root via `context.get_safe_path`.
 - **`search_tools.py`**: Wraps system utilities like `grep` and `find` for efficient global searching.
@@ -99,6 +103,7 @@ This project follows a modular ReAct (Reasoning and Acting) architecture. Below 
 - **`instance_tools.py`**: Enables "inception" capabilities, allowing the agent to launch a new `paser-mini` instance to test code or delegate tasks.
 
 ### ↻ Data Flow
+
 `User Input` $\rightarrow$ `TerminalUI` $\rightarrow$ `ChatManager` $\rightarrow$ `GeminiAdapter` $\rightarrow$ `ToolParser` (if tool call) $\rightarrow$ `AVAILABLE_TOOLS` $\rightarrow$ `ChatManager` (loop) $\rightarrow$ `Final Response` $\rightarrow$ `TerminalUI`.
 
 ## Main Features
@@ -128,22 +133,24 @@ This project follows a modular ReAct (Reasoning and Acting) architecture. Below 
 To maintain extreme lightness, only the absolute core tools are included:
 
 ### 📂 File System
+
 - **Reading**: `read_file`.
 - **Writing**: `write_file`, `remove_file`, `create_dir`, `rename_path`.
 - **Navigation**: `list_dir`, `get_cwd`.
 
 ### ✂️ Basic Editing
+
 - **Modification**: `replace_string` (Surgical text replacement).
 
 ### 🔍 Search & Analysis
+
 - **Search**: `search_files_pattern`, `search_text_global`.
 - **Analysis**: `analyze_pyright` (Static type checking).
 
 ### 🛠️ Core Utils
+
 - **Validation**: `validate_json`.
 
 ## Development & Testing
 
 Testing must be performed in a fresh environment. After any modification, please create a GitHub issue to delegate verification to a subsequent agent instance.
-
-**Maintenance Note:** Whenever `README.md` is modified, `PASER-mini.md` must be updated with the same content to ensure consistency. This is a one-way synchronization (README $\rightarrow$ PASER-mini).
