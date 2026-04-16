@@ -2,6 +2,7 @@ import json
 import tempfile
 import itertools
 import hashlib
+import difflib
 from pathlib import Path
 from . import context, ToolError
 
@@ -70,16 +71,31 @@ def list_dir(path: str = '.') -> str:
         raise ToolError(f"Access error: {e.strerror}")
 
 def replace_string(path: str, search_text: str, replace_text: str) -> str:
+    if not search_text:
+        raise ToolError('Search text cannot be empty')
     try:
         safe_path = context.get_safe_path(path)
         content = safe_path.read_text(encoding='utf-8')
+        
+        # Phase 1: Exact Match
         count = content.count(search_text)
-        if count == 0:
-            raise ToolError('Not found')
+        if count == 1:
+            safe_path.write_text(content.replace(search_text, replace_text), encoding='utf-8')
+            return 'OK'
         if count > 1:
             raise ToolError(f'Ambiguous: {count} matches')
-        safe_path.write_text(content.replace(search_text, replace_text), encoding='utf-8')
-        return 'OK'
+        
+        # Phase 2: Fuzzy Match (Suggestion Only)
+        lines = content.splitlines()
+        # Use the first line of search_text to find a close match
+        search_line = search_text.splitlines()[0]
+        closest = difflib.get_close_matches(search_line, lines, n=1, cutoff=0.6)
+        
+        if closest:
+            suggestion = closest[0].strip()
+            raise ToolError(f"Exact text not found. NO replacement performed. Did you mean: '{suggestion}'?")
+        
+        raise ToolError('Not found')
     except OSError as e:
         raise ToolError(f"Modify error: {e.strerror}")
 
