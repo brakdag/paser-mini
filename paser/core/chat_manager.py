@@ -161,6 +161,7 @@ class ChatManager:
                 )
                 if result:
                     cleaned_result = self.tool_parser.clean_response(result)
+                    self.ui.add_spacing()
                     self.ui.display_message(cleaned_result)
                 self.ui.add_spacing()
             except Exception as e:
@@ -183,6 +184,7 @@ class ChatManager:
                 )
                 if result:
                     cleaned_result = self.tool_parser.clean_response(result)
+                    self.ui.add_spacing()
                     self.ui.display_message(cleaned_result)
                 
                 self.ui.add_spacing()
