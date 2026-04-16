@@ -134,7 +134,7 @@ class TerminalUI(UserInterface):
             self._last_status_text = None
 
     def display_emergency_stop(self):
-        self.console.print(Panel(Text("🚨 [GOLPE DE PUÑO] - AGENTE DETENIDO", style="bold blink red"), title="EMERGENCY", border_style="red"))
+        self.console.print(Panel(Text("🖐️ STOP", style="bold blink red"), title="EMERGENCY", border_style="red"))
 
     def get_spinner(self, message: str, color: str = "cyan", newline: bool = False):
         return None

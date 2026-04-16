@@ -175,7 +175,7 @@ class ChatManager:
                 self.ui.add_spacing()
             except EmergencyStopException:
                 self.ui.display_emergency_stop()
-                current_intervention = await self.ui.request_input("> Intervención Manual: ")
+                current_intervention = await self.ui.request_input("> ")
             except Exception as e:
                 self.ui.display_error(f"Error processing initial message: {e}")
                 self.ui.add_spacing()
@@ -207,7 +207,7 @@ class ChatManager:
                 self.ui.add_spacing()
             except EmergencyStopException:
                 self.ui.display_emergency_stop()
-                current_intervention = await self.ui.request_input("> Intervención Manual: ")
+                current_intervention = await self.ui.request_input("> ")
             except Exception as e: 
                 self.ui.display_error(f"Error: {e}")
                 self.ui.add_spacing()
