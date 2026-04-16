@@ -14,6 +14,10 @@ from paser.tools import ToolError
 
 logger = setup_logger()
 
+class EmergencyStopException(Exception):
+    """Exception raised when the user triggers the emergency stop (Esc key)."""
+    pass
+
 class ChatManager:
     def __init__(self, assistant, tools, system_instruction, ui):
         self.assistant = assistant
@@ -64,7 +68,7 @@ class ChatManager:
             
             while True:
                 if self.stop_requested:
-                    return "Ejecución interrumpida por el usuario."
+                    raise EmergencyStopException("Ejecución interrumpida por el usuario.")
                 
                 rep_res = self.repetition_detector.add_text(response_text)
                 if rep_res is not True:
@@ -79,6 +83,9 @@ class ChatManager:
                 
                 combined_tool_responses = []
                 for call_data, raw_content in calls:
+                    if self.stop_requested:
+                        raise EmergencyStopException("Ejecución interrumpida por el usuario.")
+
                     if call_data is None:
                         combined_tool_responses.append(self.tool_parser.format_tool_response(f"Error de sintaxis: {raw_content}", success=False))
                         continue
@@ -152,6 +159,8 @@ class ChatManager:
         if not self._initialized_event.is_set():
             await asyncio.to_thread(self._initialize_chat)
         
+        current_intervention = None
+
         if initial_input:
             try:
                 result = await self.execute(
@@ -164,13 +173,21 @@ class ChatManager:
                     self.ui.add_spacing()
                     self.ui.display_message(cleaned_result)
                 self.ui.add_spacing()
+            except EmergencyStopException:
+                self.ui.display_emergency_stop()
+                current_intervention = await self.ui.request_input("> Intervención Manual: ")
             except Exception as e:
                 self.ui.display_error(f"Error processing initial message: {e}")
                 self.ui.add_spacing()
 
         while not self.should_exit:
             try:
-                user_input = await self.ui.request_input("> ", history=None)
+                if current_intervention:
+                    user_input = current_intervention
+                    current_intervention = None
+                else:
+                    user_input = await self.ui.request_input("> ", history=None)
+                
             except Exception as e:
                 self.ui.display_error(f"Critical UI Error: {e}")
                 break
@@ -188,6 +205,9 @@ class ChatManager:
                     self.ui.display_message(cleaned_result)
                 
                 self.ui.add_spacing()
+            except EmergencyStopException:
+                self.ui.display_emergency_stop()
+                current_intervention = await self.ui.request_input("> Intervención Manual: ")
             except Exception as e: 
                 self.ui.display_error(f"Error: {e}")
                 self.ui.add_spacing()

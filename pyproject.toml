@@ -16,6 +16,7 @@ dependencies = [
     "prompt_toolkit",
     "rich",
     "pyright",
+    "pynput",
 ]
 
 [project.scripts]

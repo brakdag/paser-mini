@@ -12,7 +12,11 @@ def analyze_pyright(path: str = ".") -> str:
         pyright_path = "pyright"
         
     safe_path = context.get_safe_path(path)
-    result = subprocess.run([pyright_path, "--outputjson", safe_path], capture_output=True, text=True)
+    try:
+        result = subprocess.run([pyright_path, "--outputjson", safe_path], capture_output=True, text=True, timeout=60)
+    except subprocess.TimeoutExpired:
+        raise ToolError("Pyright analysis timed out after 60 seconds.")
+
     if result.returncode == 0:
         return "No se encontraron errores de tipo."
     return result.stdout

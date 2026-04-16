@@ -53,6 +53,18 @@ async def main():
     assistant = GeminiAdapter()
     chat_manager = ChatManager(assistant, AVAILABLE_TOOLS, sys_instr, ui)
 
+    # Setup Emergency Stop Listener
+    try:
+        from pynput import keyboard
+        def on_press(key):
+            if key == keyboard.Key.esc:
+                chat_manager.stop_requested = True
+        
+        listener = keyboard.Listener(on_press=on_press)
+        listener.start()
+    except ImportError:
+        ui.display_info("pynput not installed. Emergency Stop (Esc) disabled.")
+
     # Start the agent in REPL mode, processing initial input if provided
     await chat_manager.run(initial_input=user_input)
 
