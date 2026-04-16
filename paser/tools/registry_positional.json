@@ -35,7 +35,7 @@
   ],
   [
     "replace_string",
-    "Search and replace string. Returns 'OK' on success. Throws ERR if not found.",
+    "Search and replace string. Returns 'OK' on success. If no exact match is found, it may suggest a similar line using fuzzy matching. Throws ERR if ambiguous or not found.",
     {
       "path": "string",
       "search_text": "string",
