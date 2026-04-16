@@ -5,10 +5,11 @@ from . import ToolError
 # Tiempo máximo de ejecución de la instancia secundaria para evitar bucles infinitos (inception)
 INSTANCE_TIMEOUT = 20
 
-def run_instance(message: str = None) -> str:
+def run_instance(message: str = None, args: list = None) -> str:
     """
     Lanza una nueva instancia de paser-mini en la terminal actual.
-    Si se proporciona un mensaje, se envía a la instancia antes de cerrarla.
+    Si se proporcionan `args`, se pasan como argumentos de línea de comandos.
+    Si se proporciona un `message`, se envía a la instancia antes de cerrarla.
     La instancia se cerrará automáticamente después de INSTANCE_TIMEOUT segundos.
     """
     try:
@@ -18,9 +19,14 @@ def run_instance(message: str = None) -> str:
         if not os.path.exists(binary_path):
             raise ToolError(f"Binario no encontrado en {binary_path}")
 
+        # Construimos el comando con los argumentos si existen
+        cmd = [binary_path]
+        if args and isinstance(args, list):
+            cmd.extend(args)
+
         # Lanzamos el proceso capturando salida y enviando input
         process = subprocess.Popen(
-            [binary_path],
+            cmd,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

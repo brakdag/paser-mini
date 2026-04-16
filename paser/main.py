@@ -17,9 +17,10 @@ async def main():
     parser.add_argument("-isi", "--inject_system_instruction", help="Inject instruction at the start of system prompt")
     parser.add_argument("-m", "--message", help="Initial message to send (one-shot mode)")
     parser.add_argument("input", nargs="?", help="Input text to process (one-shot mode)")
+    parser.add_argument("--no-spinner", action="store_true", help="Disable tool execution spinners")
     
     args = parser.parse_args()
-    ui = TerminalUI()
+    ui = TerminalUI(no_spinner=args.no_spinner)
 
     if args.unit_tests:
         ui.display_info("Running unit tests")
@@ -50,7 +51,6 @@ async def main():
     user_input = args.message if args.message else args.input
 
     assistant = GeminiAdapter()
-    ui = TerminalUI()
     chat_manager = ChatManager(assistant, AVAILABLE_TOOLS, sys_instr, ui)
 
     # Start the agent in REPL mode, processing initial input if provided

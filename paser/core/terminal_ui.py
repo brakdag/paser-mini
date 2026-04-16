@@ -26,7 +26,8 @@ class UIState:
     NORMAL = "NORMAL"
 
 class TerminalUI(UserInterface):
-    def __init__(self):
+    def __init__(self, no_spinner: bool = False):
+        self.no_spinner = no_spinner
         self.mode = UIState.INSERT
         self.last_cursor_pos = 0
         self._session = None
@@ -86,6 +87,13 @@ class TerminalUI(UserInterface):
         self.console.print("\n")
 
     def start_tool_monitoring(self, tool_name: str, detail: str = ""):
+        detail_str = f" ({detail})" if detail else ""
+        msg = f"🛠️ Executing {tool_name}{detail_str}..."
+        
+        if self.no_spinner:
+            self.console.print(Text(msg, style="bold cyan"))
+            return
+
         # 1. If a spinner is already running, commit its final state to history
         if self._status:
             self._status.stop()
@@ -94,33 +102,30 @@ class TerminalUI(UserInterface):
             self._status = None
 
         # 2. Start new spinner (default position: beginning of line)
-        detail_str = f" ({detail})" if detail else ""
-        msg = f"[bold cyan]🛠️ Executing {tool_name}{detail_str}..."
-        
-        self._status = Status(msg, spinner="line", console=self.console)
+        self._status = Status(f"[bold cyan]{msg}", spinner="line", console=self.console)
         self._status.start()
         self._last_status_text = None
 
     def end_tool_monitoring(self, tool_name: str, success: bool, detail: str = ""):
-        if not self._status:
-            return
-        
         color = "green" if success else "red"
         status_text = "[OK]" if success else "[FAIL]"
         detail_str = f" ({detail})" if detail else ""
-        
-        # Create the final text for this tool
         final_msg = f"🛠️ {tool_name}{detail_str} {status_text}"
+        
+        if self.no_spinner:
+            self.console.print(Text(final_msg, style=color))
+            return
+
+        if not self._status:
+            return
+        
         final_text = Text(final_msg, style=color)
-        
-        # Update the active spinner message instead of stopping it
-        # We use a formatted string for the update to keep the color
-        self._status.update(Text(final_msg, style=color))
-        
-        # Store the text to be printed when the spinner finally stops
+        self._status.update(final_text)
         self._last_status_text = final_text
 
     def stop_all_monitoring(self):
+        if self.no_spinner:
+            return
         if self._status:
             self._status.stop()
             if self._last_status_text:

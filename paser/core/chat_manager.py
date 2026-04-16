@@ -111,7 +111,7 @@ class ChatManager:
                             
                             # Visualización especial para la instancia de prueba
                             if name == "run_instance":
-                                self.ui.display_panel("🚀 Instance Test Output", result, style="cyan")
+                                self.ui.display_message(f"**🚀 Instance Test Output**\n\n```text\n{result}\n```")
                             
                             tr = self.tool_parser.format_tool_response(result, call_id=call_data.get("id"), success=True)
                             success = True
