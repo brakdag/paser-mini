@@ -6,7 +6,8 @@ import json
 from paser.tools import (
     file_tools as ft,
     system_tools as st,
-    util_tools as ut
+    util_tools as ut,
+    search_tools as sr
 )
 
 # Mapping of tool names to their executable Python functions
@@ -18,8 +19,8 @@ AVAILABLE_TOOLS = {
     "get_cwd": ut.get_cwd,
     "replace_string": ft.replace_string,
     "analyze_pyright": st.analyze_pyright,
-    "search_text_global": ft.search_text_global,
-    "search_files_pattern": ft.search_files_pattern,
+    "search_text_global": sr.search_text_global,
+    "search_files_pattern": sr.search_files_pattern,
     "rename_path": ft.rename_path,
     "create_dir": ft.create_dir,
     "validate_json": ut.validate_json

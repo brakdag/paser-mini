@@ -1,10 +1,10 @@
 import json
 import tempfile
-import shlex
 import itertools
 import hashlib
 from pathlib import Path
 from . import context, ToolError
+
 FILE_SIZE_LIMIT = 1 * 1024 * 1024
 READ_CACHE = set()
 MAX_LIST_RESULTS = 100
@@ -64,7 +64,6 @@ def remove_file(path: str) -> str:
 def list_dir(path: str = '.') -> str:
     try:
         safe_path = context.get_safe_path(path)
-        # Use generator expression with islice to stop iterating immediately
         items = list(itertools.islice((p.name for p in safe_path.iterdir()), MAX_LIST_RESULTS))
         return json.dumps(items)
     except OSError as e:
@@ -99,55 +98,3 @@ def create_dir(path: str) -> str:
         return 'OK'
     except OSError as e:
         raise ToolError(f"Create error: {e.strerror}")
-
-def search_files_pattern(pattern: str) -> str:
-    import subprocess
-    root_path = context.get_safe_path('.')
-    try:
-        # Use find with pipe to head for early termination (SIGPIPE)
-        cmd = f"find {shlex.quote(str(root_path))} -name {shlex.quote(pattern)} | head -n 10"
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, encoding='utf-8')
-        
-        if result.returncode != 0 and result.returncode != 1:
-            raise ToolError(f"Find error: {result.stderr}")
-        
-        paths = result.stdout.splitlines()
-        results = [str(Path(p).relative_to(root_path)) for p in paths if p]
-        return json.dumps(results)
-    except Exception as e:
-        raise ToolError(f"Search error: {str(e)}")
-
-def search_text_global(query: str) -> str:
-    import subprocess
-    root_path = context.get_safe_path(".")
-    try:
-        # Use pipe to head -n 10 for extreme efficiency
-        cmd = f"grep -rIn -- {shlex.quote(query)} {shlex.quote(str(root_path))} | head -n 10"
-        result = subprocess.run(
-            cmd, 
-            shell=True, 
-            capture_output=True, 
-            text=True, 
-            encoding='utf-8', 
-            errors='replace'
-        )
-        if result.returncode > 1:
-            raise ToolError(f"Grep error: {result.stderr}")
-        if not result.stdout:
-            return json.dumps([])
-        
-        parsed_results = []
-        for line in result.stdout.splitlines():
-            parts = line.split(':', 2)
-            if len(parts) == 3:
-                file_path, line_num, text = parts
-                parsed_results.append({
-                    "file": str(Path(file_path).relative_to(root_path)),
-                    "line": int(line_num),
-                    "text": text.strip()
-                })
-        return json.dumps(parsed_results)
-    except ToolError:
-        raise
-    except Exception as e:
-        raise ToolError(f"Search error: {str(e)}")

@@ -9,6 +9,8 @@ from google.genai.errors import ClientError
 from . import errors
 from . import utils
 from . import history
+from .retry_handler import RetryHandler
+from .snapshot_manager import SnapshotManager
 
 logger = logging.getLogger(__name__)
 
@@ -18,45 +20,25 @@ class GeminiAdapter:
         self.chat: Any = None
         self.history: list = []
         self._current_model: Optional[str] = None
-        self.max_retries = 5
-        self.default_retry_delay = 5
         self.system_instruction: Optional[str] = None
         
-        # Initialize call counter for langchain saving
-        self.save_dir = "."
-        self.call_count = history.initialize_call_count(self.save_dir)
-        self.save_langchain_enabled = False  # Default to False, enabled via /s
+        # Modularized Components
+        self.retry_handler = RetryHandler()
+        self.snapshot_manager = SnapshotManager()
+        self.save_langchain_enabled = False
 
     def save_snapshot(self):
-        """Saves the last interaction to disk."""
-        if not self.history:
-            return False
-        
-        # Find the last user message to use as 'current_message'
-        last_user_msg = None
-        for content in reversed(self.history):
-            if content.role.lower() == 'user':
-                # Extract text from parts
-                text_parts = [p.text for p in content.parts if hasattr(p, 'text') and p.text]
-                last_user_msg = "\n".join(text_parts)
-                break
-        
-        if last_user_msg:
-            self.call_count = history.save_payload(
-                self.save_dir, 
-                self.call_count, 
-                self.system_instruction, 
-                self.history, 
-                last_user_msg
-            )
-            return True
-        return False
+        """Saves the last interaction to disk via SnapshotManager."""
+        return self.snapshot_manager.save(
+            system_instruction=self.system_instruction, 
+            chat_history=self.history, 
+            current_message=""
+        )
 
     def start_chat(self, model_name: str, system_instruction: str, temperature: float):
         self._current_model = model_name
         self.system_instruction = system_instruction
         
-        # Validar el modelo antes de iniciar
         try:
             available_models = self.get_available_models()
         except Exception as e:
@@ -70,7 +52,6 @@ class GeminiAdapter:
         config_params: dict[str, Any] = {"temperature": temperature}
         self.history = []
         
-        # Determinar si usar system_instruction en la config o en el historial
         if 'gemini' in model_name.lower():
             config_params["system_instruction"] = system_instruction
         else:
@@ -93,7 +74,7 @@ class GeminiAdapter:
             )
         except Exception as e:
             if errors.is_retryable_error(e):
-                raise ConnectionError(errors.format_api_error(e, lambda err, ret: errors.get_retry_delay(err, ret, self.default_retry_delay)))
+                raise ConnectionError(errors.format_api_error(e, lambda err, ret: errors.get_retry_delay(err, ret, self.retry_handler.default_delay)))
             raise RuntimeError(f"Error al iniciar chat con el modelo {model_name}: {e}")
 
     def send_message_stream(self, message: str) -> Generator[str, None, None]:
@@ -101,8 +82,9 @@ class GeminiAdapter:
             yield ""
             return
 
+        # Streaming requires a custom loop because it yields values
         retries = 0
-        while retries <= self.max_retries:
+        while True:
             try:
                 parts = utils.prepare_message_parts(message)
                 response = self.chat.send_message_stream(parts)
@@ -116,65 +98,37 @@ class GeminiAdapter:
                 self.history.append(types.Content(role="model", parts=[types.Part.from_text(text=full_text)]))
                 return
             except Exception as e:
-                if errors.is_retryable_error(e):
-                    retries += 1
-                    if retries > self.max_retries:
-                        formatted_error = errors.format_api_error(e, lambda err, ret: errors.get_retry_delay(err, ret, self.default_retry_delay))
-                        logger.error(f"API Error: Max retries reached. {formatted_error}")
-                        yield f"\n⚠️ Error: {formatted_error}"
-                        return
-                    
-                    delay = errors.get_retry_delay(e, retries - 1, self.default_retry_delay)
-                    if isinstance(e, ClientError) or getattr(e, 'status_code', None) == 429 or '429' in str(e).lower():
-                        logger.warning(f"API Retry {retries}/{self.max_retries} in {delay}s (Quota exceeded)")
-                    else:
-                        logger.warning(f"API Retry {retries}/{self.max_retries} in {delay}s due to: {e}")
-                    
-                    time.sleep(delay)
-                    continue
-                else:
-                    logger.exception(f"Non-retryable API error: {e}")
-                    raise e
+                if not errors.is_retryable_error(e) or retries >= self.retry_handler.max_retries:
+                    formatted_error = errors.format_api_error(e, lambda err, ret: errors.get_retry_delay(err, ret, self.retry_handler.default_delay))
+                    logger.error(f"API Error: Max retries reached. {formatted_error}")
+                    yield f"\n\u26a0\ufe0f Error: {formatted_error}"
+                    return
+                
+                delay = errors.get_retry_delay(e, retries, self.retry_handler.default_delay)
+                logger.warning(f"API Retry {retries + 1}/{self.retry_handler.max_retries} in {delay}s due to: {e}")
+                time.sleep(delay)
+                retries += 1
 
     def send_message(self, message: Union[str, bytes]) -> Any:
         if not self.chat:
             return None
 
-        retries = 0
-        while retries <= self.max_retries:
-            try:
-                if isinstance(message, bytes):
-                    audio_bytes = message
-                    parts = [types.Part.from_bytes(data=audio_bytes, mime_type="audio/wav")]
-                else:
-                    parts = utils.prepare_message_parts(message)
-                
-                response = self.chat.send_message(parts)
-                
-                self.history.append(types.Content(role="user", parts=parts))
-                if hasattr(response, 'text') and response.text:
-                    self.history.append(types.Content(role="model", parts=[types.Part.from_text(text=response.text)]))
-                
-                return response
-            except Exception as e:
-                if errors.is_retryable_error(e):
-                    retries += 1
-                    if retries > self.max_retries:
-                        formatted_error = errors.format_api_error(e, lambda err, ret: errors.get_retry_delay(err, ret, self.default_retry_delay))
-                        logger.error(f"API Error: Max retries reached. {formatted_error}")
-                        return f"⚠️ Error: {formatted_error}"
-                    
-                    delay = errors.get_retry_delay(e, retries - 1, self.default_retry_delay)
-                    if isinstance(e, ClientError) or getattr(e, 'status_code', None) == 429 or '429' in str(e).lower():
-                        logger.warning(f"API Retry {retries}/{self.max_retries} in {delay}s (Quota exceeded)")
-                    else:
-                        logger.warning(f"API Retry {retries}/{self.max_retries} in {delay}s due to: {e}")
-                    
-                    time.sleep(delay)
-                    continue
-                
-                logger.exception(f"Non-retryable API error: {e}")
-                raise e
+        def _do_send():
+            if isinstance(message, bytes):
+                parts = [types.Part.from_bytes(data=message, mime_type="audio/wav")]
+            else:
+                parts = utils.prepare_message_parts(message)
+            
+            response = self.chat.send_message(parts)
+            self.history.append(types.Content(role="user", parts=parts))
+            if hasattr(response, 'text') and response.text:
+                self.history.append(types.Content(role="model", parts=[types.Part.from_text(text=response.text)]))
+            return response
+
+        try:
+            return self.retry_handler.execute(_do_send)
+        except Exception as e:
+            return f"\u26a0\ufe0f Error: {str(e)}"
 
     def send_audio_message(self, base64_audio: str) -> Any:
         if not self.chat:
@@ -182,18 +136,7 @@ class GeminiAdapter:
 
         try:
             audio_bytes = base64.b64decode(base64_audio)
-            audio_part = types.Part.from_bytes(
-                data=audio_bytes,
-                mime_type="audio/wav"
-            )
-            
-            response = self.chat.send_message([audio_part])
-            
-            self.history.append(types.Content(role="user", parts=[audio_part]))
-            if hasattr(response, 'text') and response.text:
-                self.history.append(types.Content(role="model", parts=[types.Part.from_text(text=response.text)]))
-            
-            return response
+            return self.send_message(audio_bytes)
         except Exception as e:
             logger.exception(f"Error sending audio message: {e}")
             raise e
@@ -221,7 +164,7 @@ class GeminiAdapter:
             return utils.get_available_models(self.client)
         except Exception as e:
             if errors.is_retryable_error(e):
-                raise ConnectionError(errors.format_api_error(e, lambda err, ret: errors.get_retry_delay(err, ret, self.default_retry_delay)))
+                raise ConnectionError(errors.format_api_error(e, lambda err, ret: errors.get_retry_delay(err, ret, self.retry_handler.default_delay)))
             raise e
 
     def count_tokens(self, contents: Any) -> int:
