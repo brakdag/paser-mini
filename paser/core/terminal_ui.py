@@ -108,7 +108,7 @@ class TerminalUI(UserInterface):
 
     def end_tool_monitoring(self, tool_name: str, success: bool, detail: str = ""):
         color = "green" if success else "red"
-        status_text = "[OK]" if success else "[FAIL]"
+        status_text = "✅" if success else "❌"
         detail_str = f" ({detail})" if detail else ""
         final_msg = f"🛠️ {tool_name}{detail_str} {status_text}"
         
