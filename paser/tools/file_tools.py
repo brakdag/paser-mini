@@ -36,6 +36,7 @@ def read_file(path: str) -> str:
 
     file_hash = hashlib.sha256(content.encode('utf-8')).hexdigest()
     if file_hash in READ_CACHE:
+        READ_CACHE.remove(file_hash)
         raise ToolError("No changes since last read")
     
     READ_CACHE.add(file_hash)
