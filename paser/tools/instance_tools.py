@@ -20,7 +20,7 @@ def run_instance(message: str = None, args: list = None) -> str:
             raise ToolError(f"Binario no encontrado en {binary_path}")
 
         # Construimos el comando con los argumentos si existen
-        cmd = [binary_path]
+        cmd = [binary_path, "--no-spinner"]
         if args and isinstance(args, list):
             cmd.extend(args)
 
