@@ -7,7 +7,8 @@ from paser.tools import (
     file_tools as ft,
     system_tools as st,
     util_tools as ut,
-    search_tools as sr
+    search_tools as sr,
+    instance_tools as it
 )
 
 # Mapping of tool names to their executable Python functions
@@ -23,7 +24,8 @@ AVAILABLE_TOOLS = {
     "search_files_pattern": sr.search_files_pattern,
     "rename_path": ft.rename_path,
     "create_dir": ft.create_dir,
-    "validate_json": ut.validate_json
+    "validate_json": ut.validate_json,
+    "run_instance": it.run_instance
 }
 
 # Load tool definitions (descriptions and params) for the LLM prompt

@@ -108,6 +108,11 @@ class ChatManager:
                         try:
                             # Execute tool in a thread to prevent blocking the spinner animation
                             result = await asyncio.to_thread(self.tools[name], **args)
+                            
+                            # Visualización especial para la instancia de prueba
+                            if name == "run_instance":
+                                self.ui.display_panel("🚀 Instance Test Output", result, style="cyan")
+                            
                             tr = self.tool_parser.format_tool_response(result, call_id=call_data.get("id"), success=True)
                             success = True
                         except ToolError as te:
