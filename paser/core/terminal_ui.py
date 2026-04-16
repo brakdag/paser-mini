@@ -93,13 +93,11 @@ class TerminalUI(UserInterface):
                 self.console.print(self._last_status_text)
             self._status = None
 
-        # 2. Start new spinner for the current task
+        # 2. Start new spinner (default position: beginning of line)
         detail_str = f" ({detail})" if detail else ""
-        self._status = Status(
-            f"[bold cyan]🛠️ Executing {tool_name}{detail_str}...", 
-            spinner="dots", 
-            console=self.console
-        )
+        msg = f"[bold cyan]🛠️ Executing {tool_name}{detail_str}..."
+        
+        self._status = Status(msg, spinner="line", console=self.console)
         self._status.start()
         self._last_status_text = None
 
@@ -112,11 +110,12 @@ class TerminalUI(UserInterface):
         detail_str = f" ({detail})" if detail else ""
         
         # Create the final text for this tool
-        final_text = Text(f"🛠️ {tool_name}{detail_str} {status_text}", style=color)
+        final_msg = f"🛠️ {tool_name}{detail_str} {status_text}"
+        final_text = Text(final_msg, style=color)
         
         # Update the active spinner message instead of stopping it
-        # This keeps the spinner spinning until the next tool starts or we summarize
-        self._status.update(final_text)
+        # We use a formatted string for the update to keep the color
+        self._status.update(Text(final_msg, style=color))
         
         # Store the text to be printed when the spinner finally stops
         self._last_status_text = final_text

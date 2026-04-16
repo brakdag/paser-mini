@@ -91,8 +91,10 @@ paser-mini "Analyze the current directory and summarize the project"
 
 ## Essential User Commands
 
+- `/help`: Show the available commands menu.
 - `/models`: Change AI model and adjust temperature.
 - `/s`: Save a snapshot of the last interaction (System + History + Last Message + Response) to the current directory as a `.text` file.
+- `/t`: Display the current context window token count.
 - `/q`, `/quit`, `/exit`: Exit the application.
 
 ## Minimal Toolset

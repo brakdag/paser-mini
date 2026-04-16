@@ -33,6 +33,19 @@ class CommandHandler:
             self.ui.display_info(f"Context window: {tokens} tokens")
             return True
 
+        elif input_stripped == '/help':
+            help_text = (
+                "Available Commands:\n"
+                "-------------------\n"
+                "/help    - Show this help menu\n"
+                "/models  - Change AI model and temperature\n"
+                "/s       - Save a snapshot of the last interaction\n"
+                "/t       - Display current context window token count\n"
+                "/q, /quit, /exit - Exit the application"
+            )
+            self.ui.display_message(help_text)
+            return True
+
         # Configuración del Agente
         elif input_stripped == '/models':
             models = self.chat_manager.assistant.get_available_models()
