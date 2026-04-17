@@ -31,6 +31,9 @@ class ChatManager:
         
         self.thinking_enabled = self.config_manager.get("thinking_enabled", False)
         self.temperature = float(self.config_manager.get("default_temperature", 0.7))
+        self.context_window_limit = int(self.config_manager.get("context_window_limit", 250000))
+        self.rpm_limit = int(self.config_manager.get("rpm_limit", 15))
+        self.request_timestamps = []
         
         self.command_handler = CommandHandler(self, ui)
         
@@ -46,6 +49,34 @@ class ChatManager:
 
     def save_config(self, key, value):
         self.config_manager.save(key, value)
+
+    async def _wait_for_rate_limit(self):
+        now = asyncio.get_event_loop().time()
+        self.request_timestamps = [t for t in self.request_timestamps if now - t < 60]
+        
+        if len(self.request_timestamps) >= self.rpm_limit:
+            wait_time = 60 - (now - self.request_timestamps[0])
+            if wait_time > 0:
+                logger.warning(f"Rate limit reached. Waiting {wait_time:.2f}s...")
+                await asyncio.sleep(wait_time)
+                return await self._wait_for_rate_limit()
+        
+        self.request_timestamps.append(asyncio.get_event_loop().time())
+
+    async def _enforce_context_limit(self):
+        history = self.assistant.history
+        if not history:
+            return
+
+        start_idx = 0
+        if 'gemini' not in (self.assistant._current_model or '').lower():
+            start_idx = 2
+
+        while len(history) > start_idx and self.assistant.count_tokens(history) > self.context_window_limit:
+            if len(history) > start_idx + 1:
+                del history[start_idx : start_idx + 2]
+            else:
+                del history[start_idx]
 
     def _extract_text(self, response) -> str:
         return response.text if hasattr(response, "text") and response.text else str(response)
@@ -63,6 +94,8 @@ class ChatManager:
                 return f"Detección de texto repetitivo: posible bucle infinito. Secuencia: '{rep_res}'"
         
         try:
+            await self._wait_for_rate_limit()
+            await self._enforce_context_limit()
             response = await asyncio.to_thread(self.assistant.send_message, user_input)
             response_text = self._extract_text(response)
             
@@ -141,6 +174,8 @@ class ChatManager:
                     combined_tool_responses.append(tr)
                 
                 combined_message = "".join(combined_tool_responses)
+                await self._wait_for_rate_limit()
+                await self._enforce_context_limit()
                 response_obj = await asyncio.to_thread(self.assistant.send_message, combined_message)
                 response_text = self._extract_text(response_obj)
                 

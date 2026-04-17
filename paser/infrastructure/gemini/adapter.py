@@ -38,6 +38,7 @@ class GeminiAdapter:
     def start_chat(self, model_name: str, system_instruction: str, temperature: float):
         self._current_model = model_name
         self.system_instruction = system_instruction
+        self.temperature = temperature
         
         try:
             available_models = self.get_available_models()

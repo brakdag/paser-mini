@@ -33,6 +33,23 @@ class CommandHandler:
             self.ui.display_info(f"Context window: {tokens} tokens")
             return True
 
+        elif input_stripped.startswith('/w'):
+            parts = input_stripped.split()
+            if len(parts) != 3:
+                self.ui.display_error("Usage: /w <tokens> <rpm_limit>")
+                return True
+            try:
+                tokens = int(parts[1])
+                rpm = int(parts[2])
+                self.chat_manager.save_config("context_window_limit", tokens)
+                self.chat_manager.save_config("rpm_limit", rpm)
+                self.chat_manager.context_window_limit = tokens
+                self.chat_manager.rpm_limit = rpm
+                self.ui.display_info(f"Context window set to {tokens} tokens | RPM limit set to {rpm}")
+            except ValueError:
+                self.ui.display_error("Tokens and RPM must be integers.")
+            return True
+
         elif input_stripped == '/help':
             help_text = (
                 "Available Commands:\n"
