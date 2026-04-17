@@ -12,6 +12,31 @@ from paser.core.config_manager import ConfigManager
 from paser.core.tool_parser import ToolParser
 from paser.tools import ToolError
 
+class ToolAttemptTracker:
+    """Tracks tool calls to detect behavioral loops (exact repetitions or repeated failures)."""
+    def __init__(self, max_exact_attempts=5, max_tool_failures=5):
+        self.exact_attempts = {}
+        self.tool_failures = {}
+        self.max_exact_attempts = max_exact_attempts
+        self.max_tool_failures = max_tool_failures
+
+    def record_attempt(self, name, args):
+        args_json = json.dumps(args, sort_keys=True)
+        key = (name, args_json)
+        self.exact_attempts[key] = self.exact_attempts.get(key, 0) + 1
+        return self.exact_attempts[key] <= self.max_exact_attempts
+
+    def record_failure(self, name):
+        self.tool_failures[name] = self.tool_failures.get(name, 0) + 1
+        return self.tool_failures[name] <= self.max_tool_failures
+
+    def record_success(self, name):
+        self.tool_failures[name] = 0
+
+    def reset(self):
+        self.exact_attempts = {}
+        self.tool_failures = {}
+
 logger = setup_logger()
 
 class EmergencyStopException(Exception):
@@ -40,6 +65,7 @@ class ChatManager:
         
         # Executor state
         self.repetition_detector = RepetitionDetector(n=5, max_repeats=5)
+        self.tool_tracker = ToolAttemptTracker()
         self.max_turns = 100
         self.turn_count = 0
         self.stop_requested = False
@@ -85,14 +111,15 @@ class ChatManager:
     async def execute(self, user_input: Union[str, bytes], thinking_enabled: bool = True, get_confirmation_callback=None) -> str:
         self.stop_requested = False
         self.turn_count = 0
+        self.tool_tracker.reset()
         self.turn_count += 1
         if self.turn_count > self.max_turns:
-            return "Límite de turnos excedido."
+            return "Turn limit exceeded."
         
         if isinstance(user_input, str):
             rep_res = self.repetition_detector.add_text(user_input)
             if rep_res is not True:
-                return f"Detección de texto repetitivo: posible bucle infinito. Secuencia: '{rep_res}'"
+                return f"Repetitive text detected: possible infinite loop. Sequence: '{rep_res}'"
         
         try:
             await self._wait_for_rate_limit()
@@ -102,18 +129,18 @@ class ChatManager:
             
             while True:
                 if self.stop_requested:
-                    raise EmergencyStopException("Ejecución interrumpida por el usuario.")
+                    raise EmergencyStopException("Execution interrupted by user.")
                 
                 rep_res = self.repetition_detector.add_text(response_text)
                 if rep_res is not True:
-                    return f"Detección de texto repetitivo: posible bucle infinito. Secuencia: '{rep_res}'"
+                    return f"Repetitive text detected: possible infinite loop. Sequence: '{rep_res}'"
                 
                 calls = self.tool_parser.extract_tool_calls(response_text)
                 
                 if not calls: break
                 
                 self.turn_count += 1
-                if self.turn_count > self.max_turns: return "Límite de turnos excedido."
+                if self.turn_count > self.max_turns: return "Turn limit exceeded."
                 
                 combined_tool_responses = []
                 for call_data, raw_content in calls:
@@ -126,6 +153,9 @@ class ChatManager:
                     
                     name, args = call_data.get("name"), call_data.get("args", {})
                     
+                    if not self.tool_tracker.record_attempt(name, args):
+                        return f"Tool loop detected: the tool '{name}' has been called too many times with the same arguments."
+
                     # Extract detail for monitoring
                     detail = ""
                     if name in ["read_file", "write_file", "remove_file", "replace_string"]:
@@ -151,19 +181,23 @@ class ChatManager:
                             success = False
                         else:
                             try:
-                                # Execute tool in a thread to prevent blocking the spinner animation
                                 result = await asyncio.to_thread(self.tools[name], **args)
                                 
                                 # Visualización especial para la instancia de prueba
                                 if name == "run_instance":
                                     self.ui.display_message(f"**🚀 Instance Test Output**\n\n```text\n{result}\n```")
                                 
+                                self.tool_tracker.record_success(name)
                                 tr = self.tool_parser.format_tool_response(result, call_id=call_data.get("id"), success=True)
                                 success = True
                             except ToolError as te:
+                                if not self.tool_tracker.record_failure(name):
+                                    return f"Error loop detected: the tool '{name}' has failed repeatedly."
                                 tr = self.tool_parser.format_tool_response(f"ERR: {str(te)}", call_id=call_data.get("id"), success=False)
                                 success = False
                             except Exception as exc:
+                                if not self.tool_tracker.record_failure(name):
+                                    return f"Error loop detected: the tool '{name}' has failed repeatedly."
                                 tr = self.tool_parser.format_tool_response(f"ERR: Unexpected error: {str(exc)}", call_id=call_data.get("id"), success=False)
                                 success = False
                     else:

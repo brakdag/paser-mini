@@ -4,11 +4,12 @@ import itertools
 import hashlib
 import difflib
 import shutil
+from collections import deque
 from pathlib import Path
 from . import context, ToolError
 
 FILE_SIZE_LIMIT = 100 * 1024
-READ_CACHE = set()
+READ_CACHE = deque(maxlen=1000)
 MAX_LIST_RESULTS = 100
 
 
@@ -39,7 +40,7 @@ def read_file(path: str) -> str:
         READ_CACHE.remove(file_hash)
         raise ToolError("No changes since last read")
     
-    READ_CACHE.add(file_hash)
+    READ_CACHE.append(file_hash)
     return content
 
 def write_file(path: str, contenido: str) -> str:

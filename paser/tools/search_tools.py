@@ -9,7 +9,10 @@ def search_files_pattern(pattern: str) -> str:
     try:
         # Use find with pipe to head for early termination (SIGPIPE)
         cmd = f"find {shlex.quote(str(root_path))} -name {shlex.quote(pattern)} | head -n 10"
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, encoding='utf-8')
+        try:
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True, encoding='utf-8', timeout=80)
+        except subprocess.TimeoutExpired:
+            raise ToolError("Search operation timed out after 80 seconds.")
         
         if result.returncode != 0 and result.returncode != 1:
             raise ToolError(f"Find error: {result.stderr}")
@@ -25,14 +28,18 @@ def search_text_global(query: str) -> str:
     try:
         # Use pipe to head -n 10 for extreme efficiency
         cmd = f"grep -rIn -- {shlex.quote(query)} {shlex.quote(str(root_path))} | head -n 10"
-        result = subprocess.run(
-            cmd, 
-            shell=True, 
-            capture_output=True, 
-            text=True, 
-            encoding='utf-8', 
-            errors='replace'
-        )
+        try:
+            result = subprocess.run(
+                cmd, 
+                shell=True, 
+                capture_output=True, 
+                text=True, 
+                encoding='utf-8', 
+                errors='replace',
+                timeout=80
+            )
+        except subprocess.TimeoutExpired:
+            raise ToolError("Search operation timed out after 80 seconds.")
         if result.returncode > 1:
             raise ToolError(f"Grep error: {result.stderr}")
         if not result.stdout:
