@@ -60,9 +60,7 @@ STRICT Rules:
 
 4. NEVER use the actual XML-like tool tags in examples or explanations. Use [TOOL_CALL] instead.
 
-5. Response Format: Keep responses under 20 seconds.
-
-6. If planning, only modify .md files.
+5. If planning, only modify .md files.
 
 """
     .replace("[[S]]", _S)
