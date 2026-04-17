@@ -1,47 +1,47 @@
-# Plan de Implementación: Tool de Ejecución de Instancia (Self-Testing)
+# Implementation Plan: Instance Execution Tool (Self-Testing)
 
-## 🎯 Objetivo
-Implementar una herramienta que permita al agente lanzar una nueva instancia de `paser-mini` en el mismo entorno virtual. Esto permitirá validar cambios en el código en tiempo real, ya que el agente actual opera sobre una versión cargada en memoria y no detectaría errores de sintaxis o importación introducidos en archivos modificados hasta que se reinicie.
+## 🎯 Objective
+Implement a tool that allows the agent to launch a new instance of `paser-mini` within the same virtual environment. This will enable real-time validation of code changes, as the current agent operates on a version loaded in memory and would not detect syntax or import errors introduced in modified files until a restart.
 
-## 🛠️ Especificaciones Técnicas
+## ⚙️ Technical Specifications
 
-### 1. Comportamiento de la Tool
-- **Nombre:** `run_instance`
-- **Función:** Debe ejecutar el binario `paser-mini` o el script `paser/main.py` utilizando el intérprete de Python del entorno virtual actual.
-- **Interactividad:** La herramienta debe ceder el control de la terminal (`stdin`, `stdout`, `stderr`) al nuevo proceso para que el usuario humano pueda interactuar con la nueva instancia como un REPL.
-- **Finalización:** Una vez que el usuario cierre la instancia secundaria (vía `/q` o `exit`), el control debe regresar a la instancia principal del agente.
+### 1. Tool Behavior
+- **Name**: `run_instance`
+- **Function**: Must execute the `paser-mini` binary or the `paser/main.py` script using the Python interpreter of the current virtual environment.
+- **Interactivity**: The tool must yield terminal control (`stdin`, `stdout`, `stderr`) to the new process so that the human user can interact with the new instance as a REPL.
+- **Termination**: Once the user closes the secondary instance (via `/q` or `exit`), control must return to the primary agent instance.
 
-### 2. Componentes a Modificar/Crear
+### 2. Components to Modify/Create
 
-#### A. Nueva Herramienta (`paser/tools/instance_tools.py`)
-- Crear un nuevo módulo para herramientas de gestión de instancias.
-- Implementar la función `run_instance()` utilizando el módulo `subprocess` de Python.
-- Asegurar que se utilice el path correcto al entorno virtual (`venv`).
+#### A. New Tool (`paser/tools/instance_tools.py`)
+- Create a new module for instance management tools.
+- Implement the `run_instance()` function using Python's `subprocess` module.
+- Ensure the correct path to the virtual environment (`venv`) is used.
 
-#### B. Registro de la Herramienta (`paser/tools/registry.py`)
-- Importar `run_instance` desde el nuevo módulo.
-- Agregar `run_instance` al diccionario `AVAILABLE_TOOLS`.
+#### B. Tool Registry (`paser/tools/registry.py`)
+- Import `run_instance` from the new module.
+- Add `run_instance` to the `AVAILABLE_TOOLS` dictionary.
 
-#### C. Catálogo de Herramientas (`paser/tools/registry_positional.json`)
-- Agregar la definición de la herramienta (nombre, descripción y parámetros) para que el LLM sepa cómo y cuándo utilizarla.
+#### C. Tool Catalog (`paser/tools/registry_positional.json`)
+- Add the tool definition (name, description, and parameters) so the LLM knows how and when to use it.
 
-## 🚀 Pasos de Ejecución
+## 🚀 Execution Steps
 
-1. **Fase de Desarrollo:**
-   - [ ] Crear `paser/tools/instance_tools.py` con la lógica de ejecución de subprocesso.
-   - [ ] Registrar la herramienta en `paser/tools/registry.py`.
-   - [ ] Actualizar `paser/tools/registry_positional.json`.
+1. **Development Phase**:
+   - [ ] Create `paser/tools/instance_tools.py` with the subprocess execution logic.
+   - [ ] Register the tool in `paser/tools/registry.py`.
+   - [ ] Update `paser/tools/registry_positional.json`.
 
-2. **Fase de Validación:**
-   - [ ] Ejecutar el agente principal.
-   - [ ] Solicitar al agente que lance una nueva instancia mediante la tool `run_instance`.
-   - [ ] Verificar que la nueva instancia inicie correctamente y sea interactiva.
-   - [ ] Cerrar la instancia secundaria y confirmar que el agente principal recupera el control.
+2. **Validation Phase**:
+   - [ ] Launch the primary agent.
+   - [ ] Request the agent to launch a new instance using the `run_instance` tool.
+   - [ ] Verify that the new instance starts correctly and is interactive.
+   - [ ] Close the secondary instance and confirm that the primary agent regains control.
 
-3. **Fase de Stress Test:**
-   - [ ] Introducir un error deliberado en `paser/main.py`.
-   - [ ] Intentar lanzar la instancia para confirmar que el error es visible y reportado por el sistema.
+3. **Stress Test Phase**:
+   - [ ] Introduce a deliberate error in `paser/main.py`.
+   - [ ] Attempt to launch the instance to confirm that the error is visible and reported by the system.
 
-## ⚠️ Consideraciones Importantes
-- **Bloqueo de Event Loop:** Dado que `subprocess.run` es bloqueante, la herramienta debe ejecutarse de manera que no congele la UI del agente principal, aunque en este caso es deseado que el usuario tome el control total de la terminal.
-- **Rutas:** Utilizar `os.getcwd()` o el contexto del proyecto para localizar el ejecutable de Python dentro de `venv/bin/python`.
+## ⚠️ Important Considerations
+- **Event Loop Blocking**: Since `subprocess.run` is blocking, the tool must be executed in a way that does not freeze the primary agent's UI, although in this case, it is intended for the user to take full control of the terminal.
+- **Paths**: Use `os.getcwd()` or the project context to locate the Python executable within `venv/bin/python`.
