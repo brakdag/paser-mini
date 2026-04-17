@@ -26,7 +26,7 @@ def read_file(path: str) -> str:
         raise ToolError('Not found')
     
     if safe_path.stat().st_size > FILE_SIZE_LIMIT:
-        raise ToolError('File too large (limit 100KB). Please use a more specific tool or request a partial read.')
+        raise ToolError('File too large')
     if is_binary_file(safe_path):
         raise ToolError('Binary file')
     
@@ -44,7 +44,7 @@ def read_file(path: str) -> str:
 
 def write_file(path: str, contenido: str) -> str:
     if len(contenido.encode('utf-8')) > FILE_SIZE_LIMIT:
-        raise ToolError('Content too large (limit 100KB). Please split the content into smaller files.')
+        raise ToolError('Content too large')
     try:
         safe_path = context.get_safe_path(path)
         safe_path.parent.mkdir(parents=True, exist_ok=True)
@@ -87,7 +87,7 @@ def replace_string(path: str, search_text: str, replace_text: str) -> str:
         # Check if the resulting content would exceed the limit
         new_size = len(content) - len(search_text) + len(replace_text)
         if new_size > FILE_SIZE_LIMIT:
-            raise ToolError('Resulting content too large (limit 100KB). Please split the content into smaller files.')
+            raise ToolError('Resulting content too large')
 
         # Phase 1: Exact Match
         count = content.count(search_text)
