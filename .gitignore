@@ -15,3 +15,4 @@ assets/*.png
 !assets/mascot.png
 save_langchain/
 sessions/
+paser/config/config.json
