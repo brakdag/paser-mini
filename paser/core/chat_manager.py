@@ -214,6 +214,6 @@ class ChatManager:
 
     def _initialize_chat(self):
         try:
-            self.assistant.start_chat(self.config_manager.get("model_name", "models/gemma-2-27B-it"), self.system_instruction, self.temperature)
+            self.assistant.start_chat(self.config_manager.get("model_name", "models/gemma-4-31b-it"), self.system_instruction, self.temperature)
             self._initialized_event.set()
         except Exception as e: self._init_error = e
