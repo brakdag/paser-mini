@@ -19,6 +19,7 @@ async def main():
     parser.add_argument("-m", "--message", help="Initial message to send (one-shot mode)")
     parser.add_argument("input", nargs="?", help="Input text to process (one-shot mode)")
     parser.add_argument("--no-spinner", action="store_true", help="Disable tool execution spinners")
+    parser.add_argument("--no-recursion", action="store_true", help="Disable the ability to launch new instances (recursion brake)")
     
     args = parser.parse_args()
     ui = TerminalUI(no_spinner=args.no_spinner)
@@ -63,7 +64,7 @@ async def main():
     user_input = args.message if args.message else args.input
 
     assistant = GeminiAdapter()
-    chat_manager = ChatManager(assistant, AVAILABLE_TOOLS, sys_instr, ui)
+    chat_manager = ChatManager(assistant, AVAILABLE_TOOLS, sys_instr, ui, no_recursion=args.no_recursion)
 
     # Setup Emergency Stop Listener
     try:

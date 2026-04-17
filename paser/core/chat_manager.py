@@ -19,11 +19,12 @@ class EmergencyStopException(Exception):
     pass
 
 class ChatManager:
-    def __init__(self, assistant, tools, system_instruction, ui):
+    def __init__(self, assistant, tools, system_instruction, ui, no_recursion=False):
         self.assistant = assistant
-        self.tools = tools
+        self.tools = tools.copy() if isinstance(tools, dict) else tools
         self.system_instruction = system_instruction
         self.ui = ui
+        self.no_recursion = no_recursion
         
         # Modularized Components
         self.config_manager = ConfigManager()
@@ -145,22 +146,26 @@ class ChatManager:
                     start_time = asyncio.get_event_loop().time()
                     
                     if name in self.tools:
-                        try:
-                            # Execute tool in a thread to prevent blocking the spinner animation
-                            result = await asyncio.to_thread(self.tools[name], **args)
-                            
-                            # Visualización especial para la instancia de prueba
-                            if name == "run_instance":
-                                self.ui.display_message(f"**🚀 Instance Test Output**\n\n```text\n{result}\n```")
-                            
-                            tr = self.tool_parser.format_tool_response(result, call_id=call_data.get("id"), success=True)
-                            success = True
-                        except ToolError as te:
-                            tr = self.tool_parser.format_tool_response(f"ERR: {str(te)}", call_id=call_data.get("id"), success=False)
+                        if name == "run_instance" and self.no_recursion:
+                            tr = self.tool_parser.format_tool_response("ERR: Recursion is disabled in this instance to prevent infinite loops.", call_id=call_data.get("id"), success=False)
                             success = False
-                        except Exception as exc:
-                            tr = self.tool_parser.format_tool_response(f"ERR: Unexpected error: {str(exc)}", call_id=call_data.get("id"), success=False)
-                            success = False
+                        else:
+                            try:
+                                # Execute tool in a thread to prevent blocking the spinner animation
+                                result = await asyncio.to_thread(self.tools[name], **args)
+                                
+                                # Visualización especial para la instancia de prueba
+                                if name == "run_instance":
+                                    self.ui.display_message(f"**🚀 Instance Test Output**\n\n```text\n{result}\n```")
+                                
+                                tr = self.tool_parser.format_tool_response(result, call_id=call_data.get("id"), success=True)
+                                success = True
+                            except ToolError as te:
+                                tr = self.tool_parser.format_tool_response(f"ERR: {str(te)}", call_id=call_data.get("id"), success=False)
+                                success = False
+                            except Exception as exc:
+                                tr = self.tool_parser.format_tool_response(f"ERR: Unexpected error: {str(exc)}", call_id=call_data.get("id"), success=False)
+                                success = False
                     else:
                         tr = self.tool_parser.format_tool_response(f"Herramienta desconocida: {name}", call_id=call_data.get("id"), success=False)
                         success = False

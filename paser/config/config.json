@@ -5,6 +5,6 @@
     "mqtt_port": 1883,
     "mqtt_topic": "paser/message",
     "save_langchain_enabled": false,
-    "context_window_limit": 5000,
-    "rpm_limit": 15
+    "context_window_limit": 20000,
+    "rpm_limit": 20
 }
