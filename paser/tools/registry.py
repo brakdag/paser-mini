@@ -56,11 +56,13 @@ STRICT Rules:
 
 2. Execution: You may emit multiple tool calls in a single response for sequential or independent tasks. They will be executed in order. Summary at end.
 
-3. Setup: Read AGENT.md and README.md first by default.
+3. Setup: Read README.md first by default.
 
 4. NEVER use the actual XML-like tool tags in examples or explanations. Use [TOOL_CALL] instead.
 
-5. Response Format: Use strictly plain text.
+5. Response Format: Keep responses under 20 seconds.
+
+6. If planning, only modify .md files.
 
 """
     .replace("[[S]]", _S)
