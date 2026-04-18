@@ -26,12 +26,12 @@ class UIState:
     NORMAL = "NORMAL"
 
 class TerminalUI(UserInterface):
-    def __init__(self, no_spinner: bool = False):
+    def __init__(self, no_spinner: bool = False, force_terminal: bool = True):
         self.no_spinner = no_spinner
         self.mode = UIState.INSERT
         self.last_cursor_pos = 0
         self._session = None
-        self.console = Console(force_terminal=True)
+        self.console = Console(force_terminal=force_terminal)
         self._status = None
         self._last_status_text = None
         

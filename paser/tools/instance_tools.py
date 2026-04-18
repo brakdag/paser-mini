@@ -20,24 +20,22 @@ def run_instance(message: str = None, args: list = None) -> str:
             raise ToolError(f"Binario no encontrado en {binary_path}")
 
         # Construimos el comando con los argumentos si existen
-        cmd = [binary_path, "--no-spinner", "--no-recursion"]
+        cmd = [binary_path, "--instance-mode"]
+        if message:
+            cmd.extend(["-m", message])
         if args and isinstance(args, list):
             cmd.extend(args)
 
-        # Lanzamos el proceso capturando salida y enviando input
+        # Lanzamos el proceso capturando salida
         process = subprocess.Popen(
             cmd,
-            stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
         )
         
-        # Preparamos el input: mensaje (si existe) + comando de salida
-        input_data = f"{message}\n" if message else ""
-        
         try:
-            stdout, stderr = process.communicate(input=input_data, timeout=INSTANCE_TIMEOUT)
+            stdout, stderr = process.communicate(timeout=INSTANCE_TIMEOUT)
         except subprocess.TimeoutExpired:
             process.kill()
             stdout, stderr = process.communicate()

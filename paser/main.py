@@ -7,6 +7,7 @@ import os
 from paser.infrastructure.gemini import GeminiAdapter
 from paser.core.chat_manager import ChatManager
 from paser.core.terminal_ui import TerminalUI
+from paser.core.logging import setup_logger
 from paser.tools.registry import AVAILABLE_TOOLS, SYSTEM_INSTRUCTION
 
 async def main():
@@ -20,9 +21,12 @@ async def main():
     parser.add_argument("input", nargs="?", help="Input text to process (one-shot mode)")
     parser.add_argument("--no-spinner", action="store_true", help="Disable tool execution spinners")
     parser.add_argument("--no-recursion", action="store_true", help="Disable the ability to launch new instances (recursion brake)")
+    parser.add_argument("--instance-mode", action="store_true", help="Run in instance mode (read-only config and no recursion)")
+    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     
     args = parser.parse_args()
-    ui = TerminalUI(no_spinner=args.no_spinner)
+    setup_logger(debug=args.debug)
+    ui = TerminalUI(no_spinner=args.no_spinner or args.instance_mode, force_terminal=not args.instance_mode)
 
     if args.unit_tests:
         ui.display_info("Running unit tests")
@@ -64,19 +68,20 @@ async def main():
     user_input = args.message if args.message else args.input
 
     assistant = GeminiAdapter()
-    chat_manager = ChatManager(assistant, AVAILABLE_TOOLS, sys_instr, ui, no_recursion=args.no_recursion)
+    chat_manager = ChatManager(assistant, AVAILABLE_TOOLS, sys_instr, ui, instance_mode=args.instance_mode or args.no_recursion)
 
     # Setup Emergency Stop Listener
-    try:
-        from pynput import keyboard
-        def on_press(key):
-            if key == keyboard.Key.esc:
-                chat_manager.stop_requested = True
-        
-        listener = keyboard.Listener(on_press=on_press)
-        listener.start()
-    except ImportError:
-        ui.display_info("pynput not installed. Emergency Stop (Esc) disabled.")
+    if not args.instance_mode:
+        try:
+            from pynput import keyboard
+            def on_press(key):
+                if key == keyboard.Key.esc:
+                    chat_manager.stop_requested = True
+            
+            listener = keyboard.Listener(on_press=on_press)
+            listener.start()
+        except ImportError:
+            ui.display_info("pynput not installed. Emergency Stop (Esc) disabled.")
 
     # Start the agent in REPL mode, processing initial input if provided
     await chat_manager.run(initial_input=user_input)

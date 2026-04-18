@@ -3,9 +3,9 @@ import re
 import os
 import asyncio
 import threading
+import logging
 from typing import Any, Optional, Union
 
-from paser.core.logging import setup_logger
 from paser.core.commands import CommandHandler
 from paser.core.repetition_detector import RepetitionDetector
 from paser.core.config_manager import ConfigManager
@@ -37,19 +37,19 @@ class ToolAttemptTracker:
         self.exact_attempts = {}
         self.tool_failures = {}
 
-logger = setup_logger()
+logger = logging.getLogger("paser")
 
 class EmergencyStopException(Exception):
     """Exception raised when the user triggers the emergency stop (Esc key)."""
     pass
 
 class ChatManager:
-    def __init__(self, assistant, tools, system_instruction, ui, no_recursion=False):
+    def __init__(self, assistant, tools, system_instruction, ui, instance_mode=False):
         self.assistant = assistant
         self.tools = tools.copy() if isinstance(tools, dict) else tools
         self.system_instruction = system_instruction
         self.ui = ui
-        self.no_recursion = no_recursion
+        self.instance_mode = instance_mode
         
         # Modularized Components
         self.config_manager = ConfigManager()
@@ -75,6 +75,10 @@ class ChatManager:
         self._init_error = None
 
     def save_config(self, key, value):
+        if self.instance_mode:
+            # Only update in memory for child instances
+            self.config_manager.config[key] = value
+            return
         self.config_manager.save(key, value)
 
     async def _wait_for_rate_limit(self):
@@ -176,7 +180,7 @@ class ChatManager:
                     start_time = asyncio.get_event_loop().time()
                     
                     if name in self.tools:
-                        if name == "run_instance" and self.no_recursion:
+                        if name == "run_instance" and self.instance_mode:
                             tr = self.tool_parser.format_tool_response("ERR: Recursion is disabled in this instance to prevent infinite loops.", call_id=call_data.get("id"), success=False)
                             success = False
                         else:
@@ -233,6 +237,9 @@ class ChatManager:
         if not self._initialized_event.is_set():
             await asyncio.to_thread(self._initialize_chat)
         
+        if self._init_error:
+            return
+
         current_intervention = None
 
         if initial_input:
@@ -253,6 +260,9 @@ class ChatManager:
             except Exception as e:
                 self.ui.display_error(f"Error processing initial message: {e}")
                 self.ui.add_spacing()
+
+        if self.instance_mode:
+            return
 
         while not self.should_exit:
             try:
