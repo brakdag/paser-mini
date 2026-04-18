@@ -10,6 +10,19 @@ Large Language Models (LLMs) with a limited context window (e.g., 1,500 tokens) 
 
 ## 2. The Core Strategy: Externalized Cognition
 
+### The Intentionality Principle: Notebook vs. Tape Recorder
+
+The agent must distinguish between two types of memory:
+
+1. **The Tape Recorder (Session History)**: Involuntary and noisy. It records the process, the trial-and-error, and the conversational filler. This is volatile and subject to FIFO purging.
+2. **The Notebook (Memento)**: Voluntary and curated. It records only the **Knowledge Assets** (decisions, architectural truths, critical constraints). 
+
+**The Golden Rule of Annotation**: The agent shall not "summarize" the history; it shall "extract" the essence. Before writing to the Memento, the agent must ask: *"If I lose all context of this session, is this specific piece of information critical for the project's survival?"* If the answer is no, the information is discarded as noise.
+
+---
+
+### A. The "Polaroid" (State Snapshots)
+
 When internal memory is volatile, the AI must treat the **file system** not just as a storage bin, but as its **Long-Term Memory (LTM)**.
 
 ### A. The "Polaroid" (State Snapshots)
