@@ -46,6 +46,7 @@ class MementoDB:
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_nodes_type ON nodes(type)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_edges_source ON edges(source_id)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_edges_target ON edges(target_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_nodes_teaser ON nodes(teaser)")
             conn.commit()
 
     def push_node(self, role: str, node_type: str, content: str, teaser: str, is_vital: bool = False) -> int:

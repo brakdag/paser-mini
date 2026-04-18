@@ -56,8 +56,13 @@ class CommandHandler:
             
             self.ui.display_info("Performing Hard Reset (The Leap)...")
             
-            # 1. Clear history
-            self.chat_manager.assistant.history = []
+                        # 1. Re-initialize chat to restore system prompt and clear history
+            assistant = self.chat_manager.assistant
+            assistant.start_chat(
+                assistant._current_model,
+                assistant.system_instruction,
+                assistant.temperature
+            )
             
             # 2. Retrieve latest Bridge Block
             manager = MementoManager()
@@ -66,7 +71,7 @@ class CommandHandler:
             if bridge:
                 # Inject bridge as a system notification
                 bridge_msg = f"\n\n[MEMENTO LEAP: RESTORED SESSION STATE]\nNode #{bridge['id']} | {bridge['content']}\n"
-                self.chat_manager.assistant.history.append(
+                assistant.history.append(
                     types.Content(
                         role="user",
                         parts=[types.Part.from_text(text=bridge_msg)]
@@ -76,8 +81,8 @@ class CommandHandler:
             else:
                 self.ui.display_info("No Bridge Block found. Starting fresh.")
             
-            # 3. Refresh session to synchronize SDK
-            self.chat_manager.assistant.refresh_session()
+                        # 3. Refresh session to synchronize SDK
+            assistant.refresh_session()
             return True
 
         elif input_stripped == '/help':

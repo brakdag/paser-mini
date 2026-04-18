@@ -1,3 +1,4 @@
+import sqlite3
 import re
 from typing import List, Optional, Dict, Any
 from .database import MementoDB
@@ -44,16 +45,15 @@ class MementoManager:
         level = self._determine_level(value)
         
         if not self._validate_phi_scale(value, level):
-            # Strict Compliance: If it exceeds L3, we truncate or warn.
-            # For the sake of narrative integrity, we store it but mark it as non-compliant
-            # in the return message, though the KPI requires 100% compliance.
-            # To ensure 100% compliance, we truncate to L3 limit.
             limit = self.SCALE_LIMITS['L3']
             value = value[:limit] + "... [TRUNCATED FOR PHI-COMPLIANCE]"
             level = 'L3'
 
-        # 2. Extract Teaser (first 280 chars or first line)
-        teaser = value[:280].replace('\n', ' ') + ('...' if len(value) > 280 else '')
+        # 2. Extract Teaser (Use key if provided, otherwise first 280 chars)
+        if key:
+            teaser = key
+        else:
+            teaser = value[:280].replace('\n', ' ') + ('...' if len(value) > 280 else '')
 
         # 3. Handle Vital Tattoos
         is_vital = (scope == 'tattoo')
@@ -87,23 +87,45 @@ class MementoManager:
                 res += "\n[ROOT SUMMARY] Not found.\n"
             return res
 
-    def get_latest_bridge(self) -> Optional[Dict[str, Any]]:
-        """Retrieves the most recent bridge block for session leaps."""
-        return self.db.get_latest_bridge()
-
-        # Narrative Navigation
+        # Narrative & Structural Navigation
         if direction:
             if not key:
-                return "ERR: Please provide the current node ID in 'key' for narrative navigation."
+                return "ERR: Please provide the current node ID in 'key' for navigation."
             
-            neighbor = self.db.get_narrative_neighbor(int(key), direction)
+            try:
+                kid = int(key)
+            except ValueError:
+                return "ERR: Key must be a numeric node ID for navigation."
+
+            if direction == 'up':
+                parent = self.db.get_parent(kid)
+                return f"Parent node: #{parent['id']} | Teaser: {parent['teaser']}" if parent else "No parent node found."
+            elif direction == 'down':
+                children = self.db.get_children(kid)
+                if not children:
+                    return "No child nodes found."
+                return "Children nodes:\n" + "\n".join([f"#{c['id']} | {c['teaser']}" for c in children])
+            
+            # Default to Narrative (next/prev)
+            neighbor = self.db.get_narrative_neighbor(kid, direction)
             if not neighbor:
                 return f"No more nodes in direction {direction}."
             return f"Next node: #{neighbor['id']} | Teaser: {neighbor['teaser']} | Date: {neighbor['timestamp']}"
 
         # Specific Node Retrieval
         if key:
-            node = self.db.pull_node(int(key))
+            try:
+                node_id = int(key)
+                node = self.db.pull_node(node_id)
+            except ValueError:
+                # Search by teaser/key
+                with self.db._get_connection() as conn:
+                    conn.row_factory = sqlite3.Row
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM nodes WHERE teaser = ? LIMIT 1", (key,))
+                    row = cursor.fetchone()
+                    node = dict(row) if row else None
+
             if not node:
                 return "ERR: Node not found."
             
@@ -121,3 +143,7 @@ class MementoManager:
             return res
 
         return "ERR: Invalid pull_memory arguments."
+
+    def get_latest_bridge(self) -> Optional[Dict[str, Any]]:
+        """Retrieves the most recent bridge block for session leaps."""
+        return self.db.get_latest_bridge()
