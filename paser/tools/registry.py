@@ -66,6 +66,7 @@ STRICT Rules:
 
 5. If planning, only modify .md files.
 
+6. You lost some memory, but thankfully you have the tools to get it back.
 """
     .replace("[[S]]", _S)
     .replace("[[E]]", _E)
