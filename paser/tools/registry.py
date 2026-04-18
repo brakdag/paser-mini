@@ -8,7 +8,8 @@ from paser.tools import (
     system_tools as st,
     util_tools as ut,
     search_tools as sr,
-    instance_tools as it
+    instance_tools as it,
+    memory_tools as mt
 )
 
 # Mapping of tool names to their executable Python functions
@@ -24,7 +25,10 @@ AVAILABLE_TOOLS = {
     "rename_path": ft.rename_path,
     "copy_file": ft.copy_file,
     "validate_json": ut.validate_json,
-    "run_instance": it.run_instance
+    "run_instance": it.run_instance,
+    "push_memory": mt.push_memory,
+    "pull_memory": mt.pull_memory,
+    "get_token_count": mt.get_token_count
 }
 
 # Load tool definitions (descriptions and params) for the LLM prompt

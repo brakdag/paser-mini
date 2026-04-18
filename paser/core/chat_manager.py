@@ -66,7 +66,8 @@ class ChatManager:
         # Executor state
         self.repetition_detector = RepetitionDetector(n=5, max_repeats=5)
         self.tool_tracker = ToolAttemptTracker()
-        self.max_turns = 100
+        self.session_accessed_nodes = set()
+        self.max_turns = 10000
         self.turn_count = 0
         self.stop_requested = False
         
@@ -103,11 +104,56 @@ class ChatManager:
         if 'gemini' not in (self.assistant._current_model or '').lower():
             start_idx = 2
 
+        modified = False
         while len(history) > start_idx and self.assistant.count_tokens(history) > self.context_window_limit:
+            modified = True
             if len(history) > start_idx + 1:
                 del history[start_idx : start_idx + 2]
             else:
                 del history[start_idx]
+        
+        if modified:
+            logger.info("Context limit enforced. Refreshing session to synchronize SDK state.")
+            self.assistant.refresh_session()
+
+    async def _check_memento_triggers(self):
+        """
+        Monitors token usage and injects system alerts for Distillation (80%) and Bridging (95%).
+        """
+        history = self.assistant.history
+        if not history:
+            return
+
+        tokens = self.assistant.count_tokens(history)
+        percentage = (tokens / self.context_window_limit) * 100
+
+        trigger_msg = None
+        if 80 <= percentage < 95:
+            trigger_msg = "⚠️ SYSTEM ALERT: Context usage at 80%. Please perform DISTILLATION: summarize key insights and store them using `push_memory(scope='fractal', ...)`. "
+        elif percentage >= 95:
+            trigger_msg = "🚨 SYSTEM ALERT: Context usage at 95%. Please generate a BRIDGE BLOCK: summarize the session state and store it using `push_memory` with teaser 'BRIDGE: ...' immediately."
+
+        if trigger_msg and not self._is_last_message_alert(trigger_msg):
+            await self._inject_system_alert(trigger_msg)
+
+    def _is_last_message_alert(self, msg):
+        if not self.assistant.history:
+            return False
+        last_msg = self.assistant.history[-1]
+        for part in last_msg.parts:
+            if hasattr(part, 'text') and msg in part.text:
+                return True
+        return False
+
+    async def _inject_system_alert(self, msg):
+        from google.genai import types
+        alert_content = types.Content(
+            role="user", 
+            parts=[types.Part.from_text(text=f"\n\n[SYSTEM NOTIFICATION]\n{msg}\n")]
+        )
+        self.assistant.history.append(alert_content)
+        self.assistant.refresh_session()
+        logger.info(f"Memento trigger injected: {msg}")
 
     def _extract_text(self, response) -> str:
         return response.text if hasattr(response, "text") and response.text else str(response)
@@ -128,6 +174,7 @@ class ChatManager:
         try:
             await self._wait_for_rate_limit()
             await self._enforce_context_limit()
+            await self._check_memento_triggers()
             response = await asyncio.to_thread(self.assistant.send_message, user_input)
             response_text = self._extract_text(response)
             
@@ -185,7 +232,18 @@ class ChatManager:
                             success = False
                         else:
                             try:
+                                # Memento Notifications
+                                if name == "pull_memory":
+                                    key = args.get("key")
+                                    if key:
+                                        is_first = key not in self.session_accessed_nodes
+                                        self.session_accessed_nodes.add(key)
+                                        self.ui.display_message(f"🧠 **Memento Pull**: Accessing node #{key} {'(First time)' if is_first else '(Cached)'}")
+                                
                                 result = await asyncio.to_thread(self.tools[name], **args)
+                                
+                                if name == "push_memory":
+                                    self.ui.display_message(f"✍️ **Memento Push**: {result}")
                                 
                                 # Visualización especial para la instancia de prueba
                                 if name == "run_instance":
@@ -219,6 +277,7 @@ class ChatManager:
                 combined_message = "".join(combined_tool_responses)
                 await self._wait_for_rate_limit()
                 await self._enforce_context_limit()
+                await self._check_memento_triggers()
                 response_obj = await asyncio.to_thread(self.assistant.send_message, combined_message)
                 response_text = self._extract_text(response_obj)
                 
@@ -298,6 +357,10 @@ class ChatManager:
 
     def _initialize_chat(self):
         try:
+            from paser.tools import memory_tools
+            memory_tools.set_assistant(self.assistant)
+            memory_tools.set_chat_manager(self)
+            
             self.assistant.start_chat(self.config_manager.get("model_name", "models/gemma-4-31b-it"), self.system_instruction, self.temperature)
             self._initialized_event.set()
         except Exception as e: self._init_error = e

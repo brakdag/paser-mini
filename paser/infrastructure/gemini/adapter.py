@@ -168,6 +168,29 @@ class GeminiAdapter:
                 raise ConnectionError(errors.format_api_error(e, lambda err, ret: errors.get_retry_delay(err, ret, self.retry_handler.default_delay)))
             raise e
 
+    def refresh_session(self):
+        """
+        Destroys the current chat session and recreates it using the current history.
+        This eliminates 'ghost states' in the SDK after history modification.
+        """
+        if not self._current_model:
+            return
+        
+        config_params = {"temperature": self.temperature}
+        if 'gemini' in self._current_model.lower():
+            config_params["system_instruction"] = self.system_instruction
+
+        try:
+            self.chat = self.client.chats.create(
+                model=self._current_model,
+                config=types.GenerateContentConfig(**config_params),
+                history=self.history
+            )
+            logger.info("Session refreshed successfully.")
+        except Exception as e:
+            logger.error(f"Error refreshing session: {e}")
+            raise RuntimeError(f"Failed to refresh Gemini session: {e}")
+
     def count_tokens(self, contents: Any) -> int:
         if not self._current_model:
             return 0

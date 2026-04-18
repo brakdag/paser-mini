@@ -16,3 +16,4 @@ assets/*.png
 save_langchain/
 sessions/
 paser/config/config.json
+agent_memory.db

@@ -88,5 +88,29 @@
       "message": "string",
       "args": "list"
     }
+  ],
+  [
+    "push_memory",
+    "Stores a piece of information in the long-term memory graph. Use scope='tattoo' for core truths, 'fractal' for general knowledge.",
+    {
+      "scope": "string",
+      "value": "string",
+      "key": "string",
+      "pointers": "list"
+    }
+  ],
+  [
+    "pull_memory",
+    "Retrieves information from the long-term memory graph. No args = The Mirror effect. Use direction='next'/'prev' for narrative navigation.",
+    {
+      "scope": "string",
+      "key": "string",
+      "direction": "string"
+    }
+  ],
+  [
+    "get_token_count",
+    "Returns the current token count of the conversation history and its percentage relative to the limit.",
+    {}
   ]
 ]
