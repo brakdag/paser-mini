@@ -87,6 +87,10 @@ class MementoManager:
                 res += "\n[ROOT SUMMARY] Not found.\n"
             return res
 
+    def get_latest_bridge(self) -> Optional[Dict[str, Any]]:
+        """Retrieves the most recent bridge block for session leaps."""
+        return self.db.get_latest_bridge()
+
         # Narrative Navigation
         if direction:
             if not key:

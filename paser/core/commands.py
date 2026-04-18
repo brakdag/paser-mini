@@ -50,6 +50,36 @@ class CommandHandler:
                 self.ui.display_error("Tokens and RPM must be integers.")
             return True
 
+        elif input_stripped == '/reset':
+            from google.genai import types
+            from paser.infrastructure.memento.manager import MementoManager
+            
+            self.ui.display_info("Performing Hard Reset (The Leap)...")
+            
+            # 1. Clear history
+            self.chat_manager.assistant.history = []
+            
+            # 2. Retrieve latest Bridge Block
+            manager = MementoManager()
+            bridge = manager.get_latest_bridge()
+            
+            if bridge:
+                # Inject bridge as a system notification
+                bridge_msg = f"\n\n[MEMENTO LEAP: RESTORED SESSION STATE]\nNode #{bridge['id']} | {bridge['content']}\n"
+                self.chat_manager.assistant.history.append(
+                    types.Content(
+                        role="user",
+                        parts=[types.Part.from_text(text=bridge_msg)]
+                    )
+                )
+                self.ui.display_info(f"Bridge Block #{bridge['id']} restored.")
+            else:
+                self.ui.display_info("No Bridge Block found. Starting fresh.")
+            
+            # 3. Refresh session to synchronize SDK
+            self.chat_manager.assistant.refresh_session()
+            return True
+
         elif input_stripped == '/help':
             help_text = (
                 "Available Commands:\n"
@@ -58,6 +88,7 @@ class CommandHandler:
                 "/models  - Change AI model and temperature\n"
                 "/s       - Save a snapshot of the last interaction\n"
                 "/t       - Display current context window token count\n"
+                "/reset   - Hard Reset: Clear history and Leap via Bridge Block\n"
                 "/q, /quit, /exit - Exit the application"
             )
             self.ui.display_message(help_text)

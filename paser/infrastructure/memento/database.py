@@ -43,6 +43,7 @@ class MementoDB:
             # Indices for performance
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_nodes_timestamp ON nodes(timestamp)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_nodes_is_vital ON nodes(is_vital)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_nodes_type ON nodes(type)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_edges_source ON edges(source_id)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_edges_target ON edges(target_id)")
             conn.commit()
@@ -109,6 +110,15 @@ class MementoDB:
                 "tattoos": tattoos,
                 "root": dict(root) if root else None
             }
+
+    def get_latest_bridge(self) -> Optional[Dict[str, Any]]:
+        """Retrieves the most recent node with 'BRIDGE' in the teaser."""
+        with self._get_connection() as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM nodes WHERE teaser LIKE 'BRIDGE:%' ORDER BY timestamp DESC LIMIT 1")
+            row = cursor.fetchone()
+            return dict(row) if row else None
 
     def get_narrative_neighbor(self, current_id: int, direction: str) -> Optional[Dict[str, Any]]:
         """Navigates the Sequential ID Chain."""

@@ -302,23 +302,26 @@ class ChatManager:
         current_intervention = None
 
         if initial_input:
-            try:
-                result = await self.execute(
-                    user_input=initial_input, 
-                    thinking_enabled=self.thinking_enabled, 
-                    get_confirmation_callback=self.ui.request_input
-                )
-                if result:
-                    cleaned_result = self.tool_parser.clean_response(result)
+            if await self.command_handler.handle(initial_input):
+                pass
+            else:
+                try:
+                    result = await self.execute(
+                        user_input=initial_input, 
+                        thinking_enabled=self.thinking_enabled, 
+                        get_confirmation_callback=self.ui.request_input
+                    )
+                    if result:
+                        cleaned_result = self.tool_parser.clean_response(result)
+                        self.ui.add_spacing()
+                        self.ui.display_message(cleaned_result)
                     self.ui.add_spacing()
-                    self.ui.display_message(cleaned_result)
-                self.ui.add_spacing()
-            except EmergencyStopException:
-                self.ui.display_emergency_stop()
-                current_intervention = await self.ui.request_input("> ")
-            except Exception as e:
-                self.ui.display_error(f"Error processing initial message: {e}")
-                self.ui.add_spacing()
+                except EmergencyStopException:
+                    self.ui.display_emergency_stop()
+                    current_intervention = await self.ui.request_input("> ")
+                except Exception as e:
+                    self.ui.display_error(f"Error processing initial message: {e}")
+                    self.ui.add_spacing()
 
         if self.instance_mode:
             return
