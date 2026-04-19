@@ -102,7 +102,7 @@ class GeminiAdapter:
                 if not errors.is_retryable_error(e) or retries >= self.retry_handler.max_retries:
                     formatted_error = errors.format_api_error(e, lambda err, ret: errors.get_retry_delay(err, ret, self.retry_handler.default_delay))
                     logger.error(f"API Error: Max retries reached. {formatted_error}")
-                    yield f"\n\u26a0\ufe0f Error: {formatted_error}"
+                    yield f"\n\u274c {formatted_error}"
                     return
                 
                 delay = errors.get_retry_delay(e, retries, self.retry_handler.default_delay)
@@ -129,7 +129,8 @@ class GeminiAdapter:
         try:
             return self.retry_handler.execute(_do_send)
         except Exception as e:
-            return f"\u26a0\ufe0f Error: {str(e)}"
+            formatted_error = errors.format_api_error(e, lambda err, ret: errors.get_retry_delay(err, ret, self.retry_handler.default_delay))
+            return f"\u274c {formatted_error}"
 
     def send_audio_message(self, base64_audio: str) -> Any:
         if not self.chat:

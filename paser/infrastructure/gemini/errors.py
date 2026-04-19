@@ -1,4 +1,6 @@
 import logging
+import re
+from typing import Optional
 from google.genai.errors import ClientError
 
 logger = logging.getLogger(__name__)
@@ -21,6 +23,22 @@ def is_retryable_error(e: Exception) -> bool:
         return True
     return False
 
+def get_status_code(e: Exception) -> Optional[int]:
+    """Extrae el código de estado de una excepción de la API."""
+    if hasattr(e, 'status_code'):
+        try:
+            return int(e.status_code)
+        except (ValueError, TypeError):
+            pass
+    # Intentar extraer de la cadena de error si es un JSON
+    try:
+        match = re.search(r'"status":\s*(\d+)', str(e))
+        if match:
+            return int(match.group(1))
+    except Exception:
+        pass
+    return None
+
 def get_retry_delay(error: Exception, retries: int, default_retry_delay: float) -> float:
     """Extrae el retryDelay del error o calcula un backoff exponencial."""
     error_msg = str(error)
@@ -42,7 +60,6 @@ def get_retry_delay(error: Exception, retries: int, default_retry_delay: float) 
         pass
 
     try:
-        import re
         match = re.search(r'"retryDelay":\s*"?(\d+)(?:s)?"?', error_msg)
         if match:
             return float(match.group(1))
@@ -52,17 +69,19 @@ def get_retry_delay(error: Exception, retries: int, default_retry_delay: float) 
     return default_retry_delay * (2 ** retries)
 
 def format_api_error(e: Exception, get_retry_delay_func) -> str:
-    """Formatea el error de la API para que sea más amable."""
+    """Formatea el error de la API para que sea más amable e incluya el código de error."""
     error_msg = str(e).lower()
+    status_code = get_status_code(e)
+    code_str = f"({status_code}) " if status_code else ""
     
     if is_retryable_error(e) and (isinstance(e, ClientError) or getattr(e, 'status_code', None) == 429 or '429' in error_msg or 'quota' in error_msg):
         delay = get_retry_delay_func(e, 0)
-        return f"Cuota de API excedida (429). Por favor, espera {delay}s antes de intentar nuevamente."
+        return f"{code_str}Cuota de API excedida. Por favor, espera {delay}s antes de intentar nuevamente."
     
-    if any(kw in error_msg for kw in ['connection', 'network', 'unreachable', 'timeout', 'dns', 'socket', 'resolution']):
-        return "Error de conectividad: No se pudo contactar con los servidores de Google. Verifica tu conexión a internet y DNS."
+    if any(kw in error_msg for kw in ['connection', 'network', 'unreachable', 'timeout', 'dns', 'socket']):
+        return f"{code_str}Error de conectividad: No se pudo contactar con los servidores de Google."
         
     if any(code in error_msg for code in ['500', '503', 'internal error', 'unavailable']):
-        return "El servidor de la API está experimentando problemas temporales (500/503). Reintentando..."
+        return f"{code_str}El servidor de la API está experimentando problemas temporales. Reintentando..."
         
-    return str(e)
+    return f"{code_str}{str(e)}"

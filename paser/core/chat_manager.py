@@ -233,6 +233,14 @@ class ChatManager:
                         orig = os.path.basename(args.get("origen", ""))
                         dest = os.path.basename(args.get("destino", ""))
                         detail = f"{orig} -> {dest}"
+                    elif name in ["push_memory", "pull_memory"]:
+                        detail = args.get("key", "unknown")
+                    elif name == "run_instance":
+                        detail = args.get("target", "unknown")
+                    elif name == "search_text_global":
+                        detail = f"'"{args.get('query', '')}" '"
+                    elif name == "search_files_pattern":
+                        detail = f"pattern: {args.get('pattern', '')}"
                     
                     self.ui.start_tool_monitoring(name, detail)
                     
