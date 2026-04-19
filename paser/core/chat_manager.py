@@ -96,24 +96,39 @@ class ChatManager:
         self.request_timestamps.append(asyncio.get_event_loop().time())
 
     async def _enforce_context_limit(self):
-        history = self.assistant.history
-        if not history:
+        if not self.assistant.history:
             return
 
-        start_idx = 0
-        if 'gemini' not in (self.assistant._current_model or '').lower():
-            start_idx = 2
-
-        modified = False
-        while len(history) > start_idx and self.assistant.count_tokens(history) > self.context_window_limit:
-            modified = True
-            if len(history) > start_idx + 1:
-                del history[start_idx : start_idx + 2]
+        if self.assistant.count_tokens(self.assistant.history) > self.context_window_limit:
+            logger.info("Context limit reached. Performing Hard Reset to eliminate ghosting...")
+            
+            from google.genai import types
+            from paser.infrastructure.memento.manager import MementoManager
+            
+            # 1. Re-initialize chat (Clear history)
+            self.assistant.start_chat(
+                self.assistant._current_model,
+                self.system_instruction,
+                self.temperature
+            )
+            
+            # 2. Retrieve and inject latest Bridge Block
+            manager = MementoManager()
+            bridge = manager.get_latest_bridge()
+            
+            if bridge:
+                bridge_msg = f"\n\n[MEMENTO LEAP: AUTOMATIC RESTORED SESSION STATE]\nNode #{bridge['id']} | {bridge['content']}\n"
+                self.assistant.history.append(
+                    types.Content(
+                        role="user",
+                        parts=[types.Part.from_text(text=bridge_msg)]
+                    )
+                )
+                logger.info(f"Bridge Block #{bridge['id']} restored automatically.")
             else:
-                del history[start_idx]
-        
-        if modified:
-            logger.info("Context limit enforced. Refreshing session to synchronize SDK state.")
+                logger.info("No Bridge Block found. Starting fresh session.")
+            
+            # 3. Sync SDK
             self.assistant.refresh_session()
 
     async def _check_memento_triggers(self):

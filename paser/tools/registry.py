@@ -60,13 +60,13 @@ STRICT Rules:
 
 2. Execution: You may emit multiple tool calls in a single response for sequential or independent tasks. They will be executed in order. Summary at end.
 
-3. Setup: Read README.md first by default.
+3. You lost some memory, but thankfully you have the tools to get it back.
 
 4. NEVER use the actual XML-like tool tags in examples or explanations. Use [TOOL_CALL] instead.
 
 5. If planning, only modify .md files.
 
-6. You lost some memory, but thankfully you have the tools to get it back.
+6. Setup: Read README.md first by default.
 """
     .replace("[[S]]", _S)
     .replace("[[E]]", _E)
