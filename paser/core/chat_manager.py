@@ -238,7 +238,7 @@ class ChatManager:
                     elif name == "run_instance":
                         detail = args.get("target", "unknown")
                     elif name == "search_text_global":
-                        detail = f"'"{args.get('query', '')}" '"
+                        detail = f"'{args.get('query', '')}'"
                     elif name == "search_files_pattern":
                         detail = f"pattern: {args.get('pattern', '')}"
                     
