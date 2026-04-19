@@ -100,7 +100,7 @@ This project follows a modular ReAct (Reasoning and Acting) architecture. Below 
 - **`file_tools.py`**: Implements secure file operations (read, write, replace, delete) restricted to the project root via `context.get_safe_path`.
 - **`search_tools.py`**: Wraps system utilities like `grep` and `find` for efficient global searching.
 - **`system_tools.py`**: Integrates `pyright` for static type analysis of the codebase.
-- **`instance_tools.py`**: Enables "inception" capabilities, allowing the agent to launch a new `paser-mini` instance to test code or delegate tasks.
+- **`instance_tools.py`**: Enables "inception" capabilities. Allows launching a new `paser-mini` instance or any Python module/script. Supports a secure WebAssembly sandbox mode via Wasmer.
 
 ### ↻ Data Flow
 
@@ -126,6 +126,7 @@ This project follows a modular ReAct (Reasoning and Acting) architecture. Below 
 - `/models`: Change AI model and adjust temperature.
 - `/s`: Save a snapshot of the last interaction (System + History + Last Message + Response) to the current directory as a `.text` file.
 - `/t`: Display the current context window token count.
+- `/sandbox`: Toggle WebAssembly sandbox mode (on/off).
 - `/q`, `/quit`, `/exit`: Exit the application.
 
 ## Minimal Toolset
@@ -150,6 +151,7 @@ To maintain extreme lightness, only the absolute core tools are included:
 ### 🛠️ Core Utils
 
 - **Validation**: `validate_json`.
+- **Execution**: `run_instance` (Automatic Sandbox: `paser-mini` runs in `venv`, all other targets run in WebAssembly sandbox).
 
 ## Development & Testing
 
@@ -158,4 +160,5 @@ Testing must be performed in a fresh environment. Because Python caches imported
 To ensure a clean state and verify changes:
 1. Launch a new instance of `paser-mini`.
 2. Use `run_instance` to delegate verification to a subsequent agent.
+3. For high-security testing of untrusted code, use `run_instance` with `sandbox=True` (requires Wasmer).
 3. After any modification, create a GitHub issue to document the change and provide testing instructions for the next agent.

@@ -83,8 +83,9 @@
   ],
   [
     "run_instance",
-    "Launch a new interactive instance of paser-mini. Use 'args' for CLI flags (e.g. ['-si', '...']) and 'message' for the initial chat input.",
+    "Ejecuta un modulo o script de Python. El modo sandbox es automático: True para todo excepto 'paser-mini'.",
     {
+      "target": "string",
       "message": "string",
       "args": "list"
     }

@@ -33,6 +33,14 @@ class CommandHandler:
             self.ui.display_info(f"Context window: {tokens} tokens")
             return True
 
+        elif input_stripped == '/sandbox':
+            current_mode = self.chat_manager.config_manager.get("sandbox_mode", False)
+            new_mode = not current_mode
+            self.chat_manager.save_config("sandbox_mode", new_mode)
+            mode_str = "ENABLED (Wasmer)" if new_mode else "DISABLED (VENV)"
+            self.ui.display_info(f"Sandbox mode is now {mode_str}")
+            return True
+
         elif input_stripped.startswith('/w'):
             parts = input_stripped.split()
             if len(parts) != 3:
@@ -91,6 +99,7 @@ class CommandHandler:
                 "-------------------\n"
                 "/help    - Show this help menu\n"
                 "/models  - Change AI model and temperature\n"
+                "/sandbox - Toggle WebAssembly sandbox mode\n"
                 "/s       - Save a snapshot of the last interaction\n"
                 "/t       - Display current context window token count\n"
                 "/reset   - Hard Reset: Clear history and Leap via Bridge Block\n"
