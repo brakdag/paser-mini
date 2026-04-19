@@ -49,12 +49,9 @@ def run_instance(target: str = "paser-mini", message: str = None, args: list = N
             except (subprocess.CalledProcessError, FileNotFoundError):
                 raise ToolError("Wasmer no está instalado o no se encuentra en el PATH. No se puede activar el modo sandbox.")
             
-            cmd.extend(["wasmer", "run", "python"])
-            cmd.extend(["--mapdir", ".:."])
+            cmd.extend(["wasmer", "run", "--volume", ".:.", "python"])
             
-            if target == "paser-mini":
-                cmd.extend(["-m", "paser.main", "--instance-mode"])
-            elif target.endswith(".py"):
+            if target.endswith(".py"):
                 cmd.append(target)
             else:
                 cmd.extend(["-m", target])
