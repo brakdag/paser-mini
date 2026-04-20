@@ -51,12 +51,15 @@ paser-mini
 
 | Argument                      | Short  | Description                                         |
 | :---------------------------- | :----- | :-------------------------------------------------- |
-| `--version`                   | N/A    | Show version information                            |
-| `--unit_tests`                | N/A    | Run the internal unit test suite                    |
+| `--version`                   | `-v`   | Show version information                            |
+| `--unit_tests`                | `-ut`  | Run the internal unit test suite                    |
 | `--system_instruction`        | `-si`  | Provide custom system instructions to the agent     |
 | `--inject_system_instruction` | `-isi` | Inject instruction at the start of system prompt    |
+| `--file_system_instruction`   | `-fsi` | Path to file for system instruction injection       |
 | `--message`                   | `-m`   | Send an initial message in one-shot mode            |
-| `input`                       | N/A    | Positional argument for input text in one-shot mode |
+| `--input`                     | `-i`   | Input text to process in one-shot mode              |
+| `--instance-mode`             | `-im`  | Run in instance mode (read-only config, no recursion)|
+| `--debug`                     | `-d`   | Enable debug logging                                 |
 
 **Example (One-shot mode):**
 

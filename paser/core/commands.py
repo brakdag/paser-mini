@@ -61,8 +61,12 @@ class CommandHandler:
         elif input_stripped == '/reset':
             from google.genai import types
             from paser.infrastructure.memento.manager import MementoManager
+            from paser.tools.file_tools import clear_read_cache
             
             self.ui.display_info("Performing Hard Reset (The Leap)...")
+            
+            # Clear file read cache to prevent 'No changes since last read' errors
+            clear_read_cache()
             
                         # 1. Re-initialize chat to restore system prompt and clear history
             assistant = self.chat_manager.assistant
@@ -109,28 +113,51 @@ class CommandHandler:
             return True
 
         # Configuración del Agente
-        elif input_stripped == '/models':
+        elif input_stripped.startswith('/models'):
+            parts = input_stripped.split()
             models = self.chat_manager.assistant.get_available_models()
-            model_list = "\n".join([f"{i}: {m}" for i, m in enumerate(models)])
-            self.ui.display_message(f"Available models:\n{model_list}")
             
-            choice = await self.ui.request_input("Modelo: ")
-            try:
-                idx = int(choice)
-                model_name = models[idx]
+            # 1. Determine Model
+            if len(parts) == 1:
+                model_list = "\n".join([f"{i}: {m}" for i, m in enumerate(models)])
+                self.ui.display_message(f"Available models:\n{model_list}")
+                choice = await self.ui.request_input("Modelo: ")
+                try:
+                    idx = int(choice)
+                    model_name = models[idx]
+                except (ValueError, IndexError):
+                    self.ui.display_error("Invalid model index.")
+                    return True
+            else:
+                try:
+                    idx = int(parts[1])
+                    model_name = models[idx]
+                except (ValueError, IndexError):
+                    self.ui.display_error("Invalid model index provided.")
+                    return True
+
+            # 2. Determine Temperature
+            if len(parts) >= 3:
+                try:
+                    new_temp = float(parts[2])
+                except ValueError:
+                    self.ui.display_error("Invalid temperature. Using default.")
+                    new_temp = self.chat_manager.temperature
+            else:
                 temp_input = await self.ui.request_input(f"Temp (0-1, default {self.chat_manager.temperature}): ")
-                new_temp = float(temp_input or self.chat_manager.temperature)
-                
-                # Persistir en config
-                self.chat_manager.save_config("model_name", model_name)
-                self.chat_manager.save_config("default_temperature", new_temp)
-                
-                self.chat_manager.temperature = new_temp
-                self.chat_manager.assistant.start_chat(model_name, self.chat_manager.system_instruction, new_temp)
-                
-                self.ui.display_info(f"Modelo cambiado a {model_name} | Temperatura: {new_temp}")
-            except Exception as e: 
-                self.ui.display_error(f"Error: {e}")
+                try:
+                    new_temp = float(temp_input or self.chat_manager.temperature)
+                except ValueError:
+                    self.ui.display_error("Invalid temperature. Using default.")
+                    new_temp = self.chat_manager.temperature
+
+            # 3. Persist and Apply
+            self.chat_manager.save_config("model_name", model_name)
+            self.chat_manager.save_config("default_temperature", new_temp)
+            self.chat_manager.temperature = new_temp
+            self.chat_manager.assistant.start_chat(model_name, self.chat_manager.system_instruction, new_temp)
+            
+            self.ui.display_info(f"Modelo cambiado a {model_name} | Temperatura: {new_temp}")
             return True
 
         if input_stripped.startswith('/') or input_stripped.startswith(':'):

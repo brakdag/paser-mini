@@ -11,22 +11,23 @@ from paser.core.logging import setup_logger
 from paser.tools.registry import AVAILABLE_TOOLS, SYSTEM_INSTRUCTION
 
 async def main():
-    parser = argparse.ArgumentParser(description="Paser Mini: Minimalist Autonomous Agent")
-    parser.add_argument("--version", action="version", version="paser-mini 0.1.0")
-    parser.add_argument("--unit_tests", action="store_true", help="Run unit tests")
+    parser = argparse.ArgumentParser(
+        description="Paser Mini: Minimalist Autonomous Agent",
+        epilog="\nInternal Agent Commands:\n  /help     - Show the available commands menu\n  /models   - Change AI model and adjust temperature\n  /s        - Save a snapshot of the last interaction\n  /t        - Display the current context window token count\n  /sandbox  - Toggle WebAssembly sandbox mode\n  /q, /quit, /exit - Exit the application"
+    )
+    parser.add_argument("-v", "--version", action="version", version="paser-mini 0.1.0")
+    parser.add_argument("-ut", "--unit_tests", action="store_true", help="Run unit tests")
     parser.add_argument("-si", "--system_instruction", help="Custom system instructions")
     parser.add_argument("-isi", "--inject_system_instruction", help="Inject instruction at the start of system prompt")
     parser.add_argument("-fsi", "--file_system_instruction", help="Path to file for system instruction injection")
     parser.add_argument("-m", "--message", help="Initial message to send (one-shot mode)")
-    parser.add_argument("input", nargs="?", help="Input text to process (one-shot mode)")
-    parser.add_argument("--no-spinner", action="store_true", help="Disable tool execution spinners")
-    parser.add_argument("--no-recursion", action="store_true", help="Disable the ability to launch new instances (recursion brake)")
-    parser.add_argument("--instance-mode", action="store_true", help="Run in instance mode (read-only config and no recursion)")
-    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    parser.add_argument("-i", "--input", help="Input text to process (one-shot mode)")
+    parser.add_argument("-im", "--instance-mode", action="store_true", help="Run in instance mode (read-only config and no recursion)")
+    parser.add_argument("-d", "--debug", action="store_true", help="Enable debug logging")
     
     args = parser.parse_args()
     setup_logger(debug=args.debug)
-    ui = TerminalUI(no_spinner=args.no_spinner or args.instance_mode, force_terminal=not args.instance_mode)
+    ui = TerminalUI(no_spinner=args.instance_mode, force_terminal=not args.instance_mode)
 
     if args.unit_tests:
         ui.display_info("Running unit tests")
@@ -68,7 +69,7 @@ async def main():
     user_input = args.message if args.message else args.input
 
     assistant = GeminiAdapter()
-    chat_manager = ChatManager(assistant, AVAILABLE_TOOLS, sys_instr, ui, instance_mode=args.instance_mode or args.no_recursion)
+    chat_manager = ChatManager(assistant, AVAILABLE_TOOLS, sys_instr, ui, instance_mode=args.instance_mode)
 
     # Setup Emergency Stop Listener
     if not args.instance_mode:
