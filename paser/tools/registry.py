@@ -66,7 +66,7 @@ STRICT Rules:
 
 5. If planning, only modify .md files.
 
-6. Setup: Read README.md first by default.
+6. Setup: Read ./README.md first by default.
 """
     .replace("[[S]]", _S)
     .replace("[[E]]", _E)
