@@ -290,9 +290,10 @@ class ChatManager:
                         success = False
                     
                     # Ensure the spinner is visible for at least 300ms for better UX
-                    elapsed = asyncio.get_event_loop().time() - start_time
-                    if elapsed < 0.3:
-                        await asyncio.sleep(0.3 - elapsed)
+                    # Removed artificial delay for execution speed
+                    # elapsed = asyncio.get_event_loop().time() - start_time
+                    # if elapsed < 0.3:
+                    #     await asyncio.sleep(0.3 - elapsed)
                     
                     self.ui.end_tool_monitoring(name, success=success, detail=detail)
                     combined_tool_responses.append(tr)

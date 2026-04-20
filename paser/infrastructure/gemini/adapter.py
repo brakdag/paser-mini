@@ -1,6 +1,8 @@
 import logging
 import time
 import base64
+import os
+import json
 from typing import Generator, Optional, Any, Union
 from google import genai
 from google.genai import types
@@ -27,6 +29,27 @@ class GeminiAdapter:
         self.retry_handler = RetryHandler()
         self.snapshot_manager = SnapshotManager()
         self.save_langchain_enabled = False
+        self._cache_path = os.path.join(os.path.dirname(__file__), '..', '..', 'config', 'model_cache.json')
+
+    def _get_cached_models(self) -> Optional[list]:
+        """Retrieves available models from cache if it's fresh (less than 24h)."""
+        try:
+            if os.path.exists(self._cache_path):
+                with open(self._cache_path, 'r') as f:
+                    cache = json.load(f)
+                    if time.time() - cache.get('timestamp', 0) < 86400:
+                        return cache.get('models')
+        except Exception as e:
+            logger.warning(f"Error reading model cache: {e}")
+        return None
+
+    def _save_models_to_cache(self, models: list):
+        """Saves available models to cache."""
+        try:
+            with open(self._cache_path, 'w') as f:
+                json.dump({'timestamp': time.time(), 'models': models}, f)
+        except Exception as e:
+            logger.warning(f"Error saving model cache: {e}")
 
     def save_snapshot(self):
         """Saves the last interaction to disk via SnapshotManager."""
@@ -42,7 +65,11 @@ class GeminiAdapter:
         self.temperature = temperature
         
         try:
-            available_models = self.get_available_models()
+            # Try cache first
+            available_models = self._get_cached_models()
+            if available_models is None:
+                available_models = self.get_available_models()
+                self._save_models_to_cache(available_models)
         except Exception as e:
             if isinstance(e, ConnectionError):
                 raise e
