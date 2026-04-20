@@ -8,6 +8,13 @@
 
 Designed for developers who want a lightweight, distraction-free autonomous core on **Debian/Linux** systems.
 
+### ⚛️ The Philosophy of Minimalism
+In Paser Mini, **minimalism is not about the scarcity of tools or code, but about the maximum efficiency of token consumption**. Every tool is strategically chosen to prevent unnecessary data from flooding the context window, ensuring the agent maintains peak reasoning capacity.
+
+Furthermore, the system embraces an **AI-native interface**: a terminal-based environment using NerdFonts and Markdown—the formats where the AI feels most at home.
+
+For detailed operational guidelines on token efficiency and tool usage, refer to [PROTOCOL.md](PROTOCOL.md).
+
 ## Installation
 
 Installation is now near-instant as all heavy system dependencies have been removed.
