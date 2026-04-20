@@ -4,6 +4,7 @@ import itertools
 import hashlib
 import difflib
 import shutil
+import subprocess
 from collections import deque
 from pathlib import Path
 from . import context, ToolError
@@ -132,3 +133,15 @@ def copy_file(origen: str, destino: str) -> str:
         raise ToolError('Origin not found')
     except OSError as e:
         raise ToolError(f"Copy error: {e.strerror}")
+
+def get_tree() -> str:
+    try:
+        result = subprocess.run(
+            ["git", "ls-files"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return result.stdout
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        raise ToolError(f"Git error: {str(e)}")

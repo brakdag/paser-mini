@@ -24,6 +24,7 @@ AVAILABLE_TOOLS = {
     "search_files_pattern": sr.search_files_pattern,
     "rename_path": ft.rename_path,
     "copy_file": ft.copy_file,
+    "get_tree": ft.get_tree,
     "validate_json": ut.validate_json,
     "run_instance": it.run_instance,
     "push_memory": mt.push_memory,

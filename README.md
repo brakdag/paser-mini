@@ -64,108 +64,13 @@ paser-mini
 paser-mini "Analyze the current directory and summarize the project"
 ```
 
-## Project Structure
+## Documentation
 
-```text
-.
-├── paser/                # Core application package
-│   ├── core/             # Unified ReAct engine and state management
-│   ├── tools/            # Minimalist toolset and registry
-│   │   ├── file_tools.py # Essential file operations
-│   │   ├── system_tools.py # Basic system analysis (Pyright)
-│   │   ├── util_tools.py # Core utilities
-│   │   └── registry.py   # Tool mapping
-│   ├── infrastructure/   # System wrappers
-│   ├── config/           # Settings
-│   └── main.py           # Entry point
-├── tests/                # Test suite
-├── scripts/              # Maintenance scripts
-└── pyproject.toml        # Metadata
-```
+For more detailed information, please refer to the following documents in the `docs/` directory:
 
-## Detailed Technical Architecture
-
-This project follows a modular ReAct (Reasoning and Acting) architecture. Below is the detailed breakdown of the components:
-
-### ⚙️ Core Engine (`paser/core/`)
-
-- **`chat_manager.py`**: The central orchestrator. It manages the conversation loop, handles tool execution asynchronously, and prevents infinite loops via `RepetitionDetector`.
-- **`tool_parser.py`**: Responsible for parsing `<TOOL_CALL>` tags from the LLM and formatting `<TOOL_RESPONSE>` tags for the model.
-- **`terminal_ui.py`**: A high-fidelity terminal interface using `rich` and `prompt_toolkit`, featuring real-time tool monitoring (spinners) and LaTeX rendering.
-- **`commands.py`**: Implements the internal command system (e.g., `/models`, `/s`, `/t`) to modify agent state without affecting the chat history.
-- **`config_manager.py`**: Handles the persistence of user preferences (model, temperature) in `config/config.json`.
-
-### 💠 Infrastructure (`paser/infrastructure/gemini/`)
-
-- **`adapter.py`**: The `GeminiAdapter` class abstracts the Google GenAI API, managing chat sessions, history, and model configuration.
-- **`retry_handler.py` & `errors.py`**: Provide a robust layer to handle API rate limits and connectivity issues with exponential backoff.
-- **`snapshot_manager.py`**: Allows saving and loading of interaction snapshots for debugging and persistence.
-
-### 💡 Toolbox (`paser/tools/`)
-
-- **`registry.py`**: The source of truth for available tools and the `SYSTEM_INSTRUCTION` that defines the agent's persona and protocol.
-- **`file_tools.py`**: Implements secure file operations (read, write, replace, delete) restricted to the project root via `context.get_safe_path`.
-- **`search_tools.py`**: Wraps system utilities like `grep` and `find` for efficient global searching.
-- **`system_tools.py`**: Integrates `pyright` for static type analysis of the codebase.
-- **`instance_tools.py`**: Enables "inception" capabilities. Allows launching a new `paser-mini` instance or any Python module/script. Supports a secure WebAssembly sandbox mode via Wasmer.
-
-### ↻ Data Flow
-
-`User Input` $\rightarrow$ `TerminalUI` $\rightarrow$ `ChatManager` $\rightarrow$ `GeminiAdapter` $\rightarrow$ `ToolParser` (if tool call) $\rightarrow$ `AVAILABLE_TOOLS` $\rightarrow$ `ChatManager` (loop) $\rightarrow$ `Final Response` $\rightarrow$ `TerminalUI`.
-
-## Main Features
-
-1.  **Minimalist UI:**
-    - **Enhanced Visuals**: Supports Markdown rendering, JetBrains Nerd Fonts, and basic LaTeX symbols (e.g., $\rightarrow$, $\Rightarrow$) for a clean yet expressive interface.
-    - **Silent Execution**: No tool-call logs, no "Working" indicators. The agent works in total silence until the final response.
-    - **Minimal Prompt**: A simple `> ` prompt for a distraction-free experience.
-
-2.  **Pure ReAct Engine:**
-    - Uses structured `<TOOL_CALL>` emissions via System Instructions.
-    - Optimized for low latency and minimal token consumption.
-
-3.  **Secure File Access:**
-    - All operations are restricted to `PROJECT_ROOT` via `get_safe_path` validation.
-
-## Essential User Commands
-
-- `/help`: Show the available commands menu.
-- `/models`: Change AI model and adjust temperature.
-- `/s`: Save a snapshot of the last interaction (System + History + Last Message + Response) to the current directory as a `.text` file.
-- `/t`: Display the current context window token count.
-- `/sandbox`: Toggle WebAssembly sandbox mode (on/off).
-- `/q`, `/quit`, `/exit`: Exit the application.
-
-## Minimal Toolset
-
-To maintain extreme lightness, only the absolute core tools are included:
-
-### 📂 File System
-
-- **Reading**: `read_file`.
-- **Writing**: `write_file`, `remove_file`, `create_dir`, `rename_path`.
-- **Navigation**: `list_dir`, `get_cwd`.
-
-### ✂️ Basic Editing
-
-- **Modification**: `replace_string` (Surgical text replacement).
-
-### 🔍 Search & Analysis
-
-- **Search**: `search_files_pattern`, `search_text_global`.
-- **Analysis**: `analyze_pyright` (Static type checking).
-
-### 🛠️ Core Utils
-
-- **Validation**: `validate_json`.
-- **Execution**: `run_instance` (Automatic Sandbox: `paser-mini` runs in `venv`, all other targets run in WebAssembly sandbox).
-
-## Development & Testing
-
-Testing must be performed in a fresh environment. Because Python caches imported modules and the agent maintains internal state (such as `READ_CACHE` in `file_tools.py`), modifications to the codebase may not be reflected in the current running session.
-
-To ensure a clean state and verify changes:
-1. Launch a new instance of `paser-mini`.
-2. Use `run_instance` to delegate verification to a subsequent agent.
-3. For high-security testing of untrusted code, use `run_instance` with `sandbox=True` (requires Wasmer).
-3. After any modification, create a GitHub issue to document the change and provide testing instructions for the next agent.
+- [Project Structure](docs/PROJECT_STRUCTURE.md) - Overview of the codebase organization.
+- [Technical Architecture](docs/ARCHITECTURE.md) - Deep dive into the ReAct engine and data flow.
+- [Main Features](docs/FEATURES.md) - Detailed list of capabilities and UI highlights.
+- [User Commands](docs/COMMANDS.md) - Guide to internal agent commands.
+- [Toolbox](docs/TOOLS.md) - Description of the minimalist toolset.
+- [Development & Testing](docs/DEVELOPMENT.md) - Guidelines for contributing and verifying changes.

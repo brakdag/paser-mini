@@ -113,5 +113,10 @@
     "get_token_count",
     "Returns the current token count of the conversation history and its percentage relative to the limit.",
     {}
+  ],
+  [
+    "get_tree",
+    "Get the project file tree",
+    {}
   ]
 ]
