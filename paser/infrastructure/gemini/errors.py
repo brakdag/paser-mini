@@ -27,7 +27,7 @@ def get_status_code(e: Exception) -> Optional[int]:
     """Extrae el código de estado de una excepción de la API."""
     if hasattr(e, 'status_code'):
         try:
-            return int(e.status_code)
+            return int(getattr(e, 'status_code', 0))
         except (ValueError, TypeError):
             pass
     # Intentar extraer de la cadena de error si es un JSON

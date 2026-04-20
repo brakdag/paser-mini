@@ -21,6 +21,7 @@ class GeminiAdapter:
         self.history: list = []
         self._current_model: Optional[str] = None
         self.system_instruction: Optional[str] = None
+        self.temperature: float = 0.7
         
         # Modularized Components
         self.retry_handler = RetryHandler()
@@ -177,7 +178,7 @@ class GeminiAdapter:
         if not self._current_model:
             return
         
-        config_params = {"temperature": self.temperature}
+        config_params: dict[str, Any] = {"temperature": self.temperature}
         if 'gemini' in self._current_model.lower():
             config_params["system_instruction"] = self.system_instruction
 

@@ -57,7 +57,7 @@ class MementoDB:
                 (int(time.time()), role, node_type, content, teaser, int(is_vital))
             )
             conn.commit()
-            return cursor.lastrowid
+            return cursor.lastrowid or 0
 
     def pull_node(self, node_id: int) -> Optional[Dict[str, Any]]:
         with self._get_connection() as conn:

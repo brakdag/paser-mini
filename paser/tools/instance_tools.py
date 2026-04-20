@@ -1,12 +1,13 @@
 import subprocess
 import os
+from typing import Optional
 from . import ToolError
 from paser.core.config_manager import ConfigManager
 
 # Tiempo máximo de ejecución de la instancia secundaria para evitar bucles infinitos (inception)
 INSTANCE_TIMEOUT = 120
 
-def run_instance(target: str = "paser-mini", message: str = None, args: list = None, sandbox: bool = None) -> str:
+def run_instance(target: str = "paser-mini", message: Optional[str] = None, args: Optional[list] = None, sandbox: Optional[bool] = None) -> str:
     """
     Ejecuta un módulo o script de Python.
     

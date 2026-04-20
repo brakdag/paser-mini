@@ -1,5 +1,6 @@
 from paser.infrastructure.memento.manager import MementoManager
 import logging
+from typing import Optional
 
 # Singleton instance of the Memento Manager
 _manager = MementoManager()
@@ -16,7 +17,7 @@ def set_chat_manager(chat_manager):
     global _current_chat_manager
     _current_chat_manager = chat_manager
 
-def push_memory(scope: str, value: str, key: str = None, pointers: list = None) -> str:
+def push_memory(scope: str, value: str, key: Optional[str] = None, pointers: Optional[list] = None) -> str:
     """
     Stores a piece of information in the long-term memory graph.
     
@@ -31,7 +32,7 @@ def push_memory(scope: str, value: str, key: str = None, pointers: list = None) 
     except Exception as e:
         return f"ERR: {str(e)}"
 
-def pull_memory(scope: str = None, key: str = None, direction: str = None) -> str:
+def pull_memory(scope: Optional[str] = None, key: Optional[str] = None, direction: Optional[str] = None) -> str:
     """
     Retrieves information from the long-term memory graph.
     
