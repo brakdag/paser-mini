@@ -59,8 +59,11 @@ def run_instance(target: str = "paser-mini", message: Optional[str] = None, args
         
         else:
             # --- MODO VENV (NORMAL) ---
-            project_root = os.getcwd()
-            venv_python = os.path.abspath(os.path.join(project_root, "venv", "bin", "python"))
+            # Determinar la raíz del proyecto basándose en la ubicación de este archivo
+            # Este archivo está en paser/tools/instance_tools.py, por lo que subimos 3 niveles
+            current_file_path = os.path.abspath(__file__)
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file_path)))
+            venv_python = os.path.join(project_root, "venv", "bin", "python")
 
             if not os.path.exists(venv_python):
                 raise ToolError(f"Error: No se encontró el intérprete de Python en {venv_python}.")
