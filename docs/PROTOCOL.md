@@ -65,7 +65,9 @@ Maximize reasoning capacity by minimizing context pollution. Every token saved i
     - Use `run_instance` for all the above steps.
     - *Reasoning:* Python caches imports and the agent maintains internal state. A fresh instance is the only way to guarantee the fix works. If it fails the `--help` test, it's a simple but critical error that must be fixed before reporting completion.
 
-### 2. Language Standard: English Only
+### 2. Language Standard: English for Code & Documentation
+
+**Note:** While the core code and documentation must be in English, the chat interface can be used in any language. However, when interacting with code or documentation, English is required.
 **CRITICAL: All documentation, code comments, and commit messages MUST be written in English.**
 
 - **The Standard:**
