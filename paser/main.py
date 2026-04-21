@@ -23,9 +23,16 @@ async def main():
     parser.add_argument("-m", "--message", help="Initial message to send (one-shot mode)")
     parser.add_argument("-i", "--input", help="Input text to process (one-shot mode)")
     parser.add_argument("-im", "--instance-mode", action="store_true", help="Run in instance mode (read-only config and no recursion)")
+    parser.add_argument("--run-instance-timeout", "-rito", type=int, help="Timeout for run_instance tool in seconds")
     parser.add_argument("-d", "--debug", action="store_true", help="Enable debug logging")
     
     args = parser.parse_args()
+    
+    # Save instance timeout to config if provided
+    from paser.core.config_manager import ConfigManager
+    if args.run_instance_timeout:
+        ConfigManager().save("instance_timeout", args.run_instance_timeout)
+
     setup_logger(debug=args.debug)
     ui = TerminalUI(no_spinner=args.instance_mode, force_terminal=not args.instance_mode)
 

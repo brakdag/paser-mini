@@ -4,8 +4,7 @@ from typing import Optional
 from . import ToolError
 from paser.core.config_manager import ConfigManager
 
-# Tiempo máximo de ejecución de la instancia secundaria para evitar bucles infinitos (inception)
-INSTANCE_TIMEOUT = 120
+
 
 def run_instance(target: str = "paser-mini", message: Optional[str] = None, args: Optional[list] = None, sandbox: Optional[bool] = None) -> str:
     """
@@ -40,6 +39,9 @@ def run_instance(target: str = "paser-mini", message: Optional[str] = None, args
             effective_sandbox = sandbox
         else:
             effective_sandbox = config.get("sandbox_mode", False)
+
+        # Recuperar timeout de la config o usar 300s por defecto
+        timeout = config.get("instance_timeout", 300)
 
         cmd = []
         
@@ -92,12 +94,12 @@ def run_instance(target: str = "paser-mini", message: Optional[str] = None, args
         )
         
         try:
-            stdout, stderr = process.communicate(timeout=INSTANCE_TIMEOUT)
+            stdout, stderr = process.communicate(timeout=timeout)
             status_msg = "Instancia finalizada.\n"
         except subprocess.TimeoutExpired:
             process.kill()
             stdout, stderr = process.communicate()
-            status_msg = f"[Timeout] Instancia cerrada forzosamente tras {INSTANCE_TIMEOUT}s.\n"
+            status_msg = f"[Timeout] Instancia cerrada forzosamente tras {timeout}s.\n"
 
         output = f"{status_msg}STDOUT:\n{stdout}\nSTDERR:\n{stderr}"
         return output if output.strip() else "Instancia ejecutada sin salida visible."
