@@ -16,7 +16,7 @@ Implement a dynamic RPM (Requests Per Minute) adjustment system based on a targe
 - Update `_wait_for_rate_limit` to recalculate `self.rpm_limit` when `auto_rpm_enabled` is True.
 
 ### 2. `paser/core/commands.py`
-- Implement `/SARPM <TPM>` command:
+- Implement `/tpm <TPM>` command:
     - Validates input is an integer.
     - Sets `tpm_limit` in config.
     - Sets `auto_rpm_enabled = True` in config.
@@ -29,6 +29,6 @@ Implement a dynamic RPM (Requests Per Minute) adjustment system based on a targe
 
 ## Verification
 - Run the agent.
-- Use `/SARPM 15000`.
+- Use `/tpm 15000`.
 - Use `/t` to check tokens.
 - Verify that as tokens increase, the effective RPM limit decreases (can be verified via logs in `_wait_for_rate_limit`).

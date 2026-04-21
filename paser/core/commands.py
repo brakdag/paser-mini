@@ -97,10 +97,10 @@ class CommandHandler:
             assistant.refresh_session()
             return True
 
-        elif input_stripped.startswith('/SARPM'):
+        elif input_stripped.startswith('/tpm'):
             parts = input_stripped.split()
             if len(parts) != 2:
-                self.ui.display_error("Usage: /SARPM <TPM>")
+                self.ui.display_error("Usage: /tpm <TPM>")
                 return True
             try:
                 tpm = int(parts[1])

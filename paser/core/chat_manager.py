@@ -197,6 +197,10 @@ class ChatManager:
             await self._wait_for_rate_limit()
             await self._enforce_context_limit()
             await self._check_memento_triggers()
+
+            if self.auto_rpm_enabled and isinstance(user_input, str):
+                user_input = f"|{self.rpm_limit}>{user_input}"
+
             response = await asyncio.to_thread(self.assistant.send_message, user_input)
             response_text = self._extract_text(response)
             
@@ -309,6 +313,10 @@ class ChatManager:
                 await self._wait_for_rate_limit()
                 await self._enforce_context_limit()
                 await self._check_memento_triggers()
+
+                if self.auto_rpm_enabled:
+                    combined_message = f"|{self.rpm_limit}>{combined_message}"
+
                 response_obj = await asyncio.to_thread(self.assistant.send_message, combined_message)
                 response_text = self._extract_text(response_obj)
                 
