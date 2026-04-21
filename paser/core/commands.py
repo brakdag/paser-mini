@@ -97,6 +97,22 @@ class CommandHandler:
             assistant.refresh_session()
             return True
 
+        elif input_stripped.startswith('/SARPM'):
+            parts = input_stripped.split()
+            if len(parts) != 2:
+                self.ui.display_error("Usage: /SARPM <TPM>")
+                return True
+            try:
+                tpm = int(parts[1])
+                self.chat_manager.save_config("tpm_limit", tpm)
+                self.chat_manager.save_config("auto_rpm_enabled", True)
+                self.chat_manager.tpm_limit = tpm
+                self.chat_manager.auto_rpm_enabled = True
+                self.ui.display_info(f"Auto-RPM enabled. Target TPM: {tpm}. RPM will adjust dynamically.")
+            except ValueError:
+                self.ui.display_error("TPM must be an integer.")
+            return True
+
         elif input_stripped == '/help':
             help_text = (
                 "Available Commands:\n"
@@ -106,6 +122,7 @@ class CommandHandler:
                 "/sandbox - Toggle WebAssembly sandbox mode\n"
                 "/s       - Save a snapshot of the last interaction\n"
                 "/t       - Display current context window token count\n"
+                "/SARPM    - Set Auto RPM based on TPM (e.g., /SARPM 15000)\n"
                 "/reset   - Hard Reset: Clear history and Leap via Bridge Block\n"
                 "/q, /quit, /exit - Exit the application"
             )

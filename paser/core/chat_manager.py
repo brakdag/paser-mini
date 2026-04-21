@@ -59,6 +59,8 @@ class ChatManager:
         self.temperature = float(self.config_manager.get("default_temperature", 0.7))
         self.context_window_limit = int(self.config_manager.get("context_window_limit", 250000))
         self.rpm_limit = int(self.config_manager.get("rpm_limit", 15))
+        self.tpm_limit = int(self.config_manager.get("tpm_limit", 15000))
+        self.auto_rpm_enabled = self.config_manager.get("auto_rpm_enabled", False)
         self.request_timestamps = []
         
         self.command_handler = CommandHandler(self, ui)
@@ -83,6 +85,11 @@ class ChatManager:
         self.config_manager.save(key, value)
 
     async def _wait_for_rate_limit(self):
+        if self.auto_rpm_enabled:
+            current_tokens = self.assistant.count_tokens(self.assistant.history)
+            self.rpm_limit = max(1, int(self.tpm_limit / max(current_tokens, 1000)))
+            logger.debug(f"Auto-RPM: Adjusted limit to {self.rpm_limit} (Tokens: {current_tokens}, TPM: {self.tpm_limit})")
+
         now = asyncio.get_event_loop().time()
         self.request_timestamps = [t for t in self.request_timestamps if now - t < 60]
         
