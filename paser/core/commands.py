@@ -113,17 +113,31 @@ class CommandHandler:
                 self.ui.display_error("TPM must be an integer.")
             return True
 
+        elif input_stripped.startswith('/timeout'):
+            parts = input_stripped.split()
+            if len(parts) != 2:
+                self.ui.display_error("Usage: /timeout <seconds>")
+                return True
+            try:
+                timeout = int(parts[1])
+                self.chat_manager.save_config("instance_timeout", timeout)
+                self.ui.display_info(f"Instance timeout set to {timeout} seconds.")
+            except ValueError:
+                self.ui.display_error("Timeout must be an integer.")
+            return True
+
         elif input_stripped == '/help':
             help_text = (
                 "Available Commands:\n"
                 "-------------------\n"
-                "/help    - Show this help menu\n"
-                "/models  - Change AI model and temperature\n"
-                "/sandbox - Toggle WebAssembly sandbox mode\n"
-                "/s       - Save a snapshot of the last interaction\n"
-                "/t       - Display current context window token count\n"
-                "/SARPM    - Set Auto RPM based on TPM (e.g., /SARPM 15000)\n"
-                "/reset   - Hard Reset: Clear history and Leap via Bridge Block\n"
+                "/help     - Show this help menu\n"
+                "/models   - Change AI model and temperature\n"
+                "/sandbox  - Toggle WebAssembly sandbox mode\n"
+                "/s        - Save a snapshot of the last interaction\n"
+                "/t        - Display current context window token count\n"
+                "/timeout  - Set the timeout for run_instance (e.g., /timeout 600)\n"
+                "/tpm      - Set Auto RPM based on TPM (e.g., /tpm 15000)\n"
+                "/reset    - Hard Reset: Clear history and Leap via Bridge Block\n"
                 "/q, /quit, /exit - Exit the application"
             )
             self.ui.display_message(help_text)

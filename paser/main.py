@@ -13,7 +13,7 @@ from paser.tools.registry import AVAILABLE_TOOLS, SYSTEM_INSTRUCTION
 async def main():
     parser = argparse.ArgumentParser(
         description="Paser Mini: Minimalist Autonomous Agent",
-        epilog="\nInternal Agent Commands:\n  /help     - Show the available commands menu\n  /models   - Change AI model and adjust temperature\n  /s        - Save a snapshot of the last interaction\n  /t        - Display the current context window token count\n  /sandbox  - Toggle WebAssembly sandbox mode\n  /q, /quit, /exit - Exit the application"
+        epilog="\nInternal Agent Commands:\n  /help     - Show the available commands menu\n  /models   - Change AI model and adjust temperature\n  /s        - Save a snapshot of the last interaction\n  /t        - Display the current context window token count\n  /timeout  - Set the timeout for run_instance\n  /sandbox  - Toggle WebAssembly sandbox mode\n  /tpm      - Set Auto RPM based on TPM\n  /reset    - Hard Reset: Clear history and Leap via Bridge Block\n  /q, /quit, /exit - Exit the application"
     )
     parser.add_argument("-v", "--version", action="version", version="paser-mini 0.1.0")
     parser.add_argument("-ut", "--unit_tests", action="store_true", help="Run unit tests")
