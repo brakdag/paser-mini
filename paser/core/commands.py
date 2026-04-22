@@ -195,6 +195,31 @@ class CommandHandler:
             self.ui.display_info(f"Connected to {list(providers.keys())[int(choice)]}")
             return True
 
+        elif input_stripped.startswith('/shadow'):
+            parts = input_stripped.split()
+            if len(parts) != 2:
+                self.ui.display_error("Usage: /shadow <model_name> (e.g., /shadow meta/llama-4-scout-17b-16e-instruct)")
+                return True
+            
+            model_name = parts[1]
+            
+            # 1. Determine Temperature
+            temp_input = await self.ui.request_input(f"Temp (0-1, default {self.chat_manager.temperature}): ")
+            try:
+                new_temp = float(temp_input or self.chat_manager.temperature)
+            except ValueError:
+                self.ui.display_error("Invalid temperature. Using default.")
+                new_temp = self.chat_manager.temperature
+
+            # 2. Persist and Apply
+            self.chat_manager.save_config("model_name", model_name)
+            self.chat_manager.save_config("default_temperature", new_temp)
+            self.chat_manager.temperature = new_temp
+            self.chat_manager.assistant.start_chat(model_name, self.chat_manager.system_instruction, new_temp)
+            
+            self.ui.display_info(f"Connected to shadow model {model_name} | Temperature: {new_temp}")
+            return True
+
         elif input_stripped.startswith('/models'):
             parts = input_stripped.split()
             models = self.chat_manager.assistant.get_available_models()
