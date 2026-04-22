@@ -107,7 +107,9 @@ class CommandHandler:
                 if tpm == 0:
                     self.chat_manager.save_config("auto_rpm_enabled", False)
                     self.chat_manager.auto_rpm_enabled = False
-                    self.ui.display_info("Auto-RPM disabled. RPM limit is now fixed.")
+                    # Restore the fixed RPM limit from configuration
+                    self.chat_manager.rpm_limit = self.chat_manager.config_manager.get("rpm_limit", 15)
+                    self.ui.display_info(f"Auto-RPM disabled. RPM limit restored to {self.chat_manager.rpm_limit}.")
                 else:
                     self.chat_manager.save_config("tpm_limit", tpm)
                     self.chat_manager.save_config("auto_rpm_enabled", True)
