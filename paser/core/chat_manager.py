@@ -419,6 +419,12 @@ class ChatManager:
             memory_tools.set_assistant(self.assistant)
             memory_tools.set_chat_manager(self)
             
-            self.assistant.start_chat(self.config_manager.get("model_name", "models/gemma-4-31b-it"), self.system_instruction, self.temperature)
+            model = self.config_manager.get("model_name", "models/gemma-4-31b-it")
+            print(f"DEBUG: Iniciando chat con modelo: {model}")
+            self.assistant.start_chat(model, self.system_instruction, self.temperature)
             self._initialized_event.set()
-        except Exception as e: self._init_error = e
+        except Exception as e:
+            print(f"CRITICAL CHAT INIT ERROR: {e}")
+            import traceback
+            traceback.print_exc()
+            self._init_error = e

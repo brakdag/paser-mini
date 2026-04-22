@@ -76,7 +76,8 @@ class GeminiAdapter:
             raise ConnectionError(f"Error de conectividad al validar modelos: {e}")
 
         if model_name not in available_models:
-            raise ValueError(f"Modelo no disponible: {model_name}. Use /models para ver los disponibles.")
+            logger.warning(f"Modelo {model_name} no encontrado en Gemini. Usando modelo por defecto.")
+            model_name = "models/gemini-2.0-flash"
         
         config_params: dict[str, Any] = {"temperature": temperature}
         self.history = []

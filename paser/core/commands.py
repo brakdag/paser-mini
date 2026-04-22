@@ -100,15 +100,20 @@ class CommandHandler:
         elif input_stripped.startswith('/tpm'):
             parts = input_stripped.split()
             if len(parts) != 2:
-                self.ui.display_error("Usage: /tpm <TPM>")
+                self.ui.display_error("Usage: /tpm <TPM> (0 to disable)")
                 return True
             try:
                 tpm = int(parts[1])
-                self.chat_manager.save_config("tpm_limit", tpm)
-                self.chat_manager.save_config("auto_rpm_enabled", True)
-                self.chat_manager.tpm_limit = tpm
-                self.chat_manager.auto_rpm_enabled = True
-                self.ui.display_info(f"Auto-RPM enabled. Target TPM: {tpm}. RPM will adjust dynamically.")
+                if tpm == 0:
+                    self.chat_manager.save_config("auto_rpm_enabled", False)
+                    self.chat_manager.auto_rpm_enabled = False
+                    self.ui.display_info("Auto-RPM disabled. RPM limit is now fixed.")
+                else:
+                    self.chat_manager.save_config("tpm_limit", tpm)
+                    self.chat_manager.save_config("auto_rpm_enabled", True)
+                    self.chat_manager.tpm_limit = tpm
+                    self.chat_manager.auto_rpm_enabled = True
+                    self.ui.display_info(f"Auto-RPM enabled. Target TPM: {tpm}. RPM will adjust dynamically.")
             except ValueError:
                 self.ui.display_error("TPM must be an integer.")
             return True
@@ -169,6 +174,27 @@ class CommandHandler:
             return True
 
         # Configuración del Agente
+        elif input_stripped == '/connect':
+            from paser.infrastructure.gemini.adapter import GeminiAdapter
+            from paser.infrastructure.nvidia.adapter import NvidiaAdapter
+            
+            providers = {"Gemini": GeminiAdapter, "NVIDIA": NvidiaAdapter}
+            self.ui.display_message("Select Provider:\n0: Gemini\n1: NVIDIA")
+            choice = await self.ui.request_input("Provider: ")
+            
+            if choice == "0":
+                self.chat_manager.assistant = GeminiAdapter()
+                self.chat_manager.save_config("provider", "Gemini")
+            elif choice == "1":
+                self.chat_manager.assistant = NvidiaAdapter()
+                self.chat_manager.save_config("provider", "NVIDIA")
+            else:
+                self.ui.display_error("Invalid provider.")
+                return True
+            
+            self.ui.display_info(f"Connected to {list(providers.keys())[int(choice)]}")
+            return True
+
         elif input_stripped.startswith('/models'):
             parts = input_stripped.split()
             models = self.chat_manager.assistant.get_available_models()
