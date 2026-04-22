@@ -4,6 +4,7 @@ import os
 import asyncio
 import threading
 import logging
+import time
 from typing import Any, Optional, Union
 
 from paser.core.commands import CommandHandler
@@ -61,6 +62,8 @@ class ChatManager:
         self.rpm_limit = int(self.config_manager.get("rpm_limit", 15))
         self.tpm_limit = int(self.config_manager.get("tpm_limit", 15000))
         self.auto_rpm_enabled = self.config_manager.get("auto_rpm_enabled", False)
+        self.timestamps_enabled = self.config_manager.get("timestamps_enabled", False)
+        self.last_response_time = 0
         self.request_timestamps = []
         
         self.command_handler = CommandHandler(self, ui)
@@ -184,6 +187,7 @@ class ChatManager:
         self.stop_requested = False
         self.turn_count = 0
         self.tool_tracker.reset()
+        self.last_response_time = 0
         self.turn_count += 1
         if self.turn_count > self.max_turns:
             return "Turn limit exceeded."
@@ -201,7 +205,9 @@ class ChatManager:
             if self.auto_rpm_enabled and isinstance(user_input, str):
                 user_input = f"|{self.rpm_limit}>{user_input}"
 
+            start_time = time.perf_counter()
             response = await asyncio.to_thread(self.assistant.send_message, user_input)
+            self.last_response_time += (time.perf_counter() - start_time)
             response_text = self._extract_text(response)
             
             while True:
@@ -317,7 +323,9 @@ class ChatManager:
                 if self.auto_rpm_enabled:
                     combined_message = f"|{self.rpm_limit}>{combined_message}"
 
+                start_time = time.perf_counter()
                 response_obj = await asyncio.to_thread(self.assistant.send_message, combined_message)
+                self.last_response_time += (time.perf_counter() - start_time)
                 response_text = self._extract_text(response_obj)
                 
             return response_text
@@ -353,6 +361,10 @@ class ChatManager:
                     if result:
                         cleaned_result = self.tool_parser.clean_response(result)
                         self.ui.add_spacing()
+                        
+                        if self.timestamps_enabled:
+                            cleaned_result += f"\n\n*Response time: {self.last_response_time:.2f}s*"
+                            
                         self.ui.display_message(cleaned_result)
                     self.ui.add_spacing()
                 except EmergencyStopException:
@@ -387,6 +399,10 @@ class ChatManager:
                 if result:
                     cleaned_result = self.tool_parser.clean_response(result)
                     self.ui.add_spacing()
+                    
+                    if self.timestamps_enabled:
+                        cleaned_result += f"\n\n*Response time: {self.last_response_time:.2f}s*"
+                        
                     self.ui.display_message(cleaned_result)
                 
                 self.ui.add_spacing()

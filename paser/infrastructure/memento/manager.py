@@ -19,7 +19,7 @@ class MementoManager:
         'L3': int((280 ** 1.618) * (1.618 ** 2))
     }
 
-    def __init__(self, db_path: str = "agent_memory.db"):
+    def __init__(self, db_path: str = "paser/config/paser_memory.db"):
         self.db = MementoDB(db_path)
 
     def _validate_phi_scale(self, content: str, level: str) -> bool:

@@ -1,5 +1,6 @@
 import sqlite3
 import time
+import os
 from typing import List, Optional, Tuple, Dict, Any
 
 class MementoDB:
@@ -7,7 +8,15 @@ class MementoDB:
     Implementation of the Cognitive Graph using SQLite.
     Adheres to the Memento Implementation Plan.
     """
-    def __init__(self, db_path: str = "agent_memory.db"):
+    def __init__(self, db_path: str = None):
+        if db_path is None:
+            # Resolve absolute path relative to this file
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+            db_path = os.path.join(base_dir, "paser", "config", "paser_memory.db")
+        
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(db_path), exist_ok=True)
+        
         self.db_path = db_path
         self._init_db()
 

@@ -123,7 +123,7 @@
   ],
   [
     "get_tree",
-    "Get the project file tree",
+    "Get the project file tree (very fast)",
     {}
   ]
 ]

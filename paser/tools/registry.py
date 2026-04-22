@@ -56,6 +56,13 @@ Response Protocol:
 Tool Catalog [Name, Description, {{Param:Type}}]:
 {TOOL_CATALOG}
 
+Tool Usage Guidelines:
+- File Manipulation:
+  - Copying: Use copy_file for duplication. Trust the tool's success response; do not verify with read_file unless an error occurs.
+  - Editing: Use replace_string for surgical changes. Only use write_file for new files or full rewrites.
+  - If replace_string fails: Use the tool's fuzzy suggestion or expand context to ensure uniqueness.
+
+
 STRICT Rules:
 1. Tool calls must use this exact JSON format, including an incremental ID:
 [[S]]{{"id": 1, "name": "tool_name", "args": {{"arg": "value"}}}}[[E]]

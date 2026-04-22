@@ -138,6 +138,15 @@ class CommandHandler:
             self.ui.display_panel("Current Configuration", config_info, style="blue")
             return True
 
+        elif input_stripped == '/timestamps':
+            current = self.chat_manager.config_manager.get("timestamps_enabled", False)
+            new_val = not current
+            self.chat_manager.save_config("timestamps_enabled", new_val)
+            self.chat_manager.timestamps_enabled = new_val
+            status = "ENABLED" if new_val else "DISABLED"
+            self.ui.display_info(f"Response timestamps are now {status}")
+            return True
+
         elif input_stripped == '/help':
             help_text = (
                 "```\n"
@@ -150,6 +159,7 @@ class CommandHandler:
                 "/s        - Save a snapshot of the last interaction\n"
                 "/t        - Display current context window token count\n"
                 "/timeout  - Set the timeout for run_instance (e.g., /timeout 600)\n"
+                "/timestamps - Toggle response time display\n"
                 "/tpm      - Set Auto RPM based on TPM (e.g., /tpm 15000)\n"
                 "/reset    - Hard Reset: Clear history and Leap via Bridge Block\n"
                 "/q, /quit, /exit - Exit the application\n"
