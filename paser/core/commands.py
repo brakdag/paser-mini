@@ -126,11 +126,25 @@ class CommandHandler:
                 self.ui.display_error("Timeout must be an integer.")
             return True
 
+        elif input_stripped == '/config':
+            config_info = (
+                f"Model: {self.chat_manager.assistant._current_model}\n"
+                f"Temperature: {self.chat_manager.temperature}\n"
+                f"Context Window: {self.chat_manager.context_window_limit} tokens\n"
+                f"TPM Limit: {self.chat_manager.tpm_limit}\n"
+                f"Instance Timeout: {self.chat_manager.config_manager.get('instance_timeout', 300)}s\n"
+                f"Sandbox Mode: {'ENABLED (Wasmer)' if self.chat_manager.config_manager.get('sandbox_mode', False) else 'DISABLED (VENV)'}"
+            )
+            self.ui.display_panel("Current Configuration", config_info, style="blue")
+            return True
+
         elif input_stripped == '/help':
             help_text = (
+                "```\n"
                 "Available Commands:\n"
                 "-------------------\n"
                 "/help     - Show this help menu\n"
+                "/config    - Show current system configuration\n"
                 "/models   - Change AI model and temperature\n"
                 "/sandbox  - Toggle WebAssembly sandbox mode\n"
                 "/s        - Save a snapshot of the last interaction\n"
@@ -138,7 +152,8 @@ class CommandHandler:
                 "/timeout  - Set the timeout for run_instance (e.g., /timeout 600)\n"
                 "/tpm      - Set Auto RPM based on TPM (e.g., /tpm 15000)\n"
                 "/reset    - Hard Reset: Clear history and Leap via Bridge Block\n"
-                "/q, /quit, /exit - Exit the application"
+                "/q, /quit, /exit - Exit the application\n"
+                "```"
             )
             self.ui.display_message(help_text)
             return True

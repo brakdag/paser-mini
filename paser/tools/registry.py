@@ -26,7 +26,8 @@ AVAILABLE_TOOLS = {
     "copy_file": ft.copy_file,
     "get_tree": ft.get_tree,
     "validate_json": ut.validate_json,
-    "run_instance": it.run_instance,
+    "run_python": it.run_python,
+    "new_agent": it.new_agent,
     "push_memory": mt.push_memory,
     "pull_memory": mt.pull_memory,
     "get_token_count": mt.get_token_count

@@ -5,97 +5,47 @@ from . import ToolError
 from paser.core.config_manager import ConfigManager
 
 
+def _get_venv_python():
+    """Helper to get the absolute path to the venv python interpreter."""
+    current_file_path = os.path.abspath(__file__)
+    # paser/tools/instance_tools.py -> root is 3 levels up
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file_path)))
+    venv_python = os.path.join(project_root, "venv", "bin", "python")
+    
+    if not os.path.exists(venv_python):
+        raise ToolError(f"Error: No se encontró el intérprete de Python en {venv_python}.")
+    
+    return venv_python, project_root
 
-def run_instance(target: str = "paser-mini", message: Optional[str] = None, args: Optional[list] = None, sandbox: Optional[bool] = None) -> str:
+
+def new_agent(message: Optional[str] = None, args: Optional[list] = None) -> str:
     """
-    Ejecuta un módulo o script de Python.
-    
-    Modos:
-    1. sandbox=False (por defecto): Usa el intérprete del entorno virtual (venv).
-       Es rápido y compatible con todas las librerías instaladas.
-    2. sandbox=True: Usa Wasmer para un aislamiento total.
-       Solo permite ejecución de Python puro (sin extensiones en C).
-    
-    POLÍTICA DE SEGURIDAD:
-    - Si el target es "paser-mini", se usa SIEMPRE el modo venv (sandbox=False).
-    - Para otros targets, se utiliza el estado global de la aplicación (controlado por el comando /sandbox).
-    
-    Lógica de ejecución:
-    - Si target es "paser-mini", ejecuta el módulo `paser.main` con el flag `--instance-mode`.
-    - Si target termina en ".py", lo ejecuta como un archivo.
-    - Para cualquier otro target, lo trata como un módulo (`-m`).
+    Lanza una nueva instancia independiente de Paser Mini.
+    Se ejecuta en la raíz del proyecto paser-mini para asegurar la carga correcta de configuraciones.
     """
     try:
+        venv_python, project_root = _get_venv_python()
         config = ConfigManager()
-        
-        # --- DETERMINACIÓN DEL MODO DE SEGURIDAD ---
-        # 1. Si el target es paser-mini, siempre usamos venv para asegurar compatibilidad.
-        # 2. Si el usuario pasó explícitamente un valor en la llamada (sandbox=True/False), lo respetamos.
-        # 3. Si no, usamos el estado global configurado por el comando /sandbox.
-        
-        if target == "paser-mini":
-            effective_sandbox = False
-        elif sandbox is not None:
-            effective_sandbox = sandbox
-        else:
-            effective_sandbox = config.get("sandbox_mode", False)
-
-        # Recuperar timeout de la config o usar 300s por defecto
         timeout = config.get("instance_timeout", 300)
 
-        cmd = []
+        cmd = [venv_python, "-m", "paser.main", "--instance-mode"]
         
-        if effective_sandbox:
-            # --- MODO WASMER (SANDBOX) ---
-            try:
-                subprocess.run(["wasmer", "--version"], capture_output=True, check=True)
-            except (subprocess.CalledProcessError, FileNotFoundError):
-                raise ToolError("Wasmer no está instalado o no se encuentra en el PATH. No se puede activar el modo sandbox.")
-            
-            cmd.extend(["wasmer", "run", "--volume", ".:.", "python", "--"])
-            
-            if target.endswith(".py"):
-                cmd.append(target)
-            else:
-                cmd.extend(["-m", target])
-        
-        else:
-            # --- MODO VENV (NORMAL) ---
-            # Determinar la raíz del proyecto basándose en la ubicación de este archivo
-            # Este archivo está en paser/tools/instance_tools.py, por lo que subimos 3 niveles
-            current_file_path = os.path.abspath(__file__)
-            project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file_path)))
-            venv_python = os.path.join(project_root, "venv", "bin", "python")
-
-            if not os.path.exists(venv_python):
-                raise ToolError(f"Error: No se encontró el intérprete de Python en {venv_python}.")
-
-            cmd.append(venv_python)
-
-            if target == "paser-mini":
-                cmd.extend(["-m", "paser.main", "--instance-mode"])
-            elif target.endswith(".py"):
-                cmd.append(target)
-            else:
-                cmd.extend(["-m", target])
-
-        # Argumentos comunes (mensaje y args adicionales)
         if message:
             cmd.extend(["-m", message])
         if args and isinstance(args, list):
             cmd.extend(args)
 
-        # Lanzamos el proceso
         process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True
+            text=True,
+            cwd=project_root
         )
         
         try:
             stdout, stderr = process.communicate(timeout=timeout)
-            status_msg = "Instancia finalizada.\n"
+            status_msg = "Nueva instancia finalizada.\n"
         except subprocess.TimeoutExpired:
             process.kill()
             stdout, stderr = process.communicate()
@@ -107,4 +57,51 @@ def run_instance(target: str = "paser-mini", message: Optional[str] = None, args
     except ToolError:
         raise
     except Exception as e:
-        raise ToolError(f"Error al lanzar la instancia ({target}): {str(e)}")
+        raise ToolError(f"Error al lanzar la nueva instancia: {str(e)}")
+
+
+def run_python(script_path: str, args: Optional[list] = None) -> str:
+    """
+    Ejecuta un script de Python (.py) utilizando el entorno virtual de Paser.
+    El script se ejecuta en su propio directorio de trabajo (CWD), permitiendo que las rutas relativas funcionen.
+    """
+    try:
+        venv_python, _ = _get_venv_python()
+        config = ConfigManager()
+        timeout = config.get("instance_timeout", 300)
+
+        # Resolver ruta absoluta del script y su directorio
+        abs_script_path = os.path.abspath(script_path)
+        script_dir = os.path.dirname(abs_script_path)
+
+        if not os.path.exists(abs_script_path):
+            raise ToolError(f"El archivo de script no existe en la ruta: {abs_script_path}")
+
+        cmd = [venv_python, abs_script_path]
+        
+        if args and isinstance(args, list):
+            cmd.extend(args)
+
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            cwd=script_dir
+        )
+        
+        try:
+            stdout, stderr = process.communicate(timeout=timeout)
+            status_msg = "Script finalizado.\n"
+        except subprocess.TimeoutExpired:
+            process.kill()
+            stdout, stderr = process.communicate()
+            status_msg = f"[Timeout] Script cerrado forzosamente tras {timeout}s.\n"
+
+        output = f"Archivo ejecutado: {abs_script_path}\n{status_msg}STDOUT:\n{stdout}\nSTDERR:\n{stderr}"
+        return output if output.strip() else f"Script {abs_script_path} ejecutado sin salida visible."
+
+    except ToolError:
+        raise
+    except Exception as e:
+        raise ToolError(f"Error al ejecutar el script Python ({script_path}): {str(e)}")

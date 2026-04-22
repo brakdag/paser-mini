@@ -82,10 +82,17 @@
     }
   ],
   [
-    "run_instance",
-    "Ejecuta un modulo o script de Python. El modo sandbox es automático: True para todo excepto 'paser-mini'.",
+    "run_python",
+    "Ejecuta un script de Python (.py) usando el venv de Paser. Se ejecuta en el directorio del script.",
     {
-      "target": "string",
+      "script_path": "string",
+      "args": "list"
+    }
+  ],
+  [
+    "new_agent",
+    "Lanza una nueva instancia independiente de Paser Mini en la raíz del proyecto.",
+    {
       "message": "string",
       "args": "list"
     }
