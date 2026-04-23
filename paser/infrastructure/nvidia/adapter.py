@@ -92,6 +92,10 @@ class NvidiaAdapter:
         """Resets the chat history."""
         self.history = [{"role": "system", "content": self.system_instruction}]
 
+    def get_chat_history(self):
+        """Returns the current chat history."""
+        return self.history
+
     def count_tokens(self, contents: Any) -> int:
         """
         Heuristic token estimation (approx 4 chars per token).

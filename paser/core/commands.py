@@ -133,6 +133,10 @@ class CommandHandler:
                 self.ui.display_error("Timeout must be an integer.")
             return True
 
+        elif input_stripped == '/clear':
+            os.system('cls' if os.name == 'nt' else 'clear')
+            return True
+
         elif input_stripped == '/config':
             config_info = (
                 f"Model: {self.chat_manager.assistant._current_model}\n"
@@ -228,8 +232,14 @@ class CommandHandler:
             
             # 1. Determine Model
             if len(parts) == 1:
-                model_list = "\n".join([f"{i}: {m}" for i, m in enumerate(models)])
-                self.ui.display_message(f"Available models:\n{model_list}")
+                header = "| ID | Model | ID | Model |\n|---|---|---|---|\n"
+                rows = []
+                for i in range(0, len(models), 2):
+                    m1 = models[i]
+                    m2 = models[i+1] if i+1 < len(models) else ""
+                    idx2 = str(i+1) if i+1 < len(models) else ""
+                    rows.append(f"| {i} | {m1} | {idx2} | {m2} |")
+                self.ui.display_message(f"Available models:\n\n{header}" + "\n".join(rows))
                 choice = await self.ui.request_input("Modelo: ")
                 try:
                     idx = int(choice)
