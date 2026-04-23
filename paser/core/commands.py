@@ -149,13 +149,15 @@ class CommandHandler:
 
         elif input_stripped == '/config':
             config_info = (
-                f"Model: {self.chat_manager.assistant._current_model}\n"
-                f"Temperature: {self.chat_manager.temperature}\n"
-                f"Context Window: {self.chat_manager.context_window_limit} tokens\n"
-                f"TPM Limit: {self.chat_manager.tpm_limit}\n"
-                f"Instance Timeout: {self.chat_manager.config_manager.get('instance_timeout', 300)}s\n"
-                f"Sandbox Mode: {'ENABLED (Wasmer)' if self.chat_manager.config_manager.get('sandbox_mode', False) else 'DISABLED (VENV)'}\n"
-                f"Safe Mode: {'ENABLED' if self.chat_manager.config_manager.get('safemode', False) else 'DISABLED'}"
+                "| Setting | Value |\n"
+                "| :--- | :--- |\n"
+                f"| Model | {self.chat_manager.assistant._current_model} |\n"
+                f"| Temperature | {self.chat_manager.temperature} |\n"
+                f"| Context Window | {self.chat_manager.context_window_limit} tokens |\n"
+                f"| TPM Limit | {self.chat_manager.tpm_limit} |\n"
+                f"| Instance Timeout | {self.chat_manager.config_manager.get('instance_timeout', 300)}s |\n"
+                f"| Sandbox Mode | {'ENABLED (Wasmer)' if self.chat_manager.config_manager.get('sandbox_mode', False) else 'DISABLED (VENV)'} |\n"
+                f"| Safe Mode | {'ENABLED' if self.chat_manager.config_manager.get('safemode', False) else 'DISABLED'} |"
             )
             self.ui.display_panel("Current Configuration", config_info, style="blue")
             return True
