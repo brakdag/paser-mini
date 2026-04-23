@@ -5,7 +5,7 @@ This project follows a modular ReAct (Reasoning and Acting) architecture. Below 
 ### ⚙️ Core Engine (`paser/core/`)
 
 - **`chat_manager.py`**: The central orchestrator. It manages the conversation loop, handles tool execution asynchronously, and prevents infinite loops via `RepetitionDetector`.
-- **`tool_parser.py`**: Responsible for parsing `<TOOL_CALL>` tags from the LLM and formatting `<TOOL_RESPONSE>` tags for the model.
+- **`smart_parser.py`**: Implements a robust, single-pass JSON parser with auto-correction and schema validation for `<TOOL_CALL>` tags.
 - **`terminal_ui.py`**: A high-fidelity terminal interface using `rich` and `prompt_toolkit`, featuring real-time tool monitoring (spinners) and LaTeX rendering.
 - **`commands.py`**: Implements the internal command system (e.g., `/models`, `/s`, `/t`) to modify agent state without affecting the chat history.
 - **`config_manager.py`**: Handles the persistence of user preferences (model, temperature) in `config/config.json`.
@@ -26,4 +26,4 @@ This project follows a modular ReAct (Reasoning and Acting) architecture. Below 
 
 ### ↻ Data Flow
 
-`User Input` $\rightarrow$ `TerminalUI` $\rightarrow$ `ChatManager` $\rightarrow$ `GeminiAdapter` $\rightarrow$ `ToolParser` (if tool call) $\rightarrow$ `AVAILABLE_TOOLS` $\rightarrow$ `ChatManager` (loop) $\rightarrow$ `Final Response` $\rightarrow$ `TerminalUI`.
+`User Input` $\rightarrow$ `TerminalUI` $\rightarrow$ `ChatManager` $\rightarrow$ `GeminiAdapter` $\rightarrow$ `SmartToolParser` (if tool call) $\rightarrow$ `AVAILABLE_TOOLS` $\rightarrow$ `ChatManager` (loop) $\rightarrow$ `Final Response` $\rightarrow$ `TerminalUI`.

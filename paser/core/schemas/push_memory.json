@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "scope": {
+      "type": "string"
+    },
+    "value": {
+      "type": "string"
+    },
+    "key": {
+      "type": "string"
+    },
+    "pointers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "scope",
+    "value",
+    "key",
+    "pointers"
+  ],
+  "additionalProperties": false
+}

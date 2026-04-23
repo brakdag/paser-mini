@@ -10,7 +10,7 @@ from typing import Any, Optional, Union
 from paser.core.commands import CommandHandler
 from paser.core.repetition_detector import RepetitionDetector
 from paser.core.config_manager import ConfigManager
-from paser.core.tool_parser import ToolParser
+from paser.core.smart_parser import SmartToolParser
 from paser.tools import ToolError
 
 class ToolAttemptTracker:
@@ -54,7 +54,7 @@ class ChatManager:
         
         # Modularized Components
         self.config_manager = ConfigManager()
-        self.tool_parser = ToolParser()
+        self.tool_parser = SmartToolParser()
         
         self.thinking_enabled = self.config_manager.get("thinking_enabled", False)
         self.temperature = float(self.config_manager.get("default_temperature", 0.7))
@@ -150,12 +150,12 @@ class ChatManager:
                 if self.turn_count > self.max_turns: return "Turn limit exceeded."
                 
                 combined_tool_responses = []
-                for call_data, raw_content in calls:
+                for call_data, raw_content, err in calls:
                     if self.stop_requested:
                         raise EmergencyStopException("Ejecución interrumpida por el usuario.")
 
                     if call_data is None:
-                        combined_tool_responses.append(self.tool_parser.format_tool_response(f"Error de sintaxis: {raw_content}", success=False))
+                        combined_tool_responses.append(self.tool_parser.format_tool_response(err or f"Error de sintaxis: {raw_content}", success=False))
                         continue
                     
                     name, args = call_data.get("name"), call_data.get("args", {})
