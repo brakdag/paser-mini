@@ -75,7 +75,8 @@ class TerminalUI(UserInterface):
         self.console.print(Text(f"[{tool_name}] Status: {detail}", style=color))
 
     def display_panel(self, title: str, message: str, style: str = "none"):
-        self.console.print(Panel(message, title=title, border_style=style))
+        content = Markdown(message) if isinstance(message, str) else message
+        self.console.print(Panel(content, title=title, border_style=style))
 
     def display_error(self, message: str):
         self.console.print(Panel(Text(message, style="bold red"), title="Error", border_style="red"))
