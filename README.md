@@ -37,7 +37,7 @@ Configure your API key in your `.bashrc` or `.zshrc`:
 
 ```bash
 export GOOGLE_API_KEY="your_google_api_key_here"
-export NVIDIA_API_KEY="your_nvidia_api_key_here"
+export OTROS_SERVICIOS_API_KEY="your_api_key_here"
 ```
 
 ## Execution
