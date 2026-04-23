@@ -103,11 +103,15 @@ class NvidiaAdapter:
         text = ""
         if isinstance(contents, list):
             for item in contents:
-                if hasattr(item, 'parts'):
+                if isinstance(item, dict):
+                    text += item.get('content', '')
+                elif hasattr(item, 'parts'):
                     for part in item.parts:
                         if hasattr(part, 'text'): text += part.text
-                elif isinstance(item, dict): text += item.get('content', '')
-        elif isinstance(contents, str): text = contents
+                elif isinstance(item, str):
+                    text += item
+        elif isinstance(contents, str):
+            text = contents
         return len(text) // 4
 
     def get_available_models(self) -> list:
