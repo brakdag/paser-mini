@@ -1,5 +1,6 @@
 import os
 import json
+import asyncio
 from paser.core.ui_interface import UserInterface
 
 class CommandHandler:
@@ -238,8 +239,17 @@ class CommandHandler:
                 if i % 10 == 0:
                     self.ui.display_info(f"Checking {i}/{len(models)}...")
                 
-                if not self.chat_manager.assistant.check_availability(model):
-                    unavailable.append(model)
+                try:
+                    # Use a timeout to avoid hanging on slow models
+                    # If it times out, we assume it's available because 404s are instant
+                    is_available = await asyncio.wait_for(
+                        asyncio.to_thread(self.chat_manager.assistant.check_availability, model),
+                        timeout=2.0
+                    )
+                    if not is_available:
+                        unavailable.append(model)
+                except asyncio.TimeoutError:
+                    pass
             
             self.chat_manager.save_config("unavailable_models", unavailable)
             self.ui.display_panel("Availability Check", f"Found {len(unavailable)} unavailable models. Cache updated.", style="yellow")
