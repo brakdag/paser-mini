@@ -5,6 +5,7 @@ import hashlib
 import difflib
 import shutil
 import subprocess
+import sys
 from collections import deque
 from pathlib import Path
 from . import context, ToolError
@@ -190,9 +191,9 @@ def code_formatter(path: str) -> str:
         if not safe_path.is_file():
             raise ToolError('File not found')
         
-        # Using black as it is installed in the environment
+        # Using black via the current python executable to ensure it's found in the venv
         result = subprocess.run(
-            ["black", str(safe_path)],
+            [sys.executable, "-m", "black", str(safe_path)],
             capture_output=True,
             text=True,
             check=True
