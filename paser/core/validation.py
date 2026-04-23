@@ -10,8 +10,12 @@ class ValidationResult:
     corrected_args: Optional[dict[str, Any]] = None
 
 class SchemaValidator:
-    def __init__(self, schemas_dir: str = "paser/core/schemas"):
-        self.schemas_dir = schemas_dir
+    def __init__(self, schemas_dir: Optional[str] = None):
+        if schemas_dir is None:
+            # Use absolute path relative to this file
+            self.schemas_dir = os.path.join(os.path.dirname(__file__), 'schemas')
+        else:
+            self.schemas_dir = schemas_dir
         self.schemas = {}
         self._load_schemas()
 
