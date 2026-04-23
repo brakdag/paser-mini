@@ -34,10 +34,10 @@ async def main():
         ConfigManager().save("instance_timeout", args.run_instance_timeout)
 
     setup_logger(debug=args.debug)
-    print("Logger inicializado. UI cargando...")
+    
     try:
         ui = TerminalUI(no_spinner=args.instance_mode, force_terminal=not args.instance_mode)
-        print("UI cargada correctamente.")
+        
     except Exception as e:
         print(f"ERROR EN UI: {e}")
         import traceback

@@ -420,7 +420,7 @@ class ChatManager:
             memory_tools.set_chat_manager(self)
             
             model = self.config_manager.get("model_name", "models/gemma-4-31b-it")
-            print(f"DEBUG: Iniciando chat con modelo: {model}")
+            
             self.assistant.start_chat(model, self.system_instruction, self.temperature)
             self._initialized_event.set()
         except Exception as e:
