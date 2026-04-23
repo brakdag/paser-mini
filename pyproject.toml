@@ -18,6 +18,7 @@ dependencies = [
     "pyright",
     "pynput",
     "openai",
+    "black",
 ]
 
 [project.scripts]
