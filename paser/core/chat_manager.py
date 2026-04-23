@@ -105,81 +105,6 @@ class ChatManager:
         
         self.request_timestamps.append(asyncio.get_event_loop().time())
 
-    async def _enforce_context_limit(self):
-        if not self.assistant.history:
-            return
-
-        if self.assistant.count_tokens(self.assistant.history) > self.context_window_limit:
-            logger.info("Context limit reached. Performing Hard Reset to eliminate ghosting...")
-            
-            from google.genai import types
-            from paser.infrastructure.memento.manager import MementoManager
-            
-            # 1. Re-initialize chat (Clear history)
-            self.assistant.start_chat(
-                self.assistant._current_model,
-                self.system_instruction,
-                self.temperature
-            )
-            
-            # 2. Retrieve and inject latest Bridge Block
-            manager = MementoManager()
-            bridge = manager.get_latest_bridge()
-            
-            if bridge:
-                bridge_msg = f"\n\n[MEMENTO LEAP: AUTOMATIC RESTORED SESSION STATE]\nNode #{bridge['id']} | {bridge['content']}\n"
-                self.assistant.history.append(
-                    types.Content(
-                        role="user",
-                        parts=[types.Part.from_text(text=bridge_msg)]
-                    )
-                )
-                logger.info(f"Bridge Block #{bridge['id']} restored automatically.")
-            else:
-                logger.info("No Bridge Block found. Starting fresh session.")
-            
-            # 3. Sync SDK
-            self.assistant.refresh_session()
-
-    async def _check_memento_triggers(self):
-        """
-        Monitors token usage and injects system alerts for Distillation (80%) and Bridging (95%).
-        """
-        history = self.assistant.history
-        if not history:
-            return
-
-        tokens = self.assistant.count_tokens(history)
-        percentage = (tokens / self.context_window_limit) * 100
-
-        trigger_msg = None
-        if 80 <= percentage < 95:
-            trigger_msg = "⚠️ SYSTEM ALERT: Context usage at 80%. Please perform DISTILLATION: summarize key insights and store them using `push_memory(scope='fractal', ...)`. "
-        elif percentage >= 95:
-            trigger_msg = "🚨 SYSTEM ALERT: Context usage at 95%. Please generate a BRIDGE BLOCK: summarize the session state and store it using `push_memory` with teaser 'BRIDGE: ...' immediately."
-
-        if trigger_msg and not self._is_last_message_alert(trigger_msg):
-            await self._inject_system_alert(trigger_msg)
-
-    def _is_last_message_alert(self, msg):
-        if not self.assistant.history:
-            return False
-        last_msg = self.assistant.history[-1]
-        for part in last_msg.parts:
-            if hasattr(part, 'text') and msg in part.text:
-                return True
-        return False
-
-    async def _inject_system_alert(self, msg):
-        from google.genai import types
-        alert_content = types.Content(
-            role="user", 
-            parts=[types.Part.from_text(text=f"\n\n[SYSTEM NOTIFICATION]\n{msg}\n")]
-        )
-        self.assistant.history.append(alert_content)
-        self.assistant.refresh_session()
-        logger.info(f"Memento trigger injected: {msg}")
-
     def _extract_text(self, response) -> str:
         return response.text if hasattr(response, "text") and response.text else str(response)
 
@@ -199,8 +124,6 @@ class ChatManager:
         
         try:
             await self._wait_for_rate_limit()
-            await self._enforce_context_limit()
-            await self._check_memento_triggers()
 
             if self.auto_rpm_enabled and isinstance(user_input, str):
                 user_input = f"|{self.rpm_limit}>{user_input}"
@@ -317,8 +240,6 @@ class ChatManager:
                 
                 combined_message = "".join(combined_tool_responses)
                 await self._wait_for_rate_limit()
-                await self._enforce_context_limit()
-                await self._check_memento_triggers()
 
                 if self.auto_rpm_enabled:
                     combined_message = f"|{self.rpm_limit}>{combined_message}"

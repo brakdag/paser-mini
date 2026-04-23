@@ -88,6 +88,12 @@ class NvidiaAdapter:
             logger.error(f"Nvidia API streaming error: {e}")
             yield f"Error: {str(e)}"
 
+    def inject_message(self, role: str, content: str):
+        """
+        Injects a message directly into the history without sending it to the API.
+        """
+        self.history.append({"role": role, "content": content})
+
     def refresh_session(self):
         """Resets the chat history."""
         self.history = [{"role": "system", "content": self.system_instruction}]
@@ -113,6 +119,23 @@ class NvidiaAdapter:
         elif isinstance(contents, str):
             text = contents
         return len(text) // 4
+
+    def check_availability(self, model_name: str) -> bool:
+        """
+        Checks if a model is actually available for the current account.
+        Returns True if available, False if it returns a 404 Not Found.
+        """
+        try:
+            self.client.chat.completions.create(
+                model=model_name,
+                messages=[{"role": "user", "content": "hi"}],
+                max_tokens=1
+            )
+            return True
+        except Exception as e:
+            if "404" in str(e) or "Not Found" in str(e):
+                return False
+            return True # Other errors might be transient
 
     def get_available_models(self) -> list:
         """

@@ -166,6 +166,7 @@ class CommandHandler:
                 "/help     - Show this help menu\n"
                 "/config    - Show current system configuration\n"
                 "/models   - Change AI model and temperature\n"
+                "/models_check - Verify model availability and cache results\n"
                 "/fav       - Manage favorite models (/fav, /fav+, /fav -<idx>, /fav <idx>)\n"
                 "/sandbox  - Toggle WebAssembly sandbox mode\n"
                 "/s        - Save a snapshot of the last interaction\n"
@@ -227,9 +228,27 @@ class CommandHandler:
             self.ui.display_info(f"Connected to shadow model {model_name} | Temperature: {new_temp}")
             return True
 
+        elif input_stripped == '/models_check':
+            models = self.chat_manager.assistant.get_available_models()
+            unavailable = []
+            self.ui.display_info(f"Checking availability for {len(models)} models... (This may take a while)")
+            
+            for i, model in enumerate(models):
+                # Visual progress
+                if i % 10 == 0:
+                    self.ui.display_info(f"Checking {i}/{len(models)}...")
+                
+                if not self.chat_manager.assistant.check_availability(model):
+                    unavailable.append(model)
+            
+            self.chat_manager.save_config("unavailable_models", unavailable)
+            self.ui.display_panel("Availability Check", f"Found {len(unavailable)} unavailable models. Cache updated.", style="yellow")
+            return True
+
         elif input_stripped.startswith('/models'):
             parts = input_stripped.split()
             models = self.chat_manager.assistant.get_available_models()
+            unavailable = self.chat_manager.config_manager.get("unavailable_models", [])
             
             # 1. Determine Model
             if len(parts) == 1:
@@ -237,10 +256,17 @@ class CommandHandler:
                 rows = []
                 for i in range(0, len(models), 2):
                     m1 = models[i]
-                    m2 = models[i+1] if i+1 < len(models) else ""
-                    idx2 = str(i+1) if i+1 < len(models) else ""
+                    if m1 in unavailable: m1 = f"~~{m1}~~"
+                    
+                    m2 = ""
+                    idx2 = ""
+                    if i+1 < len(models):
+                        m2 = models[i+1]
+                        if m2 in unavailable: m2 = f"~~{m2}~~"
+                        idx2 = str(i+1)
+                    
                     rows.append(f"| {i} | {m1} | {idx2} | {m2} |")
-                self.ui.display_message(f"Available models:\n\n{header}" + "\n".join(rows))
+                self.ui.display_message(f"Available models (~~ = unavailable):\n\n{header}" + "\n".join(rows))
                 choice = await self.ui.request_input("Modelo: ")
                 try:
                     idx = int(choice)

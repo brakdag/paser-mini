@@ -198,6 +198,24 @@ class GeminiAdapter:
                 raise ConnectionError(errors.format_api_error(e, lambda err, ret: errors.get_retry_delay(err, ret, self.retry_handler.default_delay)))
             raise e
 
+    def inject_message(self, role: str, content: str):
+        """
+        Injects a message directly into the history without sending it to the API.
+        """
+        self.history.append(types.Content(role=role, parts=[types.Part.from_text(text=content)]))
+
+    def check_availability(self, model_name: str) -> bool:
+        """
+        Checks if a model is actually available for the current account.
+        """
+        try:
+            self.client.models.get(model=model_name)
+            return True
+        except Exception as e:
+            if "404" in str(e).lower() or "not found" in str(e).lower():
+                return False
+            return True
+
     def refresh_session(self):
         """
         Destroys the current chat session and recreates it using the current history.
