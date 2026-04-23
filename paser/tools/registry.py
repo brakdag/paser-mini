@@ -30,7 +30,10 @@ AVAILABLE_TOOLS = {
     "new_agent": it.new_agent,
     "push_memory": mt.push_memory,
     "pull_memory": mt.pull_memory,
-    "get_token_count": mt.get_token_count
+    "get_token_count": mt.get_token_count,
+    "git_diff": ft.git_diff,
+    "restore_file": ft.restore_file,
+    "code_formatter": ft.code_formatter
 }
 
 # Load tool definitions (descriptions and params) for the LLM prompt

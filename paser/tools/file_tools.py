@@ -149,3 +149,58 @@ def get_tree() -> str:
         return result.stdout
     except (subprocess.CalledProcessError, FileNotFoundError) as e:
         raise ToolError(f"Git error: {str(e)}")
+
+def git_diff(path: str) -> str:
+    try:
+        safe_path = context.get_safe_path(path)
+        result = subprocess.run(
+            ["git", "diff", str(safe_path)],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return result.stdout if result.stdout else "No changes found."
+    except subprocess.CalledProcessError as e:
+        raise ToolError(f"Git diff error: {e.stderr}")
+    except FileNotFoundError:
+        raise ToolError("Git not found")
+    except Exception as e:
+        raise ToolError(f"Unexpected error: {str(e)}")
+
+def restore_file(path: str) -> str:
+    try:
+        safe_path = context.get_safe_path(path)
+        subprocess.run(
+            ["git", "restore", str(safe_path)],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return 'OK'
+    except subprocess.CalledProcessError as e:
+        raise ToolError(f"Git restore error: {e.stderr}")
+    except FileNotFoundError:
+        raise ToolError("Git not found")
+    except Exception as e:
+        raise ToolError(f"Unexpected error: {str(e)}")
+
+def code_formatter(path: str) -> str:
+    try:
+        safe_path = context.get_safe_path(path)
+        if not safe_path.is_file():
+            raise ToolError('File not found')
+        
+        # Using black as it is installed in the environment
+        result = subprocess.run(
+            ["black", str(safe_path)],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return 'OK'
+    except subprocess.CalledProcessError as e:
+        raise ToolError(f"Formatting error: {e.stderr}")
+    except FileNotFoundError:
+        raise ToolError("Black formatter not found")
+    except Exception as e:
+        raise ToolError(f"Unexpected error: {str(e)}")

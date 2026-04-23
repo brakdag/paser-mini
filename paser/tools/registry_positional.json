@@ -125,5 +125,26 @@
     "get_tree",
     "Get the project file tree (very fast)",
     {}
+  ],
+  [
+    "git_diff",
+    "Show differences of a file using git diff",
+    {
+      "path": "string"
+    }
+  ],
+  [
+    "restore_file",
+    "Restore a file to its previous state using git restore",
+    {
+      "path": "string"
+    }
+  ],
+  [
+    "code_formatter",
+    "Format Python code according to PEP 8 using black",
+    {
+      "path": "string"
+    }
   ]
 ]

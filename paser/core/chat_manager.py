@@ -194,7 +194,7 @@ class ChatManager:
                         if name == "run_instance" and self.instance_mode:
                             tr = self.tool_parser.format_tool_response("ERR: Recursion is disabled in this instance to prevent infinite loops.", call_id=call_data.get("id"), success=False)
                             success = False
-                        elif getattr(self, 'safemode', False) and name in ["write_file", "replace_string", "new_agent", "run_python", "analyze_pyright", "remove_file", "rename_path", "copy_file"]:
+                        elif getattr(self, 'safemode', False) and name in ["write_file", "replace_string", "new_agent", "run_python", "analyze_pyright", "remove_file", "rename_path", "copy_file", "restore_file", "code_formatter"]:
                             tr = self.tool_parser.format_tool_response(f"ERR: Tool '{name}' is disabled in Safe Mode.", call_id=call_data.get("id"), success=False)
                             success = False
                         else:
