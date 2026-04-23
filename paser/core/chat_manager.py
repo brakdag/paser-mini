@@ -63,6 +63,7 @@ class ChatManager:
         self.tpm_limit = int(self.config_manager.get("tpm_limit", 15000))
         self.auto_rpm_enabled = self.config_manager.get("auto_rpm_enabled", False)
         self.timestamps_enabled = self.config_manager.get("timestamps_enabled", False)
+        self.safemode = self.config_manager.get("safemode", False)
         self.last_response_time = 0
         self.request_timestamps = []
         
@@ -192,6 +193,9 @@ class ChatManager:
                     if name in self.tools:
                         if name == "run_instance" and self.instance_mode:
                             tr = self.tool_parser.format_tool_response("ERR: Recursion is disabled in this instance to prevent infinite loops.", call_id=call_data.get("id"), success=False)
+                            success = False
+                        elif getattr(self, 'safemode', False) and name in ["write_file", "replace_string", "new_agent", "run_python", "analyze_pyright", "remove_file", "rename_path", "copy_file"]:
+                            tr = self.tool_parser.format_tool_response(f"ERR: Tool '{name}' is disabled in Safe Mode.", call_id=call_data.get("id"), success=False)
                             success = False
                         else:
                             try:

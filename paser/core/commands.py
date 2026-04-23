@@ -42,6 +42,15 @@ class CommandHandler:
             self.ui.display_info(f"Sandbox mode is now {mode_str}")
             return True
 
+        elif input_stripped == '/safemode':
+            current_mode = self.chat_manager.config_manager.get("safemode", False)
+            new_mode = not current_mode
+            self.chat_manager.save_config("safemode", new_mode)
+            self.chat_manager.safemode = new_mode
+            mode_str = "ENABLED" if new_mode else "DISABLED"
+            self.ui.display_info(f"Safe Mode is now {mode_str}")
+            return True
+
         elif input_stripped.startswith('/w'):
             parts = input_stripped.split()
             if len(parts) != 3:
@@ -145,7 +154,8 @@ class CommandHandler:
                 f"Context Window: {self.chat_manager.context_window_limit} tokens\n"
                 f"TPM Limit: {self.chat_manager.tpm_limit}\n"
                 f"Instance Timeout: {self.chat_manager.config_manager.get('instance_timeout', 300)}s\n"
-                f"Sandbox Mode: {'ENABLED (Wasmer)' if self.chat_manager.config_manager.get('sandbox_mode', False) else 'DISABLED (VENV)'}"
+                f"Sandbox Mode: {'ENABLED (Wasmer)' if self.chat_manager.config_manager.get('sandbox_mode', False) else 'DISABLED (VENV)'}\n"
+                f"Safe Mode: {'ENABLED' if self.chat_manager.config_manager.get('safemode', False) else 'DISABLED'}"
             )
             self.ui.display_panel("Current Configuration", config_info, style="blue")
             return True
@@ -170,6 +180,7 @@ class CommandHandler:
                 "/models_check - Verify model availability and cache results\n"
                 "/fav       - Manage favorite models (/fav, /fav+, /fav -<idx>, /fav <idx>)\n"
                 "/sandbox  - Toggle WebAssembly sandbox mode\n"
+                "/safemode  - Toggle Safe Mode (restricts dangerous tools)\n"
                 "/s        - Save a snapshot of the last interaction\n"
                 "/t        - Display current context window token count\n"
                 "/timeout  - Set the timeout for run_instance (e.g., /timeout 600)\n"
