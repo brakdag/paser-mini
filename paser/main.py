@@ -85,7 +85,7 @@ async def main():
 
     # Lazy initialization of ChatManager inside run loop would be ideal,
     # but for now we ensure UI is ready before heavy lifting.
-    ui.display_info("Inicializando motor de IA...")
+    # ui.display_info("Inicializando motor de IA...")
     from paser.infrastructure.gemini.adapter import GeminiAdapter
     from paser.infrastructure.nvidia.adapter import NvidiaAdapter
     from paser.core.config_manager import ConfigManager

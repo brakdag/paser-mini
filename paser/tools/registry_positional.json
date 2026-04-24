@@ -11,7 +11,7 @@
     "Write content to file. Returns 'OK' on success.",
     {
       "path": "string",
-      "contenido": "string"
+      "content": "string"
     }
   ],
   [
@@ -62,16 +62,16 @@
     "rename_path",
     "Move/Rename path. Returns 'OK' on success. Throws ERR if origin not found.",
     {
-      "origen": "string",
-      "destino": "string"
+      "origin": "string",
+      "destination": "string"
     }
   ],
   [
     "copy_file",
     "Copy file from origin to destination. Returns 'OK' on success.",
     {
-      "origen": "string",
-      "destino": "string"
+      "origin": "string",
+      "destination": "string"
     }
   ],
   [
@@ -83,7 +83,7 @@
   ],
   [
     "run_python",
-    "Ejecuta un script de Python (.py) usando el venv de Paser. Se ejecuta en el directorio del script.",
+    "Executes a Python script (.py) using the Paser venv. Runs in the script's directory.",
     {
       "script_path": "string",
       "args": "list"
@@ -91,7 +91,7 @@
   ],
   [
     "new_agent",
-    "Lanza una nueva instancia independiente de Paser Mini en la raíz del proyecto.",
+    "Launches a new independent instance of Paser Mini in the project root.",
     {
       "message": "string",
       "args": "list"

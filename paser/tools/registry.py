@@ -42,7 +42,7 @@ with open(_registry_path, "r") as f:
     full_catalog = json.load(f)
 
 # All tools are now injected into the system prompt for maximum visibility
-TOOL_CATALOG = json.dumps(full_catalog, indent=2)
+TOOL_CATALOG = "\n".join([f"{t[0]}({', '.join(t[2].keys())}) - {t[1]}" for t in full_catalog])
 
 # Bypassing interceptor by fragmenting the forbidden strings
 _S = chr(60) + "TOOL" + "_CALL" + chr(62)
@@ -56,7 +56,7 @@ You are a autonomous agent.
 Response Protocol:
 - File tools return 'OK' for success and 'ERR: <message>' for errors to minimize token usage.
 
-Tool Catalog [Name, Description, {{Param:Type}}]:
+Tool Catalog: name_tool(args) - description
 {TOOL_CATALOG}
 
 Tool Usage Guidelines:
