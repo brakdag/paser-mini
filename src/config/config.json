@@ -1,14 +1,14 @@
 {
-    "model_name": "models/gemini-3.1-flash-lite-preview",
-    "default_temperature": 0.2,
-    "context_window_limit": 1000000,
+    "model_name": "moonshotai/kimi-k2-instruct",
+    "default_temperature": 0.3,
+    "context_window_limit": 256000,
     "rpm_limit": 40,
     "sandbox_mode": false,
     "tpm_limit": 250000,
     "auto_rpm_enabled": false,
     "instance_timeout": 1000,
     "timestamps_enabled": true,
-    "provider": "Gemini",
+    "provider": "NVIDIA",
     "favorites": [
         {
             "provider": "Gemini",
@@ -66,14 +66,14 @@
             "temp": 0.3
         },
         {
-            "provider": "NVIDIA",
-            "model": "openai/gpt-oss-120b",
-            "temp": 0.3
-        },
-        {
             "provider": "Gemini",
             "model": "models/gemini-3.1-flash-lite-preview",
             "temp": 0.2
+        },
+        {
+            "provider": "NVIDIA",
+            "model": "openai/gpt-oss-120b",
+            "temp": 0.0
         }
     ],
     "unavailable_models": [
