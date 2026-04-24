@@ -53,13 +53,10 @@ class GeminiAdapter:
             logger.warning(f"Error saving model cache: {e}")
 
     def _update_token_cache(self):
-        """Updates the cached token count for the current history."""
+        """Updates the cached token count using local estimation."""
         if not self._current_model:
             return
-        try:
-            self._cached_tokens = utils.count_tokens(self.client, self._current_model, self.history)
-        except Exception as e:
-            logger.error(f"Error updating token cache: {e}")
+        self._cached_tokens = utils.estimate_tokens(self.history)
 
     def save_snapshot(self):
         """Saves the last interaction to disk via SnapshotManager."""

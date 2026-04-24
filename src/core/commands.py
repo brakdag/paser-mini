@@ -29,9 +29,11 @@ class CommandHandler:
             return True
 
         elif input_stripped == '/t':
+            from src.infrastructure.gemini.utils import estimate_tokens
             history = self.chat_manager.assistant.get_chat_history()
-            tokens = self.chat_manager.assistant.count_tokens(history)
-            self.ui.display_info(f"Context window: {tokens} tokens")
+            real_tokens = self.chat_manager.assistant.count_tokens(history)
+            est_tokens = estimate_tokens(history)
+            self.ui.display_info(f"Context window: [{real_tokens}, {est_tokens}] tokens (API, Local)")
             return True
 
         elif input_stripped == '/sandbox':

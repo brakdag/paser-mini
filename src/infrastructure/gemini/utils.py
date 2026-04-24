@@ -46,8 +46,13 @@ def get_available_models(client) -> list:
     models = client.models.list()
     return [m.name for m in models if m.name and ('gemini' in m.name.lower() or 'gemma' in m.name.lower())]
 
+def estimate_tokens(contents) -> int:
+    """Estimates tokens locally (1 token ≈ 4 chars)."""
+    text = str(contents)
+    return len(text) // 4
+
 def count_tokens(client, model, contents) -> int:
-    """Counts tokens of a given content using the Gemini API."""
+    """Counts tokens of a given content using the Gemini API (Manual trigger only)."""
     response = client.models.count_tokens(
         model=model,
         contents=contents
