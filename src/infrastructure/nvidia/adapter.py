@@ -102,6 +102,13 @@ class NvidiaAdapter:
         """Resets the chat history."""
         self.history = [{"role": "system", "content": self.system_instruction}]
 
+    def hard_reset(self, history_override: List = None):
+        """Resets the chat history with an optional override."""
+        if history_override:
+            self.history = history_override
+        else:
+            self.refresh_session()
+
     def get_chat_history(self):
         """Returns the current chat history."""
         return self.history
