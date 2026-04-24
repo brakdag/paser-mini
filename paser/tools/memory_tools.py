@@ -42,7 +42,11 @@ def pull_memory(scope: Optional[str] = None, key: Optional[str] = None, directio
         direction (str, optional): 'next', 'prev', 'up', 'down' for graph navigation.
     """
     try:
-        return _manager.pull_memory(scope=scope, key=key, direction=direction)
+        # Convert empty strings to None to ensure the Mirror effect and optional logic work correctly
+        s = scope if scope not in (None, "") else None
+        k = key if key not in (None, "") else None
+        d = direction if direction not in (None, "") else None
+        return _manager.pull_memory(scope=s, key=k, direction=d)
     except Exception as e:
         return f"ERR: {str(e)}"
 

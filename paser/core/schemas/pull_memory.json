@@ -12,10 +12,6 @@
       "type": "string"
     }
   },
-  "required": [
-    "scope",
-    "key",
-    "direction"
-  ],
+  "required": [],
   "additionalProperties": false
 }
