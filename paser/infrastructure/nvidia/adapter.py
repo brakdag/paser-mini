@@ -1,6 +1,6 @@
 import os
 import logging
-from typing import Generator, Any
+from typing import Generator, Any, List
 from openai import OpenAI
 
 logger = logging.getLogger(__name__)
@@ -18,9 +18,11 @@ class NvidiaAdapter:
         self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
         
         self._current_model = "meta/llama-3.1-405b-instruct"
-        self.history = []
+        from openai.types.chat import ChatCompletionMessageParam
+        self.history: Any = []
         self.system_instruction = ""
         self.temperature = 0.7
+        self._availability_cache = {}
 
     def start_chat(self, model_name: str, system_instruction: str, temperature: float):
         """
@@ -39,38 +41,36 @@ class NvidiaAdapter:
         self.history = [{"role": "system", "content": system_instruction}]
         logger.info(f"NvidiaAdapter session started with model: {self._current_model}")
 
-    def send_message(self, message: str) -> str:
-        """
-        Sends a message and returns the full response. 
-        Complexity: O(N) where N is the number of tokens in history.
-        """
+    def send_message(self, message: str, max_tokens: int = 512) -> str:
         self.history.append({"role": "user", "content": message})
+        self._truncate_history()
         try:
             response = self.client.chat.completions.create(
                 model=self._current_model,
                 messages=self.history,
                 temperature=self.temperature,
-                max_tokens=1024
+                max_tokens=max_tokens
             )
-            content = response.choices[0].message.content
+            content = response.choices[0].message.content or ""
             self.history.append({"role": "assistant", "content": content})
             return content
         except Exception as e:
             logger.error(f"Nvidia API error: {e}")
             return f"Error: {str(e)}"
 
-    def send_message_stream(self, message: str) -> Generator[str, None, None]:
+    def send_message_stream(self, message: str, max_tokens: int = 512) -> Generator[str, None, None]:
         """
         True streaming implementation using OpenAI SDK's stream=True.
         Yields chunks as they arrive from the NVIDIA API.
         """
         self.history.append({"role": "user", "content": message})
+        self._truncate_history()
         try:
             response = self.client.chat.completions.create(
                 model=self._current_model,
-                messages=self.history,
+                messages=self.history, # type: ignore
                 temperature=self.temperature,
-                max_tokens=1024,
+                max_tokens=max_tokens,
                 stream=True
             )
             
@@ -93,6 +93,10 @@ class NvidiaAdapter:
         Injects a message directly into the history without sending it to the API.
         """
         self.history.append({"role": role, "content": content})
+
+    def _truncate_history(self):
+        if len(self.history) > 11:
+            self.history = [self.history[0]] + self.history[-10:]
 
     def refresh_session(self):
         """Resets the chat history."""
@@ -121,21 +125,23 @@ class NvidiaAdapter:
         return len(text) // 4
 
     def check_availability(self, model_name: str) -> bool:
-        """
-        Checks if a model is actually available for the current account.
-        Returns True if available, False if it returns a 404 Not Found.
-        """
+        import time
+        now = time.time()
+        if model_name in self._availability_cache:
+            available, timestamp = self._availability_cache[model_name]
+            if now - timestamp < 300: return available
+        
         try:
             self.client.chat.completions.create(
                 model=model_name,
                 messages=[{"role": "user", "content": "hi"}],
                 max_tokens=1
             )
+            self._availability_cache[model_name] = (True, now)
             return True
         except Exception as e:
-            if "404" in str(e) or "Not Found" in str(e):
-                return False
-            return True # Other errors might be transient
+            self._availability_cache[model_name] = (False, now)
+            return False
 
     def get_available_models(self) -> list:
         """

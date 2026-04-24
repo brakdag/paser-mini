@@ -83,22 +83,16 @@ async def main():
     # Determine which input message to use
     user_input = args.message if args.message else args.input
 
+    # Lazy initialization of ChatManager inside run loop would be ideal,
+    # but for now we ensure UI is ready before heavy lifting.
+    ui.display_info("Inicializando motor de IA...")
     from paser.infrastructure.gemini.adapter import GeminiAdapter
     from paser.infrastructure.nvidia.adapter import NvidiaAdapter
     from paser.core.config_manager import ConfigManager
 
     provider = ConfigManager().get("provider", "Gemini")
-    try:
-        if provider == "NVIDIA":
-            assistant = NvidiaAdapter()
-        else:
-            assistant = GeminiAdapter()
-        chat_manager = ChatManager(assistant, AVAILABLE_TOOLS, sys_instr, ui, instance_mode=args.instance_mode)
-    except Exception as e:
-        print(f"CRITICAL INIT ERROR: {e}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
+    assistant = NvidiaAdapter() if provider == "NVIDIA" else GeminiAdapter()
+    chat_manager = ChatManager(assistant, AVAILABLE_TOOLS, sys_instr, ui, instance_mode=args.instance_mode)
 
     # Setup Emergency Stop Listener
     if not args.instance_mode:

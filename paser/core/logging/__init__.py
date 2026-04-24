@@ -15,5 +15,5 @@ def setup_logger(debug: bool = False):
             console_handler.setFormatter(formatter)
             logger.addHandler(console_handler)
 
-    logger.setLevel(logging.DEBUG if debug else logging.INFO)
+    logger.setLevel(logging.DEBUG if debug else logging.WARNING)
     return logger

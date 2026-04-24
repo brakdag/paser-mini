@@ -119,7 +119,7 @@ class MementoManager:
                 node = self.db.pull_node(node_id)
             except ValueError:
                 # Search by teaser/key
-                with self.db._get_connection() as conn:
+                with self.db.get_connection() as conn:
                     conn.row_factory = sqlite3.Row
                     cursor = conn.cursor()
                     cursor.execute("SELECT * FROM nodes WHERE teaser = ? LIMIT 1", (key,))

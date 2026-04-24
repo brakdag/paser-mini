@@ -83,35 +83,13 @@ class SmartToolParser:
         return data, None
 
     def extract_tool_calls(self, text: str) -> list[tuple[Optional[dict[str, Any]], str, Optional[str]]]:
-        """
-        Extracts all tool calls from a text block using a single-pass approach.
-        Returns a list of (parsed_data, raw_content, error_message).
-        """
+        # Optimized single-pass extraction
+        pattern = re.compile(r'<(?:TOOL_CALL|tool_call)\s*>(.*?)</(?:TOOL_CALL|tool_call)>', re.IGNORECASE | re.DOTALL)
         calls = []
-        
-        # 1. XML-like tags (Highest priority)
-        tag_pattern = r'<(?:TOOL_CALL|tool_call)\s*>(.*?)</(?:TOOL_CALL|tool_call)>'
-        for match in re.finditer(tag_pattern, text, re.IGNORECASE | re.DOTALL):
+        for match in pattern.finditer(text):
             raw = match.group(1).strip()
             data, err = self.parse_call(raw)
             calls.append((data, raw, err))
-
-        # 2. Markdown blocks
-        if not calls:
-            md_pattern = r'```(?:json)?\s*(.*?)\s*```'
-            for match in re.finditer(md_pattern, text, re.DOTALL):
-                raw = match.group(1).strip()
-                data, err = self.parse_call(raw)
-                calls.append((data, raw, err))
-
-        # 3. Raw JSON fallback
-        if not calls:
-            json_pattern = r'\{(?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*\}'
-            for match in re.finditer(json_pattern, text, re.DOTALL):
-                raw = match.group(0).strip()
-                data, err = self.parse_call(raw)
-                calls.append((data, raw, err))
-
         return calls
 
     @staticmethod
