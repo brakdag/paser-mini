@@ -22,7 +22,7 @@ dependencies = [
 ]
 
 [project.scripts]
-paser_mini = "paser.main:cli"
+paser_mini = "src.main:cli"
 
 [tool.setuptools]
-packages = ["paser"]
+packages = ["src"]

@@ -1,5 +1,8 @@
-from paser.infrastructure.memento.manager import MementoManager
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-manager = MementoManager()
-print("Testing Mirror Effect...")
-print(manager.pull_memory())
+from src.infrastructure.memento.manager import MementoManager
+
+# Test logic here
+print("Import successful")

@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 # Asegurar que el path del proyecto esté en PYTHONPATH
 sys.path.append(os.getcwd())
 
-from paser.infrastructure.gemini.adapter import GeminiAdapter
+from src.infrastructure.gemini.adapter import GeminiAdapter
 from google.genai.errors import ClientError
 
 class MockAPIError(Exception):
