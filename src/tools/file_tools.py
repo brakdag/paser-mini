@@ -49,7 +49,7 @@ def clear_read_cache():
     """Clears the file read cache to force re-reading of files."""
     READ_CACHE.clear()
 
-def write_file(path: str, contenido: str) -> str:
+def write_file(path: str, content: str) -> str:
     if len(contenido.encode('utf-8')) > FILE_SIZE_LIMIT:
         raise ToolError('Content too large')
     try:
