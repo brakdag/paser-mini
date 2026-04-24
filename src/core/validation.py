@@ -1,7 +1,7 @@
 import json
 import os
 from dataclasses import dataclass, field
-from typing import Any, Optional, Union
+from typing import Any, Optional, ClassVar
 
 @dataclass
 class ValidationResult:
@@ -10,14 +10,16 @@ class ValidationResult:
     corrected_args: Optional[dict[str, Any]] = None
 
 class SchemaValidator:
+    _cached_schemas: ClassVar[dict[str, Any]] = {}
+
     def __init__(self, schemas_dir: Optional[str] = None):
         if schemas_dir is None:
-            # Use absolute path relative to this file
             self.schemas_dir = os.path.join(os.path.dirname(__file__), 'schemas')
         else:
             self.schemas_dir = schemas_dir
-        self.schemas = {}
-        self._load_schemas()
+        
+        if not SchemaValidator._cached_schemas:
+            self._load_schemas()
 
     def _load_schemas(self):
         if not os.path.exists(self.schemas_dir):
@@ -28,11 +30,13 @@ class SchemaValidator:
                 tool_name = filename[:-5]
                 try:
                     with open(os.path.join(self.schemas_dir, filename), "r", encoding="utf-8") as f:
-                        schema = json.load(f)
-                        
-                        self.schemas[tool_name] = schema
+                        SchemaValidator._cached_schemas[tool_name] = json.load(f)
                 except Exception as e:
                     print(f"Error loading schema {filename}: {e}")
+
+    @property
+    def schemas(self):
+        return SchemaValidator._cached_schemas
 
     def validate(self, tool_name: str, args: Any) -> ValidationResult:
         if tool_name not in self.schemas:
@@ -47,13 +51,10 @@ class SchemaValidator:
         additional_allowed = schema.get("additionalProperties", True)
 
         errors = []
-        
-        # Check required fields
         for req in required:
             if req not in args:
                 errors.append(f"Missing required argument: '{req}'")
 
-        # Check types and additional properties
         for key, value in args.items():
             if key not in properties:
                 if not additional_allowed:
