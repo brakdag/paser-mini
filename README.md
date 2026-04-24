@@ -68,6 +68,9 @@ paser-mini
 paser-mini "Analyze the current directory and summarize the project"
 ```
 
+## Workspace Hygiene
+To keep the project root clean, please use the `/tmp` directory for temporary files or experimental tests. Avoid creating test files directly in the project root to ensure the repository remains uncluttered.
+
 ## Documentation
 
 For more detailed information, please refer to the following documents in the `docs/` directory:
