@@ -150,12 +150,13 @@ class GeminiAdapter:
             try:
                 parts = utils.prepare_message_parts(message)
                 response = self.chat.send_message_stream(parts)
-                full_text = ""
+                chunks = []
                 for chunk in response:
                     if hasattr(chunk, 'text') and chunk.text:
-                        full_text += chunk.text
+                        chunks.append(chunk.text)
                         yield chunk.text
                 
+                full_text = "".join(chunks)
                 self.history.append(types.Content(role="user", parts=parts))
                 self.history.append(types.Content(role="model", parts=[types.Part.from_text(text=full_text)]))
                 self._update_token_cache()

@@ -64,8 +64,9 @@ class ChatManager:
         self.auto_rpm_enabled = self.config_manager.get("auto_rpm_enabled", False)
         self.timestamps_enabled = self.config_manager.get("timestamps_enabled", False)
         self.safemode = self.config_manager.get("safemode", False)
+        from collections import deque
         self.last_response_time = 0
-        self.request_timestamps = []
+        self.request_timestamps = deque()
         
         self.command_handler = CommandHandler(self, ui)
         
@@ -95,7 +96,8 @@ class ChatManager:
             logger.debug(f"Auto-RPM: Adjusted limit to {self.rpm_limit} (Tokens: {current_tokens}, TPM: {self.tpm_limit})")
 
         now = asyncio.get_event_loop().time()
-        self.request_timestamps = [t for t in self.request_timestamps if now - t < 60]
+        while self.request_timestamps and now - self.request_timestamps[0] >= 60:
+            self.request_timestamps.popleft()
         
         if len(self.request_timestamps) >= self.rpm_limit:
             wait_time = 60 - (now - self.request_timestamps[0])
