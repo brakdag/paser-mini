@@ -252,17 +252,27 @@ class GeminiAdapter:
                 return False
             return True
 
-    def refresh_session(self):
+    def hard_reset(self, history_override: Optional[list] = None):
         """
-        Destroys the current chat session and recreates it using the current history.
-        This eliminates 'ghost states' in the SDK after history modification.
+        Performs a hard reset of the chat session. Destroys the current chat object
+        and creates a new one with the provided history (or empty).
         """
         if not self._current_model:
             return
+
+        # Ensure system instruction is preserved
+        self.history = history_override if history_override is not None else []
         
         config_params: dict[str, Any] = {"temperature": self.temperature}
+        
         if 'gemini' in self._current_model.lower():
             config_params["system_instruction"] = self.system_instruction
+            logger.debug(f"Hard Reset: Using System Instruction: {self.system_instruction[:50]}...")
+        else:
+            # Inject system instruction as first message if not natively supported
+            sys_msg = types.Content(role="user", parts=[types.Part.from_text(text=f"System Instructions: {self.system_instruction}")])
+            self.history = [sys_msg] + self.history
+            logger.debug(f"Hard Reset: Injected System Instruction as message.")
 
         try:
             self.chat = self.client.chats.create(
@@ -271,10 +281,10 @@ class GeminiAdapter:
                 history=self.history
             )
             self._update_token_cache()
-            logger.info("Session refreshed successfully.")
+            logger.info("Hard reset performed: New session initialized.")
         except Exception as e:
-            logger.error(f"Error refreshing session: {e}")
-            raise RuntimeError(f"Failed to refresh Gemini session: {e}")
+            logger.error(f"Error during hard reset: {e}")
+            raise RuntimeError(f"Failed to perform hard reset: {e}")
 
     def count_tokens(self, contents: Any) -> int:
         if not self._current_model:

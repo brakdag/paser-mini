@@ -78,22 +78,14 @@ class CommandHandler:
             # Clear file read cache to prevent 'No changes since last read' errors
             clear_read_cache()
             
-                        # 1. Re-initialize chat to restore system prompt and clear history
-            assistant = self.chat_manager.assistant
-            assistant.start_chat(
-                assistant._current_model,
-                assistant.system_instruction,
-                assistant.temperature
-            )
-            
-            # 2. Retrieve latest Bridge Block
+            # 1. Retrieve latest Bridge Block from Memento
             manager = MementoManager()
             bridge = manager.get_latest_bridge()
             
+            new_history = []
             if bridge:
-                # Inject bridge as a system notification
-                bridge_msg = f"\n\n[MEMENTO LEAP: RESTORED SESSION STATE]\nNode #{bridge['id']} | {bridge['content']}\n"
-                assistant.history.append(
+                bridge_msg = f"[MEMENTO LEAP: RESTORED SESSION STATE]\nNode #{bridge['id']} | {bridge['content']}"
+                new_history.append(
                     types.Content(
                         role="user",
                         parts=[types.Part.from_text(text=bridge_msg)]
@@ -103,8 +95,9 @@ class CommandHandler:
             else:
                 self.ui.display_info("No Bridge Block found. Starting fresh.")
             
-                        # 3. Refresh session to synchronize SDK
-            assistant.refresh_session()
+            # 2. Perform Hard Reset on Assistant
+            assistant = self.chat_manager.assistant
+            assistant.hard_reset(history_override=new_history)
             return True
 
         elif input_stripped.startswith('/tpm'):
