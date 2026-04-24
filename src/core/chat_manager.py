@@ -91,9 +91,9 @@ class ChatManager:
 
     async def _wait_for_rate_limit(self):
         if self.auto_rpm_enabled:
-            current_tokens = self.assistant.count_tokens(self.assistant.history)
+            current_tokens = getattr(self.assistant, '_cached_tokens', 1000)
             self.rpm_limit = max(1, int(self.tpm_limit / max(current_tokens, 1000)))
-            logger.debug(f"Auto-RPM: Adjusted limit to {self.rpm_limit} (Tokens: {current_tokens}, TPM: {self.tpm_limit})")
+            logger.debug(f"Auto-RPM: Adjusted limit to {self.rpm_limit} (Cached Tokens: {current_tokens}, TPM: {self.tpm_limit})")
 
         now = asyncio.get_event_loop().time()
         while self.request_timestamps and now - self.request_timestamps[0] >= 60:
