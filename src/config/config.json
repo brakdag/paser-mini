@@ -1,0 +1,136 @@
+{
+    "model_name": "models/gemini-3.1-flash-lite-preview",
+    "default_temperature": 0.2,
+    "context_window_limit": 128000,
+    "rpm_limit": 40,
+    "sandbox_mode": false,
+    "tpm_limit": 250000,
+    "auto_rpm_enabled": false,
+    "instance_timeout": 1000,
+    "timestamps_enabled": true,
+    "provider": "Gemini",
+    "favorites": [
+        {
+            "provider": "Gemini",
+            "model": "models/gemma-4-31b-it",
+            "temp": 0.3
+        },
+        {
+            "provider": "Gemini",
+            "model": "models/gemma-4-26b-a4b-it",
+            "temp": 0.3
+        },
+        {
+            "provider": "NVIDIA",
+            "model": "qwen/qwen2.5-coder-32b-instruct",
+            "temp": 0.3
+        },
+        {
+            "provider": "NVIDIA",
+            "model": "meta/llama-4-maverick-17b-128e-instruct",
+            "temp": 0.3
+        },
+        {
+            "provider": "NVIDIA",
+            "model": "meta/llama-3.1-405b-instruct",
+            "temp": 0.3
+        },
+        {
+            "provider": "NVIDIA",
+            "model": "stockmark/stockmark-2-100b-instruct",
+            "temp": 0.3
+        },
+        {
+            "provider": "NVIDIA",
+            "model": "mistralai/mistral-large-3-675b-instruct-2512",
+            "temp": 0.3
+        },
+        {
+            "provider": "NVIDIA",
+            "model": "mistralai/devstral-2-123b-instruct-2512",
+            "temp": 0.3
+        },
+        {
+            "provider": "NVIDIA",
+            "model": "moonshotai/kimi-k2-instruct",
+            "temp": 0.3
+        },
+        {
+            "provider": "NVIDIA",
+            "model": "nvidia/nemotron-4-340b-instruct",
+            "temp": 0.3
+        },
+        {
+            "provider": "NVIDIA",
+            "model": "abacusai/dracarys-llama-3.1-70b-instruct",
+            "temp": 0.3
+        },
+        {
+            "provider": "NVIDIA",
+            "model": "openai/gpt-oss-120b",
+            "temp": 0.3
+        },
+        {
+            "provider": "Gemini",
+            "model": "models/gemini-3.1-flash-lite-preview",
+            "temp": 0.2
+        }
+    ],
+    "unavailable_models": [
+        "01-ai/yi-large",
+        "adept/fuyu-8b",
+        "ai21labs/jamba-1.5-large-instruct",
+        "aisingapore/sea-lion-7b-instruct",
+        "baai/bge-m3",
+        "bigcode/starcoder2-15b",
+        "databricks/dbrx-instruct",
+        "deepseek-ai/deepseek-coder-6.7b-instruct",
+        "google/codegemma-1.1-7b",
+        "google/codegemma-7b",
+        "google/deplot",
+        "google/gemma-2b",
+        "google/recurrentgemma-2b",
+        "ibm/granite-3.0-3b-a800m-instruct",
+        "ibm/granite-3.0-8b-instruct",
+        "ibm/granite-34b-code-instruct",
+        "ibm/granite-8b-code-instruct",
+        "meta/codellama-70b",
+        "meta/llama2-70b",
+        "microsoft/kosmos-2",
+        "microsoft/phi-3-vision-128k-instruct",
+        "microsoft/phi-3.5-moe-instruct",
+        "mistralai/mistral-large-2-instruct",
+        "mistralai/mixtral-8x22b-v0.1",
+        "nv-mistralai/mistral-nemo-12b-instruct",
+        "nvidia/ai-synthetic-video-detector",
+        "nvidia/cosmos-reason2-8b",
+        "nvidia/embed-qa-4",
+        "nvidia/llama-3.1-nemotron-51b-instruct",
+        "nvidia/llama-3.1-nemotron-70b-instruct",
+        "nvidia/llama-3.1-nemotron-ultra-253b-v1",
+        "nvidia/llama-3.2-nemoretriever-1b-vlm-embed-v1",
+        "nvidia/llama-3.2-nemoretriever-300m-embed-v1",
+        "nvidia/llama-3.2-nv-embedqa-1b-v1",
+        "nvidia/llama-3.2-nv-embedqa-1b-v2",
+        "nvidia/llama-nemotron-embed-1b-v2",
+        "nvidia/llama-nemotron-embed-vl-1b-v2",
+        "nvidia/llama3-chatqa-1.5-70b",
+        "nvidia/mistral-nemo-minitron-8b-8k-instruct",
+        "nvidia/nemotron-4-340b-reward",
+        "nvidia/nemotron-nano-3-30b-a3b",
+        "nvidia/neva-22b",
+        "nvidia/nv-embed-v1",
+        "nvidia/nv-embedcode-7b-v1",
+        "nvidia/nv-embedqa-e5-v5",
+        "nvidia/nv-embedqa-mistral-7b-v2",
+        "nvidia/nvclip",
+        "nvidia/riva-translate-4b-instruct",
+        "nvidia/vila",
+        "snowflake/arctic-embed-l",
+        "writer/palmyra-creative-122b",
+        "writer/palmyra-fin-70b-32k",
+        "writer/palmyra-med-70b",
+        "writer/palmyra-med-70b-32k"
+    ],
+    "safemode": false
+}

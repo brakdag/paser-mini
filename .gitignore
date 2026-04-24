@@ -18,3 +18,4 @@ sessions/
 paser/config/config.json
 agent_memory.db
 paser/config/paser_memory.db
+src.log
