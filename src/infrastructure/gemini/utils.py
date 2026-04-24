@@ -52,9 +52,5 @@ def estimate_tokens(contents) -> int:
     return len(text) // 4
 
 def count_tokens(client, model, contents) -> int:
-    """Counts tokens of a given content using the Gemini API (Manual trigger only)."""
-    response = client.models.count_tokens(
-        model=model,
-        contents=contents
-    )
-    return response.total_tokens
+    """Counts tokens locally using estimation to avoid API calls."""
+    return estimate_tokens(contents)
