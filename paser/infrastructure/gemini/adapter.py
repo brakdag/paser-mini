@@ -30,6 +30,7 @@ class GeminiAdapter:
         self.snapshot_manager = SnapshotManager()
         self.save_langchain_enabled = False
         self._cache_path = os.path.join(os.path.dirname(__file__), '..', '..', 'config', 'model_cache.json')
+        self._cached_tokens = 0
 
     def _get_cached_models(self) -> Optional[list]:
         """Retrieves available models from cache if it's fresh (less than 24h)."""
@@ -50,6 +51,15 @@ class GeminiAdapter:
                 json.dump({'timestamp': time.time(), 'models': models}, f)
         except Exception as e:
             logger.warning(f"Error saving model cache: {e}")
+
+    def _update_token_cache(self):
+        """Updates the cached token count for the current history."""
+        if not self._current_model:
+            return
+        try:
+            self._cached_tokens = utils.count_tokens(self.client, self._current_model, self.history)
+        except Exception as e:
+            logger.error(f"Error updating token cache: {e}")
 
     def save_snapshot(self):
         """Saves the last interaction to disk via SnapshotManager."""
@@ -96,12 +106,34 @@ class GeminiAdapter:
                 ),
             ]
 
+        if model_name not in available_models:
+            logger.warning(f"Modelo {model_name} no encontrado en Gemini. Usando modelo por defecto.")
+            model_name = "models/gemini-2.0-flash"
+        
+        config_params: dict[str, Any] = {"temperature": temperature}
+        self.history = []
+        
+        if 'gemini' in model_name.lower():
+            config_params["system_instruction"] = system_instruction
+        else:
+            self.history = [
+                types.Content(
+                    role="user",
+                    parts=[types.Part.from_text(text=f"System Instructions: {system_instruction}")]
+                ),
+                types.Content(
+                    role="model",
+                    parts=[types.Part.from_text(text="Understood. I will follow these instructions.")]
+                ),
+            ]
+
         try:
             self.chat = self.client.chats.create(
                 model=model_name,
                 config=types.GenerateContentConfig(**config_params),
                 history=self.history
             )
+            self._update_token_cache()
         except Exception as e:
             if errors.is_retryable_error(e):
                 raise ConnectionError(errors.format_api_error(e, lambda err, ret: errors.get_retry_delay(err, ret, self.retry_handler.default_delay)))
@@ -126,6 +158,7 @@ class GeminiAdapter:
                 
                 self.history.append(types.Content(role="user", parts=parts))
                 self.history.append(types.Content(role="model", parts=[types.Part.from_text(text=full_text)]))
+                self._update_token_cache()
                 return
             except Exception as e:
                 if not errors.is_retryable_error(e) or retries >= self.retry_handler.max_retries:
@@ -153,6 +186,7 @@ class GeminiAdapter:
             self.history.append(types.Content(role="user", parts=parts))
             if hasattr(response, 'text') and response.text:
                 self.history.append(types.Content(role="model", parts=[types.Part.from_text(text=response.text)]))
+            self._update_token_cache()
             return response
 
         try:
@@ -189,6 +223,7 @@ class GeminiAdapter:
             config=types.GenerateContentConfig(temperature=temperature),
             history=self.history
         )
+        self._update_token_cache()
 
     def get_available_models(self) -> list:
         try:
@@ -203,6 +238,7 @@ class GeminiAdapter:
         Injects a message directly into the history without sending it to the API.
         """
         self.history.append(types.Content(role=role, parts=[types.Part.from_text(text=content)]))
+        self._update_token_cache()
 
     def check_availability(self, model_name: str) -> bool:
         """
@@ -234,6 +270,7 @@ class GeminiAdapter:
                 config=types.GenerateContentConfig(**config_params),
                 history=self.history
             )
+            self._update_token_cache()
             logger.info("Session refreshed successfully.")
         except Exception as e:
             logger.error(f"Error refreshing session: {e}")
@@ -242,6 +279,11 @@ class GeminiAdapter:
     def count_tokens(self, contents: Any) -> int:
         if not self._current_model:
             return 0
+        
+        # Return cached value if counting the current history
+        if contents is self.history:
+            return self._cached_tokens
+
         try:
             return utils.count_tokens(self.client, self._current_model, contents)
         except Exception as e:
