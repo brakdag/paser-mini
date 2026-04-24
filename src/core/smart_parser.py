@@ -84,7 +84,7 @@ class SmartToolParser:
 
     def extract_tool_calls(self, text: str) -> list[tuple[Optional[dict[str, Any]], str, Optional[str]]]:
         # Optimized single-pass extraction
-        pattern = re.compile(r'<(?:TOOL_CALL|tool_call)\s*>(.*?)</(?:TOOL_CALL|tool_call)>', re.IGNORECASE | re.DOTALL)
+        pattern = re.compile(r'<(?:TOOL_CALL|tool_call)\s*>(.*?)(?:</(?:TOOL_CALL|tool_call)>|$)', re.IGNORECASE | re.DOTALL)
         calls = []
         for match in pattern.finditer(text):
             raw = match.group(1).strip()

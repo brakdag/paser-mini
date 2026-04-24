@@ -28,7 +28,9 @@ class SchemaValidator:
                 tool_name = filename[:-5]
                 try:
                     with open(os.path.join(self.schemas_dir, filename), "r", encoding="utf-8") as f:
-                        self.schemas[tool_name] = json.load(f)
+                        schema = json.load(f)
+                        
+                        self.schemas[tool_name] = schema
                 except Exception as e:
                     print(f"Error loading schema {filename}: {e}")
 

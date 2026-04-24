@@ -1,6 +1,6 @@
 {
-    "model_name": "meta/llama-4-maverick-17b-128e-instruct",
-    "default_temperature": 0.3,
+    "model_name": "models/gemini-3.1-flash-lite-preview",
+    "default_temperature": 0.2,
     "context_window_limit": 1000000,
     "rpm_limit": 15,
     "sandbox_mode": false,
@@ -8,7 +8,7 @@
     "auto_rpm_enabled": true,
     "instance_timeout": 1000,
     "timestamps_enabled": true,
-    "provider": "NVIDIA",
+    "provider": "Gemini",
     "favorites": [
         {
             "provider": "Gemini",

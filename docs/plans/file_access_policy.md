@@ -22,7 +22,7 @@ Redefine the maximum file reading and writing limits to prevent context window o
 ## Architectural Impact
 - **`paser/tools/file_tools.py`**:
     - Implement a size check before executing `read()` operations.
-    - Implement a size check on the `contenido` string before executing `write()` operations.
+    - Implement a size check on the `content` string before executing `write()` operations.
     - Ensure both checks use the same constant (100KB) to maintain consistency.
 
 ## Verification Plan

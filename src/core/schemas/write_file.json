@@ -5,13 +5,13 @@
     "path": {
       "type": "string"
     },
-    "contenido": {
+    "content": {
       "type": "string"
     }
   },
   "required": [
     "path",
-    "contenido"
+    "content"
   ],
   "additionalProperties": false
 }

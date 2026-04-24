@@ -69,10 +69,10 @@ class SmartToolParser:
  },  
  "write_file": {  
  "type": "object",  
- "required": ["path", "contenido"],  
+ "required": ["path", "content"],  
  "properties": {  
  "path": {"type": "string"},  
- "contenido": {"type": "string", "maxLength": 102400}  
+ "content": {"type": "string", "maxLength": 102400}  
  }  
  }  
  }

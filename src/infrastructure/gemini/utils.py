@@ -47,7 +47,7 @@ def get_available_models(client) -> list:
     return [m.name for m in models if m.name and ('gemini' in m.name.lower() or 'gemma' in m.name.lower())]
 
 def count_tokens(client, model, contents) -> int:
-    """Cuenta los tokens de un contenido dado utilizando la API de Gemini."""
+    """Counts tokens of a given content using the Gemini API."""
     response = client.models.count_tokens(
         model=model,
         contents=contents

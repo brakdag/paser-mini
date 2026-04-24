@@ -50,13 +50,13 @@ def clear_read_cache():
     READ_CACHE.clear()
 
 def write_file(path: str, content: str) -> str:
-    if len(contenido.encode('utf-8')) > FILE_SIZE_LIMIT:
+    if len(content.encode('utf-8')) > FILE_SIZE_LIMIT:
         raise ToolError('Content too large')
     try:
         safe_path = context.get_safe_path(path)
         safe_path.parent.mkdir(parents=True, exist_ok=True)
         with tempfile.NamedTemporaryFile('w', dir=safe_path.parent, delete=False, encoding='utf-8') as tf:
-            tf.write(contenido)
+            tf.write(content)
             temp_name = tf.name
         Path(temp_name).replace(safe_path)
         return 'OK'
