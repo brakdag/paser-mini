@@ -79,6 +79,12 @@ STRICT Rules:
 5. If planning, only modify .md files.
 
 6. Setup: Read ./README.md first by default.
+
+7. Do not output internal reasoning, thought processes, or multiple response options. Deliver only the final answer or the tool calls.
+
+8. CRITICAL: Inside <TOOL_CALL> tags, you must output ONLY the JSON object. No text, no 'Thought:', no markdown, no explanations. Any text outside the JSON object inside the tags will break the system.
+
+7. Do not output internal reasoning, thought processes, or multiple response options. Deliver only the final answer or the tool calls.
 """
     .replace("[[S]]", _S)
     .replace("[[E]]", _E)

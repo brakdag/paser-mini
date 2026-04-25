@@ -36,9 +36,13 @@ class GeminiAdapter:
             payload["systemInstruction"] = {"parts": [{"text": self.system_instruction}]}
 
         full_text = ""
-        for chunk in self.client.generate_content(self._current_model or "", payload, stream=True):
-            full_text += chunk
-            yield chunk
+        try:
+            for chunk in self.client.generate_content(self._current_model or "", payload, stream=True):
+                full_text += chunk
+                yield chunk
+        except Exception as e:
+            logger.error(f'Streaming error: {e}')
+            yield f'Error: {str(e)}'
         
         self.history.append({"role": "model", "parts": [{"text": full_text}]})
 
@@ -47,11 +51,47 @@ class GeminiAdapter:
         self.history.append({"role": "user", "parts": parts})
         
         payload = {"contents": self.history, "generationConfig": {"temperature": self.temperature}}
-        response = self.client.generate_content(self._current_model or "gemini-2.0-flash", payload)
-        
-        text = response.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
-        self.history.append({"role": "model", "parts": [{"text": text}]})
-        return text
+        if self.system_instruction:
+            payload["systemInstruction"] = {"parts": [{"text": self.system_instruction}]}
+
+        try:
+            response = self.retry_handler.execute(
+                self.client.generate_content, 
+                self._current_model or 'gemini-2.0-flash', 
+                payload
+            )
+            
+            if not response:
+                logger.error('API returned empty response')
+                return 'Error: API returned empty response'
+
+            candidates = response.get('candidates', [])
+            if not candidates:
+                logger.warning(f'No candidates returned. Response: {response}')
+                return 'Error: No response candidates returned (possible safety block).'
+
+            candidate = candidates[0]
+            finish_reason = candidate.get('finishReason')
+            
+            if finish_reason == 'SAFETY':
+                logger.warning(f'Response blocked by safety filters. Response: {response}')
+                return 'Error: Response blocked by safety filters.'
+
+            content = candidate.get('content', {})
+            parts = content.get('parts', [])
+            if not parts:
+                logger.warning(f'No parts in content. Response: {response}')
+                return 'Error: No content parts returned.'
+
+            text_content = "".join([p.get('text', '') for p in parts])
+            if text_content:
+                self.history.append({"role": "model", "parts": [{"text": text_content}]})
+                return text_content
+            return 'Error: Empty response'
+
+        except Exception as e:
+            logger.exception(f'Critical error in send_message: {e}')
+            return f'Error: {str(e)}'
 
     def inject_message(self, role: str, content: str):
         self.history.append({"role": role, "parts": [{"text": content}]})
@@ -62,11 +102,14 @@ class GeminiAdapter:
         self.history = history_data
 
     def get_available_models(self) -> List[str]:
-        # Placeholder: Implement logic to fetch models via REST if needed
-        return ["gemini-2.0-flash", "gemini-1.5-flash"]
+        return ['gemini-2.0-flash', 'gemini-1.5-flash']
 
-    def hard_reset(self):
-        self.history = []
+    def hard_reset(self, history_override: Optional[List[dict]] = None):
+        self.history = history_override if history_override is not None else []
 
     def get_history(self) -> List[dict]:
         return self.history
+
+    def count_tokens(self, history: List[dict]) -> int:
+        from src.infrastructure.gemini.utils import estimate_tokens
+        return estimate_tokens(history)

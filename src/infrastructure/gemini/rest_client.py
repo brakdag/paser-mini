@@ -45,4 +45,10 @@ class GeminiRestClient:
                 if line.startswith("data: "):
                     data = json.loads(line[6:])
                     if "candidates" in data:
-                        yield data["candidates"][0]["content"]["parts"][0].get("text", "")
+                        part = data["candidates"][0]["content"]["parts"][0]
+                        thought = part.get("thought", "")
+                        text = part.get("text", "")
+                        if thought:
+                            yield f"<thought>{thought}</thought>"
+                        if text:
+                            yield text

@@ -57,6 +57,6 @@ class NvidiaAdapter:
     def hard_reset(self, history_override: Optional[List] = None):
         self.history = history_override or [{"role": "system", "content": self.system_instruction}]
 
-    def get_chat_history(self) -> List: return self.history
+    def get_history(self) -> List: return self.history
     def inject_message(self, role: str, content: str): self.history.append({"role": role, "content": content})
     def count_tokens(self, contents: Any) -> int: return 0

@@ -32,11 +32,6 @@
         },
         {
             "provider": "NVIDIA",
-            "model": "meta/llama-3.1-405b-instruct",
-            "temp": 0.3
-        },
-        {
-            "provider": "NVIDIA",
             "model": "stockmark/stockmark-2-100b-instruct",
             "temp": 0.3
         },
