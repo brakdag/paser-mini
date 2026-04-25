@@ -9,6 +9,8 @@ class NvidiaAdapter:
     def __init__(self):
         self.api_key = os.getenv("NVIDIA_API_KEY")
         self.client = NvidiaRestClient()
+        from .retry_handler import NvidiaRetryHandler
+        self.retry_handler = NvidiaRetryHandler()
         self._current_model = "meta/llama-3.1-405b-instruct"
         self.history: Any = []
         self.system_instruction = ""
@@ -25,7 +27,7 @@ class NvidiaAdapter:
         self.history.append({"role": "user", "content": message})
         try:
             payload = {"model": self._current_model, "messages": self.history, "temperature": self.temperature, "max_tokens": max_tokens}
-            response = self.client.chat_completions(payload)
+            response = self.retry_handler.execute(self.client.chat_completions, payload)
             content = response.get("choices", [{}])[0].get("message", {}).get("content", "")
             self.history.append({"role": "assistant", "content": content})
             return content

@@ -58,11 +58,13 @@ class CommandHandler:
                 self.chat_manager.save_config("context_window_limit", tokens)
                 self.chat_manager.save_config("rpm_limit", rpm)
                 self.chat_manager.save_config("tpm_limit", tpm)
+                self.chat_manager.save_config("auto_rpm_enabled", tpm > 0)
                 self.chat_manager.context_window_limit = tokens
                 self.chat_manager.rpm_limit = rpm
                 self.chat_manager.tpm_limit = tpm
+                self.chat_manager.auto_rpm_enabled = (tpm > 0)
                 self.ui.display_info(
-                    f"Context window: {tokens} | RPM: {rpm} | TPM: {tpm}"
+                    f"Context window: {tokens} | RPM: {rpm} | TPM: {tpm} | Auto-RPM: {'ON' if tpm > 0 else 'OFF'}"
                 )
             except ValueError:
                 self.ui.display_error("Tokens, RPM, and TPM must be integers.")
