@@ -66,4 +66,7 @@ class NvidiaAdapter:
 
     def get_history(self) -> List: return self.history
     def inject_message(self, role: str, content: str): self.history.append({"role": role, "content": content})
-    def count_tokens(self, contents: Any) -> int: return 0
+    def count_tokens(self, contents: Any) -> int:
+        # Simple estimation: 1 token ~= 4 characters
+        total_chars = sum(len(str(msg.get("content", ""))) for msg in contents)
+        return total_chars // 4

@@ -15,7 +15,9 @@ class NvidiaRetryHandler:
                 return func(*args, **kwargs)
             except httpx.HTTPStatusError as e:
                 if e.response.status_code == 429 and retries < self.max_retries:
-                    retry_after = float(e.response.headers.get("Retry-After", 2 ** retries))
+                    retry_after_header = e.response.headers.get("Retry-After")
+                    retry_after = float(retry_after_header) if retry_after_header and retry_after_header.isdigit() else (2 ** retries)
+                    print(f"Error 429 NVIDIA {retry_after}s")
                     logger.warning(f"Rate limited (429). Retrying in {retry_after}s...")
                     time.sleep(retry_after)
                     retries += 1

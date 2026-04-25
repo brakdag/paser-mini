@@ -26,6 +26,7 @@ class RetryHandler:
                     raise e
                 
                 delay = errors.get_retry_delay(e, retries, self.default_delay)
+                print(f"Error {e} Gemini {delay}s")
                 logger.warning(f"API Retry {retries + 1}/{self.max_retries} in {delay}s due to: {e}")
                 time.sleep(delay)
                 retries += 1
