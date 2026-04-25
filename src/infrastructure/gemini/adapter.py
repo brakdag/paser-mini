@@ -112,6 +112,12 @@ class GeminiAdapter:
     def hard_reset(self, history_override: Optional[List[dict]] = None):
         self.history = history_override if history_override is not None else []
 
+    def save_snapshot(self) -> bool:
+        # El snapshot manager requiere el historial y la instrucción del sistema
+        # Usamos el último mensaje del historial como referencia si existe
+        last_msg = self.history[-1] if self.history else ""
+        return self.snapshot_manager.save(self.system_instruction, self.history, last_msg)
+
     def get_history(self) -> List[dict]:
         return self.history
 
