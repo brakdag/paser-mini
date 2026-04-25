@@ -13,36 +13,16 @@ from src.core.config_manager import ConfigManager
 from src.core.smart_parser import SmartToolParser
 from src.tools import ToolError
 
-class ToolAttemptTracker:
-    """Tracks tool calls to detect behavioral loops (exact repetitions or repeated failures)."""
-    def __init__(self, max_exact_attempts=5, max_tool_failures=5):
-        self.exact_attempts = {}
-        self.tool_failures = {}
-        self.max_exact_attempts = max_exact_attempts
-        self.max_tool_failures = max_tool_failures
-
-    def record_attempt(self, name, args):
-        args_json = json.dumps(args, sort_keys=True)
-        key = (name, args_json)
-        self.exact_attempts[key] = self.exact_attempts.get(key, 0) + 1
-        return self.exact_attempts[key] <= self.max_exact_attempts
-
-    def record_failure(self, name):
-        self.tool_failures[name] = self.tool_failures.get(name, 0) + 1
-        return self.tool_failures[name] <= self.max_tool_failures
-
-    def record_success(self, name):
-        self.tool_failures[name] = 0
-
-    def reset(self):
-        self.exact_attempts = {}
-        self.tool_failures = {}
+from src.core.tool_tracker import ToolAttemptTracker
 
 logger = logging.getLogger("src")
 
+
 class EmergencyStopException(Exception):
     """Exception raised when the user triggers the emergency stop (Esc key)."""
+
     pass
+
 
 class ChatManager:
     def __init__(self, assistant, tools, system_instruction, ui, instance_mode=False):
@@ -51,33 +31,40 @@ class ChatManager:
         self.system_instruction = system_instruction
         self.ui = ui
         self.instance_mode = instance_mode
-        
+
         # Modularized Components
         self.config_manager = ConfigManager()
         self.tool_parser = SmartToolParser()
-        
+
         self.thinking_enabled = self.config_manager.get("thinking_enabled", False)
         self.temperature = float(self.config_manager.get("default_temperature", 0.7))
-        self.context_window_limit = int(self.config_manager.get("context_window_limit", 250000))
+        self.context_window_limit = int(
+            self.config_manager.get("context_window_limit", 250000)
+        )
         self.rpm_limit = int(self.config_manager.get("rpm_limit", 15))
         self.tpm_limit = int(self.config_manager.get("tpm_limit", 15000))
         self.auto_rpm_enabled = self.config_manager.get("auto_rpm_enabled", False)
         self.timestamps_enabled = self.config_manager.get("timestamps_enabled", False)
         self.safemode = self.config_manager.get("safemode", False)
         from collections import deque
+
         self.last_response_time = 0
         self.request_timestamps = deque()
-        
+
         self.command_handler = CommandHandler(self, ui)
-        
+
         # Executor state
         self.repetition_detector = RepetitionDetector(n=5, max_repeats=5)
-        self.tool_tracker = ToolAttemptTracker()
+        from src.core.execution_engine import ExecutionEngine
+
+        self.engine = ExecutionEngine(
+            self.assistant, self.tools, self.tool_parser, self.ui, self.instance_mode
+        )
         self.session_accessed_nodes = set()
         self.max_turns = 10000
         self.turn_count = 0
         self.stop_requested = False
-        
+
         self.should_exit = False
         self._initialized_event = threading.Event()
         self._init_error = None
@@ -91,27 +78,38 @@ class ChatManager:
 
     async def _wait_for_rate_limit(self):
         if self.auto_rpm_enabled:
-            current_tokens = getattr(self.assistant, '_cached_tokens', 1000)
+            current_tokens = getattr(self.assistant, "_cached_tokens", 1000)
             self.rpm_limit = max(1, int(self.tpm_limit / max(current_tokens, 1000)))
-            logger.debug(f"Auto-RPM: Adjusted limit to {self.rpm_limit} (Cached Tokens: {current_tokens}, TPM: {self.tpm_limit})")
+            logger.debug(
+                f"Auto-RPM: Adjusted limit to {self.rpm_limit} (Cached Tokens: {current_tokens}, TPM: {self.tpm_limit})"
+            )
 
         now = asyncio.get_event_loop().time()
         while self.request_timestamps and now - self.request_timestamps[0] >= 60:
             self.request_timestamps.popleft()
-        
+
         if len(self.request_timestamps) >= self.rpm_limit:
             wait_time = 60 - (now - self.request_timestamps[0])
             if wait_time > 0:
                 logger.warning(f"Rate limit reached. Waiting {wait_time:.2f}s...")
                 await asyncio.sleep(wait_time)
                 return await self._wait_for_rate_limit()
-        
+
         self.request_timestamps.append(asyncio.get_event_loop().time())
 
     def _extract_text(self, response) -> str:
-        return response.text if hasattr(response, "text") and response.text else str(response)
+        return (
+            response.text
+            if hasattr(response, "text") and response.text
+            else str(response)
+        )
 
-    async def execute(self, user_input: Union[str, bytes], thinking_enabled: bool = True, get_confirmation_callback=None) -> str:
+    async def execute(
+        self,
+        user_input: Union[str, bytes],
+        thinking_enabled: bool = True,
+        get_confirmation_callback=None,
+    ) -> str:
         self.stop_requested = False
         self.turn_count = 0
         self.tool_tracker.reset()
@@ -119,12 +117,12 @@ class ChatManager:
         self.turn_count += 1
         if self.turn_count > self.max_turns:
             return "Turn limit exceeded."
-        
+
         if isinstance(user_input, str):
             rep_res = self.repetition_detector.add_text(user_input)
             if rep_res is not True:
                 return f"Repetitive text detected: possible infinite loop. Sequence: '{rep_res}'"
-        
+
         try:
             await self._wait_for_rate_limit()
 
@@ -133,41 +131,55 @@ class ChatManager:
 
             start_time = time.perf_counter()
             response = await asyncio.to_thread(self.assistant.send_message, user_input)
-            self.last_response_time += (time.perf_counter() - start_time)
+            self.last_response_time += time.perf_counter() - start_time
             response_text = self._extract_text(response)
-            
+
             while True:
                 if self.stop_requested:
                     raise EmergencyStopException("Execution interrupted by user.")
-                
+
                 rep_res = self.repetition_detector.add_text(response_text)
                 if rep_res is not True:
                     return f"Repetitive text detected: possible infinite loop. Sequence: '{rep_res}'"
-                
+
                 calls = self.tool_parser.extract_tool_calls(response_text)
-                
-                if not calls: break
-                
+
+                if not calls:
+                    break
+
                 self.turn_count += 1
-                if self.turn_count > self.max_turns: return "Turn limit exceeded."
-                
+                if self.turn_count > self.max_turns:
+                    return "Turn limit exceeded."
+
                 combined_tool_responses = []
                 for call_data, raw_content, err in calls:
                     if self.stop_requested:
-                        raise EmergencyStopException("Ejecución interrumpida por el usuario.")
+                        raise EmergencyStopException(
+                            "Ejecución interrumpida por el usuario."
+                        )
 
                     if call_data is None:
-                        combined_tool_responses.append(self.tool_parser.format_tool_response(err or f"Error de sintaxis: {raw_content}", success=False))
+                        combined_tool_responses.append(
+                            self.tool_parser.format_tool_response(
+                                err or f"Error de sintaxis: {raw_content}",
+                                success=False,
+                            )
+                        )
                         continue
-                    
+
                     name, args = call_data.get("name"), call_data.get("args", {})
-                    
+
                     if not self.tool_tracker.record_attempt(name, args):
                         return f"Tool loop detected: the tool '{name}' has been called too many times with the same arguments."
 
                     # Extract detail for monitoring
                     detail = ""
-                    if name in ["read_file", "write_file", "remove_file", "replace_string"]:
+                    if name in [
+                        "read_file",
+                        "write_file",
+                        "remove_file",
+                        "replace_string",
+                    ]:
                         path = args.get("path", "")
                         detail = os.path.basename(path) if path else ""
                     elif name in ["list_dir", "create_dir"]:
@@ -184,20 +196,39 @@ class ChatManager:
                         detail = f"'{args.get('query', '')}'"
                     elif name == "search_files_pattern":
                         detail = f"pattern: {args.get('pattern', '')}"
-                    
+
                     self.ui.start_tool_monitoring(name, detail)
-                    
+
                     # Yield to the event loop to allow the spinner to render its first frame
                     await asyncio.sleep(0)
-                    
+
                     start_time = asyncio.get_event_loop().time()
-                    
+
                     if name in self.tools:
                         if name == "run_instance" and self.instance_mode:
-                            tr = self.tool_parser.format_tool_response("ERR: Recursion is disabled in this instance to prevent infinite loops.", call_id=call_data.get("id"), success=False)
+                            tr = self.tool_parser.format_tool_response(
+                                "ERR: Recursion is disabled in this instance to prevent infinite loops.",
+                                call_id=call_data.get("id"),
+                                success=False,
+                            )
                             success = False
-                        elif getattr(self, 'safemode', False) and name in ["write_file", "replace_string", "new_agent", "run_python", "analyze_pyright", "remove_file", "rename_path", "copy_file", "restore_file", "code_formatter"]:
-                            tr = self.tool_parser.format_tool_response(f"ERR: Tool '{name}' is disabled in Safe Mode.", call_id=call_data.get("id"), success=False)
+                        elif getattr(self, "safemode", False) and name in [
+                            "write_file",
+                            "replace_string",
+                            "new_agent",
+                            "run_python",
+                            "analyze_pyright",
+                            "remove_file",
+                            "rename_path",
+                            "copy_file",
+                            "restore_file",
+                            "code_formatter",
+                        ]:
+                            tr = self.tool_parser.format_tool_response(
+                                f"ERR: Tool '{name}' is disabled in Safe Mode.",
+                                call_id=call_data.get("id"),
+                                success=False,
+                            )
                             success = False
                         else:
                             try:
@@ -205,45 +236,69 @@ class ChatManager:
                                 if name == "pull_memory":
                                     key = args.get("key")
                                     if key:
-                                        is_first = key not in self.session_accessed_nodes
+                                        is_first = (
+                                            key not in self.session_accessed_nodes
+                                        )
                                         self.session_accessed_nodes.add(key)
-                                        self.ui.display_message(f"🧠 **Memento Pull**: Accessing node #{key} {'(First time)' if is_first else '(Cached)'}")
-                                
-                                result = await asyncio.to_thread(self.tools[name], **args)
-                                
+                                        self.ui.display_message(
+                                            f"🧠 **Memento Pull**: Accessing node #{key} {'(First time)' if is_first else '(Cached)'}"
+                                        )
+
+                                result = await asyncio.to_thread(
+                                    self.tools[name], **args
+                                )
+
                                 if name == "push_memory":
-                                    self.ui.display_message(f"✍️ **Memento Push**: {result}")
-                                
+                                    self.ui.display_message(
+                                        f"✍️ **Memento Push**: {result}"
+                                    )
+
                                 # Visualización especial para la instancia de prueba
                                 if name == "run_instance":
-                                    self.ui.display_message(f"**🚀 Instance Test Output**\n\n```text\n{result}\n```")
-                                
+                                    self.ui.display_message(
+                                        f"**🚀 Instance Test Output**\n\n```text\n{result}\n```"
+                                    )
+
                                 self.tool_tracker.record_success(name)
-                                tr = self.tool_parser.format_tool_response(result, call_id=call_data.get("id"), success=True)
+                                tr = self.tool_parser.format_tool_response(
+                                    result, call_id=call_data.get("id"), success=True
+                                )
                                 success = True
                             except ToolError as te:
                                 if not self.tool_tracker.record_failure(name):
                                     return f"Error loop detected: the tool '{name}' has failed repeatedly."
-                                tr = self.tool_parser.format_tool_response(f"ERR: {str(te)}", call_id=call_data.get("id"), success=False)
+                                tr = self.tool_parser.format_tool_response(
+                                    f"ERR: {str(te)}",
+                                    call_id=call_data.get("id"),
+                                    success=False,
+                                )
                                 success = False
                             except Exception as exc:
                                 if not self.tool_tracker.record_failure(name):
                                     return f"Error loop detected: the tool '{name}' has failed repeatedly."
-                                tr = self.tool_parser.format_tool_response(f"ERR: Unexpected error: {str(exc)}", call_id=call_data.get("id"), success=False)
+                                tr = self.tool_parser.format_tool_response(
+                                    f"ERR: Unexpected error: {str(exc)}",
+                                    call_id=call_data.get("id"),
+                                    success=False,
+                                )
                                 success = False
                     else:
-                        tr = self.tool_parser.format_tool_response(f"Herramienta desconocida: {name}", call_id=call_data.get("id"), success=False)
+                        tr = self.tool_parser.format_tool_response(
+                            f"Herramienta desconocida: {name}",
+                            call_id=call_data.get("id"),
+                            success=False,
+                        )
                         success = False
-                    
+
                     # Ensure the spinner is visible for at least 300ms for better UX
                     # Removed artificial delay for execution speed
                     # elapsed = asyncio.get_event_loop().time() - start_time
                     # if elapsed < 0.3:
                     #     await asyncio.sleep(0.3 - elapsed)
-                    
+
                     self.ui.end_tool_monitoring(name, success=success, detail=detail)
                     combined_tool_responses.append(tr)
-                
+
                 combined_message = "".join(combined_tool_responses)
                 await self._wait_for_rate_limit()
 
@@ -251,25 +306,26 @@ class ChatManager:
                     combined_message = f"|{self.rpm_limit}>{combined_message}"
 
                 start_time = time.perf_counter()
-                response_obj = await asyncio.to_thread(self.assistant.send_message, combined_message)
-                self.last_response_time += (time.perf_counter() - start_time)
+                response_obj = await asyncio.to_thread(
+                    self.assistant.send_message, combined_message
+                )
+                self.last_response_time += time.perf_counter() - start_time
                 response_text = self._extract_text(response_obj)
-                
+
             return response_text
         finally:
             self.ui.stop_all_monitoring()
 
     async def execute_single(self, user_input: str) -> str:
         result = await self.execute(
-            user_input=user_input, 
-            thinking_enabled=self.thinking_enabled
+            user_input=user_input, thinking_enabled=self.thinking_enabled
         )
         return self.tool_parser.clean_response(result) if result else ""
 
     async def run(self, initial_input: Optional[str] = None):
         if not self._initialized_event.is_set():
             await asyncio.to_thread(self._initialize_chat)
-        
+
         if self._init_error:
             return
 
@@ -281,17 +337,19 @@ class ChatManager:
             else:
                 try:
                     result = await self.execute(
-                        user_input=initial_input, 
-                        thinking_enabled=self.thinking_enabled, 
-                        get_confirmation_callback=self.ui.request_input
+                        user_input=initial_input,
+                        thinking_enabled=self.thinking_enabled,
+                        get_confirmation_callback=self.ui.request_input,
                     )
                     if result:
                         cleaned_result = self.tool_parser.clean_response(result)
                         self.ui.add_spacing()
-                        
+
                         if self.timestamps_enabled:
-                            cleaned_result += f"\n\n*Response time: {self.last_response_time:.2f}s*"
-                            
+                            cleaned_result += (
+                                f"\n\n*Response time: {self.last_response_time:.2f}s*"
+                            )
+
                         self.ui.display_message(cleaned_result)
                     self.ui.add_spacing()
                 except EmergencyStopException:
@@ -311,47 +369,53 @@ class ChatManager:
                     current_intervention = None
                 else:
                     user_input = await self.ui.request_input("> ", history=None)
-                
+
             except Exception as e:
                 self.ui.display_error(f"Critical UI Error: {e}")
                 break
-            if not user_input: continue
-            if await self.command_handler.handle(user_input): continue
+            if not user_input:
+                continue
+            if await self.command_handler.handle(user_input):
+                continue
             try:
                 result = await self.execute(
-                    user_input=user_input, 
-                    thinking_enabled=self.thinking_enabled, 
-                    get_confirmation_callback=self.ui.request_input
+                    user_input=user_input,
+                    thinking_enabled=self.thinking_enabled,
+                    get_confirmation_callback=self.ui.request_input,
                 )
                 if result:
                     cleaned_result = self.tool_parser.clean_response(result)
                     self.ui.add_spacing()
-                    
+
                     if self.timestamps_enabled:
-                        cleaned_result += f"\n\n*Response time: {self.last_response_time:.2f}s*"
-                        
+                        cleaned_result += (
+                            f"\n\n*Response time: {self.last_response_time:.2f}s*"
+                        )
+
                     self.ui.display_message(cleaned_result)
-                
+
                 self.ui.add_spacing()
             except EmergencyStopException:
                 self.ui.display_emergency_stop()
                 current_intervention = await self.ui.request_input("> ")
-            except Exception as e: 
+            except Exception as e:
                 self.ui.display_error(f"Error: {e}")
                 self.ui.add_spacing()
 
     def _initialize_chat(self):
         try:
             from src.tools import memory_tools
+
             memory_tools.set_assistant(self.assistant)
             memory_tools.set_chat_manager(self)
-            
+
             model = self.config_manager.get("model_name", "models/gemma-4-31b-it")
-            
+
             self.assistant.start_chat(model, self.system_instruction, self.temperature)
             self._initialized_event.set()
         except Exception as e:
             print(f"CRITICAL CHAT INIT ERROR: {e}")
             import traceback
+
             traceback.print_exc()
             self._init_error = e
