@@ -8,6 +8,7 @@ from .rest_client import GeminiRestClient
 from . import errors
 from .retry_handler import RetryHandler
 from .snapshot_manager import SnapshotManager
+from src.infrastructure.gemini.utils import estimate_tokens
 
 logger = logging.getLogger(__name__)
 
@@ -123,5 +124,4 @@ class GeminiAdapter:
         return self.history
 
     def count_tokens(self, history: List[dict]) -> int:
-        from src.infrastructure.gemini.utils import estimate_tokens
         return estimate_tokens(history)
