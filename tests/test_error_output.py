@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 sys.path.append(os.getcwd())
 
 from src.infrastructure.gemini.adapter import GeminiAdapter
-from google.genai.errors import ClientError
+
 
 class MockAPIError(Exception):
     def __init__(self, message, status_code):

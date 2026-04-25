@@ -71,7 +71,6 @@ class CommandHandler:
             return True
 
         elif input_stripped == '/reset':
-            from google.genai import types
             from src.infrastructure.memento.manager import MementoManager
             from src.tools.file_tools import clear_read_cache
             
@@ -87,12 +86,7 @@ class CommandHandler:
             new_history = []
             if bridge:
                 bridge_msg = f"[MEMENTO LEAP: RESTORED SESSION STATE]\nNode #{bridge['id']} | {bridge['content']}"
-                new_history.append(
-                    types.Content(
-                        role="user",
-                        parts=[types.Part.from_text(text=bridge_msg)]
-                    )
-                )
+                new_history.append({"role": "user", "parts": [{"text": bridge_msg}]})
                 self.ui.display_info(f"Bridge Block #{bridge['id']} restored.")
             else:
                 self.ui.display_info("No Bridge Block found. Starting fresh.")

@@ -12,12 +12,12 @@ description = "Agente autónomo minimalista usando ReAct"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "google-genai",
+    "httpx",
     "prompt_toolkit",
     "rich",
     "pyright",
     "pynput",
-    "openai",
+
     "black",
 ]
 

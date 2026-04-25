@@ -1,8 +1,7 @@
 import os
 import re
 import logging
-from typing import Optional, Union
-from google.genai import types
+from typing import Optional, Union, List, Dict, Any
 
 logger = logging.getLogger(__name__)
 
@@ -10,16 +9,20 @@ def initialize_call_count(save_dir: str) -> int:
     """Finds the last used number in save_langchain to continue numbering."""
     if not os.path.exists(save_dir):
         return 0
-    files = os.listdir(save_dir)
-    numbers = []
-    for f in files:
-        match = re.search(r'lang_chang_(\d+)\.text', f)
-        if match:
-            numbers.append(int(match.group(1)))
-    return max(numbers) if numbers else 0
+    try:
+        files = os.listdir(save_dir)
+        numbers = []
+        for f in files:
+            match = re.search(r'lang_chang_(\d+)\.text', f)
+            if match:
+                numbers.append(int(match.group(1)))
+        return max(numbers) if numbers else 0
+    except Exception as e:
+        logger.error(f"Error initializing call count: {e}")
+        return 0
 
-def save_payload(save_dir: str, call_count: int, system_instruction: Optional[str], history: list, current_message: Union[str, bytes]) -> int:
-    """Saves the full prompt (system + history + current) to disk."""
+def save_payload(save_dir: str, call_count: int, system_instruction: Optional[str], history: List[Dict[str, Any]], current_message: Union[str, bytes]) -> int:
+    """Saves the full prompt (system + history + current) to disk using dictionary-based history."""
     try:
         new_count = call_count + 1
         filename = f"lang_chang_{new_count}.text"
@@ -32,15 +35,22 @@ def save_payload(save_dir: str, call_count: int, system_instruction: Optional[st
         
         lines.append("=== CONVERSATION HISTORY ===")
         for content in history:
-            role = content.role.upper()
+            role = content.get('role', 'unknown').upper()
+            parts = content.get('parts', [])
             text_parts = []
-            for part in content.parts:
-                if hasattr(part, 'text') and part.text:
-                    text_parts.append(part.text)
-                elif hasattr(part, 'inline_data') or (hasattr(part, 'data') and part.data):
-                    text_parts.append("[Binary Data/Image/Audio]")
+            
+            for part in parts:
+                if isinstance(part, dict):
+                    if 'text' in part and part['text']:
+                        text_parts.append(part['text'])
+                    elif 'inline_data' in part:
+                        text_parts.append("[Binary Data/Image/Audio]")
+                    else:
+                        text_parts.append("[Unknown Part]")
+                elif isinstance(part, str):
+                    text_parts.append(part)
                 else:
-                    text_parts.append("[Unknown Part]")
+                    text_parts.append(f"[Unsupported Part Type: {type(part).__name__}]")
             
             lines.append(f"[{role}]: " + "\n".join(text_parts))
             lines.append("-" * 20)
@@ -50,11 +60,12 @@ def save_payload(save_dir: str, call_count: int, system_instruction: Optional[st
         if isinstance(current_message, bytes):
             lines.append("[Audio/Binary Data]")
         else:
-            lines.append(current_message)
+            lines.append(str(current_message))
 
-        if history and history[-1].role.lower() == 'model':
+        if history and history[-1].get('role', '').lower() == 'model':
             last_resp = history[-1]
-            resp_text = " ".join([p.text for p in last_resp.parts if hasattr(p, 'text') and p.text])
+            parts = last_resp.get('parts', [])
+            resp_text = " ".join([p.get('text', '') for p in parts if isinstance(p, dict) and p.get('text')])
             lines.append("\n" + "="*30 + "\n")
             lines.append("=== MODEL RESPONSE ===")
             lines.append(resp_text)
@@ -66,16 +77,10 @@ def save_payload(save_dir: str, call_count: int, system_instruction: Optional[st
         logger.error(f"Failed to save langchain payload: {e}")
         return call_count
 
-def get_history_serializable(history: list) -> list:
-    """Convertir objetos de historial a diccionarios serializables."""
-    return [
-        {"role": content.role, "parts": [part.text for part in content.parts if hasattr(part, 'text') and part.text]}
-        for content in history
-    ]
+def get_history_serializable(history: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Returns the history as is, since it is already composed of serializable dictionaries."""
+    return history
 
-def load_history_contents(history_data: list) -> list:
-    """Convierte datos de historial serializados en objetos types.Content."""
-    return [
-        types.Content(role=item["role"], parts=[types.Part.from_text(text=text) for text in item["parts"]])
-        for item in history_data
-    ]
+def load_history_contents(history_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Returns the history data directly as it is already in the required dictionary format."""
+    return history_data

@@ -13,11 +13,11 @@ class SnapshotManager:
         if not chat_history:
             return False
         
-        # Find the last user message to use as 'current_message'
         last_user_msg = None
         for content in reversed(chat_history):
-            if content.role.lower() == 'user':
-                text_parts = [p.text for p in content.parts if hasattr(p, 'text') and p.text]
+            if content.get('role', '').lower() == 'user':
+                parts = content.get('parts', [])
+                text_parts = [p.get('text', '') for p in parts if p.get('text')]
                 last_user_msg = "\n".join(text_parts)
                 break
         

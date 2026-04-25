@@ -3,14 +3,9 @@ import time
 import base64
 import os
 import json
-from typing import Generator, Optional, Any, Union
-from google import genai
-from google.genai import types
-from google.genai.errors import ClientError
-
+from typing import Generator, Optional, Any, Union, List
+from .rest_client import GeminiRestClient
 from . import errors
-from . import utils
-from . import history
 from .retry_handler import RetryHandler
 from .snapshot_manager import SnapshotManager
 
@@ -18,286 +13,60 @@ logger = logging.getLogger(__name__)
 
 class GeminiAdapter:
     def __init__(self):
-        self.client = genai.Client()
-        self.chat: Any = None
-        self.history: list = []
+        self.client = GeminiRestClient()
+        self.history: List[dict] = []
         self._current_model: Optional[str] = None
         self.system_instruction: Optional[str] = None
         self.temperature: float = 0.7
-        
-        # Modularized Components
         self.retry_handler = RetryHandler()
         self.snapshot_manager = SnapshotManager()
-        self.save_langchain_enabled = False
-        self._cache_path = os.path.join(os.path.dirname(__file__), '..', '..', 'config', 'model_cache.json')
-        self._cached_tokens = 0
-
-    def _get_cached_models(self) -> Optional[list]:
-        """Retrieves available models from cache if it's fresh (less than 24h)."""
-        try:
-            if os.path.exists(self._cache_path):
-                with open(self._cache_path, 'r') as f:
-                    cache = json.load(f)
-                    if time.time() - cache.get('timestamp', 0) < 86400:
-                        return cache.get('models')
-        except Exception as e:
-            logger.warning(f"Error reading model cache: {e}")
-        return None
-
-    def _save_models_to_cache(self, models: list):
-        """Saves available models to cache."""
-        try:
-            with open(self._cache_path, 'w') as f:
-                json.dump({'timestamp': time.time(), 'models': models}, f)
-        except Exception as e:
-            logger.warning(f"Error saving model cache: {e}")
-
-    def _update_token_cache(self):
-        """Updates the cached token count using local estimation."""
-        if not self._current_model:
-            return
-        self._cached_tokens = utils.estimate_tokens(self.history)
-
-    def save_snapshot(self):
-        """Saves the last interaction to disk via SnapshotManager."""
-        return self.snapshot_manager.save(
-            system_instruction=self.system_instruction, 
-            chat_history=self.history, 
-            current_message=""
-        )
 
     def start_chat(self, model_name: str, system_instruction: str, temperature: float):
         self._current_model = model_name
         self.system_instruction = system_instruction
         self.temperature = temperature
-        
-        try:
-            # Try cache first
-            available_models = self._get_cached_models()
-            if available_models is None:
-                available_models = self.get_available_models()
-                self._save_models_to_cache(available_models)
-        except Exception as e:
-            if isinstance(e, ConnectionError):
-                raise e
-            raise ConnectionError(f"Error de conectividad al validar modelos: {e}")
-
-        if model_name not in available_models:
-            logger.warning(f"Modelo {model_name} no encontrado en Gemini. Usando modelo por defecto.")
-            model_name = "models/gemini-2.0-flash"
-        
-        config_params: dict[str, Any] = {"temperature": temperature}
         self.history = []
-        
-        if 'gemini' in model_name.lower():
-            config_params["system_instruction"] = system_instruction
-        else:
-            self.history = [
-                types.Content(
-                    role="user",
-                    parts=[types.Part.from_text(text=f"System Instructions: {system_instruction}")]
-                ),
-                types.Content(
-                    role="model",
-                    parts=[types.Part.from_text(text="Understood. I will follow these instructions.")]
-                ),
-            ]
-
-        if model_name not in available_models:
-            logger.warning(f"Modelo {model_name} no encontrado en Gemini. Usando modelo por defecto.")
-            model_name = "models/gemini-2.0-flash"
-        
-        config_params: dict[str, Any] = {"temperature": temperature}
-        self.history = []
-        
-        if 'gemini' in model_name.lower():
-            config_params["system_instruction"] = system_instruction
-        else:
-            self.history = [
-                types.Content(
-                    role="user",
-                    parts=[types.Part.from_text(text=f"System Instructions: {system_instruction}")]
-                ),
-                types.Content(
-                    role="model",
-                    parts=[types.Part.from_text(text="Understood. I will follow these instructions.")]
-                ),
-            ]
-
-        try:
-            self.chat = self.client.chats.create(
-                model=model_name,
-                config=types.GenerateContentConfig(**config_params),
-                history=self.history
-            )
-            self._update_token_cache()
-        except Exception as e:
-            if errors.is_retryable_error(e):
-                raise ConnectionError(errors.format_api_error(e, lambda err, ret: errors.get_retry_delay(err, ret, self.retry_handler.default_delay)))
-            raise RuntimeError(f"Error al iniciar chat con el modelo {model_name}: {e}")
 
     def send_message_stream(self, message: str) -> Generator[str, None, None]:
-        if not self.chat:
-            yield ""
-            return
+        parts = [{"text": message}]
+        self.history.append({"role": "user", "parts": parts})
+        
+        payload = {"contents": self.history, "generationConfig": {"temperature": self.temperature}}
+        if self.system_instruction:
+            payload["systemInstruction"] = {"parts": [{"text": self.system_instruction}]}
 
-        # Streaming requires a custom loop because it yields values
-        retries = 0
-        while True:
-            try:
-                parts = utils.prepare_message_parts(message)
-                response = self.chat.send_message_stream(parts)
-                chunks = []
-                for chunk in response:
-                    if hasattr(chunk, 'text') and chunk.text:
-                        chunks.append(chunk.text)
-                        yield chunk.text
-                
-                full_text = "".join(chunks)
-                self.history.append(types.Content(role="user", parts=parts))
-                self.history.append(types.Content(role="model", parts=[types.Part.from_text(text=full_text)]))
-                self._update_token_cache()
-                return
-            except Exception as e:
-                if not errors.is_retryable_error(e) or retries >= self.retry_handler.max_retries:
-                    formatted_error = errors.format_api_error(e, lambda err, ret: errors.get_retry_delay(err, ret, self.retry_handler.default_delay))
-                    logger.error(f"API Error: Max retries reached. {formatted_error}")
-                    yield f"\n\u274c {formatted_error}"
-                    return
-                
-                delay = errors.get_retry_delay(e, retries, self.retry_handler.default_delay)
-                logger.warning(f"API Retry {retries + 1}/{self.retry_handler.max_retries} in {delay}s due to: {e}")
-                time.sleep(delay)
-                retries += 1
+        full_text = ""
+        for chunk in self.client.generate_content(self._current_model or "", payload, stream=True):
+            full_text += chunk
+            yield chunk
+        
+        self.history.append({"role": "model", "parts": [{"text": full_text}]})
 
     def send_message(self, message: Union[str, bytes]) -> Any:
-        if not self.chat:
-            return None
-
-        def _do_send():
-            if isinstance(message, bytes):
-                parts = [types.Part.from_bytes(data=message, mime_type="audio/wav")]
-            else:
-                parts = utils.prepare_message_parts(message)
-            
-            response = self.chat.send_message(parts)
-            self.history.append(types.Content(role="user", parts=parts))
-            if hasattr(response, 'text') and response.text:
-                self.history.append(types.Content(role="model", parts=[types.Part.from_text(text=response.text)]))
-            self._update_token_cache()
-            return response
-
-        try:
-            return self.retry_handler.execute(_do_send)
-        except Exception as e:
-            formatted_error = errors.format_api_error(e, lambda err, ret: errors.get_retry_delay(err, ret, self.retry_handler.default_delay))
-            return f"\u274c {formatted_error}"
-
-    def send_audio_message(self, base64_audio: str) -> Any:
-        if not self.chat:
-            return None
-
-        try:
-            audio_bytes = base64.b64decode(base64_audio)
-            return self.send_message(audio_bytes)
-        except Exception as e:
-            logger.exception(f"Error sending audio message: {e}")
-            raise e
-
-    def get_chat_history(self) -> Any:
-        return self.history if self.chat else None
-
-    def get_history(self) -> list:
-        if not self.chat:
-            return []
-        return history.get_history_serializable(self.history)
-
-    def load_history(self, history_data: list, model_name: str, temperature: float):
-        self._current_model = model_name
-        self.history = history.load_history_contents(history_data)
+        parts = [{"text": message}] if isinstance(message, str) else [{"inline_data": {"mime_type": "audio/wav", "data": base64.b64encode(message).decode()}}]
+        self.history.append({"role": "user", "parts": parts})
         
-        self.chat = self.client.chats.create(
-            model=model_name,
-            config=types.GenerateContentConfig(temperature=temperature),
-            history=self.history
-        )
-        self._update_token_cache()
-
-    def get_available_models(self) -> list:
-        try:
-            return utils.get_available_models(self.client)
-        except Exception as e:
-            if errors.is_retryable_error(e):
-                raise ConnectionError(errors.format_api_error(e, lambda err, ret: errors.get_retry_delay(err, ret, self.retry_handler.default_delay)))
-            raise e
+        payload = {"contents": self.history, "generationConfig": {"temperature": self.temperature}}
+        response = self.client.generate_content(self._current_model or "gemini-2.0-flash", payload)
+        
+        text = response.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+        self.history.append({"role": "model", "parts": [{"text": text}]})
+        return text
 
     def inject_message(self, role: str, content: str):
-        """
-        Injects a message directly into the history without sending it to the API.
-        """
-        self.history.append(types.Content(role=role, parts=[types.Part.from_text(text=content)]))
-        self._update_token_cache()
+        self.history.append({"role": role, "parts": [{"text": content}]})
 
-    def check_availability(self, model_name: str) -> bool:
-        """
-        Checks if a model is actually available for the current account.
-        """
-        try:
-            self.client.models.get(model=model_name)
-            return True
-        except Exception as e:
-            if "404" in str(e).lower() or "not found" in str(e).lower():
-                return False
-            return True
+    def load_history(self, history_data: List[dict], model_name: str, temperature: float):
+        self._current_model = model_name
+        self.temperature = temperature
+        self.history = history_data
 
-    def hard_reset(self, history_override: Optional[list] = None):
-        """
-        Performs a hard reset of the chat session. Destroys the current chat object
-        and creates a new one with the provided history (or empty).
-        """
-        if not self._current_model:
-            return
+    def get_available_models(self) -> List[str]:
+        # Placeholder: Implement logic to fetch models via REST if needed
+        return ["gemini-2.0-flash", "gemini-1.5-flash"]
 
-        # Ensure system instruction is preserved
-        self.history = history_override if history_override is not None else []
-        
-        config_params: dict[str, Any] = {"temperature": self.temperature}
-        
-        if 'gemini' in self._current_model.lower():
-            config_params["system_instruction"] = self.system_instruction
-            logger.debug(f"Hard Reset: Using System Instruction: {self.system_instruction[:50]}...")
-        else:
-            # Inject system instruction as first message if not natively supported
-            sys_msg = types.Content(role="user", parts=[types.Part.from_text(text=f"System Instructions: {self.system_instruction}")])
-            self.history = [sys_msg] + self.history
-            logger.debug(f"Hard Reset: Injected System Instruction as message.")
+    def hard_reset(self):
+        self.history = []
 
-        try:
-            self.chat = self.client.chats.create(
-                model=self._current_model,
-                config=types.GenerateContentConfig(**config_params),
-                history=self.history
-            )
-            self._update_token_cache()
-            logger.info("Hard reset performed: New session initialized.")
-        except Exception as e:
-            logger.error(f"Error during hard reset: {e}")
-            raise RuntimeError(f"Failed to perform hard reset: {e}")
-
-    def count_tokens(self, contents: Any) -> int:
-        if not self._current_model:
-            return 0
-        
-        # Return cached value if counting the current history
-        if contents is self.history:
-            return self._cached_tokens
-
-        try:
-            return utils.count_tokens(self.client, self._current_model, contents)
-        except Exception as e:
-            error_msg = str(e).lower()
-            if '404' in error_msg or 'not found' in error_msg:
-                logger.warning(f"Model {self._current_model} not found for token counting. Returning 0.")
-            else:
-                logger.error(f"Error counting tokens: {e}")
-            return 0
+    def get_history(self) -> List[dict]:
+        return self.history
