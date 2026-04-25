@@ -1,14 +1,14 @@
 {
-    "model_name": "models/gemma-4-31b-it",
+    "model_name": "openai/gpt-oss-120b",
     "default_temperature": 0.0,
-    "context_window_limit": 100000,
+    "context_window_limit": 1000000,
     "rpm_limit": 15,
     "sandbox_mode": false,
     "tpm_limit": 250000,
     "auto_rpm_enabled": true,
     "instance_timeout": 1000,
     "timestamps_enabled": true,
-    "provider": "Gemini",
+    "provider": "NVIDIA",
     "favorites": [
         {
             "provider": "Gemini",

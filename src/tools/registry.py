@@ -33,7 +33,8 @@ AVAILABLE_TOOLS = {
     "get_token_count": mt.get_token_count,
     "git_diff": ft.git_diff,
     "restore_file": ft.restore_file,
-    "code_formatter": ft.code_formatter
+    "code_formatter": ft.code_formatter,
+    "concat_file": ft.concat_file
 }
 
 # Load tool definitions (descriptions and params) for the LLM prompt

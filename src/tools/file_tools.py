@@ -205,3 +205,33 @@ def code_formatter(path: str) -> str:
         raise ToolError("Black formatter not found")
     except Exception as e:
         raise ToolError(f"Unexpected error: {str(e)}")
+
+
+def concat_file(destination: str, source: str) -> str:
+    try:
+        dst_path = context.get_safe_path(destination)
+        src_path = context.get_safe_path(source)
+        
+        if not src_path.is_file():
+            raise ToolError('Source file not found')
+        if not dst_path.is_file():
+            raise ToolError('Destination file not found')
+        
+        if is_binary_file(src_path) or is_binary_file(dst_path):
+            raise ToolError('Binary files not supported')
+            
+        dst_content = dst_path.read_text(encoding='utf-8')
+        src_content = src_path.read_text(encoding='utf-8')
+        
+        combined_content = dst_content + src_content
+        if len(combined_content.encode('utf-8')) > FILE_SIZE_LIMIT:
+            raise ToolError('Resulting file would exceed size limit')
+            
+        with tempfile.NamedTemporaryFile('w', dir=dst_path.parent, delete=False, encoding='utf-8') as tf:
+            tf.write(combined_content)
+            temp_name = tf.name
+        Path(temp_name).replace(dst_path)
+        
+        return 'OK'
+    except OSError as e:
+        raise ToolError(f"Concat error: {e.strerror}")

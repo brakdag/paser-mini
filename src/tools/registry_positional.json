@@ -146,5 +146,13 @@
     {
       "path": "string"
     }
+  ],
+  [
+    "concat_file",
+    "Concatenates the content of the source file to the end of the destination file.",
+    {
+      "destination": "string",
+      "source": "string"
+    }
   ]
 ]
