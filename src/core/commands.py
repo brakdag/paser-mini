@@ -29,15 +29,6 @@ class CommandHandler:
                 self.ui.display_info("No interaction found to save.")
             return True
 
-        elif input_stripped == "/t":
-            from src.infrastructure.gemini.utils import estimate_tokens
-
-            history = self.chat_manager.assistant.get_history()
-            real_tokens = self.chat_manager.assistant.count_tokens(history)
-            est_tokens = estimate_tokens(history)
-            self.ui.display_info(f"Context window: {real_tokens} tokens")
-            return True
-
         elif input_stripped == "/sandbox":
             current_mode = self.chat_manager.config_manager.get("sandbox_mode", False)
             new_mode = not current_mode
@@ -57,21 +48,24 @@ class CommandHandler:
 
         elif input_stripped.startswith("/w"):
             parts = input_stripped.split()
-            if len(parts) != 3:
-                self.ui.display_error("Usage: /w <tokens> <rpm_limit>")
+            if len(parts) != 4:
+                self.ui.display_error("Usage: /w <tokens> <rpm_limit> <tpm_limit>")
                 return True
             try:
                 tokens = int(parts[1])
                 rpm = int(parts[2])
+                tpm = int(parts[3])
                 self.chat_manager.save_config("context_window_limit", tokens)
                 self.chat_manager.save_config("rpm_limit", rpm)
+                self.chat_manager.save_config("tpm_limit", tpm)
                 self.chat_manager.context_window_limit = tokens
                 self.chat_manager.rpm_limit = rpm
+                self.chat_manager.tpm_limit = tpm
                 self.ui.display_info(
-                    f"Context window set to {tokens} tokens | RPM limit set to {rpm}"
+                    f"Context window: {tokens} | RPM: {rpm} | TPM: {tpm}"
                 )
             except ValueError:
-                self.ui.display_error("Tokens and RPM must be integers.")
+                self.ui.display_error("Tokens, RPM, and TPM must be integers.")
             return True
 
         elif input_stripped == "/reset":
@@ -107,39 +101,14 @@ class CommandHandler:
                 history.pop()
                 history.pop()
                 self.ui.display_info("Last interaction removed. Reprompting...")
-                asyncio.create_task(self.chat_manager.run(initial_input=new_message))
+                # Reset tool tracker and state before re-running
+                self.chat_manager.tool_tracker.reset()
+                self.chat_manager.turn_count = 0
+                self.chat_manager.should_exit = False
+                await self.chat_manager.run(initial_input=new_message)
                 self.chat_manager.should_exit = True
             else:
                 self.ui.display_error("No interaction to remove.")
-            return True
-
-        elif input_stripped.startswith("/tpm"):
-            parts = input_stripped.split()
-            if len(parts) != 2:
-                self.ui.display_error("Usage: /tpm <TPM> (0 to disable)")
-                return True
-            try:
-                tpm = int(parts[1])
-                if tpm == 0:
-                    self.chat_manager.save_config("auto_rpm_enabled", False)
-                    self.chat_manager.auto_rpm_enabled = False
-                    # Restore the fixed RPM limit from configuration
-                    self.chat_manager.rpm_limit = self.chat_manager.config_manager.get(
-                        "rpm_limit", 15
-                    )
-                    self.ui.display_info(
-                        f"Auto-RPM disabled. RPM limit restored to {self.chat_manager.rpm_limit}."
-                    )
-                else:
-                    self.chat_manager.save_config("tpm_limit", tpm)
-                    self.chat_manager.save_config("auto_rpm_enabled", True)
-                    self.chat_manager.tpm_limit = tpm
-                    self.chat_manager.auto_rpm_enabled = True
-                    self.ui.display_info(
-                        f"Auto-RPM enabled. Target TPM: {tpm}. RPM will adjust dynamically."
-                    )
-            except ValueError:
-                self.ui.display_error("TPM must be an integer.")
             return True
 
         elif input_stripped.startswith("/timeout"):
@@ -166,6 +135,7 @@ class CommandHandler:
                 f"| Model | {self.chat_manager.assistant._current_model} |\n"
                 f"| Temperature | {self.chat_manager.temperature} |\n"
                 f"| Context Window | {self.chat_manager.context_window_limit} tokens |\n"
+                f"| Current Tokens | {self.chat_manager.assistant.count_tokens(self.chat_manager.assistant.get_history())} |\n"
                 f"| TPM Limit | {self.chat_manager.tpm_limit} |\n"
                 f"| Instance Timeout | {self.chat_manager.config_manager.get('instance_timeout', 300)}s |\n"
                 f"| Sandbox Mode | {'ENABLED (Wasmer)' if self.chat_manager.config_manager.get('sandbox_mode', False) else 'DISABLED (VENV)'} |\n"
@@ -196,10 +166,9 @@ class CommandHandler:
                 "/sandbox    - Toggle WebAssembly sandbox mode\n"
                 "/safemode   - Toggle Safe Mode (restricts dangerous tools)\n"
                 "/s          - Save a snapshot of the last interaction\n"
-                "/t          - Display current context window token count\n"
                 "/timeout    - Set the timeout for run_instance (e.g., /timeout 600)\n"
                 "/timestamps - Toggle response time display\n"
-                "/tpm        - Set Auto RPM based on TPM (e.g., /tpm 15000)\n"
+                "/w          - Set window, RPM, and TPM (e.g., /w 250000 15 15000)\n"
                 "/reset      - Hard Reset: Clear history and Leap via Bridge Block\n"
                 "/r <msg>    - Rewrite: Remove last interaction and re-prompt\n"
                 "/connect    - Switch between AI providers (Gemini/NVIDIA)\n"

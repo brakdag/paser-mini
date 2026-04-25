@@ -52,7 +52,12 @@ class NvidiaAdapter:
             return ["meta/llama-3.1-405b-instruct"]
 
     def check_availability(self, model_name: str) -> bool:
-        return True # Simplificado para REST
+        try:
+            payload = {"model": model_name, "messages": [{"role": "user", "content": "hi"}], "max_tokens": 1}
+            self.client.chat_completions(payload)
+            return True
+        except Exception:
+            return False
 
     def hard_reset(self, history_override: Optional[List] = None):
         self.history = history_override or [{"role": "system", "content": self.system_instruction}]

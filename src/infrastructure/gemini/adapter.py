@@ -21,6 +21,13 @@ class GeminiAdapter:
         self.retry_handler = RetryHandler()
         self.snapshot_manager = SnapshotManager()
 
+    def check_availability(self, model_name: str) -> bool:
+        try:
+            self.client.get_model(model_name)
+            return True
+        except Exception:
+            return False
+
     def start_chat(self, model_name: str, system_instruction: str, temperature: float):
         self._current_model = model_name
         self.system_instruction = system_instruction
@@ -109,12 +116,17 @@ class GeminiAdapter:
             logger.error(f"Error fetching models: {e}")
             return ['gemini-2.0-flash', 'gemini-1.5-flash']
 
+    def check_availability(self, model_name: str) -> bool:
+        try:
+            self.client.get_model(model_name)
+            return True
+        except Exception:
+            return False
+
     def hard_reset(self, history_override: Optional[List[dict]] = None):
         self.history = history_override if history_override is not None else []
 
     def save_snapshot(self) -> bool:
-        # El snapshot manager requiere el historial y la instrucción del sistema
-        # Usamos el último mensaje del historial como referencia si existe
         last_msg = self.history[-1] if self.history else ""
         return self.snapshot_manager.save(self.system_instruction, self.history, last_msg)
 

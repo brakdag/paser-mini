@@ -1,6 +1,6 @@
 {
-    "model_name": "models/gemini-3.1-flash-lite-preview",
-    "default_temperature": 0.2,
+    "model_name": "deepseek-ai/deepseek-v4-pro",
+    "default_temperature": 0.0,
     "context_window_limit": 1000000,
     "rpm_limit": 15,
     "sandbox_mode": false,
@@ -8,7 +8,7 @@
     "auto_rpm_enabled": true,
     "instance_timeout": 1000,
     "timestamps_enabled": true,
-    "provider": "Gemini",
+    "provider": "NVIDIA",
     "favorites": [
         {
             "provider": "Gemini",
@@ -94,6 +94,9 @@
         "microsoft/kosmos-2",
         "microsoft/phi-3-vision-128k-instruct",
         "microsoft/phi-3.5-moe-instruct",
+        "mistralai/codestral-22b-instruct-v0.1",
+        "mistralai/mistral-7b-instruct-v0.3",
+        "mistralai/mistral-large",
         "mistralai/mistral-large-2-instruct",
         "mistralai/mixtral-8x22b-v0.1",
         "nv-mistralai/mistral-nemo-12b-instruct",
@@ -111,8 +114,11 @@
         "nvidia/llama-nemotron-embed-vl-1b-v2",
         "nvidia/llama3-chatqa-1.5-70b",
         "nvidia/mistral-nemo-minitron-8b-8k-instruct",
+        "nvidia/nemoretriever-parse",
+        "nvidia/nemotron-4-340b-instruct",
         "nvidia/nemotron-4-340b-reward",
         "nvidia/nemotron-nano-3-30b-a3b",
+        "nvidia/nemotron-parse",
         "nvidia/neva-22b",
         "nvidia/nv-embed-v1",
         "nvidia/nv-embedcode-7b-v1",
@@ -120,12 +126,12 @@
         "nvidia/nv-embedqa-mistral-7b-v2",
         "nvidia/nvclip",
         "nvidia/riva-translate-4b-instruct",
-        "nvidia/vila",
         "snowflake/arctic-embed-l",
         "writer/palmyra-creative-122b",
         "writer/palmyra-fin-70b-32k",
         "writer/palmyra-med-70b",
-        "writer/palmyra-med-70b-32k"
+        "writer/palmyra-med-70b-32k",
+        "zyphra/zamba2-7b-instruct"
     ],
     "safemode": false
 }
