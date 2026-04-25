@@ -1,5 +1,5 @@
 {
-    "model_name": "qwen/qwen3-coder-480b-a35b-instruct",
+    "model_name": "moonshotai/kimi-k2-instruct",
     "default_temperature": 0.0,
     "context_window_limit": 256000,
     "rpm_limit": 40,
@@ -47,11 +47,6 @@
         },
         {
             "provider": "NVIDIA",
-            "model": "moonshotai/kimi-k2-instruct",
-            "temp": 0.3
-        },
-        {
-            "provider": "NVIDIA",
             "model": "nvidia/nemotron-4-340b-instruct",
             "temp": 0.3
         },
@@ -68,6 +63,11 @@
         {
             "provider": "NVIDIA",
             "model": "openai/gpt-oss-120b",
+            "temp": 0.0
+        },
+        {
+            "provider": "NVIDIA",
+            "model": "moonshotai/kimi-k2-instruct",
             "temp": 0.0
         }
     ],
