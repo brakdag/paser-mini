@@ -38,6 +38,13 @@ class GeminiRestClient:
             return self._stream_request(url, payload)
         return self._request_with_retry("POST", url, payload)
 
+    def list_models(self) -> Any:
+        url = f"{self.base_url.replace('/models', '')}/models"
+        with httpx.Client() as client:
+            response = client.get(url, headers=self.headers)
+            response.raise_for_status()
+            return response.json().get("models", [])
+
     def _stream_request(self, url: str, payload: Dict[str, Any]) -> Generator[str, None, None]:
         with httpx.stream("POST", url, headers=self.headers, json=payload, timeout=60.0) as response:
             response.raise_for_status()

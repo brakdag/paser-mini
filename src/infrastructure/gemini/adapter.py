@@ -102,7 +102,12 @@ class GeminiAdapter:
         self.history = history_data
 
     def get_available_models(self) -> List[str]:
-        return ['gemini-2.0-flash', 'gemini-1.5-flash']
+        try:
+            models = self.client.list_models()
+            return [m['name'] for m in models if 'gemini' in m['name'] or 'gemma' in m['name']]
+        except Exception as e:
+            logger.error(f"Error fetching models: {e}")
+            return ['gemini-2.0-flash', 'gemini-1.5-flash']
 
     def hard_reset(self, history_override: Optional[List[dict]] = None):
         self.history = history_override if history_override is not None else []
