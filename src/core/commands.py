@@ -17,9 +17,9 @@ class CommandHandler:
         input_stripped = user_input.strip()
 
         # Salida
+        from src.core.command_handlers.system import SystemCommands
         if input_stripped.lower() in (":q", "/q", "/quit", "/exit"):
-            self.chat_manager.should_exit = True
-            return True
+            return SystemCommands.handle_exit(self.chat_manager)
 
         # Guardado de historial (Langchain)
         elif input_stripped == "/s":
@@ -127,24 +127,12 @@ class CommandHandler:
             return True
 
         elif input_stripped == "/clear":
-            os.system("cls" if os.name == "nt" else "clear")
-            return True
+            from src.core.command_handlers.system import SystemCommands
+            return SystemCommands.handle_clear(self.ui)
 
         elif input_stripped == "/config":
-            config_info = (
-                "| Setting | Value |\n"
-                "| :--- | :--- |\n"
-                f"| Model | {self.chat_manager.assistant._current_model} |\n"
-                f"| Temperature | {self.chat_manager.temperature} |\n"
-                f"| Context Window | {self.chat_manager.context_window_limit} tokens |\n"
-                f"| Current Tokens | {self.chat_manager.assistant.count_tokens(self.chat_manager.assistant.get_history())} |\n"
-                f"| TPM Limit | {self.chat_manager.tpm_limit} |\n"
-                f"| Instance Timeout | {self.chat_manager.config_manager.get('instance_timeout', 300)}s |\n"
-                f"| Sandbox Mode | {'ENABLED (Wasmer)' if self.chat_manager.config_manager.get('sandbox_mode', False) else 'DISABLED (VENV)'} |\n"
-                f"| Safe Mode | {'ENABLED' if self.chat_manager.config_manager.get('safemode', False) else 'DISABLED'} |"
-            )
-            self.ui.display_panel("Current Configuration", config_info, style="blue")
-            return True
+            from src.core.command_handlers.config import ConfigCommands
+            return ConfigCommands.handle_config(self.chat_manager, self.ui)
 
         elif input_stripped == "/timestamps":
             current = self.chat_manager.config_manager.get("timestamps_enabled", False)
@@ -271,76 +259,8 @@ class CommandHandler:
             return True
 
         elif input_stripped.startswith("/models"):
-            parts = input_stripped.split()
-            models = self.chat_manager.assistant.get_available_models()
-            unavailable = self.chat_manager.config_manager.get("unavailable_models", [])
-
-            # 1. Determine Model
-            if len(parts) == 1:
-                header = "| ID | Model | ID | Model |\n|---|---|---|---|\n"
-                rows = []
-                for i in range(0, len(models), 2):
-                    m1 = models[i]
-                    if m1 in unavailable:
-                        m1 = f"~~{m1}~~"
-
-                    m2 = ""
-                    idx2 = ""
-                    if i + 1 < len(models):
-                        m2 = models[i + 1]
-                        if m2 in unavailable:
-                            m2 = f"~~{m2}~~"
-                        idx2 = str(i + 1)
-
-                    rows.append(f"| {i} | {m1} | {idx2} | {m2} |")
-                self.ui.display_message(
-                    f"Available models (~~ = unavailable):\n\n{header}"
-                    + "\n".join(rows)
-                )
-                choice = await self.ui.request_input("Modelo: ")
-                try:
-                    idx = int(choice)
-                    model_name = models[idx]
-                except (ValueError, IndexError):
-                    self.ui.display_error("Invalid model index.")
-                    return True
-            else:
-                try:
-                    idx = int(parts[1])
-                    model_name = models[idx]
-                except (ValueError, IndexError):
-                    self.ui.display_error("Invalid model index provided.")
-                    return True
-
-            # 2. Determine Temperature
-            if len(parts) >= 3:
-                try:
-                    new_temp = float(parts[2])
-                except ValueError:
-                    self.ui.display_error("Invalid temperature. Using default.")
-                    new_temp = self.chat_manager.temperature
-            else:
-                temp_input = await self.ui.request_input(
-                    f"Temp (0-1, default {self.chat_manager.temperature}): "
-                )
-                try:
-                    new_temp = float(temp_input or self.chat_manager.temperature)
-                except ValueError:
-                    self.ui.display_error("Invalid temperature. Using default.")
-                    new_temp = self.chat_manager.temperature
-
-            # 3. Persist and Apply
-            self.chat_manager.save_config("model_name", model_name)
-            self.chat_manager.save_config("default_temperature", new_temp)
-            self.chat_manager.temperature = new_temp
-            self.chat_manager.assistant.start_chat(
-                model_name, self.chat_manager.system_instruction, new_temp
-            )
-
-            self.ui.display_info(
-                f"Modelo cambiado a {model_name} | Temperatura: {new_temp}"
-            )
-            return True
+            from src.core.command_handlers.models import ModelCommands
+            return ModelCommands.handle_models(self.chat_manager, self.ui, input_stripped.split())
 
         elif input_stripped.startswith("/fav"):
             if input_stripped.startswith("/fav+"):

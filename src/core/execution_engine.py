@@ -20,31 +20,19 @@ class ExecutionEngine:
         self.stop_requested = False
 
     async def execute_tool_call(self, name, args, call_data):
-        # Logic moved from ChatManager.execute
-        if name == "run_instance" and self.instance_mode:
-            return (
-                self.tool_parser.format_tool_response(
-                    "ERR: Recursion disabled.",
-                    call_id=call_data.get("id"),
-                    success=False,
-                ),
-                False,
-            )
+        if not self.tool_tracker.record_attempt(name, args):
+            return self.tool_parser.format_tool_response(f"Tool loop detected: '{name}' called too many times.", call_id=call_data.get("id"), success=False), False
 
+        if name not in self.tools:
+            return self.tool_parser.format_tool_response(f"Herramienta desconocida: {name}", call_id=call_data.get("id"), success=False), False
+
+        if name == "run_instance" and self.instance_mode:
+            return self.tool_parser.format_tool_response("ERR: Recursion disabled.", call_id=call_data.get("id"), success=False), False
+        
         try:
             result = await asyncio.to_thread(self.tools[name], **args)
             self.tool_tracker.record_success(name)
-            return (
-                self.tool_parser.format_tool_response(
-                    result, call_id=call_data.get("id"), success=True
-                ),
-                True,
-            )
+            return self.tool_parser.format_tool_response(result, call_id=call_data.get("id"), success=True), True
         except Exception as e:
             self.tool_tracker.record_failure(name)
-            return (
-                self.tool_parser.format_tool_response(
-                    f"ERR: {str(e)}", call_id=call_data.get("id"), success=False
-                ),
-                False,
-            )
+            return self.tool_parser.format_tool_response(f"ERR: {str(e)}", call_id=call_data.get("id"), success=False), False
