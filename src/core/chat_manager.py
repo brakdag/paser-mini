@@ -112,7 +112,7 @@ class ChatManager:
     ) -> str:
         self.stop_requested = False
         self.turn_count = 0
-        self.tool_tracker.reset()
+        self.engine.tool_tracker.reset()
         self.last_response_time = 0
         self.turn_count += 1
         if self.turn_count > self.max_turns:
