@@ -11,16 +11,15 @@ class MementoDB:
     def __init__(self, db_path: Optional[str] = None):
         """Inicializa la base de datos y configura la conexión SQLite."""
         if db_path is None:
-            # Resolve absolute path relative to this file
-            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-            db_path = os.path.join(base_dir, "paser", "config", "paser_memory.db")
+            # Use the directory where the application is installed (src/config/)
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            db_path = os.path.join(base_dir, "config", "paser_memory.db")
         
         # Ensure directory exists
         os.makedirs(os.path.dirname(db_path), exist_ok=True)
         
         self.db_path = db_path
         # Persistent connection for the lifetime of the DB instance
-        # check_same_thread=False allows the connection to be used across different threads if necessary
         self._conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         # Enable WAL mode for better concurrency
@@ -28,26 +27,8 @@ class MementoDB:
         self._init_db()
 
     def get_connection(self) -> sqlite3.Connection:
-        """Devuelve la conexión SQLite activa.
-        Se expone como método público para que otras clases (p.ej. MementoManager)
-        puedan usarla sin romper el encapsulamiento interno.
-        """
+        """Devuelve la conexión SQLite activa."""
         return self._conn
-        if db_path is None:
-            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-            db_path = os.path.join(base_dir, "paser", "config", "paser_memory.db")
-        
-        os.makedirs(os.path.dirname(db_path), exist_ok=True)
-        
-        self.db_path = db_path
-        self._conn = sqlite3.connect(self.db_path, check_same_thread=False)
-        # Expose public accessor for the SQLite connection
-        self.get_connection = lambda: self._conn
-        self._conn.row_factory = sqlite3.Row
-        
-        # Enable WAL mode for concurrency
-        self._conn.execute("PRAGMA journal_mode=WAL;")
-        self._init_db()
 
     def _init_db(self):
         with self._conn:
