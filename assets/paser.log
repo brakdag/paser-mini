@@ -1,6 +1,0 @@
-{"timestamp": "2026-04-05T22:51:55.386595", "level": "WARNING", "logger": "tools", "message": "Path traversal attempt: /mnt/DataSD/sandbox/charla"}
-{"timestamp": "2026-04-05T22:51:55.391932", "level": "ERROR", "logger": "tools", "message": "Error al listar archivos en /mnt/DataSD/sandbox/charla: Acceso fuera del directorio permitido."}
-{"timestamp": "2026-04-05T22:53:16.751218", "level": "INFO", "logger": "tools", "message": "Archivo 'TODO_NOTIFY.md' escrito exitosamente."}
-{"timestamp": "2026-04-05T22:56:04.164851", "level": "WARNING", "logger": "tools", "message": "Path traversal attempt: /paser"}
-{"timestamp": "2026-04-05T22:56:04.165382", "level": "ERROR", "logger": "tools", "message": "Error al listar archivos en /paser: Acceso fuera del directorio permitido."}
-{"timestamp": "2026-04-05T22:57:25.376162", "level": "INFO", "logger": "tools", "message": "Archivo 'TODO_NOTIFY.md' escrito exitosamente."}

@@ -1,13 +1,17 @@
 import logging
 import re
-from typing import Optional
+from typing import Optional, Any
 
 logger = logging.getLogger(__name__)
 
-def is_retryable_error(e: Exception) -> bool:
-    error_msg = str(e).lower()
+def is_retryable_error(e: Any) -> bool:
     status_code = getattr(e, 'status_code', None)
+    response = getattr(e, 'response', None)
+    if response:
+        status_code = getattr(response, 'status_code', status_code)
+    
     if status_code in [429, 500, 503, 504]: return True
+    error_msg = str(e).lower()
     if any(code in error_msg for code in ['429', '500', '503', '504']) or 'quota' in error_msg or 'resource exhausted' in error_msg:
         return True
     if any(kw in error_msg for kw in ['connection', 'network', 'timeout', 'socket']):
