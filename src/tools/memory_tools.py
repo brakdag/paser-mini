@@ -42,6 +42,11 @@ def pull_memory(scope: Optional[str] = None, key: Optional[str] = None, directio
         direction (str, optional): 'next', 'prev', 'up', 'down' for graph navigation.
     """
     try:
+        # Apply 'The Mirror' effect: default to fractal/next if no arguments provided
+        if scope is None and key is None and direction is None:
+            scope = "fractal"
+            direction = "next"
+
         # Convert empty strings to None to ensure the Mirror effect and optional logic work correctly
         s = scope if scope not in (None, "") else None
         k = key if key not in (None, "") else None

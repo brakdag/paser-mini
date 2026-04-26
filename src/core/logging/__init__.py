@@ -5,8 +5,8 @@ def setup_logger(debug: bool = False):
     logger = logging.getLogger("src")
     if not logger.handlers:
         # Determine log path: application root/config/src.log
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-        log_path = os.path.join(base_dir, "config", "src.log")
+        base_dir = os.path.dirname(__file__)
+        log_path = os.path.join(base_dir, "src.log")
         
         # File handler for all logs
         file_handler = logging.FileHandler(log_path)
