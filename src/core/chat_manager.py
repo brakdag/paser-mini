@@ -5,7 +5,8 @@ import asyncio
 import threading
 import logging
 import time
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, Callable
+from collections import deque
 
 from src.core.commands import CommandHandler
 from src.core.repetition_detector import RepetitionDetector
@@ -14,6 +15,7 @@ from src.core.smart_parser import SmartToolParser
 from src.tools import ToolError
 
 from src.core.tool_tracker import ToolAttemptTracker
+from src.core.execution_engine import ExecutionEngine
 
 logger = logging.getLogger("src")
 
@@ -46,8 +48,6 @@ class ChatManager:
         self.auto_rpm_enabled = self.config_manager.get("auto_rpm_enabled", False)
         self.timestamps_enabled = self.config_manager.get("timestamps_enabled", False)
         self.safemode = self.config_manager.get("safemode", False)
-        from collections import deque
-
         self.last_response_time = 0
         self.request_timestamps = deque()
 
@@ -55,8 +55,6 @@ class ChatManager:
 
         # Executor state
         self.repetition_detector = RepetitionDetector(n=5, max_repeats=5)
-        from src.core.execution_engine import ExecutionEngine
-
         self.engine = ExecutionEngine(
             self.assistant, self.tools, self.tool_parser, self.ui, self.instance_mode
         )
@@ -107,17 +105,30 @@ class ChatManager:
             else str(response)
         )
 
+    def _process_and_display_result(self, result: str) -> None:
+        """Cleans and displays the assistant's response to the UI."""
+        if not result:
+            return
+
+        cleaned_result = self.tool_parser.clean_response(result)
+        self.ui.add_spacing()
+
+        if self.timestamps_enabled:
+            cleaned_result += f"\n\n*Response time: {self.last_response_time:.2f}s*"
+
+        self.ui.display_message(cleaned_result)
+        self.ui.add_spacing()
+
     async def execute(
         self,
         user_input: Union[str, bytes],
         thinking_enabled: bool = True,
-        get_confirmation_callback=None,
+        get_confirmation_callback: Optional[Callable[[str], Any]] = None,
     ) -> str:
         self.stop_requested = False
-        self.turn_count = 0
+        self.turn_count = 1
         self.engine.tool_tracker.reset()
-        self.last_response_time = 0
-        self.turn_count += 1
+        self.last_response_time = 0.0
         if self.turn_count > self.max_turns:
             return "Turn limit exceeded."
 
@@ -176,7 +187,7 @@ class ChatManager:
                     )
                     combined_tool_responses.append(tr)
 
-                combined_message = "".join(combined_tool_responses)
+                combined_message = "\n".join(combined_tool_responses)
                 await self._wait_for_rate_limit()
 
                 if self.auto_rpm_enabled:
@@ -184,7 +195,7 @@ class ChatManager:
 
                 start_time = time.perf_counter()
                 response_obj = await asyncio.to_thread(
-                    self.assistant.send_message, combined_message
+                    self.assistant.send_message, combined_message, "model"
                 )
                 self.last_response_time += time.perf_counter() - start_time
                 response_text = self._extract_text(response_obj)
@@ -218,17 +229,7 @@ class ChatManager:
                         thinking_enabled=self.thinking_enabled,
                         get_confirmation_callback=self.ui.request_input,
                     )
-                    if result:
-                        cleaned_result = self.tool_parser.clean_response(result)
-                        self.ui.add_spacing()
-
-                        if self.timestamps_enabled:
-                            cleaned_result += (
-                                f"\n\n*Response time: {self.last_response_time:.2f}s*"
-                            )
-
-                        self.ui.display_message(cleaned_result)
-                    self.ui.add_spacing()
+                    self._process_and_display_result(result)
                 except EmergencyStopException:
                     self.ui.display_emergency_stop()
                     current_intervention = await self.ui.request_input("> ")
@@ -260,18 +261,7 @@ class ChatManager:
                     thinking_enabled=self.thinking_enabled,
                     get_confirmation_callback=self.ui.request_input,
                 )
-                if result:
-                    cleaned_result = self.tool_parser.clean_response(result)
-                    self.ui.add_spacing()
-
-                    if self.timestamps_enabled:
-                        cleaned_result += (
-                            f"\n\n*Response time: {self.last_response_time:.2f}s*"
-                        )
-
-                    self.ui.display_message(cleaned_result)
-
-                self.ui.add_spacing()
+                self._process_and_display_result(result)
             except EmergencyStopException:
                 self.ui.display_emergency_stop()
                 current_intervention = await self.ui.request_input("> ")
@@ -279,7 +269,7 @@ class ChatManager:
                 self.ui.display_error(f"Error: {e}")
                 self.ui.add_spacing()
 
-    def _initialize_chat(self):
+    def _initialize_chat(self) -> None:
         try:
             from src.tools import memory_tools
 
@@ -291,8 +281,5 @@ class ChatManager:
             self.assistant.start_chat(model, self.system_instruction, self.temperature)
             self._initialized_event.set()
         except Exception as e:
-            print(f"CRITICAL CHAT INIT ERROR: {e}")
-            import traceback
-
-            traceback.print_exc()
+            logger.exception("CRITICAL CHAT INIT ERROR")
             self._init_error = e

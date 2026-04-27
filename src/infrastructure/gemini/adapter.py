@@ -28,9 +28,9 @@ class GeminiAdapter:
         self.temperature = temperature
         self.history = []
 
-    def send_message_stream(self, message: str) -> Generator[str, None, None]:
+    def send_message_stream(self, message: str, role: str = "user") -> Generator[str, None, None]:
         parts = [{"text": message}]
-        self.history.append({"role": "user", "parts": parts})
+        self.history.append({"role": role, "parts": parts})
         
         payload = {"contents": self.history, "generationConfig": {"temperature": self.temperature}}
         if self.system_instruction:
@@ -47,9 +47,9 @@ class GeminiAdapter:
         
         self.history.append({"role": "model", "parts": [{"text": full_text}]})
 
-    def send_message(self, message: Union[str, bytes]) -> Any:
+    def send_message(self, message: Union[str, bytes], role: str = "user") -> Any:
         parts = [{"text": message}] if isinstance(message, str) else [{"inline_data": {"mime_type": "audio/wav", "data": base64.b64encode(message).decode()}}]
-        self.history.append({"role": "user", "parts": parts})
+        self.history.append({"role": role, "parts": parts})
         
         payload = {"contents": self.history, "generationConfig": {"temperature": self.temperature}}
         if self.system_instruction:

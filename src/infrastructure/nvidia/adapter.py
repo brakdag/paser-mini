@@ -1,7 +1,8 @@
 import os
 import logging
-from typing import Generator, Any, List, Optional
+from typing import Generator, Any, List, Optional, Union
 from .rest_client import NvidiaRestClient
+from .snapshot_manager import SnapshotManager
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +17,7 @@ class NvidiaAdapter:
         self.system_instruction = ""
         self.temperature = 0.7
         self._availability_cache = {}
+        self.snapshot_manager = SnapshotManager()
 
     def start_chat(self, model_name: str, system_instruction: str, temperature: float):
         self.system_instruction = system_instruction
@@ -23,8 +25,9 @@ class NvidiaAdapter:
         self._current_model = model_name if model_name else "meta/llama-3.1-405b-instruct"
         self.history = [{"role": "system", "content": system_instruction}]
 
-    def send_message(self, message: str, max_tokens: int = 512) -> str:
-        self.history.append({"role": "user", "content": message})
+    def send_message(self, message: str, role: str = "user", max_tokens: int = 512) -> str:
+        api_role = "assistant" if role == "model" else role
+        self.history.append({"role": api_role, "content": message})
         try:
             payload = {"model": self._current_model, "messages": self.history, "temperature": self.temperature, "max_tokens": max_tokens}
             response = self.retry_handler.execute(self.client.chat_completions, payload)
@@ -34,8 +37,9 @@ class NvidiaAdapter:
         except Exception as e:
             return f"Error: {str(e)}"
 
-    def send_message_stream(self, message: str, max_tokens: int = 512) -> Generator[str, None, None]:
-        self.history.append({"role": "user", "content": message})
+    def send_message_stream(self, message: str, role: str = "user", max_tokens: int = 512) -> Generator[str, None, None]:
+        api_role = "assistant" if role == "model" else role
+        self.history.append({"role": api_role, "content": message})
         try:
             payload = {"model": self._current_model, "messages": self.history, "temperature": self.temperature, "max_tokens": max_tokens}
             full_content = ""
@@ -70,3 +74,7 @@ class NvidiaAdapter:
         # Simple estimation: 1 token ~= 4 characters
         total_chars = sum(len(str(msg.get("content", ""))) for msg in contents)
         return total_chars // 4
+
+    def save_snapshot(self) -> bool:
+        last_msg = str(self.history[-1]) if self.history else ""
+        return self.snapshot_manager.save(self.system_instruction, self.history, last_msg)
