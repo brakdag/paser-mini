@@ -195,7 +195,7 @@ class ChatManager:
 
                 start_time = time.perf_counter()
                 response_obj = await asyncio.to_thread(
-                    self.assistant.send_message, combined_message, "model"
+                    self.assistant.send_message, combined_message, "user"
                 )
                 self.last_response_time += time.perf_counter() - start_time
                 response_text = self._extract_text(response_obj)
