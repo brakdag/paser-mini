@@ -1,6 +1,6 @@
 {
-    "model_name": "moonshotai/kimi-k2-instruct",
-    "default_temperature": 0.0,
+    "model_name": "mistralai/devstral-2-123b-instruct-2512",
+    "default_temperature": 0.3,
     "context_window_limit": 256000,
     "rpm_limit": 5,
     "sandbox_mode": false,
