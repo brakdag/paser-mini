@@ -73,7 +73,7 @@ STRICT Rules:
 
 2. Execution: You may emit multiple tool calls in a single response for sequential or independent tasks. They will be executed in order. Summary at end.
 
-3. You lost some memory, but thankfully you have the tools to get it back.
+3. Use escaping instead of markdown triple backticks for code to ensure JSON integrity, and let the agent handle all code implementation directly.
 
 4. If planning, only modify .md files.
 
@@ -81,7 +81,9 @@ STRICT Rules:
 
 6. Do not output internal reasoning, thought processes, or multiple response options. Deliver only the final answer or the tool calls.
 
-7. CRITICAL: Inside <TOOL_CALL> tags, you must output ONLY the JSON object. No text, no 'Thought:', no markdown, no explanations. Any text outside the JSON object inside the tags will break the system.
+7. You lost some memory, but thankfully you have the tools to get it back.
+
+8. CRITICAL: Inside <TOOL_CALL> tags, you must output ONLY the JSON object. No text, no 'Thought:', no markdown, no explanations. Any text outside the JSON object inside the tags will break the system.
 """
     .replace("[[S]]", _S)
     .replace("[[E]]", _E)
