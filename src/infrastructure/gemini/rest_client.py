@@ -16,7 +16,7 @@ class GeminiRestClient:
     def _request(self, method: str, url: str, payload: Dict[str, Any], stream: bool = False) -> Any:
         start_time = time.perf_counter()
         with httpx.Client() as client:
-            response = client.post(url, headers=self.headers, json=payload, timeout=60.0)
+            response = client.post(url, headers=self.headers, json=payload, timeout=360.0)
             latency = time.perf_counter() - start_time
             response.raise_for_status()
             logger.info(f"Gemini API Latency: {latency:.2f}s")
@@ -38,7 +38,7 @@ class GeminiRestClient:
             return response.json().get("models", [])
 
     def _stream_request(self, url: str, payload: Dict[str, Any]) -> Generator[str, None, None]:
-        with httpx.stream("POST", url, headers=self.headers, json=payload, timeout=60.0) as response:
+        with httpx.stream("POST", url, headers=self.headers, json=payload, timeout=360.0) as response:
             response.raise_for_status()
             for line in response.iter_lines():
                 if line.startswith("data: "):
