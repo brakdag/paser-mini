@@ -114,6 +114,46 @@ class CommandHandler:
                 self.ui.display_error("No interaction to remove.")
             return True
 
+        elif input_stripped.startswith("/en") or input_stripped.startswith("/eng"):
+            # Determine which prefix was used to slice correctly
+            prefix_len = 4 if input_stripped.startswith("/en") else 5
+            text_to_translate = input_stripped[prefix_len:].strip()
+
+            if text_to_translate:
+                # Mode 1: Specific Text Translation
+                prompt = f"Translate the following text to English. Return ONLY the translation: {text_to_translate}"
+                translated = await self.chat_manager.execute_single(prompt)
+                self.ui.display_info(f"Translated: {translated}")
+                self.chat_manager.assistant.send_message(translated, role="user")
+            else:
+                # Mode 2: Massive Context Translation
+                self.ui.display_info("Translating entire context window to English... Please wait.")
+                history = self.chat_manager.assistant.get_history()
+                if not history:
+                    self.ui.display_error("No history to translate.")
+                else:
+                    translation_prompt = (
+                        "Translate the following conversation history to English. "
+                        "Maintain the exact JSON structure: a list of objects with 'role' and 'parts' "
+                        "(where 'parts' is a list of objects with 'text'). "
+                        "Return ONLY the raw JSON array. Do not add markdown formatting, backticks, or explanations.\n\n"
+                        f"History: {json.dumps(history, ensure_ascii=False)}"
+                    )
+                    try:
+                        translated_json_str = await self.chat_manager.execute_single(translation_prompt)
+                        # Clean potential markdown backticks if the LLM ignored instructions
+                        cleaned_json = translated_json_str.strip().removeprefix('```json').removeprefix('```').removesuffix('```').strip()
+                        translated_history = json.loads(cleaned_json)
+                        
+                        if isinstance(translated_history, list):
+                            self.chat_manager.assistant.hard_reset(history_override=translated_history)
+                            self.ui.display_info("Context window successfully translated to English.")
+                        else:
+                            raise ValueError("Translated content is not a list.")
+                    except Exception as e:
+                        self.ui.display_error(f"Failed to translate context: {e}")
+            return True
+
         elif input_stripped.startswith("/timeout"):
             parts = input_stripped.split()
             if len(parts) != 2:
@@ -164,6 +204,7 @@ class CommandHandler:
                 "/w          - Set window, RPM, and TPM (e.g., /w 250000 15 15000)\n"
                 "/reset      - Hard Reset: Clear history and Leap via Bridge Block\n"
                 "/r <msg>    - Rewrite: Remove last interaction and re-prompt\n"
+                "/eng        - Translate text or entire context window to English\n"
                 "/connect    - Switch between AI providers (Gemini/NVIDIA)\n"
                 "/shadow     - Connect to a specific shadow model\n"
                 "/q, /quit, /exit - Exit the application\n"

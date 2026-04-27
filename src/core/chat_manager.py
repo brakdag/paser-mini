@@ -269,6 +269,13 @@ class ChatManager:
                 self.ui.display_error(f"Error: {e}")
                 self.ui.add_spacing()
 
+    async def _translate_text(self, text: str) -> str:
+        """Translates text without affecting the main chat history."""
+        prompt = f"Translate the following text to English. Return ONLY the translation: {text}"
+        # Use a temporary execution to avoid history pollution
+        response = await asyncio.to_thread(self.assistant.send_message, prompt)
+        return self._extract_text(response)
+
     def _initialize_chat(self) -> None:
         try:
             from src.tools import memory_tools
