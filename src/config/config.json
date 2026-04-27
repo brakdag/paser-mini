@@ -1,14 +1,14 @@
 {
-    "model_name": "models/gemini-3.1-flash-lite-preview",
-    "default_temperature": 0.2,
-    "context_window_limit": 1000000,
-    "rpm_limit": 15,
+    "model_name": "moonshotai/kimi-k2-instruct",
+    "default_temperature": 0.0,
+    "context_window_limit": 256000,
+    "rpm_limit": 5,
     "sandbox_mode": false,
-    "tpm_limit": 250000,
-    "auto_rpm_enabled": true,
+    "tpm_limit": 0,
+    "auto_rpm_enabled": false,
     "instance_timeout": 1000,
     "timestamps_enabled": true,
-    "provider": "Gemini",
+    "provider": "NVIDIA",
     "favorites": [
         {
             "provider": "Gemini",

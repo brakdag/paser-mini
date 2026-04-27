@@ -85,17 +85,20 @@ class ChatManager:
             )
 
         now = asyncio.get_event_loop().time()
-        while self.request_timestamps and now - self.request_timestamps[0] >= 60:
-            self.request_timestamps.popleft()
+        min_interval = 60.0 / self.rpm_limit
 
-        if len(self.request_timestamps) >= self.rpm_limit:
-            wait_time = 60 - (now - self.request_timestamps[0])
-            if wait_time > 0:
-                logger.warning(f"Rate limit reached. Waiting {wait_time:.2f}s...")
+        if self.request_timestamps:
+            last_request_time = self.request_timestamps[-1]
+            elapsed = now - last_request_time
+            if elapsed < min_interval:
+                wait_time = min_interval - elapsed
+                logger.debug(f"Rate limiting: spacing requests. Waiting {wait_time:.2f}s...")
                 await asyncio.sleep(wait_time)
-                return await self._wait_for_rate_limit()
+                now = asyncio.get_event_loop().time()
 
-        self.request_timestamps.append(asyncio.get_event_loop().time())
+        self.request_timestamps.append(now)
+        if len(self.request_timestamps) > 1:
+            self.request_timestamps.popleft()
 
     def _extract_text(self, response) -> str:
         return (
