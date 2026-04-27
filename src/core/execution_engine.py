@@ -30,7 +30,9 @@ class ExecutionEngine:
             "pull_memory": lambda a: a.get("key", "unknown"),
             "run_instance": lambda a: a.get("target", "unknown"),
             "search_text_global": lambda a: f"'{a.get('query', '')}'",
-            "search_files_pattern": lambda a: f"pattern: {a.get('pattern', '')}"
+            "search_files_pattern": lambda a: f"pattern: {a.get('pattern', '')}",
+            "analyze_pyright": lambda a: os.path.basename(a.get("path", "")),
+            "run_python": lambda a: os.path.basename(a.get("script_path", "")),
         }
 
     async def execute_tool_call(self, name, args, call_data):
