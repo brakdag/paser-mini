@@ -15,9 +15,6 @@ assets/*.png
 !assets/mascot.png
 save_langchain/
 sessions/
-paser/config/config.json
-agent_memory.db
-paser/config/paser_memory.db
 src.log
-src/config/paser_memory*
-src/config/config.json
+paser_memory*
+config.json
