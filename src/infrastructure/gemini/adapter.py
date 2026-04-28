@@ -12,6 +12,7 @@ from src.infrastructure.gemini.utils import estimate_tokens
 
 logger = logging.getLogger(__name__)
 
+from typing import Generator, Optional, Any, Union, List, Dict
 class GeminiAdapter:
     def __init__(self):
         self.client = GeminiRestClient()
@@ -28,14 +29,32 @@ class GeminiAdapter:
         self.temperature = temperature
         self.history = []
 
+    def _build_payload(self) -> Dict[str, Any]:
+        # Create a shallow copy of history to avoid mutating the original list
+        contents = list(self.history)
+        payload = {"contents": contents, "generationConfig": {"temperature": self.temperature}}
+
+        if self.system_instruction:
+            # Gemma 3 does not support the 'systemInstruction' field and returns 400
+            if self._current_model and "gemma-3" in self._current_model.lower():
+                if contents:
+                    # Merge system instruction into the first user message to maintain role sequence
+                    first_msg = contents[0]
+                    if first_msg["role"] == "user":
+                        first_msg["parts"][0]["text"] = f"{self.system_instruction}\n\n{first_msg['parts'][0]['text']}"
+                else:
+                    # Fallback if history is empty (though usually it's not at this point)
+                    payload["contents"].append({"role": "user", "parts": [{"text": self.system_instruction}]})
+            else:
+                payload["systemInstruction"] = {"parts": [{"text": self.system_instruction}]}
+        
+        return payload
+
     def send_message_stream(self, message: str, role: str = "user") -> Generator[str, None, None]:
         parts = [{"text": message}]
         self.history.append({"role": role, "parts": parts})
         
-        payload = {"contents": self.history, "generationConfig": {"temperature": self.temperature}}
-        if self.system_instruction:
-            payload["systemInstruction"] = {"parts": [{"text": self.system_instruction}]}
-
+        payload = self._build_payload()
         full_text = ""
         try:
             for chunk in self.client.generate_content(self._current_model or "", payload, stream=True):
@@ -51,9 +70,7 @@ class GeminiAdapter:
         parts = [{"text": message}] if isinstance(message, str) else [{"inline_data": {"mime_type": "audio/wav", "data": base64.b64encode(message).decode()}}]
         self.history.append({"role": role, "parts": parts})
         
-        payload = {"contents": self.history, "generationConfig": {"temperature": self.temperature}}
-        if self.system_instruction:
-            payload["systemInstruction"] = {"parts": [{"text": self.system_instruction}]}
+        payload = self._build_payload()
 
         try:
             response = self.retry_handler.execute(
