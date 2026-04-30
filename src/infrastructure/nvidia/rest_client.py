@@ -38,6 +38,8 @@ class NvidiaRestClient:
     def _post_request(self, url, payload):
         with httpx.Client() as client:
             response = client.post(url, headers=self.headers, json=payload, timeout=60.0)
+            if response.status_code == 404:
+                return None
             response.raise_for_status()
             return response.json()
 

@@ -9,4 +9,5 @@ class SystemCommands:
     @staticmethod
     def handle_exit(chat_manager):
         chat_manager.should_exit = True
-        return True
+        import sys
+        sys.exit(0)

@@ -58,13 +58,9 @@ class NvidiaAdapter:
             return ["meta/llama-3.1-405b-instruct"]
 
     def check_availability(self, model_name: str) -> bool:
-        try:
-            payload = {"model": model_name, "messages": [{"role": "user", "content": "hi"}], "max_tokens": 1}
-            # Desactivamos el manejo de errores ruidoso para la verificación
-            self.client.chat_completions(payload)
-            return True
-        except Exception:
-            return False
+        payload = {"model": model_name, "messages": [{"role": "user", "content": "hi"}], "max_tokens": 1}
+        result = self.client.chat_completions(payload)
+        return result is not None
 
     def hard_reset(self, history_override: Optional[List] = None):
         self.history = history_override or [{"role": "system", "content": self.system_instruction}]

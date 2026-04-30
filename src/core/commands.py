@@ -269,20 +269,27 @@ class CommandHandler:
             return True
 
         elif input_stripped == "/models_check":
+            """
+            Model Availability Check Logic:
+            We iterate through all available models and attempt a minimal completion request.
+            - If a model returns 404, it is marked as unavailable.
+            - If a model times out (>= 2s), we assume it is available but slow, so we skip marking it as unavailable.
+            - If a model returns any other error (e.g., 400 Bad Request), we treat it as available to avoid false negatives.
+            This approach prioritizes speed and prevents the check from hanging on slow or misconfigured models.
+            """
             models = self.chat_manager.assistant.get_available_models()
             unavailable = []
             self.ui.display_info(
                 f"Checking availability for {len(models)} models... (This may take a while)"
             )
 
+            # Simple progress bar
             for i, model in enumerate(models):
-                # Visual progress
-                if i % 10 == 0:
-                    self.ui.display_info(f"Checking {i}/{len(models)}...")
+                percent = (i + 1) / len(models) * 100
+                bar = "█" * int(percent / 5) + "-" * (20 - int(percent / 5))
+                print(f"\rChecking models: [{bar}] {int(percent)}%", end="", flush=True)
 
                 try:
-                    # Use a timeout to avoid hanging on slow models
-                    # If it times out, we assume it's available because 404s are instant
                     is_available = await asyncio.wait_for(
                         asyncio.to_thread(
                             self.chat_manager.assistant.check_availability, model
@@ -291,8 +298,10 @@ class CommandHandler:
                     )
                     if not is_available:
                         unavailable.append(model)
-                except asyncio.TimeoutError:
+                except (asyncio.TimeoutError, Exception):
+                    # Si hay timeout o error (como 400), asumimos disponible para no bloquear
                     pass
+            print() # New line after progress bar
 
             self.chat_manager.save_config("unavailable_models", unavailable)
             self.ui.display_panel(
