@@ -23,6 +23,17 @@ class NvidiaRestClient:
         if stream:
             return self._stream_request(url, payload)
         
+        from src.infrastructure.nvidia.retry_handler import NvidiaRetryHandler
+        handler = NvidiaRetryHandler()
+        try:
+            return handler.execute(self._post_request, url, payload)
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                print("\n[!] Error: El modelo solicitado no está disponible (404).")
+                return None
+            raise e
+
+    def _post_request(self, url, payload):
         with httpx.Client() as client:
             response = client.post(url, headers=self.headers, json=payload, timeout=60.0)
             response.raise_for_status()

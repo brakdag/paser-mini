@@ -25,6 +25,9 @@ class NvidiaRetryHandler:
                 elif status_code in [500, 502, 503, 504]:
                     delay = 2 ** retries
                     logger.warning(f"Server error ({status_code}). Retrying in {delay}s...")
+                elif status_code == 404:
+                    logger.error("Modelo no encontrado (404). Deteniendo ejecución.")
+                    raise e
                 else:
                     raise e
                 
