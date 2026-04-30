@@ -140,9 +140,6 @@ class ChatManager:
         try:
             await self._wait_for_rate_limit()
 
-            if self.auto_rpm_enabled and isinstance(user_input, str):
-                user_input = f"|{self.rpm_limit}>{user_input}"
-
             start_time = time.perf_counter()
             response = await asyncio.to_thread(self.assistant.send_message, user_input)
             self.last_response_time += time.perf_counter() - start_time
@@ -189,9 +186,6 @@ class ChatManager:
 
                 combined_message = "\n".join(combined_tool_responses)
                 await self._wait_for_rate_limit()
-
-                if self.auto_rpm_enabled:
-                    combined_message = f"|{self.rpm_limit}>{combined_message}"
 
                 start_time = time.perf_counter()
                 response_obj = await asyncio.to_thread(
