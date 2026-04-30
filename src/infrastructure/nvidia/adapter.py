@@ -60,6 +60,7 @@ class NvidiaAdapter:
     def check_availability(self, model_name: str) -> bool:
         try:
             payload = {"model": model_name, "messages": [{"role": "user", "content": "hi"}], "max_tokens": 1}
+            # Desactivamos el manejo de errores ruidoso para la verificación
             self.client.chat_completions(payload)
             return True
         except Exception:

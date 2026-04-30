@@ -1,7 +1,7 @@
 # Paser Mini (Extreme Minimalist Autonomous Agent)
 
 <div align="center">
-  <img src="assets/mascot.png" alt="Paser Mini Mascot" width="200"/>
+  <img src="docs/assets/mascot.png" alt="Paser Mini Mascot" width="200"/>
 </div>
 
 **Paser Mini** is a highly streamlined fork of the original Paser system. It is an autonomous agent powered by Google's Gemini model that employs the **ReAct (Reasoning and Acting)** pattern to execute local functions with zero overhead and maximum efficiency.

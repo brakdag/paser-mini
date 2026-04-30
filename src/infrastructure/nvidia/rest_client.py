@@ -29,7 +29,9 @@ class NvidiaRestClient:
             return handler.execute(self._post_request, url, payload)
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
-                print("\n[!] Error: El modelo solicitado no está disponible (404).")
+                # Solo imprimimos si no es una verificación silenciosa
+                if payload.get("max_tokens") != 1:
+                    print("\n[!] Error: El modelo solicitado no está disponible (404).")
                 return None
             raise e
 
