@@ -34,7 +34,8 @@ AVAILABLE_TOOLS = {
     "git_diff": ft.git_diff,
     "restore_file": ft.restore_file,
     "code_formatter": ft.code_formatter,
-    "concat_file": ft.concat_file
+    "concat_file": ft.concat_file,
+    "verify_implementation": it.verify_implementation
 }
 
 # Load tool definitions (descriptions and params) for the LLM prompt

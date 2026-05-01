@@ -1,7 +1,7 @@
 import json
 import os
 from dataclasses import dataclass, field
-from typing import Any, Optional, ClassVar
+from typing import Any, Optional, ClassVar, Callable
 
 @dataclass
 class ValidationResult:
@@ -9,8 +9,42 @@ class ValidationResult:
     errors: list[str] = field(default_factory=list)
     corrected_args: Optional[dict[str, Any]] = None
 
+class CompiledSchema:
+    """Pre-compiled schema to eliminate runtime interpretation overhead."""
+    def __init__(self, tool_name: str, schema: dict):
+        self.tool_name = tool_name
+        self.required = set(schema.get("required", []))
+        self.additional_allowed = schema.get("additionalProperties", True)
+        self.validators: dict[str, Callable[[Any], Optional[str]]] = {}
+        
+        properties = schema.get("properties", {})
+        for key, prop in properties.items():
+            self.validators[key] = self._compile_validator(key, prop)
+
+    def _compile_validator(self, key: str, prop: dict) -> Callable[[Any], Optional[str]]:
+        expected_type = prop.get("type")
+        
+        if expected_type == "string":
+            return lambda v: None if isinstance(v, str) else f"Argument '{key}' must be a string, got {type(v).__name__}"
+        
+        if expected_type == "array":
+            items_type = prop.get("items", {}).get("type")
+            if items_type == "string":
+                def validate_array(v):
+                    if not isinstance(v, list):
+                        return f"Argument '{key}' must be a list, got {type(v).__name__}"
+                    for i, item in enumerate(v):
+                        if not isinstance(item, str):
+                            return f"Item at index {i} of argument '{key}' must be a string, got {type(item).__name__}"
+                    return None
+                return validate_array
+            
+            return lambda v: None if isinstance(v, list) else f"Argument '{key}' must be a list, got {type(v).__name__}"
+        
+        return lambda v: None
+
 class SchemaValidator:
-    _cached_schemas: ClassVar[dict[str, Any]] = {}
+    _cached_schemas: ClassVar[dict[str, CompiledSchema]] = {}
 
     def __init__(self, schemas_dir: Optional[str] = None):
         if schemas_dir is None:
@@ -30,7 +64,8 @@ class SchemaValidator:
                 tool_name = filename[:-5]
                 try:
                     with open(os.path.join(self.schemas_dir, filename), "r", encoding="utf-8") as f:
-                        SchemaValidator._cached_schemas[tool_name] = json.load(f)
+                        raw_schema = json.load(f)
+                        SchemaValidator._cached_schemas[tool_name] = CompiledSchema(tool_name, raw_schema)
                 except Exception as e:
                     print(f"Error loading schema {filename}: {e}")
 
@@ -39,38 +74,31 @@ class SchemaValidator:
         return SchemaValidator._cached_schemas
 
     def validate(self, tool_name: str, args: Any) -> ValidationResult:
-        if tool_name not in self.schemas:
+        compiled = self.schemas.get(tool_name)
+        if not compiled:
             return ValidationResult(False, [f"Tool '{tool_name}' not found in schema registry."])
 
         if not isinstance(args, dict):
             return ValidationResult(False, [f"Arguments for '{tool_name}' must be a JSON object, got {type(args).__name__}."])
 
-        schema = self.schemas[tool_name]
-        properties = schema.get("properties", {})
-        required = schema.get("required", [])
-        additional_allowed = schema.get("additionalProperties", True)
-
         errors = []
-        for req in required:
-            if req not in args:
+        
+        # O(R) check using set difference
+        missing = compiled.required - args.keys()
+        if missing:
+            for req in missing:
                 errors.append(f"Missing required argument: '{req}'")
 
+        # O(A) check using pre-compiled validator functions
         for key, value in args.items():
-            if key not in properties:
-                if not additional_allowed:
+            validator = compiled.validators.get(key)
+            if not validator:
+                if not compiled.additional_allowed:
                     errors.append(f"Unexpected argument: '{key}'")
                 continue
             
-            expected_type = properties[key].get("type")
-            if expected_type == "string" and not isinstance(value, str):
-                errors.append(f"Argument '{key}' must be a string, got {type(value).__name__}")
-            elif expected_type == "array" and not isinstance(value, list):
-                errors.append(f"Argument '{key}' must be a list, got {type(value).__name__}")
-            elif expected_type == "array":
-                items_type = properties[key].get("items", {}).get("type")
-                if items_type == "string":
-                    for i, item in enumerate(value):
-                        if not isinstance(item, str):
-                            errors.append(f"Item at index {i} of argument '{key}' must be a string, got {type(item).__name__}")
+            err = validator(value)
+            if err:
+                errors.append(err)
 
-        return ValidationResult(len(errors) == 0, errors)
+        return ValidationResult(not errors, errors)

@@ -108,7 +108,7 @@ class MementoDB:
             cursor.execute("SELECT * FROM nodes WHERE is_vital = 1 ORDER BY timestamp ASC")
             tattoos = [dict(row) for row in cursor.fetchall()]
             
-            cursor.execute("SELECT * FROM nodes WHERE type = 'fractal' AND (content LIKE '%Root%' OR teaser LIKE '%Root%') ORDER BY timestamp DESC LIMIT 1")
+            cursor.execute("SELECT * FROM nodes WHERE type = 'fractal' AND (content = 'Root' OR teaser = 'Root' OR teaser LIKE 'Root%') ORDER BY timestamp DESC LIMIT 1")
             root = cursor.fetchone()
             
             return {

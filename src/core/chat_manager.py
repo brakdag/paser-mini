@@ -52,6 +52,8 @@ class ChatManager:
         self.request_timestamps = deque()
 
         self.command_handler = CommandHandler(self, ui)
+        # Link infrastructure retries to UI notifications
+        self.assistant.set_retry_callback(ui.display_info)
 
         # Executor state
         self.repetition_detector = RepetitionDetector(n=5, max_repeats=5)

@@ -154,5 +154,12 @@
       "destination": "string",
       "source": "string"
     }
+  ],
+  [
+    "verify_implementation",
+    "Verifies a code change following the Fresh Instance Rule. Runs --help smoke test and a provided test script.",
+    {
+      "test_script": "string"
+    }
   ]
 ]

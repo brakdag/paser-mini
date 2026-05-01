@@ -103,3 +103,30 @@ def run_python(script_path: str, args: Optional[list] = None) -> str:
         raise
     except Exception as e:
         raise ToolError(f"Error al ejecutar el script Python ({script_path}): {str(e)}")
+
+
+def verify_implementation(test_script: str) -> str:
+    """
+    Verifica la implementación de un cambio siguiendo la Regla de la Instancia Fresca.
+    1. Ejecuta el sistema con --help para asegurar que no haya errores de importación o sintaxis.
+    2. Ejecuta el script de prueba proporcionado.
+    """
+    try:
+        # Step 1: Smoke Test (--help)
+        smoke_result = new_agent(args=["--help"])
+        if "usage: main.py" not in smoke_result and "Paser Mini" not in smoke_result:
+            return f"❌ Smoke Test Failed: The application failed to start correctly.\n\n{smoke_result}"
+        
+        # Step 2: Execution Test
+        test_result = run_python(test_script)
+        
+        return (
+            "✅ Implementation Verified!\n"
+            "--------------------------------------------------\n"
+            "1. Smoke Test (--help): PASSED\n"
+            "2. Execution Test: COMPLETED\n"
+            "--------------------------------------------------\n"
+            f"Test Output:\n{test_result}"
+        )
+    except Exception as e:
+        return f"❌ Verification Error: {str(e)}"

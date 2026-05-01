@@ -1,15 +1,16 @@
 import time
 import logging
-from typing import Callable, Any, TypeVar
+from typing import Callable, Any, TypeVar, Optional
 from . import errors
 
 logger = logging.getLogger(__name__)
 T = TypeVar('T')
 
 class RetryHandler:
-    def __init__(self, max_retries: int = 5, default_delay: float = 5.0):
+    def __init__(self, max_retries: int = 5, default_delay: float = 5.0, on_retry: Optional[Callable[[str], None]] = None):
         self.max_retries = max_retries
         self.default_delay = default_delay
+        self.on_retry = on_retry
 
     def execute(self, func: Callable[..., T], *args, **kwargs) -> T:
         retries = 0
@@ -26,7 +27,12 @@ class RetryHandler:
                     raise e
                 
                 delay = errors.get_retry_delay(e, retries, self.default_delay)
-                # Silencing raw print, logging handles the visibility
-                logger.warning(f"API Retry {retries + 1}/{self.max_retries} in {delay}s due to: {e}")
+                # Notify UI via callback if available
+                msg = f"API Retry {retries + 1}/{self.max_retries} in {delay}s due to: {e}"
+                if self.on_retry:
+                    self.on_retry(msg)
+                else:
+                    logger.warning(msg)
+                
                 time.sleep(delay)
                 retries += 1

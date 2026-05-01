@@ -3,7 +3,7 @@ import time
 import base64
 import os
 import json
-from typing import Generator, Optional, Any, Union, List
+from typing import Generator, Optional, Any, Union, List, Callable
 from .rest_client import GeminiRestClient
 from . import errors
 from .retry_handler import RetryHandler
@@ -22,6 +22,9 @@ class GeminiAdapter:
         self.temperature: float = 0.7
         self.retry_handler = RetryHandler()
         self.snapshot_manager = SnapshotManager()
+
+    def set_retry_callback(self, callback: Callable[[str], None]):
+        self.retry_handler.on_retry = callback
 
     def start_chat(self, model_name: str, system_instruction: str, temperature: float):
         self._current_model = model_name
