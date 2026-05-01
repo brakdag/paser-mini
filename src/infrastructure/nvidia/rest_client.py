@@ -2,7 +2,11 @@ import httpx
 import os
 import json
 import logging
+import asyncio
+import time
+from collections import deque
 from typing import AsyncGenerator, Any, Dict
+from src.core.config_manager import ConfigManager
 
 logger = logging.getLogger(__name__)
 
@@ -16,26 +20,65 @@ class NvidiaRestClient:
             "Accept": "application/json"
         }
         self.client = httpx.AsyncClient(timeout=60.0)
+        self.config_manager = ConfigManager()
+        
+        # Control de RPM Dinámico
+        self._lock = asyncio.Lock()
+        self.request_timestamps = deque()
+
+    async def _apply_rate_limit(self, current_tokens: int = 1000):
+        """
+        Implementa la lógica de ventana deslizante y RPM automático
+        basada en la configuración global del sistema.
+        """
+        async with self._lock:
+            # 1. Obtener configuración actual
+            rpm_limit = int(self.config_manager.get("rpm_limit", 15))
+            tpm_limit = int(self.config_manager.get("tpm_limit", 15000))
+            auto_rpm_enabled = self.config_manager.get("auto_rpm_enabled", False)
+
+            # 2. Ajuste de RPM Automático (Lógica espejo del ChatManager)
+            if auto_rpm_enabled:
+                rpm_limit = max(1, int(tpm_limit / max(current_tokens, 1000)))
+                logger.debug(f"Nvidia Auto-RPM: Adjusted limit to {rpm_limit} based on tokens")
+
+            now = asyncio.get_event_loop().time()
+            min_interval = 60.0 / rpm_limit
+
+            # 3. Ventana Deslizante: Calcular espera basada en la última petición
+            if self.request_timestamps:
+                last_request_time = self.request_timestamps[-1]
+                elapsed = now - last_request_time
+                if elapsed < min_interval:
+                    wait_time = min_interval - elapsed
+                    logger.debug(f"Nvidia Rate Limit: Waiting {wait_time:.2f}s to maintain {rpm_limit} RPM")
+                    await asyncio.sleep(wait_time)
+                    now = asyncio.get_event_loop().time()
+
+            self.request_timestamps.append(now)
+            # Mantenemos solo la última petición para el cálculo de intervalo mínimo
+            if len(self.request_timestamps) > 1:
+                self.request_timestamps.popleft()
 
     async def chat_completions(self, payload: Dict[str, Any], stream: bool = False) -> Any:
         url = f"{self.base_url}/chat/completions"
         payload["stream"] = stream
         
+        # Estimación simple de tokens para el RPM automático
+        token_estimate = 0
+        for msg in payload.get("messages", []):
+            token_estimate += len(str(msg.get("content", ""))) // 4
+        
         if stream:
+            await self._apply_rate_limit(token_estimate)
             return self._stream_request(url, payload)
         
-        from src.infrastructure.nvidia.retry_handler import NvidiaRetryHandler
-        handler = NvidiaRetryHandler()
-        try:
-            return await handler.execute(self._post_request, url, payload)
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == 404:
-                if payload.get("max_tokens") != 1:
-                    print("\n[!] Error: El modelo solicitado no está disponible (404).")
-                return None
-            raise e
+        # Eliminamos el retry_handler interno para evitar el double-retry
+        # El retry es gestionado ahora exclusivamente por el NvidiaAdapter
+        return await self._post_request(url, payload, token_estimate)
 
-    async def _post_request(self, url, payload):
+    async def _post_request(self, url, payload, token_estimate=1000):
+        await self._apply_rate_limit(token_estimate)
         response = await self.client.post(url, headers=self.headers, json=payload)
         if response.status_code == 404:
             return None
@@ -56,6 +99,7 @@ class NvidiaRestClient:
                         continue
 
     async def get(self, endpoint: str) -> Any:
+        await self._apply_rate_limit()
         response = await self.client.get(f"{self.base_url}/{endpoint}", headers=self.headers)
         response.raise_for_status()
         return response.json()

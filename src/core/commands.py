@@ -277,7 +277,7 @@ class CommandHandler:
             - If a model returns any other error (e.g., 400 Bad Request), we treat it as available to avoid false negatives.
             This approach prioritizes speed and prevents the check from hanging on slow or misconfigured models.
             """
-            models = self.chat_manager.assistant.get_available_models()
+            models = await self.chat_manager.assistant.get_available_models()
             unavailable = []
             self.ui.display_info(
                 f"Checking availability for {len(models)} models... (This may take a while)"
@@ -291,9 +291,7 @@ class CommandHandler:
 
                 try:
                     is_available = await asyncio.wait_for(
-                        asyncio.to_thread(
-                            self.chat_manager.assistant.check_availability, model
-                        ),
+                        self.chat_manager.assistant.check_availability(model),
                         timeout=2.0,
                     )
                     if not is_available:
@@ -314,7 +312,7 @@ class CommandHandler:
         elif input_stripped.startswith("/models"):
             from src.core.command_handlers.models import ModelCommands
 
-            return ModelCommands.handle_models(
+            return await ModelCommands.handle_models(
                 self.chat_manager, self.ui, input_stripped.split()
             )
 

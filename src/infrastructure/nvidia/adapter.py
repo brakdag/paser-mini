@@ -1,6 +1,6 @@
 import os
 import logging
-from typing import AsyncGenerator, Any, List, Optional, Union
+from typing import AsyncGenerator, Any, List, Optional, Union, Callable
 from .rest_client import NvidiaRestClient
 from .snapshot_manager import SnapshotManager
 
@@ -18,6 +18,12 @@ class NvidiaAdapter:
         self.temperature = 0.7
         self._availability_cache = {}
         self.snapshot_manager = SnapshotManager()
+        self.retry_callback: Optional[Callable[[str], None]] = None
+
+    def set_retry_callback(self, callback: Callable[[str], None]):
+        """Permite que el ChatManager asigne una función para mostrar reintentos en la UI."""
+        self.retry_callback = callback
+        self.retry_handler.set_callback(callback)
 
     def start_chat(self, model_name: str, system_instruction: str, temperature: float):
         self.system_instruction = system_instruction
@@ -30,6 +36,7 @@ class NvidiaAdapter:
         self.history.append({"role": api_role, "content": message})
         try:
             payload = {"model": self._current_model, "messages": self.history, "temperature": self.temperature, "max_tokens": max_tokens}
+            # El retry_handler ahora es el único responsable de los reintentos
             response = await self.retry_handler.execute(self.client.chat_completions, payload)
             content = response.get("choices", [{}])[0].get("message", {}).get("content", "")
             self.history.append({"role": "assistant", "content": content})
@@ -43,6 +50,7 @@ class NvidiaAdapter:
         try:
             payload = {"model": self._current_model, "messages": self.history, "temperature": self.temperature, "max_tokens": max_tokens}
             full_content = ""
+            # El streaming no suele reintentarse automáticamente para no romper el flujo de tokens
             async for chunk in await self.client.chat_completions(payload, stream=True):
                 full_content += chunk
                 yield chunk
@@ -68,7 +76,6 @@ class NvidiaAdapter:
     def get_history(self) -> List: return self.history
     def inject_message(self, role: str, content: str): self.history.append({"role": role, "content": content})
     def count_tokens(self, contents: Any) -> int:
-        # Simple estimation: 1 token ~= 4 characters
         total_chars = sum(len(str(msg.get("content", ""))) for msg in contents)
         return total_chars // 4
 

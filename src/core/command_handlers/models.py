@@ -1,7 +1,8 @@
 class ModelCommands:
     @staticmethod
-    def handle_models(chat_manager, ui, parts):
-        models = chat_manager.assistant.get_available_models()
+    async def handle_models(chat_manager, ui, parts):
+        # Ahora esperamos la corrutina para obtener la lista real de modelos
+        models = await chat_manager.assistant.get_available_models()
         unavailable = chat_manager.config_manager.get("unavailable_models", [])
 
         if len(parts) == 1:

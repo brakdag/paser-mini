@@ -13,7 +13,7 @@ In Paser Mini, **minimalism is not about the scarcity of tools or code, but abou
 
 Furthermore, the system embraces an **AI-native interface**: a terminal-based environment using NerdFonts and Markdown—the formats where the AI feels most at home.
 
-For detailed operational guidelines on token efficiency and tool usage, refer to [PROTOCOL.md](PROTOCOL.md).
+For detailed operational guidelines on token efficiency and tool usage, refer to [PROTOCOL.md](docs/PROTOCOL.md).
 
 ## Installation
 
