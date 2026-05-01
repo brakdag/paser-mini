@@ -1,6 +1,0 @@
-{
-    "venvPath": ".",
-    "venv": "venv",
-    "include": ["paser"],
-    "exclude": ["**/node_modules", "**/__pycache__", ".git"]
-}

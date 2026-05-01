@@ -161,5 +161,38 @@
     {
       "test_script": "string"
     }
+  ],
+  [
+    "get_json_structure",
+    "Returns the keys and structure of a JSON node at a given path.",
+    {
+      "file_path": "string",
+      "path": "string"
+    }
+  ],
+  [
+    "get_json_node",
+    "Retrieves the content of a specific JSON node using a path.",
+    {
+      "file_path": "string",
+      "path": "string"
+    }
+  ],
+  [
+    "get_json_array_info",
+    "Returns the length and item type of a JSON array at a given path.",
+    {
+      "file_path": "string",
+      "path": "string"
+    }
+  ],
+  [
+    "update_json_node",
+    "Updates a specific JSON node with a new value using a path.",
+    {
+      "file_path": "string",
+      "path": "string",
+      "value": "any"
+    }
   ]
 ]

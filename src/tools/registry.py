@@ -9,7 +9,8 @@ from src.tools import (
     util_tools as ut,
     search_tools as sr,
     instance_tools as it,
-    memory_tools as mt
+    memory_tools as mt,
+    json_tools as jt
 )
 
 # Mapping of tool names to their executable Python functions
@@ -35,7 +36,11 @@ AVAILABLE_TOOLS = {
     "restore_file": ft.restore_file,
     "code_formatter": ft.code_formatter,
     "concat_file": ft.concat_file,
-    "verify_implementation": it.verify_implementation
+    "verify_implementation": it.verify_implementation,
+    "get_json_structure": jt.get_json_structure,
+    "get_json_node": jt.get_json_node,
+    "get_json_array_info": jt.get_json_array_info,
+    "update_json_node": jt.update_json_node
 }
 
 # Load tool definitions (descriptions and params) for the LLM prompt
