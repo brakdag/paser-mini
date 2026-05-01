@@ -81,3 +81,4 @@ For more detailed information, please refer to the following documents in the `d
 - [User Commands](docs/COMMANDS.md) - Guide to internal agent commands.
 - [Toolbox](docs/TOOLS.md) - Description of the minimalist toolset.
 - [Development & Testing](docs/DEVELOPMENT.md) - Guidelines for contributing and verifying changes.
+- [Project History](HISTORY.md) - The story behind the creation of Paser Mini and the team.
