@@ -38,10 +38,9 @@ class TerminalUI(UserInterface):
         self.last_cursor_pos = 0
         self._session = None
         
-        # DISABLE COLORS: To prevent ANSI corruption in incompatible terminals.
         self.console = Console(
             force_terminal=force_terminal,
-            color_system=None,
+            color_system="auto",
             legacy_windows=False
         )
         
