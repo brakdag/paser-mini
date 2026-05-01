@@ -27,6 +27,7 @@ Transform Paser Mini from a synchronous, blocking agent to a fully asynchronous,
 - [x] Add visual indicators for "AI Thinking" vs "Queueing Messages".
 
 ## 💠 Phase 5: Stability & Performance (The Polish)
+- [ ] Refactor `MementoDB` to be fully non-blocking using `asyncio.to_thread` to prevent event loop starvation.
 - [ ] Stress test the message queue with rapid-fire inputs.
 - [ ] Verify memory usage during long async sessions.
 - [ ] Validate that `MementoDB` (SQLite WAL) handles the async concurrency without locks.

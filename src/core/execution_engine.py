@@ -50,7 +50,12 @@ class ExecutionEngine:
         await asyncio.sleep(0)
 
         try:
-            result = await asyncio.to_thread(self.tools[name], **args)
+            tool_func = self.tools[name]
+            if asyncio.iscoroutinefunction(tool_func):
+                result = await tool_func(**args)
+            else:
+                result = await asyncio.to_thread(tool_func, **args)
+
             if name == "pull_memory":
                 self.ui.display_message(f"🧠 **Memento Pull**: Accessing node #{args.get('key')}")
             elif name == "push_memory":
