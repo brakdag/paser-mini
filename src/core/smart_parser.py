@@ -62,14 +62,12 @@ class SmartToolParser:
     def extract_tool_calls(
         self, text: str
     ) -> list[tuple[Optional[dict[str, Any]], str, Optional[str]]]:
-        return [
-            (
-                self.parse_call(m.group(1).strip())[0],
-                m.group(1).strip(),
-                self.parse_call(m.group(1).strip())[1],
-            )
-            for m in self.TOOL_PATTERN.finditer(text)
-        ]
+        results = []
+        for m in self.TOOL_PATTERN.finditer(text):
+            content = m.group(1).strip()
+            data, err = self.parse_call(content)
+            results.append((data, content, err))
+        return results
 
     @staticmethod
     def format_tool_response(

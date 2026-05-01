@@ -75,6 +75,7 @@ To keep the project root clean, please use the `/tmp` directory for temporary fi
 
 For more detailed information, please refer to the following documents in the `docs/` directory:
 
+- [The Journey](docs/THE_JOURNEY.md) - A narrative guide to how a message travels through the system (Recommended for beginners).
 - [Project Structure](docs/PROJECT_STRUCTURE.md) - Overview of the codebase organization.
 - [Technical Architecture](docs/ARCHITECTURE.md) - Deep dive into the ReAct engine and data flow.
 - [Main Features](docs/FEATURES.md) - Detailed list of capabilities and UI highlights.

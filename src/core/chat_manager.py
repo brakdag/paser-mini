@@ -170,13 +170,9 @@ class ChatManager:
                         )
 
                     if call_data is None:
-                        combined_tool_responses.append(
-                            self.tool_parser.format_tool_response(
-                                err or f"Error de sintaxis: {raw_content}",
-                                success=False,
-                            )
-                        )
-                        continue
+                        self.assistant.pop_last_message()
+                        self.ui.display_error("⚠️ Glitch detectado: comando mal formado descartado para mantener la estabilidad.")
+                        return "Error: Se detectó un comando mal formado y la sesión ha sido sanitizada. Por favor, intenta tu petición de nuevo."
 
                     name, args = call_data.get("name"), call_data.get("args", {})
                     tr, success = await self.engine.execute_tool_call(
