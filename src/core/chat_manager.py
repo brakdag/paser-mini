@@ -5,8 +5,9 @@ import asyncio
 import threading
 import logging
 import time
-from typing import Any, Optional, Union, Callable
+from typing import Any, Optional, Union, Callable, List
 from collections import deque
+from prompt_toolkit.patch_stdout import patch_stdout
 
 from src.core.commands import CommandHandler
 from src.core.repetition_detector import RepetitionDetector
@@ -22,7 +23,6 @@ logger = logging.getLogger("src")
 
 class EmergencyStopException(Exception):
     """Exception raised when the user triggers the emergency stop (Esc key)."""
-
     pass
 
 
@@ -52,10 +52,8 @@ class ChatManager:
         self.request_timestamps = deque()
 
         self.command_handler = CommandHandler(self, ui)
-        # Link infrastructure retries to UI notifications
         self.assistant.set_retry_callback(ui.display_info)
 
-        # Executor state
         self.repetition_detector = RepetitionDetector(n=5, max_repeats=5)
         self.engine = ExecutionEngine(
             self.assistant, self.tools, self.tool_parser, self.ui, self.instance_mode
@@ -63,15 +61,18 @@ class ChatManager:
         self.session_accessed_nodes = set()
         self.max_turns = 10000
         self.turn_count = 0
+        
+        # Async State Management
+        self.message_queue = asyncio.Queue()
+        self.current_task: Optional[asyncio.Task] = None
         self.stop_requested = False
-
         self.should_exit = False
+        
         self._initialized_event = threading.Event()
         self._init_error = None
 
     def save_config(self, key, value):
         if self.instance_mode:
-            # Only update in memory for child instances
             self.config_manager.config[key] = value
             return
         self.config_manager.save(key, value)
@@ -80,9 +81,7 @@ class ChatManager:
         if self.auto_rpm_enabled:
             current_tokens = getattr(self.assistant, "_cached_tokens", 1000)
             self.rpm_limit = max(1, int(self.tpm_limit / max(current_tokens, 1000)))
-            logger.debug(
-                f"Auto-RPM: Adjusted limit to {self.rpm_limit} (Cached Tokens: {current_tokens}, TPM: {self.tpm_limit})"
-            )
+            logger.debug(f"Auto-RPM: Adjusted limit to {self.rpm_limit}")
 
         now = asyncio.get_event_loop().time()
         min_interval = 60.0 / self.rpm_limit
@@ -92,7 +91,6 @@ class ChatManager:
             elapsed = now - last_request_time
             if elapsed < min_interval:
                 wait_time = min_interval - elapsed
-                logger.debug(f"Rate limiting: spacing requests. Waiting {wait_time:.2f}s...")
                 await asyncio.sleep(wait_time)
                 now = asyncio.get_event_loop().time()
 
@@ -101,23 +99,15 @@ class ChatManager:
             self.request_timestamps.popleft()
 
     def _extract_text(self, response) -> str:
-        return (
-            response.text
-            if hasattr(response, "text") and response.text
-            else str(response)
-        )
+        return response.text if hasattr(response, "text") and response.text else str(response)
 
     def _process_and_display_result(self, result: str) -> None:
-        """Cleans and displays the assistant's response to the UI."""
         if not result:
             return
-
         cleaned_result = self.tool_parser.clean_response(result)
         self.ui.add_spacing()
-
         if self.timestamps_enabled:
             cleaned_result += f"\n\n*Response time: {self.last_response_time:.2f}s*"
-
         self.ui.display_message(cleaned_result)
         self.ui.add_spacing()
 
@@ -127,12 +117,9 @@ class ChatManager:
         thinking_enabled: bool = True,
         get_confirmation_callback: Optional[Callable[[str], Any]] = None,
     ) -> str:
-        self.stop_requested = False
         self.turn_count = 1
         self.engine.tool_tracker.reset()
         self.last_response_time = 0.0
-        if self.turn_count > self.max_turns:
-            return "Turn limit exceeded."
 
         if isinstance(user_input, str):
             rep_res = self.repetition_detector.add_text(user_input)
@@ -141,22 +128,17 @@ class ChatManager:
 
         try:
             await self._wait_for_rate_limit()
-
             start_time = time.perf_counter()
-            response = await asyncio.to_thread(self.assistant.send_message, user_input)
+            response = await self.assistant.send_message(user_input)
             self.last_response_time += time.perf_counter() - start_time
             response_text = self._extract_text(response)
 
             while True:
-                if self.stop_requested:
-                    raise EmergencyStopException("Execution interrupted by user.")
-
                 rep_res = self.repetition_detector.add_text(response_text)
                 if rep_res is not True:
                     return f"Repetitive text detected: possible infinite loop. Sequence: '{rep_res}'"
 
                 calls = self.tool_parser.extract_tool_calls(response_text)
-
                 if not calls:
                     break
 
@@ -166,41 +148,75 @@ class ChatManager:
 
                 combined_tool_responses = []
                 for call_data, raw_content, err in calls:
-                    if self.stop_requested:
-                        raise EmergencyStopException(
-                            "Ejecución interrumpida por el usuario."
-                        )
-
                     if call_data is None:
-                        self.assistant.pop_last_message()
-                        self.ui.display_error("⚠️ Glitch detectado: comando mal formado descartado para mantener la estabilidad.")
-                        return "Error: Se detectó un comando mal formado y la sesión ha sido sanitizada. Por favor, intenta tu petición de nuevo."
+                        self.ui.display_error(f"\u26a0\ufe0f Glitch detectado: {err}")
+                        return f"Tool Call Error: {err}. Please check your JSON syntax and try again."
 
                     name, args = call_data.get("name"), call_data.get("args", {})
-                    tr, success = await self.engine.execute_tool_call(
-                        name, args, call_data
-                    )
+                    tr, success = await self.engine.execute_tool_call(name, args, call_data)
                     combined_tool_responses.append(tr)
 
                 combined_message = "\n".join(combined_tool_responses)
                 await self._wait_for_rate_limit()
 
                 start_time = time.perf_counter()
-                response_obj = await asyncio.to_thread(
-                    self.assistant.send_message, combined_message, "user"
-                )
+                response_obj = await self.assistant.send_message(combined_message, "user")
                 self.last_response_time += time.perf_counter() - start_time
                 response_text = self._extract_text(response_obj)
 
             return response_text
+        except asyncio.CancelledError:
+            logger.info("Execution task cancelled.")
+            raise
         finally:
             self.ui.stop_all_monitoring()
 
-    async def execute_single(self, user_input: str) -> str:
-        result = await self.execute(
-            user_input=user_input, thinking_enabled=self.thinking_enabled
-        )
-        return self.tool_parser.clean_response(result) if result else ""
+    async def _processor_loop(self):
+        """Background loop that processes the message queue with aggregation logic."""
+        while not self.should_exit:
+            try:
+                user_input = await self.message_queue.get()
+                
+                self.current_task = asyncio.create_task(
+                    self.execute(user_input, thinking_enabled=self.thinking_enabled)
+                )
+                
+                try:
+                    result = await self.current_task
+                    self._process_and_display_result(result)
+                except asyncio.CancelledError:
+                    self.ui.display_emergency_stop()
+                except Exception as e:
+                    self.ui.display_error(f"Error: {e}")
+                finally:
+                    self.current_task = None
+                    self.message_queue.task_done()
+
+                queued_messages = []
+                while not self.message_queue.empty():
+                    msg = self.message_queue.get_nowait()
+                    queued_messages.append(msg)
+                    self.message_queue.task_done()
+
+                if queued_messages:
+                    aggregated_input = "\n\n".join(queued_messages)
+                    logger.info(f"Aggregating {len(queued_messages)} messages into one turn.")
+                    
+                    self.current_task = asyncio.create_task(
+                        self.execute(aggregated_input, thinking_enabled=self.thinking_enabled)
+                    )
+                    try:
+                        result = await self.current_task
+                        self._process_and_display_result(result)
+                    except asyncio.CancelledError:
+                        self.ui.display_emergency_stop()
+                    except Exception as e:
+                        self.ui.display_error(f"Error processing aggregated messages: {e}")
+                    finally:
+                        self.current_task = None
+
+            except Exception as e:
+                logger.error(f"Processor loop error: {e}")
 
     async def run(self, initial_input: Optional[str] = None):
         if not self._initialized_event.is_set():
@@ -209,74 +225,53 @@ class ChatManager:
         if self._init_error:
             return
 
-        current_intervention = None
+        processor = asyncio.create_task(self._processor_loop())
 
         if initial_input:
             if await self.command_handler.handle(initial_input):
                 pass
             else:
-                try:
-                    result = await self.execute(
-                        user_input=initial_input,
-                        thinking_enabled=self.thinking_enabled,
-                        get_confirmation_callback=self.ui.request_input,
-                    )
-                    self._process_and_display_result(result)
-                except EmergencyStopException:
-                    self.ui.display_emergency_stop()
-                    current_intervention = await self.ui.request_input("> ")
-                except Exception as e:
-                    self.ui.display_error(f"Error processing initial message: {e}")
-                    self.ui.add_spacing()
+                await self.message_queue.put(initial_input)
 
         if self.instance_mode:
+            await self.message_queue.join()
+            processor.cancel()
             return
 
         while not self.should_exit:
             try:
-                if current_intervention:
-                    user_input = current_intervention
-                    current_intervention = None
-                else:
-                    user_input = await self.ui.request_input("> ", history=None)
+                user_input = await self.ui.request_input("> ", history=None)
 
             except Exception as e:
                 self.ui.display_error(f"Critical UI Error: {e}")
                 break
+
             if not user_input:
                 continue
+
             if await self.command_handler.handle(user_input):
                 continue
-            try:
-                result = await self.execute(
-                    user_input=user_input,
-                    thinking_enabled=self.thinking_enabled,
-                    get_confirmation_callback=self.ui.request_input,
-                )
-                self._process_and_display_result(result)
-            except EmergencyStopException:
-                self.ui.display_emergency_stop()
-                current_intervention = await self.ui.request_input("> ")
-            except Exception as e:
-                self.ui.display_error(f"Error: {e}")
-                self.ui.add_spacing()
+
+            await self.message_queue.put(user_input)
+
+        processor.cancel()
+
+    def stop_execution(self):
+        """Triggers an immediate cancellation of the current AI task."""
+        if self.current_task:
+            self.current_task.cancel()
 
     async def _translate_text(self, text: str) -> str:
-        """Translates text without affecting the main chat history."""
         prompt = f"Translate the following text to English. Return ONLY the translation: {text}"
-        # Use a temporary execution to avoid history pollution
-        response = await asyncio.to_thread(self.assistant.send_message, prompt)
+        response = await self.assistant.send_message(prompt)
         return self._extract_text(response)
 
     def _initialize_chat(self) -> None:
         try:
             from src.tools import memory_tools
-
             memory_tools.set_assistant(self.assistant)
             memory_tools.set_chat_manager(self)
-
             model = self.config_manager.get("model_name", "models/gemma-4-31b-it")
-
             self.assistant.start_chat(model, self.system_instruction, self.temperature)
             self._initialized_event.set()
         except Exception as e:

@@ -1,9 +1,9 @@
 import logging
-import time
+import asyncio
 import base64
 import os
 import json
-from typing import Generator, Optional, Any, Union, List, Callable
+from typing import AsyncGenerator, Optional, Any, Union, List, Callable, Dict
 from .rest_client import GeminiRestClient
 from . import errors
 from .retry_handler import RetryHandler
@@ -12,7 +12,6 @@ from src.infrastructure.gemini.utils import estimate_tokens
 
 logger = logging.getLogger(__name__)
 
-from typing import Generator, Optional, Any, Union, List, Dict
 class GeminiAdapter:
     def __init__(self):
         self.client = GeminiRestClient()
@@ -33,34 +32,31 @@ class GeminiAdapter:
         self.history = []
 
     def _build_payload(self) -> Dict[str, Any]:
-        # Create a shallow copy of history to avoid mutating the original list
         contents = list(self.history)
         payload = {"contents": contents, "generationConfig": {"temperature": self.temperature}}
 
         if self.system_instruction:
-            # Gemma 3 does not support the 'systemInstruction' field and returns 400
             if self._current_model and "gemma-3" in self._current_model.lower():
                 if contents:
-                    # Merge system instruction into the first user message to maintain role sequence
                     first_msg = contents[0]
                     if first_msg["role"] == "user":
                         first_msg["parts"][0]["text"] = f"{self.system_instruction}\n\n{first_msg['parts'][0]['text']}"
                 else:
-                    # Fallback if history is empty (though usually it's not at this point)
                     payload["contents"].append({"role": "user", "parts": [{"text": self.system_instruction}]})
             else:
                 payload["systemInstruction"] = {"parts": [{"text": self.system_instruction}]}
         
         return payload
 
-    def send_message_stream(self, message: str, role: str = "user") -> Generator[str, None, None]:
+    async def send_message_stream(self, message: str, role: str = "user") -> AsyncGenerator[str, None]:
         parts = [{"text": message}]
         self.history.append({"role": role, "parts": parts})
         
         payload = self._build_payload()
         full_text = ""
         try:
-            for chunk in self.client.generate_content(self._current_model or "", payload, stream=True):
+            # Await the async generator from the client
+            async for chunk in self.client.generate_content(self._current_model or "", payload, stream=True):
                 full_text += chunk
                 yield chunk
         except Exception as e:
@@ -69,14 +65,15 @@ class GeminiAdapter:
         
         self.history.append({"role": "model", "parts": [{"text": full_text}]})
 
-    def send_message(self, message: Union[str, bytes], role: str = "user") -> Any:
+    async def send_message(self, message: Union[str, bytes], role: str = "user") -> Any:
         parts = [{"text": message}] if isinstance(message, str) else [{"inline_data": {"mime_type": "audio/wav", "data": base64.b64encode(message).decode()}}]
         self.history.append({"role": role, "parts": parts})
         
         payload = self._build_payload()
 
         try:
-            response = self.retry_handler.execute(
+            # Await the async retry handler
+            response = await self.retry_handler.execute(
                 self.client.generate_content, 
                 self._current_model or 'gemini-2.0-flash', 
                 payload
@@ -122,16 +119,17 @@ class GeminiAdapter:
         self.temperature = temperature
         self.history = history_data
 
-    def get_available_models(self) -> List[str]:
+    async def get_available_models(self) -> List[str]:
         try:
-            models = self.client.list_models()
+            # Await the async client call
+            models = await self.client.list_models()
             return [m['name'] for m in models if 'gemini' in m['name'] or 'gemma' in m['name']]
         except Exception as e:
             logger.error(f"Error fetching models: {e}")
             return ['gemini-2.0-flash', 'gemini-1.5-flash']
 
-    def check_availability(self, model_name: str) -> bool:
-        return model_name in self.get_available_models()
+    async def check_availability(self, model_name: str) -> bool:
+        return model_name in await self.get_available_models()
 
     def hard_reset(self, history_override: Optional[List[dict]] = None):
         self.history = history_override if history_override is not None else []

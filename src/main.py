@@ -100,7 +100,7 @@ async def main():
             from pynput import keyboard
             def on_press(key):
                 if key == keyboard.Key.esc:
-                    chat_manager.stop_requested = True
+                    chat_manager.stop_execution()
             
             listener = keyboard.Listener(on_press=on_press)
             listener.start()

@@ -1,6 +1,6 @@
-import time
+import asyncio
 import logging
-from typing import Callable, Any, TypeVar, Optional
+from typing import Callable, Any, TypeVar, Optional, Awaitable
 from . import errors
 
 logger = logging.getLogger(__name__)
@@ -12,17 +12,17 @@ class RetryHandler:
         self.default_delay = default_delay
         self.on_retry = on_retry
 
-    def execute(self, func: Callable[..., T], *args, **kwargs) -> T:
+    async def execute(self, func: Callable[..., Awaitable[T]], *args, **kwargs) -> T:
         retries = 0
         while True:
             try:
-                return func(*args, **kwargs)
+                # Await the async function
+                return await func(*args, **kwargs)
             except Exception as e:
                 if not errors.is_retryable_error(e) or retries >= self.max_retries:
                     if retries >= self.max_retries:
                         formatted_error = errors.format_api_error(e, lambda err, ret: errors.get_retry_delay(err, ret, self.default_delay))
                         logger.error(f"API Error: Max retries reached. {formatted_error}")
-                        # We raise the exception to let the adapter decide how to return it
                         raise e
                     raise e
                 
@@ -34,5 +34,6 @@ class RetryHandler:
                 else:
                     logger.warning(msg)
                 
-                time.sleep(delay)
+                # NON-BLOCKING sleep
+                await asyncio.sleep(delay)
                 retries += 1

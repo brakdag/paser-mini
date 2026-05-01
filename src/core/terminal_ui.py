@@ -5,6 +5,7 @@ Concrete implementation of UserInterface for the terminal using rich and prompt_
 
 import sys
 import logging
+import re
 from typing import Any, Optional
 
 from prompt_toolkit import PromptSession
@@ -26,12 +27,24 @@ class UIState:
     NORMAL = "NORMAL"
 
 class TerminalUI(UserInterface):
+    # Regex for corrupted ANSI sequences (where escape is replaced by '?')
+    CORRUPT_ANSI = re.compile(r'\?\[[0-9;]*[mK]')
+    # Regex for literal string representations of escapes
+    LITERAL_ANSI = re.compile(r'\\x1b\[[0-9;]*[mK]|\\u001b\[[0-9;]*[mK]')
+
     def __init__(self, no_spinner: bool = False, force_terminal: bool = True):
         self.no_spinner = no_spinner
         self.mode = UIState.INSERT
         self.last_cursor_pos = 0
         self._session = None
-        self.console = Console(force_terminal=force_terminal)
+        
+        # DISABLE COLORS: To prevent ANSI corruption in incompatible terminals.
+        self.console = Console(
+            force_terminal=force_terminal,
+            color_system=None,
+            legacy_windows=False
+        )
+        
         self._status = None
         self._last_status_text = None
         
@@ -47,6 +60,20 @@ class TerminalUI(UserInterface):
         
         self.kb = UIBindings.get_bindings(self)
 
+    def _sanitize_text(self, text: str) -> str:
+        """The Ultimate Sanitizer: Removes real, literal, and corrupted ANSI sequences."""
+        if not text:
+            return ""
+        
+        # 1. Remove corrupted ANSI sequences (e.g., "?[36m")
+        text = self.CORRUPT_ANSI.sub('', text)
+        
+        # 2. Remove literal string representations (e.g., "\x1b[36m")
+        text = self.LITERAL_ANSI.sub('', text)
+        
+        # 3. Filter out all characters with ordinal < 32, except for \n, \r, and \t
+        return "".join(c for c in text if ord(c) >= 32 or c in "\n\r\t")
+
     async def request_input(self, prompt: str, history: Optional[Any] = None) -> str:
         if self._session is None:
             self._session = PromptSession(history=history)
@@ -56,10 +83,12 @@ class TerminalUI(UserInterface):
         )
 
     def display_message(self, text: str):
+        text = self._sanitize_text(text)
         text = LatexTranslator.translate(text)
         self.console.print(Markdown(text))
 
     def display_thought(self, text: str):
+        text = self._sanitize_text(text)
         self.console.print(Text(f"💭 {text}", style="dim italic"))
 
     def display_tool_start(self, tool_name: str, args: dict):
@@ -75,13 +104,16 @@ class TerminalUI(UserInterface):
         self.console.print(Text(f"[{tool_name}] Status: {detail}", style=color))
 
     def display_panel(self, title: str, message: str, style: str = "none"):
+        message = self._sanitize_text(message) if isinstance(message, str) else message
         content = Markdown(message) if isinstance(message, str) else message
         self.console.print(Panel(content, title=title, border_style=style))
 
     def display_error(self, message: str):
+        message = self._sanitize_text(message)
         self.console.print(Panel(Text(message, style="bold red"), title="Error", border_style="red"))
 
     def display_info(self, message: str):
+        message = self._sanitize_text(message)
         self.console.print(Panel(Text(message, style="blue"), title="Info", border_style="blue"))
 
     def add_spacing(self):
@@ -95,14 +127,12 @@ class TerminalUI(UserInterface):
             self.console.print(Text(msg, style="bold cyan"))
             return
 
-        # 1. If a spinner is already running, commit its final state to history
         if self._status:
             self._status.stop()
             if self._last_status_text:
                 self.console.print(self._last_status_text)
             self._status = None
 
-        # 2. Start new spinner (default position: beginning of line)
         self._status = Status(f"[bold cyan]{msg}", spinner="line", console=self.console)
         self._status.start()
         self._last_status_text = None
