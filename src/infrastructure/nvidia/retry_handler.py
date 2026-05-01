@@ -1,4 +1,4 @@
-import time
+import asyncio
 import logging
 import httpx
 
@@ -8,11 +8,11 @@ class NvidiaRetryHandler:
     def __init__(self, max_retries: int = 5):
         self.max_retries = max_retries
 
-    def execute(self, func, *args, **kwargs):
+    async def execute(self, func, *args, **kwargs):
         retries = 0
         while True:
             try:
-                return func(*args, **kwargs)
+                return await func(*args, **kwargs)
             except httpx.HTTPStatusError as e:
                 status_code = e.response.status_code
                 if retries >= self.max_retries:
@@ -31,13 +31,13 @@ class NvidiaRetryHandler:
                 else:
                     raise e
                 
-                time.sleep(delay)
+                await asyncio.sleep(delay)
                 retries += 1
             except Exception as e:
                 if retries < self.max_retries:
                     delay = 2 ** retries
                     logger.warning(f"Network/Unexpected error {e}. Retrying in {delay}s...")
-                    time.sleep(delay)
+                    await asyncio.sleep(delay)
                     retries += 1
                 else:
                     raise e

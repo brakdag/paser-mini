@@ -1,6 +1,6 @@
 import os
 import logging
-from typing import Generator, Any, List, Optional, Union
+from typing import AsyncGenerator, Any, List, Optional, Union
 from .rest_client import NvidiaRestClient
 from .snapshot_manager import SnapshotManager
 
@@ -25,41 +25,41 @@ class NvidiaAdapter:
         self._current_model = model_name if model_name else "meta/llama-3.1-405b-instruct"
         self.history = [{"role": "system", "content": system_instruction}]
 
-    def send_message(self, message: str, role: str = "user", max_tokens: int = 512) -> str:
+    async def send_message(self, message: str, role: str = "user", max_tokens: int = 512) -> str:
         api_role = "assistant" if role == "model" else role
         self.history.append({"role": api_role, "content": message})
         try:
             payload = {"model": self._current_model, "messages": self.history, "temperature": self.temperature, "max_tokens": max_tokens}
-            response = self.retry_handler.execute(self.client.chat_completions, payload)
+            response = await self.retry_handler.execute(self.client.chat_completions, payload)
             content = response.get("choices", [{}])[0].get("message", {}).get("content", "")
             self.history.append({"role": "assistant", "content": content})
             return content
         except Exception as e:
             return f"Error: {str(e)}"
 
-    def send_message_stream(self, message: str, role: str = "user", max_tokens: int = 512) -> Generator[str, None, None]:
+    async def send_message_stream(self, message: str, role: str = "user", max_tokens: int = 512) -> AsyncGenerator[str, None]:
         api_role = "assistant" if role == "model" else role
         self.history.append({"role": api_role, "content": message})
         try:
             payload = {"model": self._current_model, "messages": self.history, "temperature": self.temperature, "max_tokens": max_tokens}
             full_content = ""
-            for chunk in self.client.chat_completions(payload, stream=True):
+            async for chunk in await self.client.chat_completions(payload, stream=True):
                 full_content += chunk
                 yield chunk
             self.history.append({"role": "assistant", "content": full_content})
         except Exception as e:
             yield f"Error: {str(e)}"
 
-    def get_available_models(self) -> List[str]:
+    async def get_available_models(self) -> List[str]:
         try:
-            data = self.client.get("models")
+            data = await self.client.get("models")
             return [m['id'] for m in data.get('data', [])]
         except:
             return ["meta/llama-3.1-405b-instruct"]
 
-    def check_availability(self, model_name: str) -> bool:
+    async def check_availability(self, model_name: str) -> bool:
         payload = {"model": model_name, "messages": [{"role": "user", "content": "hi"}], "max_tokens": 1}
-        result = self.client.chat_completions(payload)
+        result = await self.client.chat_completions(payload)
         return result is not None
 
     def hard_reset(self, history_override: Optional[List] = None):
@@ -75,3 +75,6 @@ class NvidiaAdapter:
     def save_snapshot(self) -> bool:
         last_msg = str(self.history[-1]) if self.history else ""
         return self.snapshot_manager.save(self.system_instruction, self.history, last_msg)
+
+    async def close(self):
+        await self.client.close()
