@@ -11,6 +11,8 @@ logger = logging.getLogger(__name__)
 class GeminiRestClient:
     def __init__(self):
         self.api_key = os.getenv("GOOGLE_API_KEY")
+        if self.api_key is None:
+            raise ValueError("GOOGLE_API_KEY environment variable is not set")
         self.base_url = "https://generativelanguage.googleapis.com/v1beta/models"
         
         # Initialize a persistent ASYNC client with connection pooling

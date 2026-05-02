@@ -56,7 +56,7 @@ class GeminiAdapter:
         full_text = ""
         try:
             # Await the async generator from the client
-            async for chunk in self.client.generate_content(self._current_model or "", payload, stream=True):
+            async for chunk in await self.client.generate_content(self._current_model or "", payload, stream=True):
                 full_text += chunk
                 yield chunk
         except Exception as e:

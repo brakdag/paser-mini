@@ -17,6 +17,7 @@ dependencies = [
     "rich",
     "pyright",
     "pynput",
+    "aiosqlite",
 
     "black",
 ]

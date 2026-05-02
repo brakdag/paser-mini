@@ -46,6 +46,7 @@ class TerminalUI(UserInterface):
         
         self._status = None
         self._last_status_text = None
+        self._current_tool_msg = ""
         
         self.style = Style.from_dict({
             '': '#cad3f5',
@@ -121,6 +122,7 @@ class TerminalUI(UserInterface):
     def start_tool_monitoring(self, tool_name: str, detail: str = ""):
         detail_str = f" ({detail})" if detail else ""
         msg = f"🛠️ Executing {tool_name}{detail_str}..."
+        self._current_tool_msg = msg
         
         if self.no_spinner:
             self.console.print(Text(msg, style="bold cyan"))
@@ -152,6 +154,27 @@ class TerminalUI(UserInterface):
         final_text = Text(final_msg, style=color)
         self._status.update(final_text)
         self._last_status_text = final_text
+        self._current_tool_msg = ""
+
+    def update_queue_count(self, count: int):
+        """Updates the current status to show how many messages are queued."""
+        if count <= 0:
+            return
+
+        queue_msg = f" [dim]({count} queued)"
+        
+        if self._status:
+            # Append queue count to the existing tool status
+            full_msg = f"[bold cyan]{self._current_tool_msg}{queue_msg}"
+            self._status.update(full_msg)
+        elif not self.no_spinner:
+            # If no tool is running but messages are queued, start a generic status
+            if not self._status:
+                self._status = Status(f"[dim]{queue_msg}", spinner="line", console=self.console)
+                self._status.start()
+        else:
+            # No spinner mode: we can't easily update a line, so we just ignore or print
+            pass
 
     def stop_all_monitoring(self):
         if self.no_spinner:
@@ -162,6 +185,7 @@ class TerminalUI(UserInterface):
                 self.console.print(self._last_status_text)
             self._status = None
             self._last_status_text = None
+            self._current_tool_msg = ""
 
     def display_emergency_stop(self):
         self.console.print(Panel(Text("🖐️ STOP", style="bold blink red"), title="EMERGENCY", border_style="red"))

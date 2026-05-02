@@ -20,7 +20,7 @@ def set_chat_manager(chat_manager):
     _current_chat_manager = chat_manager
 
 
-def push_memory(
+async def push_memory(
     scope: str, value: str, key: Optional[str] = None, pointers: Optional[list] = None
 ) -> str:
     """
@@ -33,14 +33,14 @@ def push_memory(
         pointers (list, optional): A list of node IDs to link this memory to.
     """
     try:
-        return _manager.push_memory(
+        return await _manager.push_memory(
             role="Agent", scope=scope, value=value, key=key, pointers=pointers
         )
     except Exception as e:
         return f"ERR: {str(e)}"
 
 
-def pull_memory(
+async def pull_memory(
     scope: Optional[str] = None,
     key: Optional[str] = None,
     direction: Optional[str] = None,
@@ -60,9 +60,13 @@ def pull_memory(
         d = direction if direction not in (None, "") else None
 
         # If all are None, MementoManager.pull_memory handles 'The Mirror' internally
-        return _manager.pull_memory(scope=s, key=k, direction=d)
+        return await _manager.pull_memory(scope=s, key=k, direction=d)
     except Exception as e:
-        return _manager.pull_memory(scope=None, key=None, direction=None)
+        # Fallback to Mirror if specific pull fails
+        try:
+            return await _manager.pull_memory(scope=None, key=None, direction=None)
+        except Exception as e2:
+            return f"ERR: {str(e2)}"
 
 
 def get_token_count() -> str:

@@ -82,7 +82,7 @@ class CommandHandler:
 
             # 1. Retrieve latest Bridge Block from Memento
             manager = MementoManager()
-            bridge = manager.get_latest_bridge()
+            bridge = await manager.get_latest_bridge()
 
             new_history = []
             if bridge:

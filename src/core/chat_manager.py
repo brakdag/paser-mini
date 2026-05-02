@@ -176,6 +176,7 @@ class ChatManager:
         while not self.should_exit:
             try:
                 user_input = await self.message_queue.get()
+                self.ui.update_queue_count(self.message_queue.qsize())
                 
                 self.current_task = asyncio.create_task(
                     self.execute(user_input, thinking_enabled=self.thinking_enabled)
@@ -199,7 +200,10 @@ class ChatManager:
                     self.message_queue.task_done()
 
                 if queued_messages:
-                    aggregated_input = "\n\n".join(queued_messages)
+                    # UX Improvement: Contextual header for aggregated messages
+                    header = f"[SYSTEM: The user sent {len(queued_messages)} follow-up messages while you were processing. Please address all of them.]"
+                    aggregated_input = f"{header}\n\n" + "\n\n".join(queued_messages)
+                    
                     logger.info(f"Aggregating {len(queued_messages)} messages into one turn.")
                     
                     self.current_task = asyncio.create_task(
@@ -214,6 +218,8 @@ class ChatManager:
                         self.ui.display_error(f"Error processing aggregated messages: {e}")
                     finally:
                         self.current_task = None
+                
+                self.ui.update_queue_count(self.message_queue.qsize())
 
             except Exception as e:
                 logger.error(f"Processor loop error: {e}")
@@ -232,6 +238,7 @@ class ChatManager:
                 pass
             else:
                 await self.message_queue.put(initial_input)
+                self.ui.update_queue_count(self.message_queue.qsize())
 
         if self.instance_mode:
             await self.message_queue.join()
@@ -253,6 +260,7 @@ class ChatManager:
                 continue
 
             await self.message_queue.put(user_input)
+            self.ui.update_queue_count(self.message_queue.qsize())
 
         processor.cancel()
 
