@@ -150,7 +150,9 @@ class ChatManager:
                 for call_data, raw_content, err in calls:
                     if call_data is None:
                         self.ui.display_error(f"\u26a0\ufe0f Glitch detectado: {err}")
-                        return f"Tool Call Error: {err}. Please check your JSON syntax and try again."
+                        tr = self.tool_parser.format_tool_response(f"Validation error: {err}", success=False)
+                        combined_tool_responses.append(tr)
+                        continue
 
                     name, args = call_data.get("name"), call_data.get("args", {})
                     tr, success = await self.engine.execute_tool_call(name, args, call_data)
