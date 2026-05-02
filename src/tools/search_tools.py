@@ -8,7 +8,7 @@ def search_files_pattern(pattern: str) -> str:
     root_path = context.get_safe_path('.')
     try:
         # Use find with pipe to head for early termination (SIGPIPE)
-        cmd = f"find {shlex.quote(str(root_path))} -name {shlex.quote(pattern)} | head -n 10"
+        cmd = f"find {shlex.quote(str(root_path))} -path '*/.*' -prune -o -name {shlex.quote(pattern)} -print | head -n 10"
         try:
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True, encoding='utf-8', timeout=80)
         except subprocess.TimeoutExpired:
@@ -27,7 +27,7 @@ def search_text_global(query: str) -> str:
     root_path = context.get_safe_path(".")
     try:
         # Use pipe to head -n 10 for extreme efficiency
-        cmd = f"grep -rIn -- {shlex.quote(query)} {shlex.quote(str(root_path))} | head -n 10"
+        cmd = f"grep -rIn --exclude-dir='.*' -- {shlex.quote(query)} {shlex.quote(str(root_path))} | head -n 10"
         try:
             result = subprocess.run(
                 cmd, 
