@@ -145,5 +145,14 @@ class GeminiAdapter:
     def get_history(self) -> List[dict]:
         return self.history
 
+    def prune_history(self, max_tokens: int):
+        """Prunes the history to stay within the token limit, preserving the most recent context."""
+        from src.infrastructure.gemini.utils import estimate_tokens
+        if len(self.history) <= 2:
+            return
+
+        while len(self.history) > 2 and estimate_tokens(self.history) > max_tokens:
+            self.history.pop(0)
+
     def count_tokens(self, history: List[dict]) -> int:
         return estimate_tokens(history)

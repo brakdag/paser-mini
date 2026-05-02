@@ -164,6 +164,11 @@ class ChatManager:
                 self.last_response_time += time.perf_counter() - start_time
                 response_text = self._extract_text(response_obj)
 
+            # Prune history if it exceeds the limit to maintain efficiency
+            current_tokens = self.assistant.count_tokens(self.assistant.history)
+            if current_tokens > self.context_window_limit:
+                self.assistant.prune_history(self.context_window_limit)
+
             return response_text
         except asyncio.CancelledError:
             logger.info("Execution task cancelled.")
