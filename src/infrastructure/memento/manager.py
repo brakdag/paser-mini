@@ -120,10 +120,7 @@ class MementoManager:
                 node = await self.db.pull_node(node_id)
             except ValueError:
                 # Search by teaser/key
-                conn = await self.db._get_conn()
-                cursor = await conn.execute("SELECT * FROM nodes WHERE teaser = ? LIMIT 1", (key,))
-                row = await cursor.fetchone()
-                node = dict(row) if row else None
+                node = await self.db.search_by_teaser(key)
 
             if not node:
                 return "ERR: Node not found."

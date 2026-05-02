@@ -3,9 +3,6 @@ import time
 import os
 import asyncio
 from typing import List, Optional, Tuple, Dict, Any
-import time
-import os
-from typing import List, Optional, Tuple, Dict, Any
 
 class MementoDB:
     """
@@ -62,35 +59,6 @@ class MementoDB:
     async def ensure_initialized(self):
         """Public async method to ensure DB is ready."""
         await asyncio.to_thread(self._sync_init_db)
-        conn = await self._get_conn()
-        await conn.execute("""
-            CREATE TABLE IF NOT EXISTS nodes (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp INTEGER NOT NULL,
-                role TEXT,
-                type TEXT CHECK(type IN ('tattoo', 'snapshot', 'fractal')),
-                content TEXT NOT NULL,
-                teaser TEXT,
-                weight INTEGER DEFAULT 0,
-                is_vital BOOLEAN DEFAULT 0
-            )
-        """)
-        await conn.execute("""
-            CREATE TABLE IF NOT EXISTS edges (
-                source_id INTEGER,
-                target_id INTEGER,
-                relation_type TEXT CHECK(relation_type IN ('parent', 'child', 'associative')),
-                FOREIGN KEY(source_id) REFERENCES nodes(id),
-                FOREIGN KEY(target_id) REFERENCES nodes(id)
-            )
-        """)
-        await conn.execute("CREATE INDEX IF NOT EXISTS idx_nodes_timestamp ON nodes(timestamp)")
-        await conn.execute("CREATE INDEX IF NOT EXISTS idx_nodes_is_vital ON nodes(is_vital)")
-        await conn.execute("CREATE INDEX IF NOT EXISTS idx_nodes_type ON nodes(type)")
-        await conn.execute("CREATE INDEX IF NOT EXISTS idx_nodes_role ON nodes(role)")
-        await conn.execute("CREATE INDEX IF NOT EXISTS idx_edges_source ON edges(source_id)")
-        await conn.execute("CREATE INDEX IF NOT EXISTS idx_edges_target ON edges(target_id)")
-        await conn.commit()
 
     async def push_node(self, role: str, node_type: str, content: str, teaser: str, is_vital: bool = False) -> int:
         return await asyncio.to_thread(self._sync_push_node, role, node_type, content, teaser, is_vital)
@@ -210,5 +178,15 @@ class MementoDB:
                    WHERE e.source_id = ? AND e.relation_type = 'parent' LIMIT 1""",
                 (node_id,)
             )
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    async def search_by_teaser(self, teaser: str) -> Optional[Dict[str, Any]]:
+        """Search for a node by its teaser string."""
+        return await asyncio.to_thread(self._sync_search_by_teaser, teaser)
+
+    def _sync_search_by_teaser(self, teaser: str) -> Optional[Dict[str, Any]]:
+        with self._get_connection() as conn:
+            cursor = conn.execute("SELECT * FROM nodes WHERE teaser = ? LIMIT 1", (teaser,))
             row = cursor.fetchone()
             return dict(row) if row else None
