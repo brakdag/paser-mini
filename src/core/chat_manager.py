@@ -101,10 +101,17 @@ class ChatManager:
     def _extract_text(self, response) -> str:
         return response.text if hasattr(response, "text") and response.text else str(response)
 
+    def _sanitize_text(self, text: str) -> str:
+        if not text:
+            return ""
+        # Elimina surrogates no permitidos que causan crashes en UTF-8
+        return text.encode("utf-8", "surrogatepass").decode("utf-8", "replace")
+
     def _process_and_display_result(self, result: str) -> None:
         if not result:
             return
-        cleaned_result = self.tool_parser.clean_response(result)
+        sanitized_result = self._sanitize_text(result)
+        cleaned_result = self.tool_parser.clean_response(sanitized_result)
         self.ui.add_spacing()
         if self.timestamps_enabled:
             cleaned_result += f"\n\n*Response time: {self.last_response_time:.2f}s*"
@@ -229,7 +236,8 @@ class ChatManager:
                 self.ui.update_queue_count(self.message_queue.qsize())
 
             except Exception as e:
-                logger.error(f"Processor loop error: {e}")
+                sanitized_err = self._sanitize_text(str(e))
+                logger.error(f"Processor loop error: {sanitized_err}")
 
     async def run(self, initial_input: Optional[str] = None):
         if not self._initialized_event.is_set():
