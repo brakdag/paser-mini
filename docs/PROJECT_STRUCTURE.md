@@ -11,7 +11,13 @@ This document provides the definitive map of the Paser Mini codebase. The projec
 │   │   ├── execution_engine.py # Tool execution & loop logic
 │   │   ├── smart_parser.py    # Token-efficient response parsing
 │   │   ├── terminal_ui.py     # Decoupled CLI interface
-│   │   └── config_manager.py  # Application settings
+│   │   ├── config_manager.py  # Application settings
+│   │   ├── ui_interface.py    # UI Abstractions
+│   │   ├── ui_bindings.py     # Keyboard shortcuts & bindings
+│   │   ├── latex_translator.py # Math/Science rendering
+│   │   ├── repetition_detector.py # Loop prevention
+│   │   ├── command_handlers/   # Internal system command logic
+│   │   └── schemas/           # JSON Tool definitions (The Source of Truth)
 │   ├── infrastructure/        # The "Nerves": System & API wrappers
 │   │   ├── gemini/            # LLM client & adapter
 │   │   ├── memento/           # Cognitive Graph (SQLite implementation)
@@ -20,9 +26,10 @@ This document provides the definitive map of the Paser Mini codebase. The projec
 │   │   ├── registry.py        # Tool mapping & discovery
 │   │   ├── file_tools.py      # Surgical file operations
 │   │   ├── memory_tools.py    # Memento interface tools
-│   │   └── system_tools.py    # OS & analysis tools
-│   └── config/                # Local configuration & DB files
-│       └── paser_memory.db    # The Cognitive Graph storage
+│   │   ├── search_tools.py    # Global search & patterns
+│   │   ├── system_tools.py    # OS & analysis tools
+│   │   └── util_tools.py      # General utilities
+│   └── config/                # Local configuration & cache
 ├── tests/                     # Test suite & stress tests
 ├── docs/                      # Technical documentation & protocols
 ├── scripts/                   # Maintenance & utility scripts
