@@ -15,7 +15,7 @@ El sistema utiliza un parser unificado (`SmartToolParser`) que reemplaza los int
 3. **Validación de Esquema**: Verificación de tipos, rangos y campos requeridos según el esquema de la herramienta.
 4. **Normalización**: Ajuste de la estructura de datos para el motor de ejecución.
 
-## 3. Esquemas de Herramientas
+## 3. Tool Schemas
 Los esquemas se encuentran en `src/core/schemas/`. Cada herramienta tiene un archivo `.json` que define:
 - `required`: Campos obligatorios.
 - `properties`: Tipos de datos y restricciones (ej. `maxLength`, `pattern`).

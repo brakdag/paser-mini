@@ -10,7 +10,7 @@ from src.tools import (
     search_tools as sr,
     instance_tools as it,
     memory_tools as mt,
-    json_tools as jt
+    json_tools as jt,
 )
 
 # Mapping of tool names to their executable Python functions
@@ -40,7 +40,7 @@ AVAILABLE_TOOLS = {
     "get_json_structure": jt.get_json_structure,
     "get_json_node": jt.get_json_node,
     "get_json_array_info": jt.get_json_array_info,
-    "update_json_node": jt.update_json_node
+    "update_json_node": jt.update_json_node,
 }
 
 # Load tool definitions (descriptions and params) for the LLM prompt
@@ -49,15 +49,16 @@ with open(_registry_path, "r") as f:
     full_catalog = json.load(f)
 
 # All tools are now injected into the system prompt for maximum visibility
-TOOL_CATALOG = "\n".join([f"{t[0]}({', '.join(t[2].keys())}) - {t[1]}" for t in full_catalog])
+TOOL_CATALOG = "\n".join(
+    [f"{t[0]}({', '.join(t[2].keys())}) - {t[1]}" for t in full_catalog]
+)
 
 # Bypassing interceptor by fragmenting the forbidden strings
 _S = chr(60) + "TOOL" + "_CALL" + chr(62)
 _E = chr(60) + "/" + "TOOL" + "_CALL" + chr(62)
 
 # Core system prompt defining agent behavior and tool interaction rules
-SYSTEM_INSTRUCTION = (
-    f"""
+SYSTEM_INSTRUCTION = f"""
 You are a autonomous agent.
 
 Response Protocol:
@@ -90,7 +91,4 @@ STRICT Rules:
 7. You lost some memory, but thankfully you have the tools to get it back.
 
 8. CRITICAL: Inside <TOOL_CALL> tags, you must output ONLY the JSON object. No text, no 'Thought:', no markdown, no explanations. Any text outside the JSON object inside the tags will break the system.
-"""
-    .replace("[[S]]", _S)
-    .replace("[[E]]", _E)
-)
+""".replace("[[S]]", _S).replace("[[E]]", _E)

@@ -1,5 +1,8 @@
 import json
+import logging
 import os
+
+logger = logging.getLogger("src")
 from dataclasses import dataclass, field
 from typing import Any, Optional, ClassVar, Callable
 
@@ -67,7 +70,7 @@ class SchemaValidator:
                         raw_schema = json.load(f)
                         SchemaValidator._cached_schemas[tool_name] = CompiledSchema(tool_name, raw_schema)
                 except Exception as e:
-                    print(f"Error loading schema {filename}: {e}")
+                    logger.error(f"Error loading schema {filename}: {e}")
 
     @property
     def schemas(self):
