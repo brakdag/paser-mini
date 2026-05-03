@@ -27,7 +27,7 @@ Transform Paser Mini into a high-performance, asynchronous, and cognitively stab
 - [x] Add visual indicators for "AI Thinking" vs "Queueing Messages".
 
 ## 🚀 Phase 5: Stability & Performance (The Polish)
-- [/] **Optimize `MementoDB`**: Implement thread-local connection pooling to reduce overhead. (IN PROGRESS)
+- [x] **Optimize `MementoDB`**: Implement thread-local connection pooling to reduce overhead.
 - [ ] **Concurrency Validation**: Stress test `MementoDB` (SQLite WAL) for async concurrency and locks.
 - [ ] **Message Queue Stress Test**: Test with rapid-fire inputs.
 - [ ] **Memory Profiling**: Verify memory usage during long async sessions.

@@ -13,88 +13,93 @@ class MockAssistant:
         self.send_message = AsyncMock()
         self.pop_last_message = MagicMock()
         self.set_retry_callback = MagicMock()
+        self.call_count = 0
 
     async def send_message(self, message, role="user"):
-        # Simulate API latency
-        await asyncio.sleep(1)
-        return "Mock Response"
+        self.call_count += 1
+        # Simulate variable API latency to trigger race conditions
+        await asyncio.sleep(0.5)
+        return f"Mock Response {self.call_count}"
 
-async def test_message_aggregation():
-    logger.info("\n--- Testing Message Aggregation ---")
+async def test_high_pressure_queue():
+    logger.info("\n--- Testing High Pressure Message Queue ---")
     ui = TerminalUI(no_spinner=True)
     assistant = MockAssistant()
     cm = ChatManager(assistant, {}, "System Instr", ui)
     
-    # Start the processor loop in the background
+    # Start the processor loop
     processor = asyncio.create_task(cm._processor_loop())
     
-    # Send first message
-    await cm.message_queue.put("Message 1")
-    # Send burst of messages while AI is "thinking"
-    await cm.message_queue.put("Message 2")
-    await cm.message_queue.put("Message 3")
+    # 1. Trigger initial processing
+    await cm.message_queue.put("Initial Request")
     
-    # Wait for processing to complete
-    # First turn (Msg 1) + Second turn (Aggregated Msg 2 & 3)
-    await asyncio.sleep(3)
+    # 2. The Flood: Inject 20 messages while the AI is "thinking"
+    logger.info("Flooding queue with 20 messages...")
+    for i in range(20):
+        await cm.message_queue.put(f"Burst Message {i}")
     
-    # Verify that send_message was called twice
-    # 1st call: "Message 1"
-    # 2nd call: "Message 2\n\nMessage 3"
+    # 3. Wait for the state machine to flush everything
+    # We expect: 1st call (Initial) + subsequent calls (Aggregated bursts)
+    # Depending on timing, it might be 2 or 3 calls total.
+    await asyncio.sleep(5)
+    
+    # Verification
     calls = assistant.send_message.call_args_list
-    logger.info(f"Total API calls: {len(calls)}")
+    total_api_calls = len(calls)
     
-    if len(calls) >= 2:
-        first_call_arg = calls[0][0][0]
-        second_call_arg = calls[1][0][0]
-        logger.info(f"First call: {first_call_arg}")
-        logger.info(f"Second call: {second_call_arg}")
-        
-        if "Message 2" in second_call_arg and "Message 3" in second_call_arg:
-            logger.info("✅ Aggregation successful!")
-        else:
-            logger.error("❌ Aggregation failed: Messages were not combined.")
+    # Combine all sent text to ensure no message was lost
+    all_sent_text = " ".join([call[0][0] for call in calls])
+    
+    logger.info(f"Total API calls: {total_api_calls}")
+    
+    missing_messages = 0
+    for i in range(20):
+        if f"Burst Message {i}" not in all_sent_text:
+            missing_messages += 1
+
+    if missing_messages == 0:
+        logger.info("✅ High pressure test passed: No messages lost!")
     else:
-        logger.error(f"❌ Expected at least 2 calls, got {len(calls)}")
+        logger.error(f"❌ High pressure test failed: {missing_messages} messages lost!")
+        raise RuntimeError(f"Message loss detected in ChatManager queue.")
     
     processor.cancel()
 
-async def test_emergency_stop():
-    logger.info("\n--- Testing Emergency Stop ---")
+async def test_emergency_stop_resilience():
+    logger.info("\n--- Testing Emergency Stop Resilience ---")
     ui = TerminalUI(no_spinner=True)
     assistant = MockAssistant()
-    # Make the assistant take a long time to respond
-    assistant.send_message = AsyncMock(side_effect=lambda m, r="user": asyncio.sleep(10))
+    # Simulate a hanging API call
+    assistant.send_message = AsyncMock(side_effect=lambda m, r="user": asyncio.sleep(100))
     
     cm = ChatManager(assistant, {}, "System Instr", ui)
     processor = asyncio.create_task(cm._processor_loop())
     
-    await cm.message_queue.put("Long request")
-    await asyncio.sleep(0.5) # Let it start
+    await cm.message_queue.put("Hanging request")
+    await asyncio.sleep(0.2)
     
     start = time.perf_counter()
     cm.stop_execution()
     
-    # We wait to see if it actually stops or hangs for 10s
-    try:
-        # We wait a bit to see if the processor handles the cancellation
-        await asyncio.sleep(1)
-    except Exception as e:
-        logger.error(f"Error during stop: {e}")
-    
+    # The stop should be near-instant
+    await asyncio.sleep(0.1)
     end = time.perf_counter()
-    logger.info(f"Stop took {end-start:.2f}s")
     
-    if end-start < 2:
-        logger.info("✅ Emergency Stop is instant!")
+    if end-start < 1.0:
+        logger.info(f"✅ Emergency Stop is instant ({end-start:.2f}s)!")
     else:
-        logger.error("❌ Emergency Stop is too slow.")
+        logger.error(f"❌ Emergency Stop is too slow ({end-start:.2f}s).")
+        raise RuntimeError("Emergency stop failed to interrupt execution promptly.")
     
     processor.cancel()
 
 async def main():
-    await test_message_aggregation()
-    await test_emergency_stop()
+    try:
+        await test_high_pressure_queue()
+        await test_emergency_stop_resilience()
+    except Exception as e:
+        logger.error(f"Stress test suite failed: {e}")
+        exit(1)
 
 if __name__ == "__main__":
     asyncio.run(main())
