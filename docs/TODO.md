@@ -28,10 +28,10 @@ Transform Paser Mini into a high-performance, asynchronous, and cognitively stab
 
 ## 🚀 Phase 5: Stability & Performance (The Polish)
 - [x] **Optimize `MementoDB`**: Implement thread-local connection pooling to reduce overhead.
-- [ ] **Concurrency Validation**: Stress test `MementoDB` (SQLite WAL) for async concurrency and locks.
-- [ ] **Message Queue Stress Test**: Test with rapid-fire inputs.
-- [ ] **Memory Profiling**: Verify memory usage during long async sessions.
-- [ ] Final performance profiling.
+- [x] **Concurrency Validation**: Stress test `MementoDB` (SQLite WAL) for async concurrency and locks.
+- [x] **Message Queue Stress Test**: Test with rapid-fire inputs.
+- [x] **Memory Profiling**: Verify memory usage during long async sessions.
+- [x] Final performance profiling.
 
 ## 🚀 Phase 6: Alignment & Hygiene
 - [ ] **Doc Sync**: Align all documentation (especially `PROJECT_STRUCTURE.md`) with the `src/` layout.

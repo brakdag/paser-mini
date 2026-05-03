@@ -20,6 +20,7 @@ dependencies = [
     "aiosqlite",
 
     "black",
+    "pytest",
 ]
 
 [project.scripts]
