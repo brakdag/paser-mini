@@ -32,14 +32,18 @@ class GeminiAdapter:
         self.history = []
 
     def _build_payload(self) -> Dict[str, Any]:
-        contents = list(self.history)
+        # Deep copy the first message if we need to mutate it for Gemma-3 to avoid token leaking
+        contents = [msg.copy() for msg in self.history]
+        if contents and contents[0]["parts"]:
+            contents[0]["parts"] = [p.copy() for p in contents[0]["parts"]]
+
         payload = {"contents": contents, "generationConfig": {"temperature": self.temperature}}
 
         if self.system_instruction:
             if self._current_model and "gemma-3" in self._current_model.lower():
                 if contents:
                     first_msg = contents[0]
-                    if first_msg["role"] == "user":
+                    if first_msg["role"] == "user" and first_msg["parts"]:
                         first_msg["parts"][0]["text"] = f"{self.system_instruction}\n\n{first_msg['parts'][0]['text']}"
                 else:
                     payload["contents"].append({"role": "user", "parts": [{"text": self.system_instruction}]})
@@ -151,8 +155,12 @@ class GeminiAdapter:
         if len(self.history) <= 2:
             return
 
-        while len(self.history) > 2 and estimate_tokens(self.history) > max_tokens:
-            self.history.pop(0)
+        # Optimize: Calculate total tokens once and pop until we are safely under the limit
+        # to avoid O(N^2) complexity in the pruning loop.
+        current_tokens = estimate_tokens(self.history)
+        while len(self.history) > 2 and current_tokens > max_tokens:
+            popped = self.history.pop(0)
+            current_tokens -= estimate_tokens([popped])
 
     def count_tokens(self, history: List[dict]) -> int:
         return estimate_tokens(history)
