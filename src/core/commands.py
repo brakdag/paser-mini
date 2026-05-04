@@ -186,11 +186,16 @@ class CommandHandler:
             self.ui.display_info(f"Response timestamps are now {status}")
             return True
 
+        elif input_stripped == "/hello":
+            self.ui.display_message("Hello! I'm Paser Mini. How can I assist you today? 😊")
+            return True
+
         elif input_stripped == "/help":
             help_text = (
                 "```\n"
                 "Available Commands:\n"
                 "-------------------\n"
+                "/hello      - Friendly greeting\n"
                 "/help       - Show this help menu\n"
                 "/config     - Show current system configuration\n"
                 "/models     - Change AI model and temperature\n"

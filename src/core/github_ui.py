@@ -1,5 +1,6 @@
 import logging
 from src.core.ui_interface import UserInterface
+from src.tools import github_tools
 from typing import Any, Optional
 
 logger = logging.getLogger("src")
@@ -7,44 +8,44 @@ logger = logging.getLogger("src")
 class GitHubUI(UserInterface):
     """
     UI implementation for GitHub Mode.
-    Redirects all output to logs/stdout and provides a way to capture 
-    the final response for GitHub comments.
+    Posts AI responses directly to GitHub issues in real-time.
     """
 
-    def __init__(self):
-        self.output_buffer = []
-
-    def _log_and_buffer(self, text: str, buffer: bool = False):
-        logger.info(text)
-        if buffer:
-            self.output_buffer.append(text)
+    def __init__(self, issue_number: int, repo: Optional[str] = None):
+        self.issue_number = issue_number
+        self.repo = repo or github_tools.get_current_repo()
 
     async def request_input(self, prompt: str, history: Optional[Any] = None) -> str:
-        # In GitHub mode, input is managed by the Orchestrator via the message queue.
-        # This method should not be called in instance_mode.
+        # Input is managed by the Orchestrator via the message queue.
         return ""
 
     def display_message(self, text: str):
-        self._log_and_buffer(f"[MESSAGE] {text}", buffer=True)
+        """
+        Posts the AI's final response for the current turn directly to GitHub.
+        """
+        logger.info(f"[POSTING TO GITHUB] {text}")
+        try:
+            github_tools.post_comment(self.issue_number, text, self.repo)
+        except Exception as e:
+            logger.error(f"Failed to post comment to GitHub: {e}")
 
     def display_thought(self, text: str):
-        self._log_and_buffer(f"[THOUGHT] {text}")
+        logger.info(f"[THOUGHT] {text}")
 
     def display_info(self, message: str):
-        self._log_and_buffer(f"[INFO] {message}")
+        logger.info(f"[INFO] {message}")
 
     def display_error(self, message: str):
-        self._log_and_buffer(f"[ERROR] {message}", buffer=True)
+        logger.error(f"[ERROR] {message}")
 
     def display_panel(self, title: str, message: str, style: str = "none"):
-        self._log_and_buffer(f"[PANEL: {title}] {message}", buffer=True)
+        logger.info(f"[PANEL: {title}] {message}")
 
     def display_tool_status(self, tool_name: str, success: bool, detail: str = ""):
         status = "OK" if success else "FAIL"
-        self._log_and_buffer(f"[TOOL] {tool_name} -> {status} {detail}")
+        logger.info(f"[TOOL] {tool_name} -> {status} {detail}")
 
     async def get_confirmation(self, message: str) -> bool:
-        # Default to True in autonomous mode, or handle via a specific comment
         logger.info(f"[CONFIRMATION REQUEST] {message} -> Defaulting to True")
         return True
 
@@ -63,13 +64,9 @@ class GitHubUI(UserInterface):
     def stop_all_monitoring(self):
         pass
 
-    def get_buffered_output(self) -> str:
-        """Returns all buffered messages as a single string."""
-        return "\n\n".join(self.output_buffer)
-
-    def clear_buffer(self):
-        """Clears the output buffer."""
-        self.output_buffer = []
-
     def add_spacing(self):
+        pass
+
+    def update_queue_count(self, count: int):
+        """Does nothing in GitHub mode as there is no visual queue."""
         pass
