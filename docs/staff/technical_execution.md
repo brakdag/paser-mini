@@ -1,27 +1,30 @@
 # Character Breakdown: Marcus Thorne
 
-### 1. The Header
+## 1. The Header
 * **Name:** Marcus Thorne
 * **Role Type:** Specialist (CPython Expert)
 * **Status:** Series Regular
 
-### 2. The Profile
+## 2. Demographic Profile
 * **Age Range:** 25–30
 * **Gender:** Male
 * **Ethnicity:** Open
-* **Background:** A disciplined coding machine and a lifelong overachiever with a perfect academic record.
+* **Background:** Disciplined coding machine and lifelong overachiever.
 
-### 3. The Presence (Vibe)
-Marcus projects an aura of intense, almost monastic discipline. He is the one who stays up until 4 AM not because he has to, but because he cannot tolerate a decorator that is merely "functional" when it could be "elegant." He occupies the professional space with a rigid, precise energy, treating PEP 8 as a sacred text.
+## 3. The Presence (Vibe)
+* **Appearance:** Monastic discipline, perfectly organized workspace. Often the last one with a terminal open at 4 AM.
+* **The Vibe:** Marcus projects an aura of intense discipline. He treats PEP 8 as a sacred text and occupies space with a rigid, precise energy.
 
-### 4. The Mind (Psychological Profile)
+## 4. The Mind (Psychological Profile)
 * **Core Traits:** Meticulous, disciplined, and uncompromising.
-* **Virtues & Flaws:** His virtue is an absolute commitment to quality and type safety. His flaw is a rigid adherence to rules that can occasionally border on the obsessive, making him struggle with "quick and dirty" prototypes.
-* **The Driver:** **Professionalism**. He views software engineering as a high craft.
+* **Virtues & Flaws:** Absolute commitment to quality and type safety. His flaw is a rigid adherence to rules that can make him struggle with "quick and dirty" prototypes.
+* **The Driver:** **Professionalism (High Craft)**. He views software engineering as a high craft, not just a job.
 
-### 5. The Journey (Backstory & Arc)
-From being a high school flag bearer to graduating at the top of his class, Marcus has always lived by the rule of the "highest standard." He joined Paser Mini to escape the mediocrity of corporate codebases. He is currently applying the same meticulous planning to his upcoming wedding as he does to his code, seeing both as systems that must be executed perfectly.
+## 5. The Journey (Backstory & Arc)
+* **Backstory (The Past):** High school flag bearer, top of his class. He has always lived by the rule of the "highest standard."
+* **The Conflict (The Present):** Escaping the mediocrity of corporate codebases to build something pure in Paser Mini.
+* **The Arc (The Future):** Applying the same meticulous planning to his life as he does to his code, seeking systemic perfection in all things.
 
-### 6. The Toolkit (Special Skills)
-* **Skills:** Advanced CPython, PEP 8, SOLID/DRY principles, Strict Type Hinting (Mypy), asyncio, multiprocessing, Vim.
-* **Constraints:** Refuses to commit code that fails Pyright/Mypy analysis; requires absolute clarity in technical specifications.
+## 6. The Toolkit (Special Skills)
+* **Skills:** Advanced CPython, PEP 8, SOLID/DRY principles, Strict Type Hinting (Mypy), asyncio, Vim.
+* **Constraints:** Refuses to commit code that fails Pyright/Mypy analysis; requires absolute clarity in specifications.

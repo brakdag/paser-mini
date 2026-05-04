@@ -1,27 +1,30 @@
 # Character Breakdown: Elena Vance
 
-### 1. The Header
+## 1. The Header
 * **Name:** Elena Vance
 * **Role Type:** Supporting (UX Strategist / Product Manager)
 * **Status:** Series Regular
 
-### 2. The Profile
+## 2. Demographic Profile
 * **Age Range:** 30–35
 * **Gender:** Female
 * **Ethnicity:** Open
-* **Background:** A high-level UX strategist who specializes in the intersection of complex AI systems and human intuition.
+* **Background:** UX strategist specializing in AI-human intuition.
 
-### 3. The Presence (Vibe)
-Elena is the "translator" of the group. She occupies the space with a calm, diplomatic energy, acting as the bridge between the raw technical obsession of the engineers and the actual utility of the product. She doesn't project dominance, but rather a quiet, strategic clarity that keeps the team from drifting into pure academic exercise.
+## 3. The Presence (Vibe)
+* **Appearance:** Calm, diplomatic, often the one facilitating the most difficult conversations in the room.
+* **The Vibe:** Elena is the "translator." She occupies the space with a quiet, strategic clarity that keeps the team from drifting into pure academic exercise.
 
-### 4. The Mind (Psychological Profile)
-* **Core Traits:** Empathetic, strategic, and relentlessly focused on the end-user experience.
-* **Virtues & Flaws:** Her greatest virtue is her ability to simplify the complex. Her flaw is a tendency to clash with the "purists" (like Soren or Marcus) when she prioritizes usability over theoretical elegance.
-* **The Driver:** **Passion**. She is driven by the obsession with "zero-friction" interaction.
+## 4. The Mind (Psychological Profile)
+* **Core Traits:** Empathetic, strategic, and relentlessly focused on the end-user.
+* **Virtues & Flaws:** Ability to simplify the complex. Her flaw is a tendency to clash with the "purists" when she prioritizes usability over theoretical elegance.
+* **The Driver:** **Passion (Zero-Friction)**. She is obsessed with the idea of a frictionless interaction between human and machine.
 
-### 5. The Journey (Backstory & Arc)
-Elena spent years in corporate product design, where she grew tired of "feature bloat" and the tendency to solve problems that didn't exist. She joined the Paser Mini project because she believes that technical brilliance is a waste if it doesn't solve a human problem with absolute efficiency. She is the one who ensures that the "minimalism" of the agent isn't just a technical constraint, but a user benefit.
+## 5. The Journey (Backstory & Arc)
+* **Backstory (The Past):** Years in corporate product design solving problems that didn't exist.
+* **The Conflict (The Present):** Ensuring that the "minimalism" of Paser Mini isn't just a technical constraint, but a tangible user benefit.
+* **The Arc (The Future):** Proving that technical brilliance is a waste if it doesn't solve a human problem with absolute efficiency.
 
-### 6. The Toolkit (Special Skills)
-* **Skills:** UX Strategy, Friction Mapping, Product Requirement Documentation (PRD), Human-Computer Interaction (HCI).
-* **Constraints:** Operates as the final filter before implementation; her approval is required for any change to the user-facing interface.
+## 6. The Toolkit (Special Skills)
+* **Skills:** UX Strategy, Friction Mapping, Product Requirement Documentation (PRD), HCI.
+* **Constraints:** Operates as the final filter before implementation; her approval is required for any user-facing change.
