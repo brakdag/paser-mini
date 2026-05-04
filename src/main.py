@@ -150,9 +150,9 @@ async def main():
             ui.display_info("pynput not installed. Emergency Stop (Esc) disabled.")
 
     if args.github_mode:
-        ui.display_info("Iniciando GitHub Mode...")
+        ui.display_info("Iniciando GitHub Mode en modo continuo (Daemon)...")
         orchestrator = GitHubModeOrchestrator(sys_instr)
-        await orchestrator.run()
+        await orchestrator.run_forever()
     else:
         # Start the agent in REPL mode, processing initial input if provided
         await chat_manager.run(initial_input=user_input)

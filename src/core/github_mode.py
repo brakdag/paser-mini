@@ -6,8 +6,8 @@ from typing import List, Dict, Any, Optional
 from src.tools import github_tools
 from src.core.github_ui import GitHubUI
 from src.core.chat_manager import ChatManager
-from src.infrastructure.gemini.adapter import GeminiAdapter
-from src.infrastructure.nvidia.adapter import NvidiaAdapter
+from src.infrastructure.gemini import GeminiAdapter
+from src.infrastructure.nvidia import NvidiaAdapter
 from src.core.config_manager import ConfigManager
 from src.tools.registry import AVAILABLE_TOOLS
 
@@ -27,12 +27,14 @@ class GitHubModeOrchestrator:
         self.bot_login = None
 
     async def run(self):
-        """Main entry point for GitHub mode."""
-        logger.info("Starting GitHub Mode Orchestrator...")
+        """Performs a single scan and process cycle of GitHub issues."""
+        logger.info("Scanning GitHub for eligible issues...")
         try:
-            user_data = github_tools.get_authenticated_user()
-            self.bot_login = user_data.get("login")
-            logger.info(f"Authenticated as bot: {self.bot_login}")
+            # Identify the bot's own account to avoid self-responding loops
+            if not self.bot_login:
+                user_data = github_tools.get_authenticated_user()
+                self.bot_login = user_data.get("login")
+                logger.info(f"Authenticated as bot: {self.bot_login}")
 
             issues = github_tools.list_issues()
             eligible_issues = self._filter_issues(issues)
@@ -45,7 +47,22 @@ class GitHubModeOrchestrator:
                 await self.process_issue(issue)
 
         except Exception as e:
-            logger.exception(f"Critical error in GitHub mode: {e}")
+            logger.exception(f"Error during GitHub scan cycle: {e}")
+
+    async def run_forever(self, interval: int = 300):
+        """
+        Runs the orchestrator in a continuous loop.
+        :param interval: Time to sleep between cycles in seconds (default 300s / 5m).
+        """
+        logger.info(f"Entering Continuous Daemon Mode (Interval: {interval}s)...")
+        while True:
+            try:
+                await self.run()
+            except Exception as e:
+                logger.exception(f"Unexpected error in daemon loop: {e}")
+            
+            logger.info(f"Cycle complete. Sleeping for {interval} seconds...")
+            await asyncio.sleep(interval)
 
     def _filter_issues(self, issues: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         eligible = []
@@ -83,7 +100,6 @@ class GitHubModeOrchestrator:
             # 4. Execution with Feedback Loop
             last_comment_id = self._get_last_comment_id(issue_number)
             
-            # We wrap the initial input to guide the AI to acknowledge and plan
             initial_prompt = (
                 f"SYSTEM: You have been assigned to GitHub Issue #{issue_number}.\n"
                 f"Issue Description: {issue_body}\n\n"
@@ -109,7 +125,6 @@ class GitHubModeOrchestrator:
 
         except Exception as e:
             logger.exception(f"Error processing issue #{issue_number}: {e}")
-            # Minimal error report, as we avoid automatic conversational messages
             github_tools.post_comment(issue_number, f"Error: {str(e)}")
         finally:
             try:
