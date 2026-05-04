@@ -6,8 +6,8 @@ from typing import List, Dict, Any, Optional
 from src.tools import github_tools
 from src.core.github_ui import GitHubUI
 from src.core.chat_manager import ChatManager
-from src.infrastructure.gemini import GeminiAdapter
-from src.infrastructure.nvidia import NvidiaAdapter
+from src.infrastructure.gemini.adapter import GeminiAdapter
+from src.infrastructure.nvidia.adapter import NvidiaAdapter
 from src.core.config_manager import ConfigManager
 from src.tools.registry import AVAILABLE_TOOLS
 
