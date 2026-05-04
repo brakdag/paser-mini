@@ -1,6 +1,6 @@
 import subprocess
 import re
-from .core_tools import ToolError
+from . import ToolError
 
 def git_diff() -> str:
     try:

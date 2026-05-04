@@ -194,5 +194,49 @@
       "path": "string",
       "value": "any"
     }
+  ],
+  [
+    "list_issues",
+    "List issues in a GitHub repository",
+    {
+      "repo": "string"
+    }
+  ],
+  [
+    "create_issue",
+    "Create a new issue in a GitHub repository",
+    {
+      "title": "string",
+      "body": "string",
+      "repo": "string"
+    }
+  ],
+  [
+    "edit_issue",
+    "Edit an existing issue in a GitHub repository",
+    {
+      "issue_number": "integer",
+      "repo": "string",
+      "title": "string",
+      "body": "string"
+    }
+  ],
+  [
+    "close_issue",
+    "Close an issue in a GitHub repository",
+    {
+      "issue_number": "integer",
+      "repo": "string"
+    }
+  ],
+  [
+    "get_current_repo",
+    "Get the current GitHub repository name",
+    {}
+  ],
+  [
+    "git_diff_all",
+    "Show all changes in the current repository using git diff",
+    {}
   ]
 ]

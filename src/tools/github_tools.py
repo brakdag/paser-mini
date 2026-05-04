@@ -1,8 +1,8 @@
 import os
 import requests
-from paser.tools.core_tools import ToolError
-from paser.tools.git_tools import get_current_repo
-from paser.tools.system_tools import notify_user
+from . import ToolError
+from .git_tools import get_current_repo
+
 
 GITHUB_API_URL = "https://api.github.com"
 

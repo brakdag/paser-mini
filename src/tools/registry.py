@@ -11,6 +11,8 @@ from src.tools import (
     instance_tools as it,
     memory_tools as mt,
     json_tools as jt,
+    github_tools as gh,
+    git_tools as gt,
 )
 
 # Mapping of tool names to their executable Python functions
@@ -41,6 +43,12 @@ AVAILABLE_TOOLS = {
     "get_json_node": jt.get_json_node,
     "get_json_array_info": jt.get_json_array_info,
     "update_json_node": jt.update_json_node,
+    "list_issues": gh.list_issues,
+    "create_issue": gh.create_issue,
+    "edit_issue": gh.edit_issue,
+    "close_issue": gh.close_issue,
+    "get_current_repo": gt.get_current_repo,
+    "git_diff_all": gt.git_diff,
 }
 
 # Load tool definitions (descriptions and params) for the LLM prompt
