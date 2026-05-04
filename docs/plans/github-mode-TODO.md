@@ -67,3 +67,16 @@ Move from direct commits to a Pull Request workflow using a dedicated Bot accoun
     - Update the orchestrator to push the feature branch and open a PR to the main branch.
 - [ ] **Updated Reporting**: Modify the final issue comment to include a direct link to the created Pull Request instead of just a summary of changes.
 - [ ] **Human-in-the-loop Merge**: Ensure the bot never merges its own PRs, leaving the final approval and merge to the human maintainer.
+
+## Deployment: Dockerization
+
+### Goal
+Containerize the agent for seamless deployment and automatic recovery using Docker Compose.
+
+### Technical Requirements
+- [ ] **Dockerfile**: Create a multi-stage build to keep the image slim and secure.
+- [ ] **docker-compose.yml**: 
+    - Configure environment variables (`GITHUB_TOKEN`, etc.).
+    - Set `restart: always` to ensure the daemon is always running.
+    - Map volumes for logs and configuration files.
+- [ ] **Healthcheck**: Implement a healthcheck to monitor the daemon's status.

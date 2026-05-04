@@ -43,9 +43,9 @@ class ChatManager:
         self.context_window_limit = int(
             self.config_manager.get("context_window_limit", 250000)
         )
-        self.rpm_limit = int(self.config_manager.get("rpm_limit", 15))
+        self.rpm_limit = 15  # Límite estricto para evitar errores 429
         self.tpm_limit = int(self.config_manager.get("tpm_limit", 15000))
-        self.auto_rpm_enabled = self.config_manager.get("auto_rpm_enabled", False)
+        self.auto_rpm_enabled = False # Desactivado para usar RPM fijo
         self.timestamps_enabled = self.config_manager.get("timestamps_enabled", False)
         self.safemode = self.config_manager.get("safemode", False)
         self.last_response_time = 0

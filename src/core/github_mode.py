@@ -6,8 +6,8 @@ from typing import List, Dict, Any, Optional
 from src.tools import github_tools
 from src.core.github_ui import GitHubUI
 from src.core.chat_manager import ChatManager
-from src.infrastructure.gemini import GeminiAdapter
-from src.infrastructure.nvidia import NvidiaAdapter
+from src.infrastructure.gemini.adapter import GeminiAdapter
+from src.infrastructure.nvidia.adapter import NvidiaAdapter
 from src.core.config_manager import ConfigManager
 from src.tools.registry import AVAILABLE_TOOLS
 
@@ -49,7 +49,7 @@ class GitHubModeOrchestrator:
         except Exception as e:
             logger.exception(f"Error during GitHub scan cycle: {e}")
 
-    async def run_forever(self, interval: int = 300):
+    async def run_forever(self, interval: int = 60):
         """
         Runs the orchestrator in a continuous loop.
         :param interval: Time to sleep between cycles in seconds (default 300s / 5m).
@@ -119,7 +119,7 @@ class GitHubModeOrchestrator:
                     chat_manager.stop_execution()
                     await chat_manager.message_queue.put(new_comment)
                 
-                await asyncio.sleep(30)
+                await asyncio.sleep(10)
 
             await run_task
 
