@@ -8,6 +8,7 @@ from src.infrastructure.gemini import GeminiAdapter
 from src.core.chat_manager import ChatManager
 from src.core.terminal_ui import TerminalUI
 from src.core.logging import setup_logger
+from src.core.github_mode import GitHubModeOrchestrator
 from src.tools.registry import AVAILABLE_TOOLS, SYSTEM_INSTRUCTION
 
 
@@ -51,6 +52,11 @@ async def main():
     )
     parser.add_argument(
         "-d", "--debug", action="store_true", help="Enable debug logging"
+    )
+    parser.add_argument(
+        "--github-mode",
+        action="store_true",
+        help="Run in GitHub mode: process issues with #ai-assistance",
     )
 
     args = parser.parse_args()
@@ -143,8 +149,13 @@ async def main():
         except ImportError:
             ui.display_info("pynput not installed. Emergency Stop (Esc) disabled.")
 
-    # Start the agent in REPL mode, processing initial input if provided
-    await chat_manager.run(initial_input=user_input)
+    if args.github_mode:
+        ui.display_info("Iniciando GitHub Mode...")
+        orchestrator = GitHubModeOrchestrator(sys_instr)
+        await orchestrator.run()
+    else:
+        # Start the agent in REPL mode, processing initial input if provided
+        await chat_manager.run(initial_input=user_input)
 
 
 def cli():
