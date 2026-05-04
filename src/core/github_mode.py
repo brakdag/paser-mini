@@ -24,11 +24,17 @@ class GitHubModeOrchestrator:
         self.config_manager = ConfigManager()
         self.processing_label = "paser-processing"
         self.trigger_hashtag = "#ai-assistance"
+        self.bot_login = None
 
     async def run(self):
         """Main entry point for GitHub mode."""
         logger.info("Starting GitHub Mode Orchestrator...")
         try:
+            # Identify the bot's own account to avoid self-responding loops
+            user_data = github_tools.get_authenticated_user()
+            self.bot_login = user_data.get("login")
+            logger.info(f"Authenticated as bot: {self.bot_login}")
+
             issues = github_tools.list_issues()
             eligible_issues = self._filter_issues(issues)
             
@@ -141,8 +147,15 @@ class GitHubModeOrchestrator:
         while not task.done():
             try:
                 comments = github_tools.get_issue_comments(issue_number)
-                if comments and comments[-1]["id"] > last_id:
-                    return comments[-1]["body"], comments[-1]["id"]
+                if not comments:
+                    await asyncio.sleep(30)
+                    continue
+
+                # Filter out comments made by the bot itself
+                human_comments = [c for c in comments if c['user']['login'] != self.bot_login]
+                
+                if human_comments and human_comments[-1]["id"] > last_id:
+                    return human_comments[-1]["body"], human_comments[-1]["id"]
             except Exception as e:
                 logger.error(f"Error polling comments: {e}")
             

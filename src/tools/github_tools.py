@@ -39,6 +39,16 @@ def _resolve_repo(repo: str) -> str:
     return raw
 
 
+def get_authenticated_user():
+    """Returns the login of the authenticated user."""
+    session = _get_session()
+    headers = _get_headers()
+    url = f"{GITHUB_API_URL}/user"
+    response = session.get(url, headers=headers)
+    response.raise_for_status()
+    return response.json()
+
+
 def list_issues(repo: str = ""):
     session = _get_session()
     headers = _get_headers()
