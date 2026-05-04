@@ -74,6 +74,10 @@ class SmartToolParser:
         if not isinstance(data, dict) or "name" not in data:
             return None, "Missing 'name' field."
 
+        # Sanitize tool name: remove trailing parentheses if the LLM added them
+        if isinstance(data["name"], str) and data["name"].endswith("()"):
+            data["name"] = data["name"][:-2]
+
         data.setdefault("args", {})
         validation = self.validator.validate(data["name"], data["args"])
         if not validation.is_valid:

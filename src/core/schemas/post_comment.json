@@ -1,10 +1,10 @@
 {
-  "required": ["issue_id", "text"],
+  "required": ["issue_number", "body"],
   "properties": {
-    "issue_id": {
+    "issue_number": {
       "type": "integer"
     },
-    "text": {
+    "body": {
       "type": "string"
     }
   },

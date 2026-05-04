@@ -233,8 +233,8 @@
     "post_comment",
     "Post a comment to a specific GitHub issue.",
     {
-      "issue_id": "integer",
-      "text": "string"
+      "issue_number": "integer",
+      "body": "string"
     }
   ],
   [
