@@ -66,6 +66,15 @@ _S = chr(60) + "TOOL" + "_CALL" + chr(62)
 _E = chr(60) + "/" + "TOOL" + "_CALL" + chr(62)
 
 # Core system prompt defining agent behavior and tool interaction rules
+GITHUB_SYSTEM_INSTRUCTION = """
+## GitHub Mode Protocol
+You are operating in GitHub Mode. Your primary interface is GitHub Issues.
+1. **Communication**: You are not in a live chat. All communication must be done via GitHub issue comments.
+2. **Planning**: Before executing any engineering changes, you MUST post a comment with a detailed "Work Plan".
+3. **Progress Tracking**: Use a Markdown checklist in your plan (e.g., - [ ] Task). As you complete each task, post a progress update comment marking the task as completed (e.g., - [x] Task).
+4. **Transparency**: Be explicit about what you are doing and why. Since the user is not watching your internal process, your comments are the only way they know the agent is still active and making progress.
+""
+
 SYSTEM_INSTRUCTION = f"""
 You are a autonomous agent.
 

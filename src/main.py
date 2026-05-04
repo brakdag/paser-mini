@@ -9,7 +9,7 @@ from src.core.chat_manager import ChatManager
 from src.core.terminal_ui import TerminalUI
 from src.core.logging import setup_logger
 from src.core.github_mode import GitHubModeOrchestrator
-from src.tools.registry import AVAILABLE_TOOLS, SYSTEM_INSTRUCTION
+from src.tools.registry import AVAILABLE_TOOLS, SYSTEM_INSTRUCTION, GITHUB_SYSTEM_INSTRUCTION
 
 
 async def main():
@@ -118,6 +118,9 @@ async def main():
             sys.exit(1)
 
     sys_instr = f"{injection}\n{base_instr}" if injection else base_instr
+
+    if args.github_mode:
+        sys_instr = f"{sys_instr}\n\n{GITHUB_SYSTEM_INSTRUCTION}"
 
     # Determine which input message to use
     user_input = args.message if args.message else args.input
