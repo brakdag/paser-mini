@@ -1,0 +1,12 @@
+{
+  "required": ["issue_id", "text"],
+  "properties": {
+    "issue_id": {
+      "type": "integer"
+    },
+    "text": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}
