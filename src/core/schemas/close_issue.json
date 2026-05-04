@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "issue_number": {
+      "type": "integer"
+    },
+    "repo": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "issue_number"
+  ],
+  "additionalProperties": false
+}
