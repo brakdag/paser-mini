@@ -13,6 +13,10 @@ class AutoCorrector:
     def fix_json(content: str) -> str:
         content = content.strip()
         
+        # Fix invalid backslashes (common in LaTeX/Windows paths) before other fixes
+        # Escapes backslashes that are not part of a valid JSON escape sequence
+        content = re.sub(r"\\(?!(?:[\"\\\/bfnrt]|u[0-9a-fA-F]{4}))", "\\\\", content)
+
         # Only replace single quotes if they are acting as delimiters (start/end of string or near colons)
         # This avoids breaking contractions like "It's"
         content = re.sub(r"^'|'$|'\s*:\s*|:\s*'", '"', content)

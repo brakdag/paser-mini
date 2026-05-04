@@ -156,7 +156,7 @@ class ChatManager:
                 combined_tool_responses = []
                 for call_data, raw_content, err in calls:
                     if call_data is None:
-                        self.ui.display_error(f"\u26a0\ufe0f Glitch detectado: {err}")
+                        self.ui.display_error(f"\u2696\ufe0f Error de llamada a herramienta: {err}")
                         tr = self.tool_parser.format_tool_response(f"Validation error: {err}", success=False)
                         combined_tool_responses.append(tr)
                         continue
