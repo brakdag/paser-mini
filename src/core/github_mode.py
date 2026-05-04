@@ -103,7 +103,7 @@ class GitHubModeOrchestrator:
             initial_prompt = (
                 f"SYSTEM: You have been assigned to GitHub Issue #{issue_number}.\n"
                 f"Issue Description: {issue_body}\n\n"
-                f"Please acknowledge the request, analyze the problem, and provide a detailed plan of action to the user."
+                f"Please acknowledge the request, analyze the problem, and provide a detailed plan of action to the user via a comment on this issue. Do NOT create new issues."
             )
             
             run_task = asyncio.create_task(chat_manager.run(initial_input=initial_prompt))

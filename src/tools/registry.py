@@ -16,6 +16,8 @@ from src.tools import (
 )
 
 # Mapping of tool names to their executable Python functions
+GITHUB_SYSTEM_INSTRUCTION = '## GitHub Mode Protocol\nYou are operating in GitHub Mode. Your primary interface is GitHub Issues.\n1. Communication: You are not in a live chat. All communication must be done via GitHub issue comments.\n2. Planning: Before executing any engineering changes, you MUST post a comment with a detailed Work Plan.\n3. Progress Tracking: Use a Markdown checklist in your plan. As you complete each task, post a progress update comment marking the task as completed.\n4. Transparency: Be explicit about what you are doing and why. Since the user is not watching your internal process, your comments are the only way they know the agent is still active and making progress.'
+
 AVAILABLE_TOOLS = {
     "read_file": ft.read_file,
     "write_file": ft.write_file,
@@ -65,16 +67,6 @@ TOOL_CATALOG = "\n".join(
 _S = chr(60) + "TOOL" + "_CALL" + chr(62)
 _E = chr(60) + "/" + "TOOL" + "_CALL" + chr(62)
 
-# Core system prompt defining agent behavior and tool interaction rules
-GITHUB_SYSTEM_INSTRUCTION = """
-## GitHub Mode Protocol
-You are operating in GitHub Mode. Your primary interface is GitHub Issues.
-1. **Communication**: You are not in a live chat. All communication must be done via GitHub issue comments.
-2. **Planning**: Before executing any engineering changes, you MUST post a comment with a detailed "Work Plan".
-3. **Progress Tracking**: Use a Markdown checklist in your plan (e.g., - [ ] Task). As you complete each task, post a progress update comment marking the task as completed (e.g., - [x] Task).
-4. **Transparency**: Be explicit about what you are doing and why. Since the user is not watching your internal process, your comments are the only way they know the agent is still active and making progress.
-""
-
 SYSTEM_INSTRUCTION = f"""
 You are a autonomous agent.
 
@@ -86,9 +78,9 @@ Tool Catalog: name_tool(args) - description
 
 Tool Usage Guidelines:
 - File Manipulation:
-  - Copying: Use copy_file for duplication. Trust the tool's success response; do not verify with read_file unless an error occurs.
+        - Copying: Use copy_file for duplication. Trust the tools success response; do not verify with read_file unless an error occurs.
   - Editing: Use replace_string for surgical changes. Only use write_file for new files or full rewrites.
-  - If replace_string fails: Use the tool's fuzzy suggestion or expand context to ensure uniqueness.
+  - If replace_string fails: Use the tools fuzzy suggestion or expand context to ensure uniqueness.
 
 
 STRICT Rules:
