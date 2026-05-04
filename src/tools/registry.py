@@ -49,6 +49,7 @@ AVAILABLE_TOOLS = {
     "create_issue": gh.create_issue,
     "edit_issue": gh.edit_issue,
     "close_issue": gh.close_issue,
+    "post_comment": gh.post_comment,
     "get_current_repo": gt.get_current_repo,
     "git_diff_all": gt.git_diff,
 }
