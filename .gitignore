@@ -20,3 +20,10 @@ paser_memory*
 config.json
 
 .staff
+
+# Node.js / JS Port
+node_modules/
+.env
+config/config.json
+config/paser_memory.db
+.migration/
