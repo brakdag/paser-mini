@@ -33,4 +33,4 @@ Furthermore, the system embraces an **AI-native interface**: a terminal-based en
 For installation guides, CLI arguments, and technical specifications, please refer to the [Technical Documentation](./docs/TECHNICAL.md).
 
 ## 🜰 Ecosystem Alignment
-For the narrative history of this pod and the character breakdowns of the team, see the [Staff Directory](./docs/staff/).
+For the narrative history of this pod and the character breakdowns of the team, see the [Staff Directory](./.staff/).
