@@ -27,8 +27,8 @@ export class ModelCommands {
       const modelName = models[idx];
       const newTemp = parts[2] ? parseFloat(parts[2]) : chatManager.temperature;
       
-      chatManager.saveConfig('model_name', modelName);
-      chatManager.saveConfig('default_temperature', newTemp);
+      chatManager.configManager.save('model_name', modelName);
+      chatManager.configManager.save('default_temperature', newTemp);
       chatManager.temperature = newTemp;
       chatManager.assistant.startChat(modelName, chatManager.systemInstruction, newTemp);
       

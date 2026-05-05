@@ -67,7 +67,7 @@ export class SmartToolParser {
   /**
    * Formatea la respuesta de una herramienta para la IA
    */
-  static formatToolResponse(data, callId = null, success = true) {
+  formatToolResponse(data, callId = null, success = true) {
     return `<TOOL_RESPONSE>${JSON.stringify({
       id: callId,
       status: success ? 'success' : 'error',
@@ -78,7 +78,7 @@ export class SmartToolParser {
   /**
    * Limpia las etiquetas de respuesta del texto
    */
-  static cleanResponse(text) {
+  cleanResponse(text) {
     if (!text) return '';
     return text.replace(/<[^>]+>.*?<\/[^>]+>/gs, '');
   }

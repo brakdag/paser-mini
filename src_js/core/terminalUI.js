@@ -52,4 +52,12 @@ export class TerminalUI {
   clear() {
     process.stdout.write('\x1Bc');
   }
+
+  async requestInput(rl, prompt) {
+    return new Promise((resolve) => {
+      rl.question(chalk.yellow('❯ ') + prompt, (answer) => {
+        resolve(answer);
+      });
+    });
+  }
 }

@@ -27,15 +27,20 @@ export class ChatManager {
 
     if (initialInput) await this.processTurn(initialInput);
 
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    this.rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
     const ask = () => {
-      rl.question('❯ ', async (input) => {
+      this.rl.question('❯ ', async (input) => {
         if (await this.commandHandler.handle(input)) {
           if (this.stopRequested) process.exit(0);
           return ask();
         }
-        await this.processTurn(input);
+        try {
+          await this.processTurn(input);
+        } catch (e) {
+          this.ui.displayError('Critical error in processTurn: ' + e.message);
+          console.error(e);
+        }
         ask();
       });
     };
@@ -46,7 +51,9 @@ export class ChatManager {
     if (!userInput) return;
     this.ui.displayMessage('\nUser: ' + userInput);
     
+    console.log('[DEBUG] Sending message to assistant...');
     let currentResponse = await this.assistant.sendMessage(userInput);
+    console.log('[DEBUG] Received response from assistant.');
     let turnComplete = false;
     let iterations = 0;
     const maxIterations = 10;

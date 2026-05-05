@@ -78,10 +78,24 @@ export class CommandHandler {
     if (inputStripped.startsWith('/fav')) return await FavoriteCommands.handleFav(this.chatManager, this.ui, inputStripped.split(/\s+/));
 
     if (inputStripped === '/connect') {
+      const { GeminiAdapter } = await import('../infrastructure/gemini/adapter.js');
+      const { NvidiaAdapter } = await import('../infrastructure/nvidia/adapter.js');
+
       this.ui.displayMessage('Select Provider:\n0: Gemini\n1: NVIDIA');
-      // Nota: En un entorno real, usaríamos readline para capturar la respuesta
-      // Aquí simulamos la selección o dejamos que el usuario use /config
-      this.ui.displayInfo('Please use /config or environment variables to switch providers in this version.');
+      const choice = await this.ui.requestInput(this.chatManager.rl, 'Provider: ');
+
+      if (choice === '0') {
+        this.chatManager.assistant = new GeminiAdapter();
+        this.chatManager.configManager.save('provider', 'Gemini');
+        this.ui.displayInfo('Connected to Gemini');
+      } else if (choice === '1') {
+        this.chatManager.assistant = new NvidiaAdapter();
+        this.chatManager.configManager.save('provider', 'NVIDIA');
+        this.ui.displayInfo('Connected to NVIDIA');
+      } else {
+        this.ui.displayError('Invalid provider.');
+        return true;
+      }
       return true;
     }
 

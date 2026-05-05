@@ -2,7 +2,7 @@ import axios from 'axios';
 
 export class GeminiAdapter {
   constructor() {
-    this.apiKey = process.env.GEMINI_API_KEY;
+    this.apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     this.history = [];
     this.currentModel = 'gemini-2.0-flash';
     this.systemInstruction = null;
@@ -50,7 +50,8 @@ export class GeminiAdapter {
     this.history.push({ role, parts });
 
     const payload = this._buildPayload();
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.currentModel}:generateContent?key=${this.apiKey}`;
+        const modelName = this.currentModel.replace(/^models\//, '');
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${this.apiKey}`;
 
     try {
       const response = await axios.post(url, payload);
@@ -99,6 +100,20 @@ export class GeminiAdapter {
   popLastMessage() {
     if (this.history.length > 0) {
       this.history.pop();
+    }
+  }
+
+  async getAvailableModels() {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${this.apiKey}`;
+      const response = await axios.get(url);
+      const models = response.data.models || [];
+      return models
+        .filter(m => m.name.includes('gemini') || m.name.includes('gemma'))
+        .map(m => m.name);
+    } catch (e) {
+      console.error(`Error fetching models: ${e.message}`);
+      return ['models/gemini-2.0-flash', 'models/gemini-1.5-flash'];
     }
   }
 }
