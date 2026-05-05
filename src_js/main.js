@@ -5,6 +5,7 @@ import { NvidiaAdapter } from './infrastructure/nvidia/adapter.js';
 import { TerminalUI } from './core/terminalUI.js';
 import { ChatManager } from './core/chatManager.js';
 import { ConfigManager } from './core/configManager.js';
+import fs from 'fs';
 import { SYSTEM_INSTRUCTION, AVAILABLE_TOOLS } from './tools/registry.js';
 import * as fileTools from './tools/fileTools.js';
 import * as gitTools from './tools/gitTools.js';
@@ -36,6 +37,8 @@ async function main() {
     .description('Minimalist Autonomous Agent (JS Port)')
     .option('-m, --message <message>', 'Initial message to send')
     .option('-si, --system-instruction <instruction>', 'Custom system instructions')
+    .option('-isi, --inject-system-instruction <instruction>', 'Inject instruction at the start of system prompt')
+    .option('-fsi, --file-system-instruction <path>', 'Path to file for system instruction injection')
     .option('--github-mode', 'Run in GitHub mode: process issues with #ai-assistance')
     .parse(process.argv);
 
@@ -55,7 +58,21 @@ async function main() {
   const provider = configManager.get('provider', 'Gemini');
   const assistant = provider === 'NVIDIA' ? new NvidiaAdapter() : new GeminiAdapter();
   
-  const sysInstr = options.systemInstruction || SYSTEM_INSTRUCTION;
+  const baseInstr = options.systemInstruction || SYSTEM_INSTRUCTION;
+  let injection = '';
+
+  if (options.injectSystemInstruction) {
+    injection = options.injectSystemInstruction;
+  } else if (options.fileSystemInstruction) {
+    try {
+      injection = fs.readFileSync(options.fileSystemInstruction, 'utf8');
+    } catch (e) {
+      console.error(`Error reading instruction file: ${e.message}`);
+      process.exit(1);
+    }
+  }
+
+  const sysInstr = injection ? `${injection}\n${baseInstr}` : baseInstr;
 
   const chatManager = new ChatManager(
     assistant,
@@ -69,6 +86,14 @@ async function main() {
 
   await chatManager.run(options.message);
 }
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception thrown:', err);
+});
 
 main().catch(err => {
   console.error('Critical Error:', err);

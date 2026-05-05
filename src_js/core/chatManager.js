@@ -24,27 +24,35 @@ export class ChatManager {
   async run(initialInput = null) {
     this.ui.displayInfo('Paser Mini initialized. Type /quit to exit.');
     this.assistant.startChat('gemini-2.0-flash', this.systemInstruction);
+    
+    // Vincular contexto para herramientas de memoria (get_token_count)
+    import('./../tools/memoryTools.js').then(m => m.setMemoryContext(this.assistant, this));
 
     if (initialInput) await this.processTurn(initialInput);
 
     this.rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
-    const ask = () => {
-      this.rl.question('❯ ', async (input) => {
-        if (await this.commandHandler.handle(input)) {
-          if (this.stopRequested) process.exit(0);
-          return ask();
-        }
-        try {
-          await this.processTurn(input);
-        } catch (e) {
-          this.ui.displayError('Critical error in processTurn: ' + e.message);
-          console.error(e);
-        }
-        ask();
-      });
-    };
-    ask();
+    // Keep-alive to prevent premature process exit
+    const heartbeat = setInterval(() => {}, 1000);
+    this.heartbeat = heartbeat;
+
+    while (!this.stopRequested) {
+      const input = await this.ui.requestInput(this.rl, '');
+      
+      if (!input) continue;
+
+      if (await this.commandHandler.handle(input)) {
+        if (this.stopRequested) break;
+        continue;
+      }
+
+      try {
+        await this.processTurn(input);
+      } catch (e) {
+        this.ui.displayError('Critical error in processTurn: ' + e.message);
+        console.error(e);
+      }
+    }
   }
 
   async processTurn(userInput) {

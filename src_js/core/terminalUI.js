@@ -56,7 +56,11 @@ export class TerminalUI {
   async requestInput(rl, prompt) {
     return new Promise((resolve) => {
       rl.question(chalk.yellow('❯ ') + prompt, (answer) => {
-        resolve(answer);
+        if (answer === null || answer === undefined) {
+          resolve('');
+        } else {
+          resolve(answer.toString());
+        }
       });
     });
   }

@@ -1,42 +1,52 @@
 import axios from 'axios';
+import axiosRetry from 'axios-retry';
 import { get_current_repo } from './gitTools.js';
 
 const GITHUB_API_URL = 'https://api.github.com';
 
-async function request(method, endpoint, data = null) {
+const client = axios.create({
+  baseURL: GITHUB_API_URL,
+  headers: {
+    'Accept': 'application/vnd.github.v3+json'
+  }
+});
+
+// Implementación de estrategia de reintentos similar a la de Python
+axiosRetry(client, {
+  retries: 3,
+  retryDelay: axiosRetry.exponentialDelay,
+  retryCondition: (error) => {
+    return axiosRetry.isNetworkOrIdempotentRequestError(error) || error.response?.status === 429;
+  }
+});
+
+async function getHeaders() {
   const token = process.env.GITHUB_TOKEN;
   if (!token) throw new Error('GITHUB_TOKEN no configurado.');
-
-  const config = {
-    method,
-    url: `${GITHUB_API_URL}${endpoint}`,
-    headers: {
-      'Authorization': `token ${token}`,
-      'Accept': 'application/vnd.github.v3+json'
-    },
-    data
-  };
-
-  try {
-    const response = await axios(config);
-    return response.data;
-  } catch (e) {
-    throw new Error(e.response?.data?.message || e.message);
-  }
+  return { 'Authorization': `token ${token}` };
 }
 
 function resolveRepo(repo) {
-  // Nota: get_current_repo es async, así que el llamador debe manejar la resolución
-  // Para simplificar, resolveRepo aquí asume que ya recibió el string del repo
   let raw = repo || '';
   return raw.replace('git@github.com:', '').replace('https://github.com/', '').replace('.git', '');
 }
 
+export const get_authenticated_user = async () => {
+  try {
+    const headers = await getHeaders();
+    const response = await client.get('/user', { headers });
+    return response.data;
+  } catch (e) {
+    return `ERR: ${e.response?.data?.message || e.message}`;
+  }
+};
+
 export const list_issues = async ({ repo = '' }) => {
   try {
-    // Intentamos obtener el repo actual si no se provee uno
     const targetRepo = repo ? resolveRepo(repo) : (await get_current_repo());
-    return await request('GET', `/repos/${targetRepo}/issues`);
+    const headers = await getHeaders();
+    const response = await client.get(`/repos/${targetRepo}/issues`, { headers });
+    return response.data;
   } catch (e) {
     return `ERR: ${e.message}`;
   }
@@ -45,8 +55,9 @@ export const list_issues = async ({ repo = '' }) => {
 export const create_issue = async ({ title, body, repo = '' }) => {
   try {
     const targetRepo = repo ? resolveRepo(repo) : (await get_current_repo());
-    const data = await request('POST', `/repos/${targetRepo}/issues`, { title, body });
-    return `Issue #${data.number} created successfully.`;
+    const headers = await getHeaders();
+    const response = await client.post(`/repos/${targetRepo}/issues`, { title, body }, { headers });
+    return `Issue #${response.data.number} created successfully.`;
   } catch (e) {
     return `ERR: ${e.message}`;
   }
@@ -55,10 +66,11 @@ export const create_issue = async ({ title, body, repo = '' }) => {
 export const edit_issue = async ({ issue_number, repo = '', title, body }) => {
   try {
     const targetRepo = repo ? resolveRepo(repo) : (await get_current_repo());
+    const headers = await getHeaders();
     const data = {};
     if (title) data.title = title;
     if (body) data.body = body;
-    await request('PATCH', `/repos/${targetRepo}/issues/${issue_number}`, data);
+    await client.patch(`/repos/${targetRepo}/issues/${issue_number}`, data, { headers });
     return `Issue #${issue_number} edited successfully.`;
   } catch (e) {
     return `ERR: ${e.message}`;
@@ -68,7 +80,8 @@ export const edit_issue = async ({ issue_number, repo = '', title, body }) => {
 export const close_issue = async ({ issue_number, repo = '' }) => {
   try {
     const targetRepo = repo ? resolveRepo(repo) : (await get_current_repo());
-    await request('PATCH', `/repos/${targetRepo}/issues/${issue_number}`, { state: 'closed' });
+    const headers = await getHeaders();
+    await client.patch(`/repos/${targetRepo}/issues/${issue_number}`, { state: 'closed' }, { headers });
     return `Issue #${issue_number} closed successfully.`;
   } catch (e) {
     return `ERR: ${e.message}`;
@@ -78,8 +91,42 @@ export const close_issue = async ({ issue_number, repo = '' }) => {
 export const post_comment = async ({ issue_number, body, repo = '' }) => {
   try {
     const targetRepo = repo ? resolveRepo(repo) : (await get_current_repo());
-    await request('POST', `/repos/${targetRepo}/issues/${issue_number}/comments`, { body });
+    const headers = await getHeaders();
+    await client.post(`/repos/${targetRepo}/issues/${issue_number}/comments`, { body }, { headers });
     return `Comment posted to issue #${issue_number}.`;
+  } catch (e) {
+    return `ERR: ${e.message}`;
+  }
+};
+
+export const add_label = async ({ issue_number, label, repo = '' }) => {
+  try {
+    const targetRepo = repo ? resolveRepo(repo) : (await get_current_repo());
+    const headers = await getHeaders();
+    await client.post(`/repos/${targetRepo}/issues/${issue_number}/labels`, { labels: [label] }, { headers });
+    return `Label '${label}' added to issue #${issue_number}.`;
+  } catch (e) {
+    return `ERR: ${e.message}`;
+  }
+};
+
+export const remove_label = async ({ issue_number, label, repo = '' }) => {
+  try {
+    const targetRepo = repo ? resolveRepo(repo) : (await get_current_repo());
+    const headers = await getHeaders();
+    await client.delete(`/repos/${targetRepo}/issues/${issue_number}/labels/${label}`, { headers });
+    return `Label '${label}' removed from issue #${issue_number}.`;
+  } catch (e) {
+    return `ERR: ${e.message}`;
+  }
+};
+
+export const get_issue_comments = async ({ issue_number, repo = '' }) => {
+  try {
+    const targetRepo = repo ? resolveRepo(repo) : (await get_current_repo());
+    const headers = await getHeaders();
+    const response = await client.get(`/repos/${targetRepo}/issues/${issue_number}/comments`, { headers });
+    return response.data;
   } catch (e) {
     return `ERR: ${e.message}`;
   }
