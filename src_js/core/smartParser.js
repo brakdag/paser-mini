@@ -55,7 +55,7 @@ export class SmartToolParser {
     const results = [];
     let match;
 
-    while ((match = this.TOOL_PATTERN.exec(text)) !== null) {
+    while ((match = SmartToolParser.TOOL_PATTERN.exec(text)) !== null) {
       const content = match[1].trim();
       const { data, error } = this.parseCall(content);
       results.push({ data, content, error });

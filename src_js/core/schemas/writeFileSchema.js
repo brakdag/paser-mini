@@ -5,4 +5,3 @@ export const writeFileSchema = z.object({
   content: z.string(),
 }).strict();
 
-export const WriteFileArgs = z.infer<typeof writeFileSchema>;
