@@ -17,17 +17,7 @@ import * as utilTools from './tools/utilTools.js';
 import * as systemTools from './tools/systemTools.js';
 import * as instanceTools from './tools/instanceTools.js';
 
-Object.assign(AVAILABLE_TOOLS, {
-  ...fileTools,
-  ...gitTools,
-  ...githubTools,
-  ...memoryTools,
-  ...jsonTools,
-  ...searchTools,
-  ...utilTools,
-  ...systemTools,
-  ...instanceTools
-});
+// Tool mapping is handled centrally in src_js/tools/registry.js
 
 async function main() {
   const program = new Command();

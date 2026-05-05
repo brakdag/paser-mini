@@ -45,12 +45,22 @@ export class GeminiAdapter {
     return payload;
   }
 
+  /**
+   * Limpia los pensamientos internos del modelo para evitar que contaminen el historial
+   * y causen bucles de razonamiento o ejecuciones falsas.
+   */
+  _filterThoughts(text) {
+    if (!text) return '';
+    // Elimina bloques <thought>...</thought> y cualquier cosa similar
+    return text.replace(/<(thought|reasoning)>[\s\S]*?<\/\1>/gi, '').trim();
+  }
+
   async sendMessage(message, role = 'user') {
     const parts = [{ text: message }];
     this.history.push({ role, parts });
 
     const payload = this._buildPayload();
-        const modelName = this.currentModel.replace(/^models\//, '');
+    const modelName = this.currentModel.replace(/^models\//, '');
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${this.apiKey}`;
 
     try {
@@ -72,7 +82,11 @@ export class GeminiAdapter {
         return 'Error: No content parts returned.';
       }
 
-      const textContent = content.parts.map(p => p.text).join('');
+      let textContent = content.parts.map(p => p.text).join('');
+      
+      // FILTRO CRÍTICO: Limpiamos los pensamientos antes de guardar en el historial
+      textContent = this._filterThoughts(textContent);
+
       if (textContent) {
         this.history.push({ role: 'model', parts: [{ text: textContent }] });
         return textContent;

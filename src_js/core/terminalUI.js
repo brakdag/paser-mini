@@ -8,25 +8,25 @@ export class TerminalUI {
   }
 
   displayMessage(text) {
-    console.log(chalk.white(text));
+    process.stdout.write(chalk.white(text) + '\n');
   }
 
   displayInfo(text) {
-    console.log(chalk.blue('ℹ ') + chalk.cyan(text));
+    process.stdout.write(chalk.blue('\u2139 ') + chalk.cyan(text) + '\n');
   }
 
   displayError(text) {
-    console.log(chalk.red('✖ ') + chalk.red.bold(text));
+    process.stdout.write(chalk.red('\u2716 ') + chalk.red.bold(text) + '\n');
   }
 
   startToolMonitoring(name, detail) {
     if (this.noSpinner) {
-      console.log(chalk.yellow('⚙ ') + chalk.gray(name + ' (' + detail + ')...'));
+      process.stdout.write(chalk.yellow('\u2699 ') + chalk.gray(name + ' (' + detail + ')...') + '\n');
       return;
     }
 
     const spinner = ora({
-      text: chalk.yellow('⚙ ') + chalk.gray(name + ' (' + detail + ')...'),
+      text: chalk.yellow('\u2699 ') + chalk.gray(name + ' (' + detail + ')...'),
       color: 'yellow'
     }).start();
 
@@ -38,14 +38,14 @@ export class TerminalUI {
 
     if (spinner) {
       if (success) {
-        spinner.succeed(chalk.green('✔ ') + chalk.gray(name + ' (' + detail + ') completed'));
+        spinner.succeed(chalk.green('\u2714 ') + chalk.gray(name + ' (' + detail + ') completed'));
       } else {
-        spinner.fail(chalk.red('✖ ') + chalk.gray(name + ' (' + detail + ') failed'));
+        spinner.fail(chalk.red('\u2716 ') + chalk.gray(name + ' (' + detail + ') failed'));
       }
       this.activeSpinners.delete(name);
     } else if (this.noSpinner) {
-      const symbol = success ? chalk.green('✔') : chalk.red('✖');
-      console.log(symbol + ' ' + chalk.gray(name + ' (' + detail + ') ' + (success ? 'completed' : 'failed')));
+      const symbol = success ? chalk.green('\u2714') : chalk.red('\u2716');
+      process.stdout.write(symbol + ' ' + chalk.gray(name + ' (' + detail + ') ' + (success ? 'completed' : 'failed')) + '\n');
     }
   }
 
@@ -55,12 +55,10 @@ export class TerminalUI {
 
   async requestInput(rl, prompt) {
     return new Promise((resolve) => {
-      rl.question(chalk.yellow('❯ ') + prompt, (answer) => {
-        if (answer === null || answer === undefined) {
-          resolve('');
-        } else {
-          resolve(answer.toString());
-        }
+      // Forzamos la limpieza de la línea antes de preguntar
+      process.stdout.write('\r'); 
+      rl.question(chalk.yellow('\u276f ') + prompt, (answer) => {
+        resolve(answer ? answer.toString() : '');
       });
     });
   }

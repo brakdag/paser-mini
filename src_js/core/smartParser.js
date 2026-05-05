@@ -2,24 +2,19 @@ import { AutoCorrector } from './autoCorrector.js';
 import validator from './schemaRegistry.js';
 
 export class SmartToolParser {
-  static TOOL_PATTERN = /<(?:TOOL_CALL|tool_call)\s*>(.*?)(?:<\/(?:TOOL_CALL|tool_call)>|$)/gis;
+  // Regex optimizada: limita la captura a 10k caracteres para evitar el bloqueo del hilo principal
+  static TOOL_PATTERN = /<(?:TOOL_CALL|tool_call)\s*>([\s\S]{1,10000}?)(?:<\/(?:TOOL_CALL|tool_call)>|$)/gis;
 
   constructor() {
     this.validator = validator;
     this.corrector = AutoCorrector;
   }
 
-  /**
-   * Intenta parsear y validar una llamada a herramienta
-   * @param {string} rawContent 
-   * @returns {{data: any, error: string|null}}
-   */
   parseCall(rawContent) {
     let data;
     try {
       data = JSON.parse(rawContent);
     } catch (e) {
-      // Intento de corrección automática
       try {
         data = JSON.parse(this.corrector.fixJson(rawContent));
       } catch (e2) {
@@ -31,7 +26,6 @@ export class SmartToolParser {
       return { data: null, error: "Missing 'name' field." };
     }
 
-    // Sanitizar nombre de la herramienta (quitar '()' si la IA los añadió)
     if (typeof data.name === 'string' && data.name.endsWith('()')) {
       data.name = data.name.slice(0, -2);
     }
@@ -46,14 +40,10 @@ export class SmartToolParser {
     return { data, error: null };
   }
 
-  /**
-   * Extrae todas las llamadas a herramientas de un texto
-   * @param {string} text 
-   * @returns {Array<{data: any, content: string, error: string|null}>}
-   */
   extractToolCalls(text) {
     const results = [];
     let match;
+    SmartToolParser.TOOL_PATTERN.lastIndex = 0;
 
     while ((match = SmartToolParser.TOOL_PATTERN.exec(text)) !== null) {
       const content = match[1].trim();
@@ -64,9 +54,6 @@ export class SmartToolParser {
     return results;
   }
 
-  /**
-   * Formatea la respuesta de una herramienta para la IA
-   */
   formatToolResponse(data, callId = null, success = true) {
     return `<TOOL_RESPONSE>${JSON.stringify({
       id: callId,
@@ -75,9 +62,6 @@ export class SmartToolParser {
     })}</TOOL_RESPONSE>`;
   }
 
-  /**
-   * Limpia las etiquetas de respuesta del texto
-   */
   cleanResponse(text) {
     if (!text) return '';
     return text.replace(/<[^>]+>.*?<\/[^>]+>/gs, '');
