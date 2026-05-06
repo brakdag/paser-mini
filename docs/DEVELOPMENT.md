@@ -1,9 +1,15 @@
 # Development & Testing
 
-Testing must be performed in a fresh environment. Because Python caches imported modules and the agent maintains internal state (such as `READ_CACHE` in `file_tools.py`), modifications to the codebase may not be reflected in the current running session.
+Development of Paser Mini focuses on extreme efficiency and zero-overhead execution. To ensure stability and performance, follow these guidelines:
 
-To ensure a clean state and verify changes:
-1. Launch a new instance of `paser-mini`.
-2. Use `run_instance` to delegate verification to a subsequent agent.
-3. For high-security testing of untrusted code, use `run_instance` with `sandbox=True` (requires Wasmer).
-3. After any modification, create a GitHub issue to document the change and provide testing instructions for the next agent.
+### Verification Workflow
+
+To verify changes in the core engine or toolset:
+1. **Fresh Instance**: Launch a new instance of `paser-mini` to ensure no stale state is affecting the behavior.
+2. **Delegated Testing**: Use `newAgent` to launch a secondary instance. This allows the primary agent to observe and verify the behavior of the new instance in real-time.
+3. **Regression Check**: After any modification, verify that the tool's token consumption hasn't increased and that no new friction has been introduced to the user experience.
+4. **Documentation**: Create a GitHub issue to document the change, the reasoning behind it, and the verification steps taken.
+
+### Testing Environment
+
+All tests should be run in a clean Debian/Linux environment. Avoid using multi-platform wrappers that could introduce latency or behavioral discrepancies.

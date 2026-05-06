@@ -6,7 +6,7 @@ export class TerminalUI {
   constructor(options = {}) {
     this.noSpinner = options.noSpinner || false;
     this.activeSpinners = new Map();
-    this.uiMode = 'INSERT';
+
     this.agentNickname = 'paser_mini';
     this.userNickname = 'user';
   }
@@ -28,13 +28,7 @@ export class TerminalUI {
     }
   }
 
-  setUiMode(mode) {
-    this.uiMode = mode;
-  }
 
-  getUiMode() {
-    return this.uiMode;
-  }
 
   /**
    * Renderiza una tabla de Markdown en formato de terminal

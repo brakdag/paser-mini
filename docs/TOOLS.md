@@ -11,7 +11,7 @@ This document serves as the definitive reference for the tools available to the 
 ### 🔍 Search & Analysis
 
 - **Global Search**: `searchTextGlobal` (content search), `searchFilesPattern` (filename pattern).
-- **Code Intelligence**: `analyzePyright` (static analysis), `gitDiff` (version control differences).
+- **Code Intelligence**: `analyzePyright` (static analysis for JS/TS codebase), `gitDiff` (version control differences).
 
 ### 🧠 Memento (Cognitive Memory)
 
@@ -22,8 +22,6 @@ This document serves as the definitive reference for the tools available to the 
 
 ### 🛠️ Technical Execution
 
-- **Python Sandbox**: `runPython` - Executes a Python script using the project venv. Runs in the script's directory.
-- **Formatting**: `codeFormatter` - Format Python code according to PEP 8 using black.
 - **Orchestration**: `newAgent` - Launches a new independent instance of Paser Mini in the project root.
 - **Metrics**: `getTokenCount` - Returns current token usage and percentage relative to the limit.
 

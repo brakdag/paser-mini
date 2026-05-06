@@ -72,6 +72,8 @@ export class ChatManager {
     while (!this.stopRequested) {
       let input = await this.ui.requestInput();
       
+
+      
       if (!input) continue;
 
       if (!this.logOpened) {
@@ -120,6 +122,16 @@ export class ChatManager {
       }
 
       const toolCalls = this.parser.extractToolCalls(currentResponse);
+
+      // UX: Separate reasoning (thought) from action
+      const firstCallIndex = currentResponse.search(/<(?:TOOL_CALL|tool_call)\s*>/i);
+      if (firstCallIndex !== -1) {
+        const thought = currentResponse.substring(0, firstCallIndex);
+        if (thought.trim()) {
+          this.ui.displayThought(thought.trim());
+        }
+      }
+
       if (toolCalls.length === 0 || toolCalls.every(tc => tc.error)) {
         turnComplete = true;
       } else {
@@ -152,8 +164,11 @@ export class ChatManager {
 
     if (iterations >= maxIterations) this.ui.displayError('Maximum tool iterations reached.');
 
-    const finalResponse = LatexTranslator.translate(currentResponse);
-    this.ui.displayChatMessage(this.ui.agentNickname, finalResponse);
+    const cleanedResponse = this.parser.cleanResponse(currentResponse);
+    const finalResponse = LatexTranslator.translate(cleanedResponse);
+    if (finalResponse.trim()) {
+      this.ui.displayChatMessage(this.ui.agentNickname, finalResponse);
+    }
   }
 
   stopExecution() {

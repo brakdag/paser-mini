@@ -82,11 +82,11 @@ export class ExecutionEngine {
       const result = await toolFunc(args);
 
       if (name === 'pullMemory') {
-        this.ui.displayMessage('\ud83e\udde0 **Memento Pull**: Accessing node #' + args.key);
+        this.ui.displayPanel('Memento Pull', 'Accessing node #' + args.key, 'info');
       } else if (name === 'pushMemory') {
-        this.ui.displayMessage('\u270d\ufe0f **Memento Push**: ' + result);
+        this.ui.displayPanel('Memento Push', result, 'info');
       } else if (name === 'runInstance') {
-        this.ui.displayMessage('\ud83d\ude80 **Instance Test Output**\n\n' + '```text\n' + result + '\n```');
+        this.ui.displayPanel('Instance Test Output', result, 'info');
       }
 
       this.toolTracker.recordSuccess(name);

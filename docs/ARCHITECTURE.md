@@ -2,27 +2,27 @@
 
 This project follows a modular ReAct (Reasoning and Acting) architecture. Below is the detailed breakdown of the components:
 
-### ⚙️ Core Engine (`paser/core/`)
+### ⚙️ Core Engine (`src_js/core/`)
 
-- **`chat_manager.py`**: The central orchestrator. It manages the conversation loop, handles tool execution asynchronously, and prevents infinite loops via `RepetitionDetector`.
-- **`smart_parser.py`**: Implements a robust, single-pass JSON parser with auto-correction and schema validation for `<TOOL_CALL>` tags.
-- **`terminal_ui.py`**: A high-fidelity terminal interface using `rich` and `prompt_toolkit`, featuring real-time tool monitoring (spinners) and LaTeX rendering.
-- **`commands.py`**: Implements the internal command system (e.g., `/models`, `/s`, `/t`) to modify agent state without affecting the chat history.
-- **`config_manager.py`**: Handles the persistence of user preferences (model, temperature) in `config/config.json`.
+- **`chatManager.js`**: The central orchestrator. It manages the conversation loop, handles tool execution asynchronously, and prevents infinite loops via `RepetitionDetector`.
+- **`smartParser.js`**: Implements a robust, single-pass JSON parser with auto-correction and schema validation for `<TOOL_CALL>` tags.
+- **`terminalUI.js`**: A high-fidelity terminal interface using `chalk` and `ora`, featuring real-time tool monitoring (spinners) and Markdown rendering.
+- **`commandHandler.js`**: Implements the internal command system (e.g., `/models`, `/s`, `/t`) to modify agent state without affecting the chat history.
+- **`configManager.js`**: Handles the persistence of user preferences (model, temperature) in `config/config.json`.
 
-### 💠 Infrastructure (`paser/infrastructure/gemini/`)
+### 💠 Infrastructure (`src_js/infrastructure/`)
 
-- **`adapter.py`**: The `GeminiAdapter` class abstracts the Google GenAI API, managing chat sessions, history, and model configuration.
-- **`retry_handler.py` & `errors.py`**: Provide a robust layer to handle API rate limits and connectivity issues with exponential backoff.
-- **`snapshot_manager.py`**: Allows saving and loading of interaction snapshots for debugging and persistence.
+- **`gemini/adapter.js`**: The `GeminiAdapter` class abstracts the Google GenAI API, managing chat sessions, history, and model configuration.
+- **`memento/`**: Implements the Cognitive Graph using SQLite for persistent, distilled memory.
+- **`nvidia/`**: Hardware-specific integrations for optimized LLM execution.
 
-### 💡 Toolbox (`paser/tools/`)
+### 💡 Toolbox (`src_js/tools/`)
 
-- **`registry.py`**: The source of truth for available tools and the `SYSTEM_INSTRUCTION` that defines the agent's persona and protocol.
-- **`file_tools.py`**: Implements secure file operations (read, write, replace, delete) restricted to the project root via `context.get_safe_path`.
-- **`search_tools.py`**: Wraps system utilities like `grep` and `find` for efficient global searching.
-- **`system_tools.py`**: Integrates `pyright` for static type analysis of the codebase.
-- **`instance_tools.py`**: Enables "inception" capabilities. Allows launching a new `paser-mini` instance or any Python module/script. Supports a secure WebAssembly sandbox mode via Wasmer.
+- **`registry.js`**: The source of truth for available tools and the `SYSTEM_INSTRUCTION` that defines the agent's persona and protocol.
+- **`fileTools.js`**: Implements secure file operations (read, write, replace, delete) restricted to the project root.
+- **`searchTools.js`**: Wraps system utilities for efficient global searching.
+- **`systemTools.js`**: Integrates `pyright` for static type analysis of the JS/TS codebase.
+- **`instanceTools.js`**: Enables "inception" capabilities, allowing the launching of new independent `paser-mini` instances.
 
 ### ↻ Data Flow
 
