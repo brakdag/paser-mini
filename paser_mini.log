@@ -1,2 +1,10 @@
---- Session Started: 2026-05-05T20:28:59.739Z ---
-[2026-05-05T20:29:01.576Z] [INFO] Initializing ChatManager.run 
+--- Session Started: 2026-05-06T02:19:05.136Z ---
+[2026-05-06T02:19:05.565Z] [INFO] Initializing ChatManager.run 
+[2026-05-06T02:19:42.093Z] [INFO] Starting processTurn {"userInput":"hola"}
+[2026-05-06T02:19:45.417Z] [DEBUG] Received response from assistant {"responseLength":272}
+[2026-05-06T02:19:59.642Z] [INFO] Starting processTurn {"userInput":"escribí en formato markdown"}
+[2026-05-06T02:20:06.276Z] [DEBUG] Received response from assistant {"responseLength":1023}
+[2026-05-06T02:20:54.660Z] [INFO] Starting processTurn {"userInput":"devolvemene ejemplo en markdown"}
+[2026-05-06T02:21:06.549Z] [DEBUG] Received response from assistant {"responseLength":1678}
+[2026-05-06T02:21:36.213Z] [INFO] Starting processTurn {"userInput":"exit"}
+[2026-05-06T02:21:40.481Z] [DEBUG] Received response from assistant {"responseLength":513}

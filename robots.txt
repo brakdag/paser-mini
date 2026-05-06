@@ -1,0 +1,28 @@
+User-agent: *
+# Cognitive Navigation Map for Paser Mini
+# This file serves as the primary orientation guide for the AI agent.
+
+# --- ALLOWED ZONES (High Utility) ---
+Allow: /README.md
+Allow: /.staff/
+Allow: /src_js/
+Allow: /config/
+Allow: /docs/
+Allow: /.migration/
+Allow: /scripts/
+
+# --- DISALLOWED ZONES (Noise & Risk) ---
+Disallow: /node_modules/
+Disallow: /.git/
+Disallow: /venv/
+Disallow: /.pytest_cache/
+Disallow: /tmp/
+Disallow: /sessions/
+
+# --- SITEMAP (Priority Entry Points) ---
+Sitemap: /README.md
+Sitemap: /.staff/elena_vance.md
+Sitemap: /.migration/manifest.json
+Sitemap: /src_js/core/executionEngine.js
+
+# Note: Prioritize src_js over src for all current operations to ensure JS-native fluency.

@@ -1,38 +1,31 @@
-import axios from 'axios';
+import { NvidiaRestClient } from './restClient.js';
+import { NvidiaRetryHandler } from './retryHandler.js';
+import { ConfigManager } from '../../core/configManager.js';
 
 export class NvidiaAdapter {
   constructor() {
-    this.apiKey = process.env.NVIDIA_API_KEY;
-    this.baseUrl = 'https://integrate.api.nvidia.com/v1';
+    this.configManager = new ConfigManager();
+    this.client = new NvidiaRestClient(this.configManager);
+    this.retryHandler = new NvidiaRetryHandler();
+    
     this.currentModel = 'meta/llama-3.1-405b-instruct';
     this.history = [];
     this.systemInstruction = '';
     this.temperature = 0.7;
   }
 
+  setRetryCallback(callback) {
+    this.retryHandler.setCallback(callback);
+  }
+
   startChat(modelName, systemInstruction, temperature = 0.7) {
     this.currentModel = modelName || this.currentModel;
     this.systemInstruction = systemInstruction;
     this.temperature = temperature;
-    // NVIDIA usa el rol 'system' para las instrucciones globales
     this.history = [{ role: 'system', content: systemInstruction }];
   }
 
-  async _applyRateLimit(configManager) {
-    const rpmLimit = parseInt(configManager.get('rpm_limit', 15), 10);
-    const minInterval = 60000 / rpmLimit;
-    
-    if (this.lastRequestTime) {
-      const elapsed = Date.now() - this.lastRequestTime;
-      if (elapsed < minInterval) {
-        const waitTime = minInterval - elapsed;
-        await new Promise(resolve => setTimeout(resolve, waitTime));
-      }
-    }
-    this.lastRequestTime = Date.now();
-  }
-
-  async sendMessage(message, role = 'user') {
+  async sendMessage(message, role = 'user', maxTokens = 512) {
     const apiRole = role === 'model' ? 'assistant' : role;
     this.history.push({ role: apiRole, content: message });
 
@@ -40,20 +33,17 @@ export class NvidiaAdapter {
       model: this.currentModel,
       messages: this.history,
       temperature: this.temperature,
-      max_tokens: 512
+      max_tokens: maxTokens
     };
 
     try {
-      // Nota: En una implementación completa, pasaríamos el configManager aquí
-      // Para simplificar, aplicamos un delay básico o confiamos en el servidor
-      const response = await axios.post(`${this.baseUrl}/chat/completions`, payload, {
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      // Execute via retry handler to ensure resilience against 429s and 5xxs
+      const response = await this.retryHandler.execute(
+        (p) => this.client.chatCompletions(p),
+        payload
+      );
 
-      const content = response.data.choices[0].message.content;
+      const content = response.choices[0].message.content;
       this.history.push({ role: 'assistant', content: content });
       return content;
     } catch (e) {
@@ -64,10 +54,8 @@ export class NvidiaAdapter {
 
   async getAvailableModels() {
     try {
-      const response = await axios.get(`${this.baseUrl}/models`, {
-        headers: { 'Authorization': `Bearer ${this.apiKey}` }
-      });
-      return response.data.data.map(m => m.id);
+      const data = await this.client.get('models');
+      return data.data.map(m => m.id);
     } catch (e) {
       return ['meta/llama-3.1-405b-instruct'];
     }
@@ -75,13 +63,12 @@ export class NvidiaAdapter {
 
   async checkAvailability(modelName) {
     try {
-      await axios.post(`${this.baseUrl}/chat/completions`, {
+      const payload = {
         model: modelName,
         messages: [{ role: 'user', content: 'hi' }],
         max_tokens: 1
-      }, {
-        headers: { 'Authorization': `Bearer ${this.apiKey}` }
-      });
+      };
+      await this.retryHandler.execute((p) => this.client.chatCompletions(p), payload);
       return true;
     } catch (e) {
       return false;
@@ -93,12 +80,18 @@ export class NvidiaAdapter {
   }
 
   getHistory() { return this.history; }
+  
   injectMessage(role, content) {
     const apiRole = role === 'model' ? 'assistant' : role;
     this.history.push({ role: apiRole, content });
   }
+
   countTokens(contents) {
     const totalChars = contents.reduce((acc, msg) => acc + (msg.content?.length || 0), 0);
     return Math.floor(totalChars / 4);
+  }
+
+  async close() {
+    await this.client.close();
   }
 }

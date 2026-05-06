@@ -48,9 +48,9 @@ Este documento sirve como benchmark para validar la operatividad de las herramie
 ## 🚩 Matriz de Resultados
 | Categoría | Estado | Notas |
 | :--- | :---: | :--- |
-| Archivos | ⚪ | |
-| Búsqueda | ⚪ | |
-| JSON | ⚪ | |
-| Memoria | ⚪ | |
-| Dev Tools | ⚪ | |
-| Flujo Complejo | ⚪ | |
+| Archivos | ✅ | |
+| Búsqueda | ✅ | |
+| JSON | ✅ | |
+| Memoria | ✅ | |
+| Dev Tools | ✅ | |
+| Flujo Complejo | ✅ | |

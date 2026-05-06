@@ -47,12 +47,11 @@ export class ChatManager {
 
     if (initialInput) await this.processTurn(initialInput);
 
-    // Configuración manual de stdin para evitar bloqueos de readline
     process.stdin.setEncoding('utf8');
     process.stdin.resume();
 
     while (!this.stopRequested) {
-      const input = await this.requestInputManual();
+      const input = await this.ui.requestInput();
       
       if (!input) continue;
 
@@ -70,20 +69,6 @@ export class ChatManager {
     }
   }
 
-  async requestInputManual() {
-    return new Promise((resolve) => {
-      this.ui.displayMessage('\n❯ ');
-      
-      const onData = (data) => {
-        const input = data.toString().trim();
-        process.stdin.removeListener('data', onData);
-        resolve(input);
-      };
-
-      process.stdin.once('data', onData);
-    });
-  }
-
   async processTurn(userInput) {
     if (!userInput) return;
     this.ui.displayMessage('\nUser: ' + userInput);
@@ -95,6 +80,7 @@ export class ChatManager {
     let turnComplete = false;
     let iterations = 0;
     const maxIterations = 10;
+    let consecutiveErrors = 0;
 
     while (!turnComplete && iterations < maxIterations) {
       iterations++;
@@ -111,7 +97,7 @@ export class ChatManager {
         let toolResults = [];
         for (const call of toolCalls) {
           if (call.data) {
-            consecutiveErrors = 0; // Reset errors on successful parse
+            consecutiveErrors = 0; 
             const { response } = await this.engine.executeToolCall(call.data.name, call.data.args, { id: call.data.id });
             toolResults.push(response);
           } else if (call.error) {
