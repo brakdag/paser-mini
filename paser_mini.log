@@ -1,14 +1,4 @@
---- Session Started: 2026-05-06T13:39:15.076Z ---
-[2026-05-06T13:39:17.024Z] [INFO] Initializing ChatManager.run 
-[2026-05-06T13:39:19.115Z] [INFO] Starting processTurn {"userInput":"--- Log opened Wed May 06 10:39:19 2026\n[10:39] <user> hola"}
-[2026-05-06T13:39:29.439Z] [DEBUG] Received response from assistant {"responseLength":1166}
-[2026-05-06T13:41:57.844Z] [INFO] Starting processTurn {"userInput":"[10:41] <user> hola"}
-[2026-05-06T13:42:18.305Z] [DEBUG] Received response from assistant {"responseLength":545}
-[2026-05-06T13:42:22.880Z] [INFO] Starting processTurn {"userInput":"[10:42] <user> como andas?"}
-[2026-05-06T13:42:34.197Z] [DEBUG] Received response from assistant {"responseLength":268}
-[2026-05-06T13:42:39.707Z] [INFO] Starting processTurn {"userInput":"[10:42] <user> todo bien?"}
-[2026-05-06T13:42:54.163Z] [DEBUG] Received response from assistant {"responseLength":189}
-[2026-05-06T13:44:40.315Z] [INFO] Starting processTurn {"userInput":"[10:44] <user> donde estamos hablando?"}
-[2026-05-06T13:44:50.776Z] [DEBUG] Received response from assistant {"responseLength":535}
-[2026-05-06T13:45:16.473Z] [INFO] Starting processTurn {"userInput":"[10:45] <user> ahh pense que estabamos en un log de irc"}
-[2026-05-06T13:45:48.895Z] [DEBUG] Received response from assistant {"responseLength":556}
+--- Session Started: 2026-05-06T14:06:49.115Z ---
+[2026-05-06T14:06:49.832Z] [INFO] Initializing ChatManager.run 
+[2026-05-06T14:07:22.703Z] [INFO] Starting processTurn {"userInput":"[11:07] <gustavo> * se rasca la cabeza *"}
+[2026-05-06T14:07:28.795Z] [DEBUG] Received response from assistant {"responseLength":34}

@@ -125,8 +125,11 @@ export class ChatManager {
           if (call.data) {
             consecutiveErrors = 0; 
             const { response, result } = await this.engine.executeToolCall(call.data.name, call.data.args, { id: call.data.id });
-            if (call.data.name === 'setNickname' && typeof result === 'string' && result.startsWith('Nickname updated to: ')) {
-              this.ui.agentNickname = result.split(': ')[1];
+            if (call.data.name === 'setNickname' && typeof result === 'string' && result.startsWith('*** ')) {
+              const match = result.match(/is now known as\s+(.+)$/);
+              if (match) {
+                this.ui.agentNickname = match[1];
+              }
             }
             toolResults.push(response);
           } else if (call.error) {

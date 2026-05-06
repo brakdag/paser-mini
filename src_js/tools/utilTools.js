@@ -13,8 +13,9 @@ export const validateJson = async ({ json_string }) => {
 export const setNickname = async ({ newNickname }) => {
   try {
     const config = new ConfigManager();
+    const oldNickname = config.get('agent_nickname', 'paser_mini');
     config.save('agent_nickname', newNickname);
-    return `Nickname updated to: ${newNickname}`;
+    return `*** ${oldNickname} is now known as ${newNickname}`;
   } catch (e) {
     return `ERR: Failed to update nickname: ${e.message}`;
   }
