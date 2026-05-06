@@ -1,8 +1,8 @@
---- Session Started: 2026-05-06T16:10:24.334Z ---
-[2026-05-06T16:10:24.648Z] [INFO] Initializing ChatManager.run 
-[2026-05-06T16:10:32.516Z] [INFO] Starting processTurn {"userInput":"hola"}
-[2026-05-06T16:10:56.344Z] [DEBUG] Received response from assistant {"responseLength":65}
-[2026-05-06T16:13:59.324Z] [INFO] Starting processTurn {"userInput":"[13:13] <gustavo> * se rasca la  cabeza *"}
-[2026-05-06T16:14:29.554Z] [DEBUG] Received response from assistant {"responseLength":133}
-[2026-05-06T16:16:56.385Z] [INFO] Starting processTurn {"userInput":"que viste en last_request.json?"}
-[2026-05-06T16:17:17.248Z] [DEBUG] Received response from assistant {"responseLength":922}
+--- Session Started: 2026-05-06T16:35:26.127Z ---
+[2026-05-06T16:35:27.933Z] [INFO] Initializing ChatManager.run 
+[2026-05-06T16:35:36.561Z] [INFO] Starting processTurn {"userInput":"hola, como te llamas?"}
+[2026-05-06T16:36:02.384Z] [DEBUG] Received response from assistant {"responseLength":52}
+[2026-05-06T16:36:21.152Z] [INFO] Starting processTurn {"userInput":"actualiza tu nick entonces o ese te gusta?"}
+[2026-05-06T16:36:46.263Z] [DEBUG] Received response from assistant {"responseLength":467}
+[2026-05-06T16:38:33.099Z] [INFO] Starting processTurn {"userInput":"cual es el trabajo que haces?"}
+[2026-05-06T16:39:04.073Z] [DEBUG] Received response from assistant {"responseLength":1553}
