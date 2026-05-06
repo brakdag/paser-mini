@@ -16,12 +16,45 @@ export class TerminalUI {
     return this.uiMode;
   }
 
+  /**
+   * Formatea texto Markdown básico usando chalk para la terminal
+   */
+  formatMarkdown(text) {
+    if (!text) return '';
+
+    let formatted = text;
+
+    // 1. Bloques de código (```code```)
+    formatted = formatted.replace(/```([\s\S]*?)```/g, (_, code) => {
+      return '\n' + chalk.gray(code.trim()) + '\n';
+    });
+
+    // 2. Código en línea (`code`)
+    formatted = formatted.replace(/`([^`]+)`/g, (_, code) => {
+      return chalk.bgGray.black(` ${code} `);
+    });
+
+    // 3. Negritas (**text**)
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, (_, content) => {
+      return chalk.bold(content);
+    });
+
+    // 4. Itálicas (*text*)
+    formatted = formatted.replace(/\*(.*?)\*/g, (_, content) => {
+      return chalk.italic(content);
+    });
+
+    return formatted;
+  }
+
   displayMessage(text) {
-    process.stdout.write(chalk.white(text) + '\n');
+    // Usamos nuestro formateador personalizado en lugar de la librería externa
+    const renderedText = this.formatMarkdown(text);
+    process.stdout.write(renderedText + '\n');
   }
 
   displayThought(text) {
-    process.stdout.write(chalk.gray.italic('💭 ' + text) + '\n');
+    process.stdout.write(chalk.gray.italic('\ud83d\udcad ' + text) + '\n');
   }
 
   displayInfo(text) {
@@ -33,14 +66,14 @@ export class TerminalUI {
   }
 
   displayPanel(title, message, style = 'none') {
-    const border = '─'.repeat(title.length + 4);
+    const border = '\u2500'.repeat(title.length + 4);
     const panelColor = style === 'warning' ? chalk.yellow : chalk.blue;
     
-    process.stdout.write('\n' + panelColor('┌' + border + '┐') + '\n');
-    process.stdout.write(panelColor('│') + ' ' + chalk.bold(title) + ' ' + panelColor(' '.repeat(border.length - title.length - 2)) + ' ' + panelColor('│') + '\n');
-    process.stdout.write(panelColor('├' + '─'.repeat(border.length) + '┤') + '\n');
-    process.stdout.write(panelColor('│') + ' ' + message + ' ' + panelColor(' '.repeat(Math.max(0, border.length - message.length - 2))) + ' ' + panelColor('│') + '\n');
-    process.stdout.write(panelColor('└' + border + '┘') + '\n\n');
+    process.stdout.write('\n' + panelColor('\u250c' + border + '\u2510') + '\n');
+    process.stdout.write(panelColor('\u2502') + ' ' + chalk.bold(title) + ' ' + panelColor(' '.repeat(border.length - title.length - 2)) + ' ' + panelColor('\u2502') + '\n');
+    process.stdout.write(panelColor('\u251c' + '\u2500'.repeat(border.length) + '\u2524') + '\n');
+    process.stdout.write(panelColor('\u2502') + ' ' + message + ' ' + panelColor(' '.repeat(Math.max(0, border.length - message.length - 2))) + ' ' + panelColor('\u2502') + '\n');
+    process.stdout.write(panelColor('\u2514' + border + '\u2518') + '\n\n');
   }
 
   startToolMonitoring(name, detail) {
@@ -84,7 +117,7 @@ export class TerminalUI {
     process.stdout.write('\x1Bc');
   }
 
-  async requestInput(prompt = '❯ ') {
+  async requestInput(prompt = '\u276f ') {
     return new Promise((resolve) => {
       let buffer = '';
       
@@ -106,7 +139,7 @@ export class TerminalUI {
           if (char === 'i') {
             this.setUiMode('INSERT');
             render();
-          } else if (char === '\x1b') { // Esc
+          } else if (char === '\x1b') {
             this.setUiMode('NORMAL');
             render();
           } else {
@@ -120,10 +153,10 @@ export class TerminalUI {
             process.stdin.removeListener('data', onData);
             process.stdout.write('\n');
             resolve(buffer.trim());
-          } else if (char === '\x7f') { // Backspace
+          } else if (char === '\x7f') {
             buffer = buffer.slice(0, -1);
             render();
-          } else if (char === '\x1b') { // Esc
+          } else if (char === '\x1b') {
             this.setUiMode('NORMAL');
             render();
           } else {
@@ -138,7 +171,7 @@ export class TerminalUI {
   }
 
   async getConfirmation(message) {
-    const answer = await this.requestInput(message + ' [y/N] ❯ ');
+    const answer = await this.requestInput(message + ' [y/N] \u276f ');
     return answer.toLowerCase() === 'y';
   }
 }
