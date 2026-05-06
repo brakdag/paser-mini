@@ -1,74 +1,78 @@
-import { NvidiaRestClient } from './restClient.js';
-import { NvidiaRetryHandler } from './retryHandler.js';
-import { ConfigManager } from '../../core/configManager.js';
+import { ConversationState } from '../conversationState.js';
+import { PayloadMapper } from '../payloadMapper.js';
+import { TransportLayer } from '../transportLayer.js';
 
 export class NvidiaAdapter {
-  constructor() {
-    this.configManager = new ConfigManager();
-    this.client = new NvidiaRestClient(this.configManager);
-    this.retryHandler = new NvidiaRetryHandler();
-    
+  constructor(userNickname = 'user', agentNickname = 'assistant') {
+    this.state = new ConversationState(userNickname, agentNickname);
+    this.transport = new TransportLayer();
     this.currentModel = 'meta/llama-3.1-405b-instruct';
-    this.history = [];
     this.systemInstruction = '';
     this.temperature = 0.7;
     this.lastPayload = null;
-  }
-
-  setRetryCallback(callback) {
-    this.retryHandler.setCallback(callback);
+    this.apiKey = process.env.NVIDIA_API_KEY;
   }
 
   startChat(modelName, systemInstruction, temperature = 0.7) {
     this.currentModel = modelName || this.currentModel;
     this.systemInstruction = systemInstruction;
     this.temperature = temperature;
-    this.history = [{ role: 'system', content: systemInstruction }];
+    this.state.hardReset();
   }
 
   async sendMessage(message, role = 'user', maxTokens = 512) {
-    const apiRole = role === 'model' ? 'assistant' : role;
-    this.history.push({ 
-      role: apiRole, 
-      content: message, 
-      timestamp: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) 
-    });
+    // 1. Add message to state (IRC formatted)
+    this.state.addMessage(role, message);
 
-    const payload = {
-      model: this.currentModel,
-      messages: this.history.map(m => {
-        const { timestamp, ...rest } = m;
-        return rest;
-      }),
-      temperature: this.temperature,
-      max_tokens: maxTokens
-    };
+    // 2. Map to NVIDIA JSON
+    const payload = PayloadMapper.toNvidia(
+      this.state.getRawHistory(),
+      this.systemInstruction,
+      this.temperature
+    );
+    payload.model = this.currentModel;
+    payload.max_tokens = maxTokens;
     this.lastPayload = payload;
 
-    try {
-      // Execute via retry handler to ensure resilience against 429s and 5xxs
-      const response = await this.retryHandler.execute(
-        (p) => this.client.chatCompletions(p),
-        payload
-      );
+    const url = 'https://infer.nvidia.com/v1/chat/completions';
+    const headers = { 'Authorization': `Bearer ${this.apiKey}` };
 
-      const content = response.choices[0].message.content;
-      this.history.push({
-        role: 'assistant',
-        content: content,
-        timestamp: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-      });
-      return content;
+    try {
+      const data = await this.transport.post(url, payload, headers);
+      const content = data.choices?.[0]?.message?.content || '';
+      
+      if (content) {
+        this.state.addMessage('model', content);
+        return content;
+      }
+      return 'Error: Empty response from NVIDIA';
     } catch (e) {
-      const errorMsg = e.response?.data?.error?.message || e.message;
-      return `Error: ${errorMsg}`;
+      return `Error: ${e.response?.data?.error?.message || e.message}`;
     }
+  }
+
+  injectMessage(role, content, timestamp = null) {
+    this.state.addMessage(role, content, timestamp);
+  }
+
+  hardReset(historyOverride = null) {
+    this.state.hardReset(historyOverride);
+  }
+
+  getHistory() {
+    return this.state.getRawHistory();
+  }
+
+  popLastMessage() {
+    this.state.popLastMessage();
   }
 
   async getAvailableModels() {
     try {
-      const data = await this.client.get('models');
-      return data.data.map(m => m.id);
+      const url = 'https://infer.nvidia.com/v1/models';
+      const headers = { 'Authorization': `Bearer ${this.apiKey}` };
+      const data = await this.transport.get(url, {}, headers);
+      return data.data?.map(m => m.id) || [];
     } catch (e) {
       return ['meta/llama-3.1-405b-instruct'];
     }
@@ -76,35 +80,26 @@ export class NvidiaAdapter {
 
   async checkAvailability(modelName) {
     try {
+      const url = 'https://infer.nvidia.com/v1/chat/completions';
+      const headers = { 'Authorization': `Bearer ${this.apiKey}` };
       const payload = {
         model: modelName,
         messages: [{ role: 'user', content: 'hi' }],
         max_tokens: 1
       };
-      await this.retryHandler.execute((p) => this.client.chatCompletions(p), payload);
+      await this.transport.post(url, payload, headers);
       return true;
     } catch (e) {
       return false;
     }
   }
 
-  hardReset(historyOverride = null) {
-    this.history = historyOverride || [{ role: 'system', content: this.systemInstruction }];
-  }
-
-  getHistory() { return this.history; }
-  
-  injectMessage(role, content) {
-    const apiRole = role === 'model' ? 'assistant' : role;
-    this.history.push({ role: apiRole, content });
-  }
-
   countTokens(contents) {
-    const totalChars = contents.reduce((acc, msg) => acc + (msg.content?.length || 0), 0);
+    const totalChars = contents.reduce((acc, msg) => acc + (msg.text?.length || 0), 0);
     return Math.floor(totalChars / 4);
   }
 
   async close() {
-    await this.client.close();
+    // TransportLayer uses axios, no persistent connection to close
   }
 }

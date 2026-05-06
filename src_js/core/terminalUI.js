@@ -112,11 +112,22 @@ export class TerminalUI {
   }
 
   displayChatMessage(nickname, text) {
-    const formatted = this.formatChatMessage(nickname, text);
-    const renderedText = this.formatMarkdown(text);
-    
+    const trimmedText = text.trim();
+    const renderedText = this.formatMarkdown(trimmedText);
+    const now = new Date();
+    const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+    // Respect IRC aesthetics: system events do not have nicknames
+    if (trimmedText.startsWith('---') || trimmedText.startsWith('***')) {
+      const formatted = `[${time}] ${trimmedText}`;
+      process.stdout.write(`${chalk.white(`[${time}]`)} ${renderedText}\n`);
+      this.writeToLog(formatted);
+      return;
+    }
+
     const nameColor = nickname === this.agentNickname ? chalk.cyan : chalk.green;
-    const prefix = formatted.split(' ')[0] + ' ' + `<${nameColor(nickname)}>`;
+    const formatted = `[${time}] <${nickname}> ${trimmedText}`;
+    const prefix = `[${time}] <${nameColor(nickname)}>`;
     
     process.stdout.write(`${prefix} ${renderedText}\n`);
     this.writeToLog(formatted);

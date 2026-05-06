@@ -47,7 +47,7 @@ async function main() {
   const provider = configManager.get('provider', 'Gemini');
   const userNick = configManager.get('user_nickname', 'user');
   const agentNick = configManager.get('agent_nickname', 'assistant');
-  const assistant = provider === 'NVIDIA' ? new NvidiaAdapter() : new GeminiAdapter(userNick, agentNick);
+  const assistant = provider === 'NVIDIA' ? new NvidiaAdapter(userNick, agentNick) : new GeminiAdapter(userNick, agentNick);
   
   const baseInstr = options.systemInstruction || SYSTEM_INSTRUCTION;
   let injection = '';

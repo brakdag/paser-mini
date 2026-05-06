@@ -58,8 +58,12 @@ export class ChatManager {
       const logMsg = this.ui.getLogOpenedString();
       this.ui.displayChatMessage(this.ui.userNickname, logMsg);
       this.logOpened = true;
-      const formattedInput = this.ui.formatChatMessage(this.ui.userNickname, initialInput);
-      await this.processTurn(logMsg + '\n' + formattedInput);
+      
+      // Inyectamos el log de apertura como mensaje de servidor para evitar prefijos de usuario
+      this.assistant.injectMessage('server', logMsg);
+      
+      // Enviamos el input inicial raw
+      await this.processTurn(initialInput);
     }
 
     process.stdin.setEncoding('utf8');
@@ -70,12 +74,12 @@ export class ChatManager {
       
       if (!input) continue;
 
-      let messageForAI = '';
       if (!this.logOpened) {
         const logMsg = this.ui.getLogOpenedString();
         this.ui.displayChatMessage(this.ui.userNickname, logMsg);
         this.logOpened = true;
-        messageForAI = logMsg + '\n';
+        // El log de apertura es un evento de sistema, no un mensaje de usuario
+        this.assistant.injectMessage('server', logMsg);
       }
 
       if (await this.commandHandler.handle(input)) {
@@ -83,11 +87,10 @@ export class ChatManager {
         continue;
       }
 
-      this.ui.displayChatMessage(this.ui.userNickname, input);
-      messageForAI += this.ui.formatChatMessage('user', input);
-
       try {
-        await this.processTurn(messageForAI);
+        // Eliminamos el eco del input para evitar duplicación visual en la terminal
+        // Enviamos solo el input puro. El adaptador se encarga del formato IRC.
+        await this.processTurn(input);
       } catch (e) {
         this.ui.displayError('Critical error in processTurn: ' + e.message);
         console.error(e);

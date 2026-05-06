@@ -22,6 +22,11 @@ export class GeminiAdapter {
   _buildPayload() {
     const contents = JSON.parse(JSON.stringify(this.history)).map(c => {
       const { timestamp, ...rest } = c;
+      // Map internal 'server' role to 'user' for API compatibility
+      // The model will distinguish it by the text format ([HH:mm] Text)
+      if (rest.role === 'server') {
+        rest.role = 'user';
+      }
       return rest;
     });
     const payload = {
@@ -67,6 +72,9 @@ export class GeminiAdapter {
   }
 
   _formatMessage(role, text, timestamp) {
+    if (role === 'server') {
+      return `[${timestamp}] ${text}`;
+    }
     const nickname = role === 'user' ? this.userNickname : this.agentNickname;
     return `[${timestamp}] <${nickname}> ${text}`;
   }
