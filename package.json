@@ -17,5 +17,9 @@
     "dotenv": "^16.3.1",
     "axios-retry": "^4.0.0",
     "marked-terminal": "^1.2.0"
+  },
+  "overrides": {
+    "marked": "^4.3.0"
   }
 }
+
