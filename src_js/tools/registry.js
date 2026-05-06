@@ -52,7 +52,7 @@ export const AVAILABLE_TOOLS = {
     "gitDiffAll": gitTools.gitDiffAll,
 };
 
-const registryPath = 'src_js/tools/registry_positional.json';
+const registryPath = path.join(process.cwd(), 'src_js/tools/registry_positional.json');
 const full_catalog = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
 
 const TOOL_CATALOG = full_catalog.map(t => `${t[0]}(${Object.keys(t[2]).join(', ')}) - ${t[1]}`).join('\n');
@@ -60,5 +60,5 @@ const TOOL_CATALOG = full_catalog.map(t => `${t[0]}(${Object.keys(t[2]).join(', 
 const _S = String.fromCharCode(60) + "TOOL" + "_CALL" + String.fromCharCode(62);
 const _E = String.fromCharCode(60) + "/" + "TOOL" + "_CALL" + String.fromCharCode(62);
 
-const systemInstrData = JSON.parse(fs.readFileSync('src_js/tools/system_instruction.json', 'utf8'));
+const systemInstrData = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'src_js/tools/system_instruction.json'), 'utf8'));
 export const SYSTEM_INSTRUCTION = systemInstrData.instruction.replace('{TOOL_CATALOG}', TOOL_CATALOG).replace('[[S]]', _S).replace('[[E]]', _E);

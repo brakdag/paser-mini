@@ -40,9 +40,15 @@ mkdir -p "$PROJECT_ROOT/bin"
 
 cat <<EOF > "$PROJECT_ROOT/bin/paser-mini"
 #!/bin/bash
-# Get the absolute path to the project root
-PROJECT_ROOT="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")/.." && pwd)"
-node "\$PROJECT_ROOT/src_js/main.js" "\$@"
+# Resolve the real physical path of this script to avoid symlink issues
+REAL_SCRIPT_PATH=\$(readlink -f "\$0")
+SCRIPT_DIR=\$(dirname "\$REAL_SCRIPT_PATH")
+PROJECT_ROOT=\$(cd "\$SCRIPT_DIR/.." && pwd)
+
+# Change directory to project root so that process.cwd() is correct
+cd "\$PROJECT_ROOT"
+
+node src_js/main.js "\$@"
 EOF
 
 chmod +x "$PROJECT_ROOT/bin/paser-mini"

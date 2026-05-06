@@ -1,0 +1,10 @@
+#!/bin/bash
+# Resolve the real physical path of this script to avoid symlink issues
+REAL_SCRIPT_PATH=$(readlink -f "$0")
+SCRIPT_DIR=$(dirname "$REAL_SCRIPT_PATH")
+PROJECT_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
+
+# Change directory to project root so that process.cwd() is correct
+cd "$PROJECT_ROOT"
+
+node src_js/main.js "$@"

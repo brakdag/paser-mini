@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import ora from 'ora';
 import fs from 'fs';
+import readline from 'readline';
 
 export class TerminalUI {
   constructor(options = {}) {
@@ -229,38 +230,23 @@ export class TerminalUI {
 
   async requestInput(prompt = '\u276f ') {
     return new Promise((resolve) => {
-      let buffer = '';
-      
-      process.stdin.setRawMode(true);
-      process.stdin.resume();
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+        prompt: prompt,
+        terminal: true
+      });
 
-      const render = () => {
-        process.stdout.write('\r\x1b[K' + prompt + buffer);
-      };
+      rl.prompt();
 
-      render();
+      rl.on('line', (line) => {
+        rl.close();
+        resolve(line.trim());
+      });
 
-      const onData = (data) => {
-        const char = data.toString();
-
-        if (char === '\r' || char === '\n') {
-          process.stdin.setRawMode(false);
-          process.stdin.pause();
-          process.stdin.removeListener('data', onData);
-          process.stdout.write('\n');
-          resolve(buffer.trim());
-        } else if (char === '\x7f') {
-          buffer = buffer.slice(0, -1);
-          render();
-        } else if (char === '\x1b') {
-          render();
-        } else {
-          buffer += char;
-          render();
-        }
-      };
-
-      process.stdin.on('data', onData);
+      rl.on('close', () => {
+        process.stdin.setRawMode(false);
+      });
     });
   }
 
