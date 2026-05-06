@@ -27,3 +27,5 @@ node_modules/
 config/config.json
 config/paser_memory.db
 .migration/
+session.log
+last_request.json
