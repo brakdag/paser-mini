@@ -28,6 +28,10 @@ export class ChatManager {
     this.commandHandler = new CommandHandler(this, ui);
     this.repetitionDetector = new RepetitionDetector();
     
+        // Load agent nickname from config
+        const agentNickname = this.configManager.get('agent_nickname', 'paser_mini');
+        this.ui.agentNickname = agentNickname;
+    
     this.stopRequested = false;
   }
 
@@ -54,6 +58,8 @@ export class ChatManager {
       const input = await this.ui.requestInput();
       
       if (!input) continue;
+
+      this.ui.displayChatMessage('user', input);
 
       if (await this.commandHandler.handle(input)) {
         if (this.stopRequested) break;
@@ -99,6 +105,9 @@ export class ChatManager {
           if (call.data) {
             consecutiveErrors = 0; 
             const { response } = await this.engine.executeToolCall(call.data.name, call.data.args, { id: call.data.id });
+            if (call.data.name === 'setNickname' && response.startsWith('Nickname updated to: ')) {
+              this.ui.agentNickname = response.split(': ')[1];
+            }
             toolResults.push(response);
           } else if (call.error) {
             consecutiveErrors++;
@@ -118,7 +127,7 @@ export class ChatManager {
     if (iterations >= maxIterations) this.ui.displayError('Maximum tool iterations reached.');
 
     const finalResponse = LatexTranslator.translate(currentResponse);
-    this.ui.displayMessage('\n' + finalResponse);
+    this.ui.displayChatMessage(this.ui.agentNickname, finalResponse);
   }
 
   stopExecution() {

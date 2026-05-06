@@ -71,7 +71,7 @@ export const removeFile = async ({ path: filePath }) => {
   }
 };
 
-export const create_dir = async ({ path: dirPath }) => {
+export const createDir = async ({ path: dirPath }) => {
   try {
     const safePath = getSafePath(dirPath);
     await fs.mkdir(safePath, { recursive: true });

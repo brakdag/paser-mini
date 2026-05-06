@@ -6,6 +6,7 @@ export class TerminalUI {
     this.noSpinner = options.noSpinner || false;
     this.activeSpinners = new Map();
     this.uiMode = 'INSERT';
+    this.agentNickname = 'paser_mini';
   }
 
   setUiMode(mode) {
@@ -86,6 +87,17 @@ export class TerminalUI {
     return formatted;
   }
 
+  displayChatMessage(nickname, text) {
+    const now = new Date();
+    const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const renderedText = this.formatMarkdown(text);
+    
+    const nameColor = nickname === this.agentNickname ? chalk.cyan : chalk.green;
+    const prefix = `[${time}] <${nameColor(nickname)}>`;
+    
+    process.stdout.write(`${prefix} ${renderedText}\n`);
+  }
+
   displayMessage(text) {
     const renderedText = this.formatMarkdown(text);
     process.stdout.write(renderedText + '\n');
@@ -115,7 +127,7 @@ export class TerminalUI {
   }
 
   startToolMonitoring(name, detail) {
-    const toolIcon = '\ud83d\udee0\ufe0f'; // 🛠️
+    const toolIcon = '\ud83d\udee0\ufe0f'; // \ud83d\udee0\ufe0f
     const msg = `${toolIcon} ${name} (${detail})...`;
 
     if (this.noSpinner) {
@@ -137,15 +149,14 @@ export class TerminalUI {
       spinner.stop();
     }
 
-    const toolIcon = '\ud83d\udee0\ufe0f'; // 🛠️
-    const statusIcon = success ? '\u2705' : '\u274c'; // ✅ or ❌
-    const color = success ? chalk.green : chalk.red;
+    const now = new Date();
+    const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const nameColor = chalk.cyan;
+    const statusIcon = success ? '✓' : '✗';
+    const statusColor = success ? chalk.green : chalk.red;
+    const prefix = `[${time}] <${nameColor(this.agentNickname)}>`;
     
-    const finalMsg = `${toolIcon} ${name} (${detail}) ${statusIcon}`;
-    
-    // Usamos console.log para asegurar que la línea se imprima y se mueva el cursor
-    // evitando que el spinner la sobrescriba
-    console.log(color(finalMsg));
+    console.log(`${prefix} * ${name} (${detail}) ${statusColor(statusIcon)}`);
 
     if (spinner) {
       this.activeSpinners.delete(name);

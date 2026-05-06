@@ -16,6 +16,7 @@ export const AVAILABLE_TOOLS = {
     "readFile": fileTools.readFile,
     "writeFile": fileTools.writeFile,
     "removeFile": fileTools.removeFile,
+        "createDir": fileTools.createDir,
     "listDir": fileTools.listDir,
     "replaceString": fileTools.replaceString,
     "analyzePyright": systemTools.analyzePyright,
@@ -25,6 +26,7 @@ export const AVAILABLE_TOOLS = {
     "copyFile": fileTools.copyFile,
     "getTree": fileTools.getTree,
     "validateJson": utilTools.validateJson,
+        "setNickname": utilTools.setNickname,
     "runPython": instanceTools.runPython,
     "newAgent": instanceTools.newAgent,
     "pushMemory": memoryTools.pushMemory,
@@ -45,7 +47,7 @@ export const AVAILABLE_TOOLS = {
     "closeIssue": githubTools.closeIssue,
     "postComment": githubTools.postComment,
     "getCurrentRepo": gitTools.getCurrentRepo,
-    "gitDiffAll": gitTools.gitDiff,
+    "gitDiffAll": gitTools.gitDiffAll,
 };
 
 const registryPath = 'src_js/tools/registry_positional.json';

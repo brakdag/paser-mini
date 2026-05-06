@@ -31,7 +31,7 @@ function resolveRepo(repo) {
   return raw.replace('git@github.com:', '').replace('https://github.com/', '').replace('.git', '');
 }
 
-export const get_authenticated_user = async () => {
+export const getAuthenticatedUser = async () => {
   try {
     const headers = await getHeaders();
     const response = await client.get('/user', { headers });
@@ -99,7 +99,7 @@ export const postComment = async ({ issue_number, body, repo = '' }) => {
   }
 };
 
-export const add_label = async ({ issue_number, label, repo = '' }) => {
+export const addLabel = async ({ issue_number, label, repo = '' }) => {
   try {
     const targetRepo = repo ? resolveRepo(repo) : (await getCurrentRepo());
     const headers = await getHeaders();
@@ -110,7 +110,7 @@ export const add_label = async ({ issue_number, label, repo = '' }) => {
   }
 };
 
-export const remove_label = async ({ issue_number, label, repo = '' }) => {
+export const removeLabel = async ({ issue_number, label, repo = '' }) => {
   try {
     const targetRepo = repo ? resolveRepo(repo) : (await getCurrentRepo());
     const headers = await getHeaders();
@@ -121,7 +121,7 @@ export const remove_label = async ({ issue_number, label, repo = '' }) => {
   }
 };
 
-export const get_issue_comments = async ({ issue_number, repo = '' }) => {
+export const getIssueComments = async ({ issue_number, repo = '' }) => {
   try {
     const targetRepo = repo ? resolveRepo(repo) : (await getCurrentRepo());
     const headers = await getHeaders();

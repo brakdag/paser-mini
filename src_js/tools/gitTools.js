@@ -13,3 +13,13 @@ export const getCurrentRepo = async () => {
     return '';
   }
 };
+
+
+export const gitDiffAll = async () => {
+  try {
+    const { stdout } = await execPromise('git diff');
+    return stdout || 'No changes found in the repository.';
+  } catch (e) {
+    return `ERR: Git diff all error: ${e.message}`;
+  }
+};

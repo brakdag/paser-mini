@@ -1,4 +1,14 @@
---- Session Started: 2026-05-06T09:07:43.141Z ---
-[2026-05-06T09:07:45.053Z] [INFO] Initializing ChatManager.run 
-[2026-05-06T09:07:49.591Z] [INFO] Starting processTurn {"userInput":"Hola, cual es tu sexo?"}
-[2026-05-06T09:07:57.828Z] [DEBUG] Received response from assistant {"responseLength":794}
+--- Session Started: 2026-05-06T10:22:07.227Z ---
+[2026-05-06T10:22:07.664Z] [INFO] Initializing ChatManager.run 
+[2026-05-06T10:22:10.199Z] [INFO] Starting processTurn {"userInput":"hola"}
+[2026-05-06T10:22:10.203Z] [DEBUG] Nvidia Auto-RPM: Adjusted limit to 120 based on tokens 
+[2026-05-06T10:22:11.510Z] [DEBUG] Received response from assistant {"responseLength":34}
+[2026-05-06T10:22:22.748Z] [INFO] Starting processTurn {"userInput":"como te llamas?"}
+[2026-05-06T10:22:22.750Z] [DEBUG] Nvidia Auto-RPM: Adjusted limit to 119 based on tokens 
+[2026-05-06T10:22:23.659Z] [DEBUG] Received response from assistant {"responseLength":46}
+[2026-05-06T10:22:42.780Z] [INFO] Starting processTurn {"userInput":"cambiate el nick sale paser_mini ponete algo qeu te represente mejor"}
+[2026-05-06T10:22:42.782Z] [DEBUG] Nvidia Auto-RPM: Adjusted limit to 118 based on tokens 
+[2026-05-06T10:22:44.432Z] [DEBUG] Received response from assistant {"responseLength":98}
+[2026-05-06T10:23:00.842Z] [INFO] Starting processTurn {"userInput":"y pudiste cambiarlo?"}
+[2026-05-06T10:23:00.843Z] [DEBUG] Nvidia Auto-RPM: Adjusted limit to 116 based on tokens 
+[2026-05-06T10:23:02.913Z] [DEBUG] Received response from assistant {"responseLength":52}
