@@ -104,8 +104,8 @@ export class CommandHandler {
         if (inputStripped.startsWith('/me ')) {
           const action = inputStripped.slice(4).trim();
           const formattedAction = `* ${action} *`;
-          this.ui.displayChatMessage('user', formattedAction);
-          await this.chatManager.processTurn(this.ui.formatChatMessage('user', formattedAction));
+          this.ui.displayChatMessage(this.chatManager.ui.userNickname, formattedAction);
+          await this.chatManager.processTurn(this.ui.formatChatMessage(this.chatManager.ui.userNickname, formattedAction));
           return true;
         }
     if (inputStripped === '/compact') {

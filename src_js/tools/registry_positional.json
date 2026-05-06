@@ -81,14 +81,13 @@
       "json_string": "string"
     }
   ],
-
   [
     "setNickname",
     "Changes the agent's display nickname in the chat log",
     {
       "newNickname": "string"
     }
-  ]
+  ],
   [
     "runPython",
     "Executes a Python script (.py) using the Paser venv. Runs in the script's directory.",
