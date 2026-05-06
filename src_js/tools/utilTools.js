@@ -9,6 +9,7 @@ export const validateJson = async ({ json_string }) => {
   }
 };
 
+
 export const setNickname = async ({ newNickname }) => {
   try {
     const config = new ConfigManager();
@@ -18,3 +19,4 @@ export const setNickname = async ({ newNickname }) => {
     return `ERR: Failed to update nickname: ${e.message}`;
   }
 };
+

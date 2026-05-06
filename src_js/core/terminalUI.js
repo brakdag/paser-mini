@@ -8,6 +8,7 @@ export class TerminalUI {
     this.activeSpinners = new Map();
     this.uiMode = 'INSERT';
     this.agentNickname = 'paser_mini';
+    this.userNickname = 'user';
   }
 
 
@@ -149,6 +150,12 @@ export class TerminalUI {
 
   displayError(text) {
     process.stdout.write(chalk.red('\u2716 ') + chalk.red.bold(text) + '\n');
+  }
+
+
+  displaySystemMessage(text) {
+    process.stdout.write(chalk.yellow(`*** ${text}\n`));
+    this.writeToLog(`*** ${text}`);
   }
 
   displayPanel(title, message, style = 'none') {

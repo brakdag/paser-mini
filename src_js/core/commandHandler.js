@@ -75,6 +75,32 @@ export class CommandHandler {
 
     if (inputStripped === '/clear') return SystemCommands.handleClear(this.ui);
     
+        if (inputStripped.startsWith('/topic ')) {
+          const topic = inputStripped.slice(6).trim();
+          this.ui.displaySystemMessage(`Topic changed to: ${topic}`);
+          
+          const actionMsg = `changed the channel topic to: ${topic}`;
+          await this.chatManager.processTurn(this.ui.formatChatMessage(this.chatManager.ui.userNickname, `* ${actionMsg} *`));
+          
+          return true;
+        }
+    
+        if (inputStripped.startsWith('/nick ')) {
+          const newNick = inputStripped.slice(6).trim();
+          const oldNick = this.chatManager.ui.userNickname;
+          
+          this.chatManager.configManager.save('user_nickname', newNick);
+          this.chatManager.ui.userNickname = newNick;
+          
+          this.ui.displaySystemMessage(`${oldNick} is now known as ${newNick}`);
+          
+          // Inform the AI about the change so it stays in character
+          const actionMsg = `user changed their nickname to ${newNick}`;
+          await this.chatManager.processTurn(this.ui.formatChatMessage(this.chatManager.ui.userNickname, `* ${actionMsg} *`));
+          
+          return true;
+        }
+    
         if (inputStripped.startsWith('/me ')) {
           const action = inputStripped.slice(4).trim();
           const formattedAction = `* ${action} *`;
@@ -132,7 +158,7 @@ export class CommandHandler {
     }
 
     if (inputStripped === '/help') {
-      const helpText = `\nAvailable Commands:\n-------------------\n/help       - Show this help menu\n/config     - Show current system configuration\n/models     - Change AI model and temperature\n/fav        - Manage favorite models (/fav, /fav+, /fav -<idx>, /fav <idx>)\n/reset      - Hard Reset: Clear history and Leap via Bridge Block\n/r <msg>    - Rewrite: Remove last interaction and re-prompt\n/w <t> <r> <p> - Set window, RPM, and TPM\n/clear      - Clear terminal\n/me <action> - Perform an action (roleplay)\n/compact    - Compact history into IRC log and reset context\n/s [file]   - Save last request payload to JSON\n/q, /quit, /exit - Exit application\n`;
+      const helpText = `\nAvailable Commands:\n-------------------\n/help       - Show this help menu\n/config     - Show current system configuration\n/models     - Change AI model and temperature\n/fav        - Manage favorite models (/fav, /fav+, /fav -<idx>, /fav <idx>)\n/reset      - Hard Reset: Clear history and Leap via Bridge Block\n/r <msg>    - Rewrite: Remove last interaction and re-prompt\n/w <t> <r> <p> - Set window, RPM, and TPM\n/clear      - Clear terminal\n/topic <text> - Change the channel topic\n/nick <name> - Change the agent's nickname\n/me <action> - Perform an action (roleplay)\n/compact    - Compact history into IRC log and reset context\n/s [file]   - Save last request payload to JSON\n/q, /quit, /exit - Exit application\n`;
       this.ui.displayMessage(helpText);
       return true;
     }

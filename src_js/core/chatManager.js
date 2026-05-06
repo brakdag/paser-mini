@@ -31,6 +31,8 @@ export class ChatManager {
         // Load agent nickname from config
         const agentNickname = this.configManager.get('agent_nickname', 'paser_mini');
         this.ui.agentNickname = agentNickname;
+        const userNickname = this.configManager.get('user_nickname', 'user');
+        this.ui.userNickname = userNickname;
     
     this.stopRequested = false;
     this.logOpened = false;
@@ -54,9 +56,9 @@ export class ChatManager {
 
     if (initialInput) {
       const logMsg = this.ui.getLogOpenedString();
-      this.ui.displayChatMessage('user', logMsg);
+      this.ui.displayChatMessage(this.ui.userNickname, logMsg);
       this.logOpened = true;
-      const formattedInput = this.ui.formatChatMessage('user', initialInput);
+      const formattedInput = this.ui.formatChatMessage(this.ui.userNickname, initialInput);
       await this.processTurn(logMsg + '\n' + formattedInput);
     }
 
@@ -71,20 +73,18 @@ export class ChatManager {
       let messageForAI = '';
       if (!this.logOpened) {
         const logMsg = this.ui.getLogOpenedString();
-        this.ui.displayChatMessage('user', logMsg);
+        this.ui.displayChatMessage(this.ui.userNickname, logMsg);
         this.logOpened = true;
         messageForAI = logMsg + '\n';
       }
-
-      if (!input.startsWith('/me ')) {
-        this.ui.displayChatMessage('user', input);
-      }
-      messageForAI += this.ui.formatChatMessage('user', input);
 
       if (await this.commandHandler.handle(input)) {
         if (this.stopRequested) break;
         continue;
       }
+
+      this.ui.displayChatMessage(this.ui.userNickname, input);
+      messageForAI += this.ui.formatChatMessage('user', input);
 
       try {
         await this.processTurn(messageForAI);
