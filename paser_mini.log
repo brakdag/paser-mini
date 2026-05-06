@@ -1,4 +1,8 @@
---- Session Started: 2026-05-06T14:06:49.115Z ---
-[2026-05-06T14:06:49.832Z] [INFO] Initializing ChatManager.run 
-[2026-05-06T14:07:22.703Z] [INFO] Starting processTurn {"userInput":"[11:07] <gustavo> * se rasca la cabeza *"}
-[2026-05-06T14:07:28.795Z] [DEBUG] Received response from assistant {"responseLength":34}
+--- Session Started: 2026-05-06T14:14:21.705Z ---
+[2026-05-06T14:14:23.572Z] [INFO] Initializing ChatManager.run 
+[2026-05-06T14:14:25.562Z] [INFO] Starting processTurn {"userInput":"--- Log opened Wed May 06 11:14:25 2026\n[11:14] <user> hola"}
+[2026-05-06T14:14:32.089Z] [DEBUG] Received response from assistant {"responseLength":31}
+[2026-05-06T14:14:43.386Z] [INFO] Starting processTurn {"userInput":"[11:14] <user> como te llamas?"}
+[2026-05-06T14:14:49.064Z] [DEBUG] Received response from assistant {"responseLength":105}
+[2026-05-06T14:15:35.160Z] [INFO] Starting processTurn {"userInput":"[11:15] <user> ponte un nick mas representantivo de eso."}
+[2026-05-06T14:15:40.746Z] [DEBUG] Received response from assistant {"responseLength":178}
