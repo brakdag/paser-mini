@@ -44,7 +44,7 @@ Maximize reasoning capacity by minimizing context pollution. Every token saved i
 ### 3. State Persistence (The Memento Pattern)
 
 - **Bridge Blocks:** When context usage is high (>80%), you MUST generate a BRIDGE BLOCK using `pushMemory` with the teaser `BRIDGE: [Summary of state]`. This prevents total amnesia during Hard Resets.
-- **Tattoos:** Store permanent project truths (e.g., "The project uses Python 3.13") as `scope='tattoo'` to ensure they survive across sessions.
+- **Tattoos:** Store permanent project truths (e.g., "The project uses Node.js") as `scope='tattoo'` to ensure they survive across sessions.
 
 ## 🚫 Forbidden Patterns
 - ❌ Reading the same file multiple times in a single session without changes.
@@ -57,13 +57,13 @@ Maximize reasoning capacity by minimizing context pollution. Every token saved i
 **CRITICAL: No code modification is considered finished until it is verified in a clean environment.**
 
 - **Finalization Sequence:**
-    1. **Dependency Review:** Ensure all new imports are correct and no dependencies are missing.
-    2. **Smoke Test (`--help`):** Execute the application with the `--help` flag in a fresh instance. If the program crashes or fails to display help, it is fundamentally broken.
-    3. **Execution Test:** Run the specific functionality modified to ensure it behaves as expected.
+    1. **Dependency Review**: Ensure all new imports are correct and no dependencies are missing.
+    2. **Smoke Test (`--help`)**: Execute the application with the `--help` flag in a fresh instance. If the program crashes or fails to display help, it is fundamentally broken.
+    3. **Execution Test**: Run the specific functionality modified to ensure it behaves as expected.
 
-- **Verification Process:**
-    - Use `run_instance` for all the above steps.
-    - *Reasoning:* Python caches imports and the agent maintains internal state. A fresh instance is the only way to guarantee the fix works. If it fails the `--help` test, it's a simple but critical error that must be fixed before reporting completion.
+- **Verification Process**:
+    - Use `newAgent` for all the above steps.
+    - *Reasoning:* A fresh instance is the only way to guarantee the fix works. If it fails the `--help` test, it's a simple but critical error that must be fixed before reporting completion.
 
 ### 2. Language Standard: English for Code & Documentation
 

@@ -6,12 +6,12 @@ Welcome to the inner workings of Paser Mini. Instead of a dry technical manual, 
 
 ## 🌅 Phase 1: The Awakening (Startup)
 
-Everything begins in `src/main.py`. When you run `paser-mini`, the application doesn't just start; it orchestrates an ecosystem:
+Everything begins in `src_js/main.js`. When you run `paser-mini`, the application orchestrates its ecosystem:
 
-1. **The UI is born**: `TerminalUI` is initialized to handle the colors, spacing, and input of your terminal.
-2. **The Brain is wired**: `ChatManager` is created. It acts as the conductor of the entire orchestra.
-3. **The Connection is established**: Inside `ChatManager`, the `GeminiAdapter` (in `src/infrastructure/gemini/adapter.py`) is initialized. This is the bridge between your local machine and Google's servers.
-4. **The Memory is loaded**: The system checks your configuration and prepares the `system_instruction` (the "personality" of the agent).
+1. **The UI is born**: `TerminalUI` is initialized to handle colors, spacing, and input.
+2. **The Brain is wired**: `ChatManager` is created, acting as the conductor of the entire orchestra.
+3. **The Connection is established**: Inside `ChatManager`, the `GeminiAdapter` (in `src_js/infrastructure/gemini/adapter.js`) is initialized, bridging the local machine and Google's servers.
+4. **The Memory is loaded**: The system prepares the `system_instruction` (the agent's persona).
 
 Now, the system enters a loop, waiting for you. The cursor blinks. You are in control.
 
@@ -19,65 +19,65 @@ Now, the system enters a loop, waiting for you. The cursor blinks. You are in co
 
 ## 🛣️ Phase 2: The Crossroads (The Input)
 
-You type something and press **Enter**. This string of text is captured by `ui.request_input()` and handed over to `ChatManager.run()`.
+You type something and press **Enter**. This text is captured by `ui.requestInput()` and handed over to `ChatManager.run()`.
 
-At this point, the system reaches a **Bifurcation**. It asks: *"Is this a command or a conversation?"*
+At this point, the system reaches a **Bifurcation**: *"Is this a command or a conversation?"*
 
 ### 🛠️ Path A: The Command Shortcut (e.g., `/config`)
 
-If your input starts with a `/`, it's a command. It doesn't need to travel to the cloud; it's handled locally for maximum speed.
+If your input starts with a `/`, it's a command handled locally for maximum speed.
 
-1. **The Gatekeeper**: `ChatManager` sends the input to `CommandHandler` (`src/core/commands.py`).
-2. **The Specialist**: The `CommandHandler` looks at the command. For `/config`, it routes the request to `src/core/command_handlers/config.py`.
+1. **The Gatekeeper**: `ChatManager` sends the input to `CommandHandler` (`src_js/core/commandHandler.js`).
+2. **The Specialist**: The `CommandHandler` routes the request to the specific handler (e.g., `config.js`).
 3. **The Action**: The handler modifies a setting in `ConfigManager` or retrieves a value.
-4. **The Delivery**: The result is sent directly to `TerminalUI` to be printed on your screen.
+4. **The Delivery**: The result is sent directly to `TerminalUI` to be printed.
 
 **Total travel time**: Milliseconds. **Cloud cost**: 0 tokens.
 
 ---
 
-### 🌌 Path B: The Great Voyage (e.g., "Hola, ¿qué tal?")
+### 🌌 Path B: The Great Voyage (e.g., "Hello, how are you?")
 
-If you type natural language, you've just started a journey to the cloud. This is where the real magic happens.
+If you type natural language, you've started a journey to the cloud.
 
-#### 1. The Dispatcher (`ChatManager.execute`)
-`ChatManager` receives your "Hola". It doesn't know the answer, so it prepares the package for the AI.
+#### 1. The Dispatcher (`ChatManager.processTurn`)
+`ChatManager` receives your input and prepares the package for the AI.
 
-#### 2. The Bridge (`GeminiAdapter.send_message`)
-Your text travels to `src/infrastructure/gemini/adapter.py`. The adapter does three things:
-- **History Check**: It attaches your previous messages so the AI remembers who you are.
-- **Payload Construction**: It wraps your text in a JSON format that Google's API understands.
-- **The Leap**: It hands the payload to `GeminiRestClient` (`src/infrastructure/gemini/rest_client.py`), which sends an HTTPS request to the Gemini API.
+#### 2. The Bridge (`GeminiAdapter.sendMessage`)
+Your text travels to `src_js/infrastructure/gemini/adapter.js`. The adapter:
+- **History Check**: Attaches previous messages for continuity.
+- **Payload Construction**: Wraps text in the format required by the Gemini API.
+- **The Leap**: Sends the payload via HTTPS request to the API.
 
 #### 3. The Oracle (Google Gemini)
-Across the internet, the model processes your tokens, reasons, and generates a response.
+Across the internet, the model processes tokens, reasons, and generates a response.
 
 #### 4. The Return Trip
-The API sends back a JSON response. The `GeminiAdapter` captures it, extracts the text, and saves it in the local `self.history` so the conversation can continue.
+The API sends back a JSON response. The `GeminiAdapter` extracts the text and updates the session history.
 
 ---
 
 ## 🔄 Phase 3: The Loop of Action (The ReAct Pattern)
 
-But wait! What if you asked: *"What files are in this folder?"* The AI can't see your files... unless it uses a **Tool**.
+What if you asked: *"What files are in this folder?"* The AI uses a **Tool**.
 
-1. **The Detection**: Before showing the response to you, `ChatManager` passes the AI's text through the `SmartToolParser` (`src/core/smart_parser.py`).
-2. **The Discovery**: The parser finds a `<TOOL_CALL>` tag. The AI is saying: *"I need to use `listDir` to answer this!"*
-3. **The Execution**: `ChatManager` hands the call to the `ExecutionEngine` (`src/core/execution_engine.py`), which finds the actual Python function in `src/tools/file_tools.py`.
-4. **The Feedback**: The tool returns the list of files. This result is wrapped in a `<TOOL_RESPONSE>` and sent **back to the AI**.
-5. **The Final Answer**: The AI reads the tool's output and finally says: *"The files in this folder are..."*
+1. **The Detection**: `ChatManager` passes the AI's text through the `SmartToolParser` (`src_js/core/smartParser.js`).
+2. **The Discovery**: The parser finds a `<TOOL_CALL>` tag. The AI is requesting a tool like `listDir`.
+3. **The Execution**: `ChatManager` hands the call to the `ExecutionEngine` (`src_js/core/executionEngine.js`), which executes the logic in `src_js/tools/fileTools.js`.
+4. **The Feedback**: The tool returns the result, which is wrapped in a `<TOOL_RESPONSE>` and sent **back to the AI**.
+5. **The Final Answer**: The AI reads the output and finally provides the answer to the user.
 
 ---
 
 ## 🏁 Phase 4: The Final Delivery
 
-Once the AI has finished reasoning (and using any necessary tools), the final text reaches the end of the line:
+Once the AI has finished reasoning:
 
-1. **Cleaning**: `SmartToolParser.clean_response()` removes any internal XML tags so you don't see the "technical plumbing".
-2. **Formatting**: `TerminalUI` adds spacing and colors to make the text readable.
+1. **Cleaning**: `SmartToolParser.cleanResponse()` removes internal XML tags.
+2. **Formatting**: `TerminalUI` applies spacing and colors.
 3. **The Reveal**: The text appears on your screen.
 
-**The journey is complete.** The system returns to the loop, the cursor blinks, and it waits for your next move.
+**The journey is complete.**
 
 ---
 
@@ -85,10 +85,10 @@ Once the AI has finished reasoning (and using any necessary tools), the final te
 
 | Step | File | Role |
 | :--- | :--- | :--- |
-| **Start** | `src/main.py` | Entry point & Orchestration |
-| **Input** | `src/core/chat_manager.py` | The Conductor |
-| **Commands** | `src/core/commands.py` | Local logic handler |
-| **API Bridge** | `src/infrastructure/gemini/adapter.py` | Cloud communicator |
-| **Parsing** | `src/core/smart_parser.py` | Tool call detector |
-| **Execution** | `src/core/execution_engine.py` | Tool runner |
-| **Output** | `src/core/terminal_ui.py` | Visual delivery |
+| **Start** | `src_js/main.js` | Entry point & Orchestration |
+| **Input** | `src_js/core/chatManager.js` | The Conductor |
+| **Commands** | `src_js/core/commandHandler.js` | Local logic handler |
+| **API Bridge** | `src_js/infrastructure/gemini/adapter.js` | Cloud communicator |
+| **Parsing** | `src_js/core/smartParser.js` | Tool call detector |
+| **Execution** | `src_js/core/executionEngine.js` | Tool runner |
+| **Output** | `src_js/core/terminalUI.js` | Visual delivery |
