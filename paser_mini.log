@@ -1,9 +1,14 @@
---- Session Started: 2026-05-06T12:31:22.612Z ---
-[2026-05-06T12:31:24.553Z] [INFO] Initializing ChatManager.run 
-[2026-05-06T12:31:29.062Z] [DEBUG] Nvidia Auto-RPM: Adjusted limit to 250 based on tokens 
-[2026-05-06T12:31:58.876Z] [INFO] Starting processTurn {"userInput":"[09:31] <user> hola"}
-[2026-05-06T12:32:00.593Z] [DEBUG] Received response from assistant {"responseLength":34}
-[2026-05-06T12:32:25.439Z] [INFO] Starting processTurn {"userInput":"[09:32] <user> hola"}
-[2026-05-06T12:32:27.411Z] [DEBUG] Received response from assistant {"responseLength":33}
-[2026-05-06T12:32:35.790Z] [INFO] Starting processTurn {"userInput":"[09:32] <user> todo bien?"}
-[2026-05-06T12:32:37.510Z] [DEBUG] Received response from assistant {"responseLength":34}
+--- Session Started: 2026-05-06T13:05:11.948Z ---
+[2026-05-06T13:05:12.900Z] [INFO] Initializing ChatManager.run 
+[2026-05-06T13:07:33.096Z] [INFO] Starting processTurn {"userInput":"[10:07] <user> hola"}
+[2026-05-06T13:07:56.929Z] [DEBUG] Received response from assistant {"responseLength":1194}
+[2026-05-06T13:08:09.974Z] [INFO] Starting processTurn {"userInput":"[10:08] <user> como andas?"}
+[2026-05-06T13:08:16.153Z] [DEBUG] Received response from assistant {"responseLength":115}
+[2026-05-06T13:08:30.672Z] [INFO] Starting processTurn {"userInput":"[10:08] <user> podes dar un vistazo al proyecto?"}
+[2026-05-06T13:08:42.997Z] [DEBUG] Received response from assistant {"responseLength":706}
+[2026-05-06T13:17:29.336Z] [INFO] Starting processTurn {"userInput":"[10:17] <user> te has dado cuenta donde estamos ahora?"}
+[2026-05-06T13:17:52.708Z] [DEBUG] Received response from assistant {"responseLength":3844}
+[2026-05-06T13:18:35.512Z] [INFO] Starting processTurn {"userInput":"[10:18] <user> no, no, ahora donde estamos hablando?"}
+[2026-05-06T13:19:02.452Z] [DEBUG] Received response from assistant {"responseLength":4392}
+[2026-05-06T13:21:49.173Z] [INFO] Starting processTurn {"userInput":"[10:21] <user> no estamos en un chat irc?"}
+[2026-05-06T13:22:11.059Z] [DEBUG] Received response from assistant {"responseLength":3427}

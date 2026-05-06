@@ -1,13 +1,15 @@
 import axios from 'axios';
 
 export class GeminiAdapter {
-  constructor() {
+  constructor(userNickname = 'user', agentNickname = 'assistant') {
     this.apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     this.history = [];
     this.currentModel = 'gemini-2.0-flash';
     this.systemInstruction = null;
     this.temperature = 0.7;
     this.lastPayload = null;
+    this.userNickname = userNickname;
+    this.agentNickname = agentNickname;
   }
 
   startChat(modelName, systemInstruction, temperature = 0.7) {
@@ -59,12 +61,19 @@ export class GeminiAdapter {
     return text.replace(/<(thought|reasoning)>[\s\S]*?<\/\1>/gi, '').trim();
   }
 
+  _formatMessage(role, text, timestamp) {
+    const roleLabel = role === 'user' ? 'user' : 'assistant';
+    return `[${timestamp}] <${roleLabel}> ${text}`;
+  }
+
   async sendMessage(message, role = 'user') {
-    const parts = [{ text: message }];
-    this.history.push({ 
-      role, 
-      parts, 
-      timestamp: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) 
+    const timestamp = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const formattedMessage = this._formatMessage(role, message, timestamp);
+    const parts = [{ text: formattedMessage }];
+    this.history.push({
+      role,
+      parts,
+      timestamp
     });
 
     const payload = this._buildPayload();
@@ -97,10 +106,12 @@ export class GeminiAdapter {
       textContent = this._filterThoughts(textContent);
 
       if (textContent) {
+        const timestamp = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        const formattedMessage = this._formatMessage('model', textContent, timestamp);
         this.history.push({
           role: 'model',
-          parts: [{ text: textContent }],
-          timestamp: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+          parts: [{ text: formattedMessage }],
+          timestamp
         });
         return textContent;
       }
@@ -112,8 +123,14 @@ export class GeminiAdapter {
     }
   }
 
-  injectMessage(role, content) {
-    this.history.push({ role, parts: [{ text: content }] });
+  injectMessage(role, content, timestamp = null) {
+    const ts = timestamp || new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const formattedMessage = this._formatMessage(role, content, ts);
+    this.history.push({ 
+      role, 
+      parts: [{ text: formattedMessage }],
+      timestamp: ts
+    });
   }
 
   hardReset(historyOverride = null) {
