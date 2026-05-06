@@ -21,6 +21,8 @@ export class ChatManager {
     this.tpmLimit = parseInt(this.configManager.get('tpm_limit', 15000));
     this.ui = ui;
     this.ui.bashEnabled = false;
+    this.currentChannel = '#main';
+    this.ui.bashEnabled = false;
     this.timestampsEnabled = this.configManager.get('timestamps_enabled', false);
     this.safemode = this.configManager.get('safemode', false);
     

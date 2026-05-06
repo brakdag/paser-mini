@@ -245,7 +245,7 @@ export class TerminalUI {
       });
 
       rl.on('close', () => {
-        process.stdin.setRawMode(false);
+        // No manual setRawMode needed, readline handles it
       });
     });
   }

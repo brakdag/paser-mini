@@ -8,7 +8,7 @@ export const searchFilesPattern = async ({ pattern }) => {
   try {
     const rootPath = process.cwd();
     // Usamos find con prune para ignorar carpetas ocultas y head para limitar resultados
-    const cmd = `find ${rootPath} \( -path '*/.*' -o -path '*/node_modules' \) -prune -o -name '${pattern.replace(/'/g, "'\\'")}' -print | head -n 10`;
+    const cmd = `find "${rootPath}" -name ".git" -prune -o -name "node_modules" -prune -o -name "${pattern}" -print | head -n 10`;
     
     const { stdout } = await execPromise(cmd, { timeout: 80000 });
     
@@ -23,10 +23,11 @@ export const searchFilesPattern = async ({ pattern }) => {
 };
 
 export const searchTextGlobal = async ({ query }) => {
+  if (!query || query.trim() === '') return JSON.stringify([]);
   try {
     const rootPath = process.cwd();
     // grep -rIn: recursivo, ignora mayúsculas, muestra número de línea
-    const cmd = `grep -rIn --exclude-dir={'.*',node_modules} -- '${query.replace(/'/g, "'\\'")}' ${rootPath} | head -n 10`;
+    const cmd = `grep -rIn --exclude-dir={'.*',node_modules} -- '${query.replace(/'/g, "'\\'")}' "${rootPath}" | head -n 10`;
     
     const { stdout } = await execPromise(cmd, { timeout: 80000 });
     

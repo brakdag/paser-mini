@@ -64,7 +64,7 @@ export const listDir = async ({ path: dirPath = '.' }) => {
 export const removeFile = async ({ path: filePath }) => {
   try {
     const safePath = getSafePath(filePath);
-    await fs.rm(safePath, { recursive: true, force: true });
+    await fs.rm(safePath, { recursive: true });
     return 'OK';
   } catch (e) {
     return `ERR: ${e.message}`;
@@ -127,8 +127,8 @@ export const copyFile = async ({ origin, destination }) => {
 
 export const getTree = async () => {
   try {
-    const { stdout } = await execPromise('git ls-files');
-    return stdout;
+    const { stdout } = await execPromise('git ls-files | head -n 100', { timeout: 30000 });
+    return stdout || 'No files found in git index.';
   } catch (e) {
     return `ERR: Git error: ${e.message}`;
   }
@@ -137,7 +137,7 @@ export const getTree = async () => {
 export const gitDiff = async ({ path: filePath }) => {
   try {
     const safePath = getSafePath(filePath);
-    const { stdout } = await execPromise(`git diff ${safePath}`);
+    const { stdout } = await execPromise(`git diff -- ${safePath}`, { timeout: 30000 });
     return stdout || 'No changes found.';
   } catch (e) {
     return `ERR: Git diff error: ${e.message}`;
@@ -147,7 +147,7 @@ export const gitDiff = async ({ path: filePath }) => {
 export const restoreFile = async ({ path: filePath }) => {
   try {
     const safePath = getSafePath(filePath);
-    await execPromise(`git restore ${safePath}`);
+    await execPromise(`git restore ${safePath}`, { timeout: 30000 });
     return 'OK';
   } catch (e) {
     return `ERR: Git restore error: ${e.message}`;
@@ -157,7 +157,7 @@ export const restoreFile = async ({ path: filePath }) => {
 export const codeFormatter = async ({ path: filePath }) => {
   try {
     const safePath = getSafePath(filePath);
-    await execPromise(`npx black ${safePath}`);
+    await execPromise(`npx black ${safePath}`, { timeout: 60000 });
     return 'OK';
   } catch (e) {
     return `ERR: Formatting error: ${e.message}`;

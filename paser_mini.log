@@ -1,2 +1,24 @@
---- Session Started: 2026-05-06T20:40:21.764Z ---
-[2026-05-06T20:40:23.597Z] [INFO] Initializing ChatManager.run 
+--- Session Started: 2026-05-06T22:29:31.223Z ---
+[2026-05-06T22:29:31.559Z] [INFO] Initializing ChatManager.run 
+[2026-05-06T22:29:33.982Z] [INFO] Starting processTurn {"userInput":"#30"}
+[2026-05-06T22:29:47.667Z] [DEBUG] Received response from assistant {"responseLength":915}
+[2026-05-06T22:33:11.512Z] [INFO] Starting processTurn {"userInput":"What are you trying to say? I don't get it. but ok, continue"}
+[2026-05-06T22:33:37.701Z] [DEBUG] Received response from assistant {"responseLength":2846}
+[2026-05-06T22:36:38.982Z] [INFO] Starting processTurn {"userInput":"bueno vamos a probar el comando notifyUser, no lo vi como andaba, podes probarlo, mandame unas 5 notificaciones seguidas."}
+[2026-05-06T22:37:04.835Z] [DEBUG] Received response from assistant {"responseLength":1223}
+[2026-05-06T22:43:40.525Z] [INFO] Starting processTurn {"userInput":"bueno entonces completala, agregala y la probamos cuando reinicie el entorno.( un detalle) la notificación debe reproducir un sonido, type.wav esta en el directorio raiz, movelo dentro de src_js, en una carpeta con el nombre que quieras para que quede ordenado, cada vez que envia una notificación y que te permite seguir trabjando, debe sonar ese wav. Asi si yo estoy tomando mate o haciendo otra cosa miro la pantalla."}
+[2026-05-06T22:44:13.722Z] [DEBUG] Received response from assistant {"responseLength":4657}
+[2026-05-06T22:47:03.802Z] [INFO] Starting processTurn {"userInput":"que issues han quedado abiertos?"}
+[2026-05-06T22:47:11.449Z] [DEBUG] Received response from assistant {"responseLength":530}
+[2026-05-06T22:48:00.283Z] [INFO] Starting processTurn {"userInput":"alguno ya esta todo validado para cerrarlo?"}
+[2026-05-06T22:48:24.741Z] [DEBUG] Received response from assistant {"responseLength":3004}
+[2026-05-06T22:49:57.696Z] [INFO] Starting processTurn {"userInput":"revisalos, todo lo que podas cerrar porque anda hacelo."}
+[2026-05-06T22:50:17.424Z] [DEBUG] Received response from assistant {"responseLength":3414}
+[2026-05-06T22:51:26.890Z] [INFO] Starting processTurn {"userInput":"dale!!"}
+[2026-05-06T22:51:31.091Z] [DEBUG] Received response from assistant {"responseLength":263}
+[2026-05-06T22:52:20.726Z] [INFO] Starting processTurn {"userInput":"vamos!"}
+[2026-05-06T22:52:27.717Z] [DEBUG] Received response from assistant {"responseLength":204}
+[2026-05-06T22:52:42.018Z] [INFO] Starting processTurn {"userInput":"* bueno dale! *"}
+[2026-05-06T22:52:50.124Z] [DEBUG] Received response from assistant {"responseLength":218}
+[2026-05-06T22:53:17.179Z] [INFO] Starting processTurn {"userInput":"* piennsa que elena ha quedado colgada en un bucle infinito. *"}
+[2026-05-06T22:53:30.328Z] [DEBUG] Received response from assistant {"responseLength":2247}

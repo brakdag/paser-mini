@@ -106,12 +106,42 @@ export class CommandHandler {
           const action = inputStripped.slice(4).trim();
           const formattedAction = `* ${action} *`;
           this.ui.displayChatMessage(this.chatManager.ui.userNickname, formattedAction);
-          await this.chatManager.processTurn(this.ui.formatChatMessage(this.chatManager.ui.userNickname, formattedAction));
+          await this.chatManager.processTurn(formattedAction);
           return true;
         }
     if (inputStripped === '/compact') {
       this.ui.displayInfo('Compacting history into IRC log...');
       return await this.chatManager.compactHistory();
+    }
+
+    if (inputStripped === '/kick') {
+      this.ui.displaySystemMessage('*** Agent kicked. Session wiped. Restarting...');
+      this.chatManager.assistant.hardReset();
+      this.ui.clearLog();
+      this.ui.displayLogOpened();
+      return true;
+    }
+
+    if (inputStripped.startsWith('/join ')) {
+      const channel = inputStripped.slice(6).trim();
+      if (!channel.startsWith('#')) {
+        this.ui.displayError('Channel name must start with # (e.g., /join #work)');
+        return true;
+      }
+
+      this.chatManager.currentChannel = channel;
+      
+      let modeDesc = 'General purpose mode.';
+      if (channel === '#charla') modeDesc = 'Casual, friendly, and conversational mode.';
+      else if (channel === '#work') modeDesc = 'Professional, focused, and highly efficient engineering mode.';
+
+      const systemMsg = `Joined channel ${channel}. Mode: ${modeDesc}`;
+      this.ui.displaySystemMessage(systemMsg);
+      
+      // Inject as a server message so the AI sees it in history without a fake user prompt
+      this.chatManager.assistant.injectMessage('server', systemMsg);
+      
+      return true;
     }
 
     if (inputStripped === '/enableBash') {
@@ -165,7 +195,7 @@ export class CommandHandler {
     }
 
     if (inputStripped === '/help') {
-      const helpText = `\nAvailable Commands:\n-------------------\n/help       - Show this help menu\n/config     - Show current system configuration\n/models     - Change AI model and temperature\n/fav        - Manage favorite models (/fav, /fav+, /fav -<idx>, /fav <idx>)\n/reset      - Hard Reset: Clear history and Leap via Bridge Block\n/r <msg>    - Rewrite: Remove last interaction and re-prompt\n/w <t> <r> <p> - Set window, RPM, and TPM\n/clear      - Clear terminal\n/topic <text> - Change the channel topic\n/nick <name> - Change the agent's nickname\n/me <action> - Perform an action (roleplay)\n/compact    - Compact history into IRC log and reset context\n/s [file]   - Save last request payload to JSON\n/q, /quit, /exit - Exit application\n`;
+      const helpText = `\nAvailable Commands:\n-------------------\n/help       - Show this help menu\n/config     - Show current system configuration\n/models     - Change AI model and temperature\n/fav        - Manage favorite models (/fav, /fav+, /fav -<idx>, /fav <idx>)\n/reset      - Hard Reset: Clear history and Leap via Bridge Block\n/r <msg>    - Rewrite: Remove last interaction and re-prompt\n/w <t> <r> <p> - Set window, RPM, and TPM\n/clear      - Clear terminal\n/topic <text> - Change the channel topic\n/nick <name> - Change the agent's nickname\n/me <action> - Perform an action (roleplay)\n/compact    - Compact history into IRC log and reset context\n/kick       - Kick agent: Nuclear reset, wipes all session memory\n/join <#ch> - Change channel and mode (#charla, #work)\n/s [file]   - Save last request payload to JSON\n/q, /quit, /exit - Exit application\n`;
       this.ui.displayMessage(helpText);
       return true;
     }

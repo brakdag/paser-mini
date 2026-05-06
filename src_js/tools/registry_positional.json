@@ -256,5 +256,12 @@
     "gitDiffAll",
     "Show all changes in the current repository using git diff",
     {}
+  ],
+  [
+    "notifyUser",
+    "Sends a notification to the user and plays a sound.",
+    {
+      "message": "string"
+    }
   ]
 ]
