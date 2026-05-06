@@ -67,6 +67,11 @@ export class NvidiaAdapter {
     this.state.popLastMessage();
   }
 
+  updateNicknames(userNickname, agentNickname) {
+    this.state.userNickname = userNickname;
+    this.state.agentNickname = agentNickname;
+  }
+
   async getAvailableModels() {
   
       if (!this.apiKey) {

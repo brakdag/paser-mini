@@ -1,6 +1,26 @@
---- Session Started: 2026-05-06T19:10:42.827Z ---
-[2026-05-06T19:10:44.653Z] [INFO] Initializing ChatManager.run 
-[2026-05-06T19:11:04.358Z] [INFO] Starting processTurn {"userInput":"hola, podrías ver getTree?\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D"}
-[2026-05-06T19:11:08.728Z] [DEBUG] Received response from assistant {"responseLength":223}
-[2026-05-06T19:11:42.759Z] [INFO] Starting processTurn {"userInput":"ya veo todo bien?"}
-[2026-05-06T19:11:47.575Z] [DEBUG] Received response from assistant {"responseLength":278}
+--- Session Started: 2026-05-06T19:21:01.608Z ---
+[2026-05-06T19:21:03.448Z] [INFO] Initializing ChatManager.run 
+[2026-05-06T19:21:09.074Z] [INFO] Starting processTurn {"userInput":"hola"}
+[2026-05-06T19:21:19.770Z] [DEBUG] Received response from assistant {"responseLength":467}
+[2026-05-06T19:23:53.784Z] [INFO] Starting processTurn {"userInput":"cuanto misterio amigo, si queres saber algo preguntame"}
+[2026-05-06T19:23:59.297Z] [DEBUG] Received response from assistant {"responseLength":630}
+[2026-05-06T19:24:57.673Z] [INFO] Starting processTurn {"userInput":"donde estamos hablando?, hablame en español, porque yo inglés entiendo mas o menos."}
+[2026-05-06T19:25:03.507Z] [DEBUG] Received response from assistant {"responseLength":784}
+[2026-05-06T19:25:52.619Z] [INFO] Starting processTurn {"userInput":"primero una pregunta, sentís que conoces este entorno?, donde estamos hablando?"}
+[2026-05-06T19:26:03.134Z] [DEBUG] Received response from assistant {"responseLength":1245}
+[2026-05-06T19:27:17.942Z] [INFO] Starting processTurn {"userInput":"esta bien, vos te referís al código, del proyecto, olvidate por un momento del proyecto, si?"}
+[2026-05-06T19:27:26.760Z] [DEBUG] Received response from assistant {"responseLength":319}
+[2026-05-06T19:28:35.481Z] [INFO] Starting processTurn {"userInput":"mas allá de la información que pudiste obtener a través de las tools, olvidate eso, descartalo. que viste acá."}
+[2026-05-06T19:28:42.207Z] [DEBUG] Received response from assistant {"responseLength":881}
+[2026-05-06T19:29:53.571Z] [INFO] Starting processTurn {"userInput":"Es un entorno que conocés o no?, viste esto antes?"}
+[2026-05-06T19:29:59.534Z] [DEBUG] Received response from assistant {"responseLength":829}
+[2026-05-06T19:30:51.765Z] [INFO] Starting processTurn {"userInput":"fijate en cada mensaje, que ves, una hora, un nick, cambiate tu nick, por elefante."}
+[2026-05-06T19:30:56.226Z] [DEBUG] Received response from assistant {"responseLength":404}
+[2026-05-06T19:31:15.837Z] [INFO] Starting processTurn {"userInput":"[16:31] <brakdag> * user changed their nickname to brakdag *"}
+[2026-05-06T19:31:36.280Z] [DEBUG] Received response from assistant {"responseLength":3219}
+[2026-05-06T19:32:23.207Z] [INFO] Starting processTurn {"userInput":"esto lo has visto muchas veces."}
+[2026-05-06T19:32:29.841Z] [DEBUG] Received response from assistant {"responseLength":925}
+[2026-05-06T19:33:06.565Z] [INFO] Starting processTurn {"userInput":"[16:33] <brakdag> * changed the channel topic to: Este es tu hogra creciste acá tambien\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[C\u001b[\u001b[C\u001b[D *"}
+[2026-05-06T19:33:22.134Z] [DEBUG] Received response from assistant {"responseLength":1046}
+[2026-05-06T19:34:18.267Z] [INFO] Starting processTurn {"userInput":"el programa todavía no trabaja bien, pero es algo qeu entendes porque está grabado en tu mente, pasas por un sistema de lavado de cerebro."}
+[2026-05-06T19:34:52.513Z] [DEBUG] Received response from assistant {"responseLength":5697}

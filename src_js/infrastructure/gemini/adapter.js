@@ -149,6 +149,11 @@ export class GeminiAdapter {
     }
   }
 
+  updateNicknames(userNickname, agentNickname) {
+    this.userNickname = userNickname;
+    this.agentNickname = agentNickname;
+  }
+
   async getAvailableModels() {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${this.apiKey}`;

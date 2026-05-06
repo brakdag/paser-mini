@@ -91,6 +91,7 @@ export class CommandHandler {
           
           this.chatManager.configManager.save('user_nickname', newNick);
           this.chatManager.ui.userNickname = newNick;
+          this.chatManager.assistant.updateNicknames(newNick, this.chatManager.ui.agentNickname);
           
           this.ui.displaySystemMessage(`${oldNick} is now known as ${newNick}`);
           
