@@ -81,10 +81,10 @@ export const createDir = async ({ path: dirPath }) => {
   }
 };
 
-export const renamePath = async ({ origen, destino }) => {
+export const renamePath = async ({ origin, destination }) => {
   try {
-    const safeOrigen = getSafePath(origen);
-    const safeDestino = getSafePath(destino);
+    const safeOrigen = getSafePath(origin);
+    const safeDestino = getSafePath(destination);
     await fs.rename(safeOrigen, safeDestino);
     return 'OK';
   } catch (e) {
@@ -113,10 +113,10 @@ export const replaceString = async ({ path: filePath, search_text, replace_text 
   }
 };
 
-export const copyFile = async ({ origen, destino }) => {
+export const copyFile = async ({ origin, destination }) => {
   try {
-    const safeSrc = getSafePath(origen);
-    const safeDst = getSafePath(destino);
+    const safeSrc = getSafePath(origin);
+    const safeDst = getSafePath(destination);
     await fs.mkdir(path.dirname(safeDst), { recursive: true });
     await fs.copyFile(safeSrc, safeDst);
     return 'OK';
