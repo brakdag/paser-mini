@@ -140,7 +140,7 @@ export class CommandHandler {
       const { NvidiaAdapter } = await import('../infrastructure/nvidia/adapter.js');
 
       this.ui.displayMessage('Select Provider:\n0: Gemini\n1: NVIDIA');
-      const choice = await this.ui.requestInput(this.chatManager.rl, 'Provider: ');
+      const choice = await this.ui.requestInput('Provider: ');
 
       if (choice === '0') {
         this.chatManager.assistant = new GeminiAdapter();

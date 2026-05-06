@@ -34,7 +34,7 @@ export class NvidiaAdapter {
     payload.max_tokens = maxTokens;
     this.lastPayload = payload;
 
-    const url = 'https://infer.nvidia.com/v1/chat/completions';
+    const url = 'https://integrate.api.nvidia.com/v1/chat/completions';
     const headers = { 'Authorization': `Bearer ${this.apiKey}` };
 
     try {
@@ -68,19 +68,25 @@ export class NvidiaAdapter {
   }
 
   async getAvailableModels() {
+  
+      if (!this.apiKey) {
+        console.error('NVIDIA_API_KEY is not defined in environment variables.');
+        return [];
+      }
     try {
-      const url = 'https://infer.nvidia.com/v1/models';
+      const url = 'https://integrate.api.nvidia.com/v1/models';
       const headers = { 'Authorization': `Bearer ${this.apiKey}` };
       const data = await this.transport.get(url, {}, headers);
       return data.data?.map(m => m.id) || [];
     } catch (e) {
-      return ['meta/llama-3.1-405b-instruct'];
+      console.error(`Error fetching NVIDIA models: ${e.message}`);
+      return [];
     }
   }
 
   async checkAvailability(modelName) {
     try {
-      const url = 'https://infer.nvidia.com/v1/chat/completions';
+      const url = 'https://integrate.api.nvidia.com/v1/chat/completions';
       const headers = { 'Authorization': `Bearer ${this.apiKey}` };
       const payload = {
         model: modelName,

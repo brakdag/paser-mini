@@ -1,8 +1,10 @@
---- Session Started: 2026-05-06T16:35:26.127Z ---
-[2026-05-06T16:35:27.933Z] [INFO] Initializing ChatManager.run 
-[2026-05-06T16:35:36.561Z] [INFO] Starting processTurn {"userInput":"hola, como te llamas?"}
-[2026-05-06T16:36:02.384Z] [DEBUG] Received response from assistant {"responseLength":52}
-[2026-05-06T16:36:21.152Z] [INFO] Starting processTurn {"userInput":"actualiza tu nick entonces o ese te gusta?"}
-[2026-05-06T16:36:46.263Z] [DEBUG] Received response from assistant {"responseLength":467}
-[2026-05-06T16:38:33.099Z] [INFO] Starting processTurn {"userInput":"cual es el trabajo que haces?"}
-[2026-05-06T16:39:04.073Z] [DEBUG] Received response from assistant {"responseLength":1553}
+--- Session Started: 2026-05-06T18:11:05.073Z ---
+[2026-05-06T18:11:06.821Z] [INFO] Initializing ChatManager.run 
+[2026-05-06T18:11:42.118Z] [INFO] Starting processTurn {"userInput":"hola"}
+[2026-05-06T18:11:55.878Z] [DEBUG] Received response from assistant {"responseLength":592}
+[2026-05-06T18:12:03.299Z] [INFO] Starting processTurn {"userInput":"como andas chabón?"}
+[2026-05-06T18:12:19.628Z] [DEBUG] Received response from assistant {"responseLength":145}
+[2026-05-06T18:14:21.668Z] [INFO] Starting processTurn {"userInput":"[15:14] <gustavo> * user changed their nickname to gustavo *"}
+[2026-05-06T18:14:23.719Z] [DEBUG] Received response from assistant {"responseLength":89}
+[2026-05-06T18:14:29.312Z] [INFO] Starting processTurn {"userInput":"hola"}
+[2026-05-06T18:14:35.156Z] [DEBUG] Received response from assistant {"responseLength":59}

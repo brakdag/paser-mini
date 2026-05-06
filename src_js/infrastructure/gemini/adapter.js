@@ -37,20 +37,9 @@ export class GeminiAdapter {
     };
 
     if (this.systemInstruction) {
-      if (this.currentModel && this.currentModel.toLowerCase().includes('gemma')) {
-        if (contents.length > 0 && contents[0].role === 'user') {
-          contents[0].parts[0].text = `${this.systemInstruction}\n\n${contents[0].parts[0].text}`;
-        } else {
-          payload.contents.push({
-            role: 'user',
-            parts: [{ text: this.systemInstruction }]
-          });
-        }
-      } else {
-        payload.systemInstruction = {
-          parts: [{ text: this.systemInstruction }]
-        };
-      }
+      payload.systemInstruction = {
+        parts: [{ text: this.systemInstruction }]
+      };
     }
 
     return payload;
