@@ -44,7 +44,6 @@ async function main() {
 
   const ui = new TerminalUI();
   
-  // Selección dinámica de proveedor
   const provider = configManager.get('provider', 'Gemini');
   const assistant = provider === 'NVIDIA' ? new NvidiaAdapter() : new GeminiAdapter();
   
@@ -62,7 +61,10 @@ async function main() {
     }
   }
 
-  const sysInstr = injection ? `${injection}\n${baseInstr}` : baseInstr;
+  // Explicitly define Identity vs Protocols to ensure persona adoption
+  const sysInstr = injection 
+    ? `IDENTITY AND PERSONA:\n${injection}\n\nCORE OPERATIONAL PROTOCOLS:\n${baseInstr}` 
+    : baseInstr;
 
   const chatManager = new ChatManager(
     assistant,
@@ -71,7 +73,6 @@ async function main() {
     ui
   );
   
-  // Inyectamos el configManager para que el chatManager pueda usarlo en los comandos
   chatManager.configManager = configManager;
 
   await chatManager.run(options.message);

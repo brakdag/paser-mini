@@ -1,3 +1,4 @@
---- Session Started: 2026-05-06T08:21:39.209Z ---
-[2026-05-06T08:21:39.708Z] [INFO] Initializing ChatManager.run 
-[2026-05-06T08:21:48.878Z] [DEBUG] Nvidia Auto-RPM: Adjusted limit to 250 based on tokens 
+--- Session Started: 2026-05-06T09:07:43.141Z ---
+[2026-05-06T09:07:45.053Z] [INFO] Initializing ChatManager.run 
+[2026-05-06T09:07:49.591Z] [INFO] Starting processTurn {"userInput":"Hola, cual es tu sexo?"}
+[2026-05-06T09:07:57.828Z] [DEBUG] Received response from assistant {"responseLength":794}

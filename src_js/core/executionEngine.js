@@ -20,11 +20,11 @@ export class ExecutionEngine {
       'removeFile': (a) => path.basename(a.path || ''),
       'replaceString': (a) => path.basename(a.path || ''),
       'listDir': (a) => a.path || '',
-      'create_dir': (a) => a.path || '',
-      'renamePath': (a) => path.basename(a.origen || '') + ' -> ' + path.basename(a.destino || ''),
+      'createDir': (a) => a.path || '',
+      'renamePath': (a) => path.basename(a.origin || '') + ' -> ' + path.basename(a.destination || ''),
       'pushMemory': (a) => a.key || 'unknown',
       'pullMemory': (a) => a.key || 'unknown',
-      'run_instance': (a) => a.target || 'unknown',
+      'runInstance': (a) => a.target || 'unknown',
       'searchTextGlobal': (a) => "'" + (a.query || '') + "'",
       'searchFilesPattern': (a) => 'pattern: ' + (a.pattern || ''),
       'analyzePyright': (a) => path.basename(a.path || ''),
@@ -55,7 +55,7 @@ export class ExecutionEngine {
       };
     }
 
-    if (name === 'run_instance' && this.instanceMode) {
+    if (name === 'runInstance' && this.instanceMode) {
       return {
         response: this.toolParser.formatToolResponse(
           'ERR: Recursion disabled.',
@@ -66,8 +66,15 @@ export class ExecutionEngine {
       };
     }
 
-    const mapper = this._detailMappers[name] || (() => '');
-    const detail = mapper(args);
+    // Safe detail mapping
+    let detail = 'no details';
+    try {
+      const mapper = this._detailMappers[name] || (() => 'no details');
+      detail = mapper(args);
+    } catch (e) {
+      detail = 'error mapping details';
+    }
+    
     this.ui.startToolMonitoring(name, detail);
 
     try {
@@ -75,11 +82,11 @@ export class ExecutionEngine {
       const result = await toolFunc(args);
 
       if (name === 'pullMemory') {
-        this.ui.displayMessage('🧠 **Memento Pull**: Accessing node #' + args.key);
+        this.ui.displayMessage('\ud83e\udde0 **Memento Pull**: Accessing node #' + args.key);
       } else if (name === 'pushMemory') {
-        this.ui.displayMessage('✍️ **Memento Push**: ' + result);
-      } else if (name === 'run_instance') {
-        this.ui.displayMessage('🚀 **Instance Test Output**\n\n' + '```text\n' + result + '\n```');
+        this.ui.displayMessage('\u270d\ufe0f **Memento Push**: ' + result);
+      } else if (name === 'runInstance') {
+        this.ui.displayMessage('\ud83d\ude80 **Instance Test Output**\n\n' + '```text\n' + result + '\n```');
       }
 
       this.toolTracker.recordSuccess(name);

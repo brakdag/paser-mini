@@ -118,7 +118,7 @@ export class ChatManager {
     if (iterations >= maxIterations) this.ui.displayError('Maximum tool iterations reached.');
 
     const finalResponse = LatexTranslator.translate(currentResponse);
-    this.ui.displayMessage('\nAssistant: ' + finalResponse);
+    this.ui.displayMessage('\n' + finalResponse);
   }
 
   stopExecution() {

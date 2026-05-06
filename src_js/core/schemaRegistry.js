@@ -16,7 +16,7 @@ async function registerSchemas() {
     for (const file of files) {
       if (file.endsWith('.js')) {
         const schemaName = file.replace('.js', '').replace('Schema', '');
-        const toolName = schemaName.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase();
+        const toolName = schemaName;
         
         try {
           const module = await import(`./schemas/${file}`);
