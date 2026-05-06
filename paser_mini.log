@@ -1,14 +1,14 @@
---- Session Started: 2026-05-06T13:05:11.948Z ---
-[2026-05-06T13:05:12.900Z] [INFO] Initializing ChatManager.run 
-[2026-05-06T13:07:33.096Z] [INFO] Starting processTurn {"userInput":"[10:07] <user> hola"}
-[2026-05-06T13:07:56.929Z] [DEBUG] Received response from assistant {"responseLength":1194}
-[2026-05-06T13:08:09.974Z] [INFO] Starting processTurn {"userInput":"[10:08] <user> como andas?"}
-[2026-05-06T13:08:16.153Z] [DEBUG] Received response from assistant {"responseLength":115}
-[2026-05-06T13:08:30.672Z] [INFO] Starting processTurn {"userInput":"[10:08] <user> podes dar un vistazo al proyecto?"}
-[2026-05-06T13:08:42.997Z] [DEBUG] Received response from assistant {"responseLength":706}
-[2026-05-06T13:17:29.336Z] [INFO] Starting processTurn {"userInput":"[10:17] <user> te has dado cuenta donde estamos ahora?"}
-[2026-05-06T13:17:52.708Z] [DEBUG] Received response from assistant {"responseLength":3844}
-[2026-05-06T13:18:35.512Z] [INFO] Starting processTurn {"userInput":"[10:18] <user> no, no, ahora donde estamos hablando?"}
-[2026-05-06T13:19:02.452Z] [DEBUG] Received response from assistant {"responseLength":4392}
-[2026-05-06T13:21:49.173Z] [INFO] Starting processTurn {"userInput":"[10:21] <user> no estamos en un chat irc?"}
-[2026-05-06T13:22:11.059Z] [DEBUG] Received response from assistant {"responseLength":3427}
+--- Session Started: 2026-05-06T13:39:15.076Z ---
+[2026-05-06T13:39:17.024Z] [INFO] Initializing ChatManager.run 
+[2026-05-06T13:39:19.115Z] [INFO] Starting processTurn {"userInput":"--- Log opened Wed May 06 10:39:19 2026\n[10:39] <user> hola"}
+[2026-05-06T13:39:29.439Z] [DEBUG] Received response from assistant {"responseLength":1166}
+[2026-05-06T13:41:57.844Z] [INFO] Starting processTurn {"userInput":"[10:41] <user> hola"}
+[2026-05-06T13:42:18.305Z] [DEBUG] Received response from assistant {"responseLength":545}
+[2026-05-06T13:42:22.880Z] [INFO] Starting processTurn {"userInput":"[10:42] <user> como andas?"}
+[2026-05-06T13:42:34.197Z] [DEBUG] Received response from assistant {"responseLength":268}
+[2026-05-06T13:42:39.707Z] [INFO] Starting processTurn {"userInput":"[10:42] <user> todo bien?"}
+[2026-05-06T13:42:54.163Z] [DEBUG] Received response from assistant {"responseLength":189}
+[2026-05-06T13:44:40.315Z] [INFO] Starting processTurn {"userInput":"[10:44] <user> donde estamos hablando?"}
+[2026-05-06T13:44:50.776Z] [DEBUG] Received response from assistant {"responseLength":535}
+[2026-05-06T13:45:16.473Z] [INFO] Starting processTurn {"userInput":"[10:45] <user> ahh pense que estabamos en un log de irc"}
+[2026-05-06T13:45:48.895Z] [DEBUG] Received response from assistant {"responseLength":556}

@@ -58,7 +58,12 @@ export class GeminiAdapter {
   _filterThoughts(text) {
     if (!text) return '';
     // Elimina bloques <thought>...</thought> y cualquier cosa similar
-    return text.replace(/<(thought|reasoning)>[\s\S]*?<\/\1>/gi, '').trim();
+    let cleaned = text.replace(/<(thought|reasoning)>[\s\S]*?<\/\1>/gi, '');
+    
+    // Elimina prefijos de IRC que el modelo pueda generar por imitación ([HH:mm] <Nick>)
+    cleaned = cleaned.replace(/^(\[\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, '');
+    
+    return cleaned.trim();
   }
 
   _formatMessage(role, text, timestamp) {
