@@ -16,13 +16,9 @@ class GitHubUI(UserInterface):
         self.repo = repo or github_tools.get_current_repo()
 
     async def request_input(self, prompt: str, history: Optional[Any] = None) -> str:
-        # Input is managed by the Orchestrator via the message queue.
         return ""
 
     def display_message(self, text: str):
-        """
-        Posts the AI's final response for the current turn directly to GitHub.
-        """
         logger.info(f"[POSTING TO GITHUB] {text}")
         try:
             github_tools.post_comment(self.issue_number, text, self.repo)
@@ -49,12 +45,6 @@ class GitHubUI(UserInterface):
         logger.info(f"[CONFIRMATION REQUEST] {message} -> Defaulting to True")
         return True
 
-    def set_ui_mode(self, mode: str):
-        pass
-
-    def get_ui_mode(self) -> str:
-        return "NORMAL"
-
     def start_tool_monitoring(self, tool_name: str, detail: str = ""):
         pass
 
@@ -68,5 +58,4 @@ class GitHubUI(UserInterface):
         pass
 
     def update_queue_count(self, count: int):
-        """Does nothing in GitHub mode as there is no visual queue."""
         pass

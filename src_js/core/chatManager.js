@@ -71,7 +71,7 @@ export class ChatManager {
 
   async processTurn(userInput) {
     if (!userInput) return;
-    this.ui.displayMessage('\nUser: ' + userInput);
+
     
     logger.info('Starting processTurn', { userInput });
     let currentResponse = await this.assistant.sendMessage(userInput);

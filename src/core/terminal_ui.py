@@ -22,10 +22,6 @@ from .ui_bindings import UIBindings
 
 logger = logging.getLogger("ui")
 
-class UIState:
-    INSERT = "INSERT"
-    NORMAL = "NORMAL"
-
 class TerminalUI(UserInterface):
     # Regex for corrupted ANSI sequences (where escape is replaced by '?')
     CORRUPT_ANSI = re.compile(r'\?\[[0-9;]*[mK]')
@@ -34,7 +30,6 @@ class TerminalUI(UserInterface):
 
     def __init__(self, no_spinner: bool = False, force_terminal: bool = True):
         self.no_spinner = no_spinner
-        self.mode = UIState.INSERT
         self.last_cursor_pos = 0
         self._session = None
         
@@ -65,13 +60,8 @@ class TerminalUI(UserInterface):
         if not text:
             return ""
         
-        # 1. Remove corrupted ANSI sequences (e.g., "?[36m")
         text = self.CORRUPT_ANSI.sub('', text)
-        
-        # 2. Remove literal string representations (e.g., "\x1b[36m")
         text = self.LITERAL_ANSI.sub('', text)
-        
-        # 3. Filter out all characters with ordinal < 32, except for \n, \r, and \t
         return "".join(c for c in text if ord(c) >= 32 or c in "\n\r\t")
 
     async def request_input(self, prompt: str, history: Optional[Any] = None) -> str:
@@ -157,24 +147,18 @@ class TerminalUI(UserInterface):
         self._current_tool_msg = ""
 
     def update_queue_count(self, count: int):
-        """Updates the current status to show how many messages are queued."""
         if count <= 0:
             return
 
         queue_msg = f" [dim]({count} queued)"
         
         if self._status:
-            # Append queue count to the existing tool status
             full_msg = f"[bold cyan]{self._current_tool_msg}{queue_msg}"
             self._status.update(full_msg)
         elif not self.no_spinner:
-            # If no tool is running but messages are queued, start a generic status
             if not self._status:
                 self._status = Status(f"[dim]{queue_msg}", spinner="line", console=self.console)
                 self._status.start()
-        else:
-            # No spinner mode: we can't easily update a line, so we just ignore or print
-            pass
 
     def stop_all_monitoring(self):
         if self.no_spinner:
@@ -192,12 +176,6 @@ class TerminalUI(UserInterface):
 
     def get_spinner(self, message: str, color: str = "cyan", newline: bool = False):
         return None
-
-    def set_ui_mode(self, mode: str):
-        self.mode = mode
-
-    def get_ui_mode(self) -> str:
-        return self.mode
 
     async def get_confirmation(self, message: str) -> bool:
         response = await self.request_input(f"{message} (y/n): ")

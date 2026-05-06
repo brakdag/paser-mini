@@ -48,16 +48,6 @@ class UserInterface(ABC):
         pass
 
     @abstractmethod
-    def set_ui_mode(self, mode: str):
-        """Set the current UI mode (e.g., INSERT, NORMAL)."""
-        pass
-
-    @abstractmethod
-    def get_ui_mode(self) -> str:
-        """Get the current UI mode."""
-        pass
-
-    @abstractmethod
     def start_tool_monitoring(self, tool_name: str, detail: str = ""):
         """Signals the start of a tool execution and activates the spinner."""
         pass

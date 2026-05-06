@@ -6,7 +6,7 @@ export class SystemCommands {
 
   static handleExit(chatManager) {
     chatManager.shouldExit = true;
-    console.log('Shutting down...');
+
     process.exit(0);
   }
 }

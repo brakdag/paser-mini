@@ -17,6 +17,46 @@ export class TerminalUI {
   }
 
   /**
+   * Renderiza una tabla de Markdown en formato de terminal
+   */
+  renderTable(tableText) {
+    const lines = tableText.trim().split('\n');
+    if (lines.length < 2) return tableText;
+
+    const rows = lines
+      .filter(line => line.includes('|'))
+      .map(line => line.split('|').filter((cell, index, array) => {
+        if (index === 0 && cell.trim() === '') return false;
+        if (index === array.length - 1 && cell.trim() === '') return false;
+        return true;
+      }).map(cell => cell.trim()));
+
+    const dataRows = rows.filter(row => !row.every(cell => /^[:\s\-]*$/.test(cell)));
+
+    if (dataRows.length === 0) return tableText;
+
+    const colWidths = [];
+    dataRows.forEach(row => {
+      row.forEach((cell, i) => {
+        colWidths[i] = Math.max(colWidths[i] || 0, cell.length);
+      });
+    });
+
+    let output = '';
+    const separator = '+' + colWidths.map(w => '-'.repeat(w + 2)).join('+') + '+';
+
+    output += separator + '\n';
+    dataRows.forEach((row, rowIndex) => {
+      const line = '| ' + row.map((cell, i) => cell.padEnd(colWidths[i])).join(' | ') + ' |';
+      output += chalk.white(line) + '\n';
+      if (rowIndex === 0) output += separator + '\n';
+    });
+    output += separator;
+
+    return '\n' + output + '\n';
+  }
+
+  /**
    * Formatea texto Markdown básico usando chalk para la terminal
    */
   formatMarkdown(text) {
@@ -24,22 +64,21 @@ export class TerminalUI {
 
     let formatted = text;
 
-    // 1. Bloques de código (```code```)
+    const tableRegex = /((?:^\s*\|.*\n?)+)/gm;
+    formatted = formatted.replace(tableRegex, (match) => this.renderTable(match));
+
     formatted = formatted.replace(/```([\s\S]*?)```/g, (_, code) => {
       return '\n' + chalk.gray(code.trim()) + '\n';
     });
 
-    // 2. Código en línea (`code`)
     formatted = formatted.replace(/`([^`]+)`/g, (_, code) => {
       return chalk.bgGray.black(` ${code} `);
     });
 
-    // 3. Negritas (**text**)
     formatted = formatted.replace(/\*\*(.*?)\*\*/g, (_, content) => {
       return chalk.bold(content);
     });
 
-    // 4. Itálicas (*text*)
     formatted = formatted.replace(/\*(.*?)\*/g, (_, content) => {
       return chalk.italic(content);
     });
@@ -48,7 +87,6 @@ export class TerminalUI {
   }
 
   displayMessage(text) {
-    // Usamos nuestro formateador personalizado en lugar de la librería externa
     const renderedText = this.formatMarkdown(text);
     process.stdout.write(renderedText + '\n');
   }
@@ -77,13 +115,16 @@ export class TerminalUI {
   }
 
   startToolMonitoring(name, detail) {
+    const toolIcon = '\ud83d\udee0\ufe0f'; // 🛠️
+    const msg = `${toolIcon} ${name} (${detail})...`;
+
     if (this.noSpinner) {
-      process.stdout.write(chalk.yellow('\u2699 ') + chalk.gray(name + ' (' + detail + ')...') + '\n');
+      process.stdout.write(chalk.yellow(msg) + '\n');
       return;
     }
 
     const spinner = ora({
-      text: chalk.yellow('\u2699 ') + chalk.gray(name + ' (' + detail + ')...'),
+      text: chalk.yellow(msg),
       color: 'yellow'
     }).start();
 
@@ -92,17 +133,21 @@ export class TerminalUI {
 
   endToolMonitoring(name, success, detail) {
     const spinner = this.activeSpinners.get(name);
+    if (spinner) {
+      spinner.stop();
+    }
+
+    const toolIcon = '\ud83d\udee0\ufe0f'; // 🛠️
+    const statusIcon = success ? '\u2705' : '\u274c'; // ✅ or ❌
+    const color = success ? chalk.green : chalk.red;
+    
+    const finalMsg = `${toolIcon} ${name} (${detail}) ${statusIcon}`;
+    
+    // Limpiamos la línea del spinner y escribimos el resultado final
+    process.stdout.write('\r\x1b[K' + color(finalMsg) + '\n');
 
     if (spinner) {
-      if (success) {
-        spinner.succeed(chalk.green('\u2714 ') + chalk.gray(name + ' (' + detail + ') completed'));
-      } else {
-        spinner.fail(chalk.red('\u2716 ') + chalk.gray(name + ' (' + detail + ') failed'));
-      }
       this.activeSpinners.delete(name);
-    } else if (this.noSpinner) {
-      const symbol = success ? chalk.green('\u2714') : chalk.red('\u2716');
-      process.stdout.write(symbol + ' ' + chalk.gray(name + ' (' + detail + ') ' + (success ? 'completed' : 'failed')) + '\n');
     }
   }
 
@@ -121,13 +166,11 @@ export class TerminalUI {
     return new Promise((resolve) => {
       let buffer = '';
       
-      // Set raw mode to capture every keystroke
       process.stdin.setRawMode(true);
       process.stdin.resume();
 
       const render = () => {
-        const modeLabel = this.uiMode === 'NORMAL' ? chalk.yellow('[NORMAL]') : chalk.green('[INSERT]');
-        process.stdout.write('\r\x1b[K' + modeLabel + ' ' + prompt + buffer);
+        process.stdout.write('\r\x1b[K' + prompt + buffer);
       };
 
       render();
@@ -135,34 +178,20 @@ export class TerminalUI {
       const onData = (data) => {
         const char = data.toString();
 
-        if (this.uiMode === 'NORMAL') {
-          if (char === 'i') {
-            this.setUiMode('INSERT');
-            render();
-          } else if (char === '\x1b') {
-            this.setUiMode('NORMAL');
-            render();
-          } else {
-            // Other keys in NORMAL mode are ignored or could be mapped to commands
-          }
+        if (char === '\r' || char === '\n') {
+          process.stdin.setRawMode(false);
+          process.stdin.pause();
+          process.stdin.removeListener('data', onData);
+          process.stdout.write('\n');
+          resolve(buffer.trim());
+        } else if (char === '\x7f') {
+          buffer = buffer.slice(0, -1);
+          render();
+        } else if (char === '\x1b') {
+          render();
         } else {
-          // INSERT MODE
-          if (char === '\r' || char === '\n') {
-            process.stdin.setRawMode(false);
-            process.stdin.pause();
-            process.stdin.removeListener('data', onData);
-            process.stdout.write('\n');
-            resolve(buffer.trim());
-          } else if (char === '\x7f') {
-            buffer = buffer.slice(0, -1);
-            render();
-          } else if (char === '\x1b') {
-            this.setUiMode('NORMAL');
-            render();
-          } else {
-            buffer += char;
-            render();
-          }
+          buffer += char;
+          render();
         }
       };
 

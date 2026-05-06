@@ -1,2 +1,6 @@
---- Session Started: 2026-05-06T07:14:54.855Z ---
-[2026-05-06T07:14:57.161Z] [INFO] Initializing ChatManager.run 
+--- Session Started: 2026-05-06T07:50:39.993Z ---
+[2026-05-06T07:50:40.675Z] [INFO] Initializing ChatManager.run 
+[2026-05-06T07:52:00.532Z] [INFO] Starting processTurn {"userInput":"hola"}
+[2026-05-06T07:52:18.266Z] [DEBUG] Received response from assistant {"responseLength":1589}
+[2026-05-06T07:58:32.092Z] [INFO] Starting processTurn {"userInput":"como andas? estamos dentro de paser-mini, version javascript"}
+[2026-05-06T07:58:50.184Z] [DEBUG] Received response from assistant {"responseLength":1165}

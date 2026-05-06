@@ -14,7 +14,6 @@ class MockUI(UserInterface):
         self.panels = []
         self.tool_statuses = []
         self.input_responses = []
-        self.mode = "INSERT"
 
     async def request_input(self, prompt: str, history: Optional[Any] = None) -> str:
         if self.input_responses:
@@ -44,12 +43,6 @@ class MockUI(UserInterface):
             res = self.input_responses.pop(0)
             return res.lower().strip() == 'y'
         return False
-
-    def set_ui_mode(self, mode: str):
-        self.mode = mode
-
-    def get_ui_mode(self) -> str:
-        return self.mode
 
     def add_spacing(self):
         pass
