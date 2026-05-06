@@ -62,8 +62,8 @@ export class GeminiAdapter {
   }
 
   _formatMessage(role, text, timestamp) {
-    const roleLabel = role === 'user' ? 'user' : 'assistant';
-    return `[${timestamp}] <${roleLabel}> ${text}`;
+    const nickname = role === 'user' ? this.userNickname : this.agentNickname;
+    return `[${timestamp}] <${nickname}> ${text}`;
   }
 
   async sendMessage(message, role = 'user') {
