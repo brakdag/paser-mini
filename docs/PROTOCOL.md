@@ -26,7 +26,7 @@ Maximize reasoning capacity by minimizing context pollution. Every token saved i
 ### 1.1 Error Detection: Tool-Driven vs. Manual Tracing
 **CRITICAL: Do not attempt to "trace" bugs by reading multiple files manually.**
 
-- **Use `analyzePyright` FIRST:**
+- **Use `analyzeCode` FIRST:**
     - Before reading files to find a bug, run the static analyzer.
     - Let the tool locate the exact file and line of the error.
     - *Reasoning:* Manual tracing consumes massive tokens and is prone to hallucination. Tool-driven detection is instant and precise.

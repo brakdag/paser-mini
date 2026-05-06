@@ -61,7 +61,7 @@ export class GeminiAdapter {
   }
 
   _formatMessage(role, text, timestamp) {
-    if (role === 'server') {
+    if (role === 'server' || text.startsWith('---') || text.startsWith('***') || text.startsWith('<TOOL_RESPONSE>')) {
       return `[${timestamp}] ${text}`;
     }
     const nickname = role === 'user' ? this.userNickname : this.agentNickname;

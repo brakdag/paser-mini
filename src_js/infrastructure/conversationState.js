@@ -10,8 +10,8 @@ export class ConversationState {
   }
 
   _formatMessage(role, text, timestamp = this.getTimestamp()) {
-    // Preserve IRC aesthetics: system events (starting with --- or ***) do not have nicknames
-    if (text.startsWith('---') || text.startsWith('***')) {
+    // Preserve IRC aesthetics: system events (starting with ---, *** or <TOOL_RESPONSE>) do not have nicknames
+    if (text.startsWith('---') || text.startsWith('***') || text.startsWith('<TOOL_RESPONSE>')) {
       return `[${timestamp}] ${text}`;
     }
     const nickname = role === 'user' ? this.userNickname : this.agentNickname;

@@ -1,10 +1,6 @@
---- Session Started: 2026-05-06T18:11:05.073Z ---
-[2026-05-06T18:11:06.821Z] [INFO] Initializing ChatManager.run 
-[2026-05-06T18:11:42.118Z] [INFO] Starting processTurn {"userInput":"hola"}
-[2026-05-06T18:11:55.878Z] [DEBUG] Received response from assistant {"responseLength":592}
-[2026-05-06T18:12:03.299Z] [INFO] Starting processTurn {"userInput":"como andas chabón?"}
-[2026-05-06T18:12:19.628Z] [DEBUG] Received response from assistant {"responseLength":145}
-[2026-05-06T18:14:21.668Z] [INFO] Starting processTurn {"userInput":"[15:14] <gustavo> * user changed their nickname to gustavo *"}
-[2026-05-06T18:14:23.719Z] [DEBUG] Received response from assistant {"responseLength":89}
-[2026-05-06T18:14:29.312Z] [INFO] Starting processTurn {"userInput":"hola"}
-[2026-05-06T18:14:35.156Z] [DEBUG] Received response from assistant {"responseLength":59}
+--- Session Started: 2026-05-06T18:33:04.093Z ---
+[2026-05-06T18:33:04.402Z] [INFO] Initializing ChatManager.run 
+[2026-05-06T18:33:17.290Z] [INFO] Starting processTurn {"userInput":"hola podrias mirar getTree?"}
+[2026-05-06T18:33:19.692Z] [DEBUG] Received response from assistant {"responseLength":65}
+[2026-05-06T18:35:41.999Z] [INFO] Starting processTurn {"userInput":"dale la lista de tus herramientas"}
+[2026-05-06T18:36:00.531Z] [DEBUG] Received response from assistant {"responseLength":2936}

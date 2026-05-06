@@ -32,7 +32,7 @@ This document serves as a benchmark to validate the operability of the agent's t
 - [ ] **Retrieval**: Retrieve the information using `pullMemory` with the key `test_secret`.
 
 ### 5. Development Tools
-- [ ] **Code Analysis**: Run `analyzePyright` on any `.js` or `.ts` file in the project and report if there are errors.
+- [ ] **Code Analysis**: Run `analyzeCode` on any `.js` or `.ts` file in the project and report if there are errors.
 - [ ] **Instance Orchestration**: Use `newAgent` to launch a secondary instance and verify it can read the `README.md` of the project.
 
 ### 6. Complex Workflow (Stress Test)

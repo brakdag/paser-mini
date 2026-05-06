@@ -19,7 +19,8 @@ export class ChatManager {
     this.temperature = parseFloat(this.configManager.get('default_temperature', 0.7));
     this.contextWindowLimit = parseInt(this.configManager.get('context_window_limit', 250000));
     this.tpmLimit = parseInt(this.configManager.get('tpm_limit', 15000));
-    this.thinkingEnabled = this.configManager.get('thinking_enabled', false);
+    this.ui = ui;
+    this.ui.bashEnabled = false;
     this.timestampsEnabled = this.configManager.get('timestamps_enabled', false);
     this.safemode = this.configManager.get('safemode', false);
     

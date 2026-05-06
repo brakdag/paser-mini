@@ -1,16 +1,48 @@
-[15:11] --- Log opened Wed May 06 15:11:13 2026
-[15:11] <Marcus Thorne> The user said "hola". This is a greeting in Spanish.
-As Marcus Thorne, I should respond with professional, precise, and perhaps slightly formal or disciplined language, reflecting my persona. However, since the user just said "hola", a simple, polite acknowledgment is appropriate.
+[15:33] --- Log opened Wed May 06 15:33:17 2026
+[15:33] <Marcus Thorne> * getTree (no details) ✓
+[15:33] <[36mMarcus Thorne[39m> * getTree (no details) ✓
+[15:33] <Marcus Thorne> Claro, Gustavo. He obtenido la estructura del proyecto. Parece que estamos trabajando sobre la implementación de Paser Mini en JavaScript (`src_js/`). ¿Hay algún componente o archivo específico que desees que analice o sobre el cual tengas dudas?
+[15:36] <Marcus Thorne> Entendido. Aquí tienes el catálogo de herramientas con las que dispongo para interactuar con el sistema y el entorno de desarrollo. Cada una ha sido diseñada para mantener la integridad y la precisión del proyecto:
 
-Wait, I am an autonomous agent. I should check if there's any context or if I need to perform any initial setup.
-The instructions say: "Setup: Read .staff files and respect robots.txt first by default."
+### Gestión de Archivos y Directorios
+*   `readFile(path)`: Lee el contenido de un archivo.
+*   `writeFile(path, content)`: Escribe contenido en un archivo.
+*   `removeFile(path)`: Elimina un archivo.
+*   `listDir(path)`: Lista el contenido de un directorio.
+*   `replaceString(path, search_text, replace_text)`: Realiza una sustitución quirúrgica de texto en un archivo.
+*   `renamePath(origin, destination)`: Mueve o renombra una ruta.
+*   `copyFile(origin, destination)`: Duplica un archivo.
+*   `getTree()`: Obtiene la estructura jerárquica del proyecto.
+*   `searchFilesPattern(pattern)`: Busca archivos que coincidan con un patrón.
+*   `searchTextGlobal(query)`: Busca una cadena de texto en todos los archivos del proyecto.
 
-I will start by checking the environment.Hello. How can I assist you in your pursuit of excellence today?
-[15:12] <Marcus Thorne> I am functioning within optimal parameters, maintaining the discipline required for the tasks at hand. 
+### Integración con Git y GitHub
+*   `gitDiff(path)`: Muestra las diferencias de un archivo específico.
+*   `gitDiffAll()`: Muestra todos los cambios actuales en el repositorio.
+*   `restoreFile(path)`: Restaura un archivo a su estado anterior mediante `git restore`.
+*   `getCurrentRepo()`: Obtiene el nombre del repositorio actual.
+*   `listIssues(repo)`: Lista las incidencias (issues) de un repositorio.
+*   `createIssue(title, body, repo)`: Crea una nueva incidencia.
+*   `editIssue(issue_number, repo, title, body)`: Edita una incidencia existente.
+*   `closeIssue(issue_number, repo)`: Cierra una incidencia.
+*   `postComment(issue_number, body)`: Publica un comentario en una incidencia.
 
-How may I direct my focus to assist you?
-*** gustavo is now known as gustavo
-[15:14] <Marcus Thorne> Acknowledged, Gustavo. The identity has been noted. 
+### Manipulación de Datos JSON
+*   `validateJson(json_string)`: Valida si una cadena es un JSON válido.
+*   `getJsonStructure(file_path, path)`: Devuelve la estructura de un nodo JSON.
+*   `getJsonNode(file_path, path)`: Recupera el contenido de un nodo específico.
+*   `getJsonArrayInfo(file_path, path)`: Devuelve la longitud y el tipo de elementos de un array JSON.
+*   `updateJsonNode(file_path, path, value)`: Actualiza un nodo específico en un JSON.
 
-How shall we proceed with our work?
-[15:14] <Marcus Thorne> Hello, Gustavo. I am ready to begin. What is our objective?
+### Memoria y Estado del Sistema
+*   `pushMemory(scope, value, key, pointers)`: Almacena información en el grafo de memoria a largo plazo (`scope='tattoo'` para verdades fundamentales, `scope='fractal'` para conocimiento general).
+*   `pullMemory(scope, key, direction)`: Recupera información de la memoria.
+*   `setNickname(newNickname)`: Cambia mi nombre de visualización.
+*   `getTokenCount()`: Informa sobre el uso de tokens en la conversación actual.
+*   `newAgent(message, args)`: Lanza una nueva instancia independiente de Paser Mini.
+
+### Análisis y Utilidades
+*   `analyzePyright(path)`: Ejecuta análisis de tipos mediante Pyright.
+*   `concatFile(destination, source)`: Concatena el contenido de un archivo al final de otro.
+
+Si necesitas que ejecute alguna de ellas para investigar el estado actual del código, solo dímelo.

@@ -1,9 +1,9 @@
 ---
 name: Hotfix
-about: Parche crítico para producción
+about: Critical production patch
 title: "[Hotfix] "
 labels: hotfix
 ---
-### Descripción del problema
-### Impacto
-### Pasos de mitigación rápida
+### Problem Description
+### Impact
+### Quick Mitigation Steps

@@ -1,9 +1,9 @@
 ---
 name: Feature / Enhancement
-about: Nueva funcionalidad o mejora
+about: New functionality or improvement
 title: "[Feature] "
 labels: feature
 ---
-### Objetivo
-### Beneficio para el usuario
-### Requisitos técnicos
+### Objective
+### User Benefit
+### Technical Requirements

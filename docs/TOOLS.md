@@ -11,7 +11,7 @@ This document serves as the definitive reference for the tools available to the 
 ### 🔍 Search & Analysis
 
 - **Global Search**: `searchTextGlobal` (content search), `searchFilesPattern` (filename pattern).
-- **Code Intelligence**: `analyzePyright` (static analysis for JS/TS codebase), `gitDiff` (version control differences).
+- **Code Intelligence**: `analyzeCode` (static analysis for JS/TS codebase), `gitDiff` (version control differences).
 
 ### 🧠 Memento (Cognitive Memory)
 

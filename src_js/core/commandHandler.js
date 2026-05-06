@@ -112,6 +112,12 @@ export class CommandHandler {
       this.ui.displayInfo('Compacting history into IRC log...');
       return await this.chatManager.compactHistory();
     }
+
+    if (inputStripped === '/enableBash') {
+      this.ui.bashEnabled = true;
+      this.ui.displayInfo('Bash access enabled. You can now use executeBash.');
+      return true;
+    }
     
         if (inputStripped.startsWith('/s')) {
           const parts = inputStripped.split(/\s+/);

@@ -1,9 +1,9 @@
 ---
 name: Spike
-about: Investigación o prototipado
+about: Investigation or prototyping
 title: "[Spike] "
 labels: spike
 ---
-### Pregunta o problema a investigar
-### Entregable esperado (Ej: Prototipo, Documento de diseño)
-### Timebox (Ej: 2 días)
+### Question or problem to investigate
+### Expected Deliverable (e.g., Prototype, Design Document)
+### Timebox (e.g., 2 days)

@@ -27,7 +27,10 @@ export class ExecutionEngine {
       'runInstance': (a) => a.target || 'unknown',
       'searchTextGlobal': (a) => "'" + (a.query || '') + "'",
       'searchFilesPattern': (a) => 'pattern: ' + (a.pattern || ''),
-      'analyzePyright': (a) => path.basename(a.path || ''),
+      'analyzeCode': (a) => path.basename(a.path || ''),
+            'lintCode': (a) => path.basename(a.path || ''),
+                  'generateDocs': (a) => `Docs for ${path.basename(a.path || '.')} -> ${a.outputDir || 'docs/api'}`,
+                        'executeBash': (a) => a.command.substring(0, 50) + (a.command.length > 50 ? '...' : ''),
       'runPython': (a) => path.basename(a.scriptPath || ''),
     };
   }
@@ -37,6 +40,17 @@ export class ExecutionEngine {
       return {
         response: this.toolParser.formatToolResponse(
           'Tool loop detected: ' + name + ' called too many times.',
+          callData.id,
+          false
+        ),
+        success: false,
+      };
+    }
+
+    if (name === 'executeBash' && !this.ui.bashEnabled) {
+      return {
+        response: this.toolParser.formatToolResponse(
+          'ERR: Bash access is disabled for security. Please use /enableBash to activate it.',
           callData.id,
           false
         ),

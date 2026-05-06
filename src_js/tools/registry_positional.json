@@ -38,10 +38,32 @@
     }
   ],
   [
-    "analyzePyright",
+    "analyzeCode",
     "Run pyright analysis",
     {
       "path": "string"
+    }
+  ],
+  [
+    "lintCode",
+    "Run ESLint analysis",
+    {
+      "path": "string"
+    }
+  ],
+  [
+    "generateDocs",
+    "Generate HTML documentation using JSDoc",
+    {
+      "path": "string",
+      "outputDir": "string"
+    }
+  ],
+  [
+    "executeBash",
+    "Execute a bash command in the project root",
+    {
+      "command": "string"
     }
   ],
   [
