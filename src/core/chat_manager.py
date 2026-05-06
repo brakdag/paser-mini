@@ -104,7 +104,7 @@ class ChatManager:
     def _sanitize_text(self, text: str) -> str:
         if not text:
             return ""
-        # Elimina surrogates no permitidos que causan crashes en UTF-8
+        # Remove disallowed surrogates that cause UTF-8 crashes
         return text.encode("utf-8", "surrogatepass").decode("utf-8", "replace")
 
     def _process_and_display_result(self, result: str) -> None:
@@ -156,7 +156,7 @@ class ChatManager:
                 combined_tool_responses = []
                 for call_data, raw_content, err in calls:
                     if call_data is None:
-                        self.ui.display_error(f"\u2696\ufe0f Error de llamada a herramienta: {err}")
+                        self.ui.display_error(f"\u2696\ufe0f Tool call error: {err}")
                         tr = self.tool_parser.format_tool_response(f"Validation error: {err}", success=False)
                         combined_tool_responses.append(tr)
                         continue

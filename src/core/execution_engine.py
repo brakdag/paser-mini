@@ -22,20 +22,20 @@ class ExecutionEngine:
         self.stop_requested = False
 
         self._detail_mappers: Dict[str, Callable[[Dict], str]] = {
-            "read_file": lambda a: os.path.basename(a.get("path", "")),
-            "write_file": lambda a: os.path.basename(a.get("path", "")),
-            "remove_file": lambda a: os.path.basename(a.get("path", "")),
-            "replace_string": lambda a: os.path.basename(a.get("path", "")),
-            "list_dir": lambda a: a.get("path", ""),
+            "readFile": lambda a: os.path.basename(a.get("path", "")),
+            "writeFile": lambda a: os.path.basename(a.get("path", "")),
+            "removeFile": lambda a: os.path.basename(a.get("path", "")),
+            "replaceString": lambda a: os.path.basename(a.get("path", "")),
+            "listDir": lambda a: a.get("path", ""),
             "create_dir": lambda a: a.get("path", ""),
-            "rename_path": lambda a: f"{os.path.basename(a.get('origen', ''))} -> {os.path.basename(a.get('destino', ''))}",
-            "push_memory": lambda a: a.get("key", "unknown"),
-            "pull_memory": lambda a: a.get("key", "unknown"),
+            "renamePath": lambda a: f"{os.path.basename(a.get('origen', ''))} -> {os.path.basename(a.get('destino', ''))}",
+            "pushMemory": lambda a: a.get("key", "unknown"),
+            "pullMemory": lambda a: a.get("key", "unknown"),
             "run_instance": lambda a: a.get("target", "unknown"),
-            "search_text_global": lambda a: f"'{a.get('query', '')}'",
-            "search_files_pattern": lambda a: f"pattern: {a.get('pattern', '')}",
-            "analyze_pyright": lambda a: os.path.basename(a.get("path", "")),
-            "run_python": lambda a: os.path.basename(a.get("script_path", "")),
+            "searchTextGlobal": lambda a: f"'{a.get('query', '')}'",
+            "searchFilesPattern": lambda a: f"pattern: {a.get('pattern', '')}",
+            "analyzePyright": lambda a: os.path.basename(a.get("path", "")),
+            "runPython": lambda a: os.path.basename(a.get("script_path", "")),
         }
 
     async def execute_tool_call(self, name, args, call_data):
@@ -80,11 +80,11 @@ class ExecutionEngine:
             else:
                 result = await asyncio.to_thread(tool_func, **args)
 
-            if name == "pull_memory":
+            if name == "pullMemory":
                 self.ui.display_message(
                     f"🧠 **Memento Pull**: Accessing node #{args.get('key')}"
                 )
-            elif name == "push_memory":
+            elif name == "pushMemory":
                 self.ui.display_message(f"✍️ **Memento Push**: {result}")
             elif name == "run_instance":
                 self.ui.display_message(

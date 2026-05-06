@@ -16,7 +16,7 @@ const getSafePath = (inputPath) => {
   return resolved;
 };
 
-export const read_file = async ({ path: filePath }) => {
+export const readFile = async ({ path: filePath }) => {
   try {
     const safePath = getSafePath(filePath);
     const stats = await fs.stat(safePath);
@@ -38,7 +38,7 @@ export const read_file = async ({ path: filePath }) => {
   }
 };
 
-export const write_file = async ({ path: filePath, content }) => {
+export const writeFile = async ({ path: filePath, content }) => {
   try {
     if (Buffer.byteLength(content, 'utf8') > FILE_SIZE_LIMIT) return 'ERR: Content too large';
     const safePath = getSafePath(filePath);
@@ -51,7 +51,7 @@ export const write_file = async ({ path: filePath, content }) => {
   }
 };
 
-export const list_dir = async ({ path: dirPath = '.' }) => {
+export const listDir = async ({ path: dirPath = '.' }) => {
   try {
     const safePath = getSafePath(dirPath);
     const files = await fs.readdir(safePath);
@@ -61,7 +61,7 @@ export const list_dir = async ({ path: dirPath = '.' }) => {
   }
 };
 
-export const remove_file = async ({ path: filePath }) => {
+export const removeFile = async ({ path: filePath }) => {
   try {
     const safePath = getSafePath(filePath);
     await fs.rm(safePath, { recursive: true, force: true });
@@ -81,7 +81,7 @@ export const create_dir = async ({ path: dirPath }) => {
   }
 };
 
-export const rename_path = async ({ origen, destino }) => {
+export const renamePath = async ({ origen, destino }) => {
   try {
     const safeOrigen = getSafePath(origen);
     const safeDestino = getSafePath(destino);
@@ -92,7 +92,7 @@ export const rename_path = async ({ origen, destino }) => {
   }
 };
 
-export const replace_string = async ({ path: filePath, search_text, replace_text }) => {
+export const replaceString = async ({ path: filePath, search_text, replace_text }) => {
   try {
     if (!search_text) return 'ERR: Search text cannot be empty';
     const safePath = getSafePath(filePath);
@@ -113,7 +113,7 @@ export const replace_string = async ({ path: filePath, search_text, replace_text
   }
 };
 
-export const copy_file = async ({ origen, destino }) => {
+export const copyFile = async ({ origen, destino }) => {
   try {
     const safeSrc = getSafePath(origen);
     const safeDst = getSafePath(destino);
@@ -125,7 +125,7 @@ export const copy_file = async ({ origen, destino }) => {
   }
 };
 
-export const get_tree = async () => {
+export const getTree = async () => {
   try {
     const { stdout } = await execPromise('git ls-files');
     return stdout;
@@ -134,7 +134,7 @@ export const get_tree = async () => {
   }
 };
 
-export const git_diff = async ({ path: filePath }) => {
+export const gitDiff = async ({ path: filePath }) => {
   try {
     const safePath = getSafePath(filePath);
     const { stdout } = await execPromise(`git diff ${safePath}`);
@@ -144,7 +144,7 @@ export const git_diff = async ({ path: filePath }) => {
   }
 };
 
-export const restore_file = async ({ path: filePath }) => {
+export const restoreFile = async ({ path: filePath }) => {
   try {
     const safePath = getSafePath(filePath);
     await execPromise(`git restore ${safePath}`);
@@ -154,7 +154,7 @@ export const restore_file = async ({ path: filePath }) => {
   }
 };
 
-export const code_formatter = async ({ path: filePath }) => {
+export const codeFormatter = async ({ path: filePath }) => {
   try {
     const safePath = getSafePath(filePath);
     await execPromise(`npx black ${safePath}`);
@@ -164,7 +164,7 @@ export const code_formatter = async ({ path: filePath }) => {
   }
 };
 
-export const concat_file = async ({ destination, source }) => {
+export const concatFile = async ({ destination, source }) => {
   try {
     const safeDst = getSafePath(destination);
     const safeSrc = getSafePath(source);

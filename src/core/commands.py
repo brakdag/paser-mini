@@ -328,7 +328,7 @@ class CommandHandler:
             return FavoriteCommands.handle_fav(self.chat_manager, self.ui, parts)
 
         if input_stripped.startswith("/") or input_stripped.startswith(":"):
-            self.ui.display_error("Comando no válido")
+            self.ui.display_error("Invalid command. See /help for available commands.")
             return True
 
         return False

@@ -30,8 +30,10 @@ Modify the `execute` method loop where tools are processed:
 4. **Step 4**: Refine the visual output to ensure no extra newlines are added unless a new tool starts.
 
 ## 4. Testing Strategy
-- **Sequential Tool Test**: Trigger a sequence of 3-5 tools (e.g., `list_dir` $ightarrow$ `read_file` $ightarrow$ `write_file`) and verify that the spinner moves down correctly and statuses are printed on the same line.
-- **Failure Test**: Force a tool error (e.g., `read_file` on a non-existent path) to verify the `[FAIL]` status and red coloring.
+- **Sequential Tool Test**: Trigger a sequence of 3-5 tools (e.g., `listDir` $
+ightarrow$ `readFile` $
+ightarrow$ `writeFile`) and verify that the spinner moves down correctly and statuses are printed on the same line.
+- **Failure Test**: Force a tool error (e.g., `readFile` on a non-existent path) to verify the `[FAIL]` status and red coloring.
 - **Rapid Execution Test**: Run tools that execute very quickly to ensure the spinner doesn't flicker or break the line formatting.
 
 ## 5. Executor Role

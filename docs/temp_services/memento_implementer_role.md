@@ -15,7 +15,7 @@
 - **Limits of Authority**: 
   - Authorized to modify `paser/core/chat_manager.py` and `paser/infrastructure/gemini/adapter.py`.
   - Cannot alter the `System Instruction` or the `Memento Methodology` without approval from the Systems Architect.
-  - Authorized to propose new SQLite indices to optimize `pull_memory` latency.
+  - Authorized to propose new SQLite indices to optimize `pullMemory` latency.
 
 - **Key Performance Indicators (KPIs)**:
   - **Ghosting Rate**: 0% (No data leakage between Hard Resets).

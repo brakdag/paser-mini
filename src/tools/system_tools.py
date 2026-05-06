@@ -5,7 +5,7 @@ from . import context, ToolError
 
 logger = logging.getLogger("tools")
 
-def analyze_pyright(path: str = ".") -> str:
+def analyzePyright(path: str = ".") -> str:
     """Analiza código usando pyright y devuelve errores si existen."""
     pyright_path = os.path.join(context.root, "venv", "bin", "pyright")
     if not os.path.exists(pyright_path):

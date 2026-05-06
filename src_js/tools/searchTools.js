@@ -4,7 +4,7 @@ import path from 'path';
 
 const execPromise = promisify(exec);
 
-export const search_files_pattern = async ({ pattern }) => {
+export const searchFilesPattern = async ({ pattern }) => {
   try {
     const rootPath = process.cwd();
     // Usamos find con prune para ignorar carpetas ocultas y head para limitar resultados
@@ -22,7 +22,7 @@ export const search_files_pattern = async ({ pattern }) => {
   }
 };
 
-export const search_text_global = async ({ query }) => {
+export const searchTextGlobal = async ({ query }) => {
   try {
     const rootPath = process.cwd();
     // grep -rIn: recursivo, ignora mayúsculas, muestra número de línea

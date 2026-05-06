@@ -2,14 +2,14 @@ import subprocess
 import re
 from . import ToolError
 
-def git_diff() -> str:
+def gitDiff() -> str:
     try:
         result = subprocess.run(["git", "diff"], capture_output=True, text=True, check=True)
         return result.stdout if result.stdout else "No hay cambios."
     except subprocess.CalledProcessError as e:
         raise ToolError(f"Git diff error: {e.stderr}")
 
-def get_current_repo() -> str:
+def getCurrentRepo() -> str:
     try:
         result = subprocess.run(["git", "remote", "get-url", "origin"], capture_output=True, text=True, check=True)
         url = result.stdout.strip()

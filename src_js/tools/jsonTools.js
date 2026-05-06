@@ -49,7 +49,7 @@ function setByPath(data, pathParts, value) {
   }
 }
 
-export const get_json_structure = async ({ file_path, path: pathStr }) => {
+export const getJsonStructure = async ({ file_path, path: pathStr }) => {
   try {
     const safePath = getSafePath(file_path);
     const content = await fs.readFile(safePath, 'utf8');
@@ -79,7 +79,7 @@ export const get_json_structure = async ({ file_path, path: pathStr }) => {
   }
 };
 
-export const get_json_node = async ({ file_path, path: pathStr }) => {
+export const getJsonNode = async ({ file_path, path: pathStr }) => {
   try {
     const safePath = getSafePath(file_path);
     const content = await fs.readFile(safePath, 'utf8');
@@ -92,7 +92,7 @@ export const get_json_node = async ({ file_path, path: pathStr }) => {
   }
 };
 
-export const get_json_array_info = async ({ file_path, path: pathStr }) => {
+export const getJsonArrayInfo = async ({ file_path, path: pathStr }) => {
   try {
     const safePath = getSafePath(file_path);
     const content = await fs.readFile(safePath, 'utf8');
@@ -113,7 +113,7 @@ export const get_json_array_info = async ({ file_path, path: pathStr }) => {
   }
 };
 
-export const update_json_node = async ({ file_path, path: pathStr, value }) => {
+export const updateJsonNode = async ({ file_path, path: pathStr, value }) => {
   try {
     const safePath = getSafePath(file_path);
     const content = await fs.readFile(safePath, 'utf8');

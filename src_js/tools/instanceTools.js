@@ -15,7 +15,7 @@ function getVenvPython() {
   return venvPython;
 }
 
-export const run_python = async ({ script_path, args = [] }) => {
+export const runPython = async ({ script_path, args = [] }) => {
   try {
     const venvPython = getVenvPython();
     const timeout = config.get('instance_timeout', 300);
@@ -34,7 +34,7 @@ export const run_python = async ({ script_path, args = [] }) => {
   }
 };
 
-export const new_agent = async ({ message = null, args = [] }) => {
+export const newAgent = async ({ message = null, args = [] }) => {
   try {
     const timeout = config.get('instance_timeout', 300);
     let cmd = `node src_js/main.js --instance-mode`;
@@ -49,16 +49,16 @@ export const new_agent = async ({ message = null, args = [] }) => {
   }
 };
 
-export const verify_implementation = async ({ test_script }) => {
+export const verifyImplementation = async ({ test_script }) => {
   try {
     // 1. Smoke Test
-    const smoke = await new_agent({ args: ['--help'] });
+    const smoke = await newAgent({ args: ['--help'] });
     if (!smoke.includes('Paser Mini') && !smoke.includes('usage')) {
       return `❌ Smoke Test Failed: The application failed to start correctly.\n\n${smoke}`;
     }
 
     // 2. Execution Test
-    const testResult = await run_python({ script_path: test_script });
+    const testResult = await runPython({ script_path: test_script });
 
     return `✅ Implementation Verified!\n--------------------------------------------------\n1. Smoke Test: PASSED\n2. Execution Test: COMPLETED\n--------------------------------------------------\nTest Output:\n${testResult}`;
   } catch (e) {

@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from . import context, ToolError
 
-def search_files_pattern(pattern: str) -> str:
+def searchFilesPattern(pattern: str) -> str:
     root_path = context.get_safe_path('.')
     try:
         # Use find with pipe to head for early termination (SIGPIPE)
@@ -23,7 +23,7 @@ def search_files_pattern(pattern: str) -> str:
     except Exception as e:
         raise ToolError(f"Search error: {str(e)}")
 
-def search_text_global(query: str) -> str:
+def searchTextGlobal(query: str) -> str:
     root_path = context.get_safe_path(".")
     try:
         # Use pipe to head -n 10 for extreme efficiency

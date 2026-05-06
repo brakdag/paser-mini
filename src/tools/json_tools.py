@@ -47,7 +47,7 @@ def _set_by_path(data: Any, path_parts: List[Union[str, int]], value: Any):
     else:
         raise TypeError("Cannot set value at specified path.")
 
-def get_json_structure(file_path: str, path: str) -> str:
+def getJsonStructure(file_path: str, path: str) -> str:
     try:
         safe_path = context.get_safe_path(file_path)
         if not safe_path.is_file():
@@ -68,7 +68,7 @@ def get_json_structure(file_path: str, path: str) -> str:
     except Exception as e:
         raise ToolError(f"Error: {str(e)}")
 
-def get_json_node(file_path: str, path: str) -> str:
+def getJsonNode(file_path: str, path: str) -> str:
     try:
         safe_path = context.get_safe_path(file_path)
         if not safe_path.is_file():
@@ -83,7 +83,7 @@ def get_json_node(file_path: str, path: str) -> str:
     except Exception as e:
         raise ToolError(f"Error: {str(e)}")
 
-def get_json_array_info(file_path: str, path: str) -> str:
+def getJsonArrayInfo(file_path: str, path: str) -> str:
     try:
         safe_path = context.get_safe_path(file_path)
         if not safe_path.is_file():
@@ -101,7 +101,7 @@ def get_json_array_info(file_path: str, path: str) -> str:
     except Exception as e:
         raise ToolError(f"Error: {str(e)}")
 
-def update_json_node(file_path: str, path: str, value: Any) -> str:
+def updateJsonNode(file_path: str, path: str, value: Any) -> str:
     try:
         safe_path = context.get_safe_path(file_path)
         if not safe_path.is_file():

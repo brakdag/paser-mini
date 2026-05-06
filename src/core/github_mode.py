@@ -36,7 +36,7 @@ class GitHubModeOrchestrator:
                 self.bot_login = user_data.get("login")
                 logger.info(f"Authenticated as bot: {self.bot_login}")
 
-            issues = github_tools.list_issues()
+            issues = github_tools.listIssues()
             eligible_issues = self._filter_issues(issues)
             
             if not eligible_issues:
@@ -86,7 +86,7 @@ class GitHubModeOrchestrator:
             # 2. Consume the trigger hashtag
             new_body = issue_body.replace(self.trigger_hashtag, "").strip()
             if new_body != issue_body:
-                github_tools.edit_issue(issue_number, body=new_body)
+                github_tools.editIssue(issue_number, body=new_body)
 
             # 3. Setup Agent
             ui = GitHubUI(issue_number=issue_number)
@@ -125,7 +125,7 @@ class GitHubModeOrchestrator:
 
         except Exception as e:
             logger.exception(f"Error processing issue #{issue_number}: {e}")
-            github_tools.post_comment(issue_number, f"Error: {str(e)}")
+            github_tools.postComment(issue_number, f"Error: {str(e)}")
         finally:
             try:
                 github_tools.remove_label(issue_number, self.processing_label)

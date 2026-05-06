@@ -21,7 +21,7 @@ export class GitHubModeOrchestrator {
         console.log(`Authenticated as bot: ${this.botLogin}`);
       }
 
-      const issues = await githubTools.list_issues();
+      const issues = await githubTools.listIssues();
       const eligibleIssues = this._filterIssues(issues);
 
       if (eligibleIssues.length === 0) {
@@ -71,7 +71,7 @@ export class GitHubModeOrchestrator {
       // 2. Consume trigger hashtag
       const newBody = issueBody.replace(this.triggerHashtag, '').trim();
       if (newBody !== issueBody) {
-        await githubTools.edit_issue({ issue_number: issueNumber, body: newBody });
+        await githubTools.editIssue({ issue_number: issueNumber, body: newBody });
       }
 
       // 3. Setup Agent
@@ -108,7 +108,7 @@ export class GitHubModeOrchestrator {
       await runPromise;
     } catch (e) {
       console.error(`Error processing issue #${issueNumber}: ${e.message}`);
-      await githubTools.post_comment({ issue_number: issueNumber, body: `Error: ${e.message}` });
+      await githubTools.postComment({ issue_number: issueNumber, body: `Error: ${e.message}` });
     } finally {
       try {
         await githubTools.remove_label({ issue_number: issueNumber, label: this.processingLabel });

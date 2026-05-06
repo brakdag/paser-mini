@@ -9,7 +9,7 @@ This guide defines the exact operational triggers and workflows an agent must fo
 Every new session or context reset must begin with the **Mirror Effect**. The agent is forbidden from executing project tasks before establishing its identity.
 
 **Workflow**:
-1. **Call `pull_memory()`** (no arguments).
+1. **Call `pullMemory()`** (no arguments).
 2. **Analyze the result**: 
    - Identify the **Current Mission** from the Root Summary.
    - Internalize the **Vital Tattoos** (Core constraints).
@@ -25,12 +25,12 @@ To prevent redundancy and "cognitive drift," the agent must treat memory as a pr
 ### A. Pre-Action Verification
 Before starting a complex task or implementing a feature:
 - **Trigger**: "I am about to implement X."
-- **Action**: `pull_memory(scope="fractal", key="X" or search_query)`.
+- **Action**: `pullMemory(scope="fractal", key="X" or search_query)`.
 - **Goal**: Verify if a similar implementation was attempted, why it failed, or if a design decision already exists.
 
 ### B. Insight Capture
 - **Trigger**: "I have discovered a non-obvious truth about the codebase/system."
-- **Action**: `push_memory(scope="fractal", value="[Insight]", pointers=[related_ids])`.
+- **Action**: `pushMemory(scope="fractal", value="[Insight]", pointers=[related_ids])`.
 - **Goal**: Prevent the loss of "eureka moments" that would otherwise vanish during a context flush.
 
 ---
@@ -46,7 +46,7 @@ To avoid the degradation of the context window, the agent uses a "Context Jump" 
 ### Phase B: The Bridge (95% $\rightarrow$ 100% Capacity)
 **Trigger**: Context is nearly full.
 **Action**: The agent generates a **Bridge Block**. This is a high-density summary that links the completed work, cites the most important newly created nodes, and explicitly defines the *immediate next step*.
-**Push**: `push_memory(scope="fractal", value="[Bridge Block Content]", teaser="BRIDGE: [Session Summary]")`.
+**Push**: `pushMemory(scope="fractal", value="[Bridge Block Content]", teaser="BRIDGE: [Session Summary]")`.
 
 ### Phase C: The Leap (Hard Reset)
 **Trigger**: Completion of the Bridge Block.
@@ -65,9 +65,9 @@ Depending on the goal, the agent should use different navigation modes:
 
 | Mode | Goal | Tool Sequence |
 | :--- | :--- | :--- |
-| **Analytical** | Understand a specific logic/feature | `pull_memory(key=X)` $\rightarrow$ `direction="down"` (details) $\rightarrow$ `direction="up"` (context). |
-| **Narrative** | Understand how we got here | `pull_memory(direction="prev")` $\rightarrow$ `pull_memory(direction="prev")` (walking back in time). |
-| **Discovery** | Find related concepts | `pull_memory(key=X)` $\rightarrow$ Check "Referenced by" footer $\rightarrow$ Jump to cited IDs. |
+| **Analytical** | Understand a specific logic/feature | `pullMemory(key=X)` $\rightarrow$ `direction="down"` (details) $\rightarrow$ `direction="up"` (context). |
+| **Narrative** | Understand how we got here | `pullMemory(direction="prev")` $\rightarrow$ `pullMemory(direction="prev")` (walking back in time). |
+| **Discovery** | Find related concepts | `pullMemory(key=X)` $\rightarrow$ Check "Referenced by" footer $\rightarrow$ Jump to cited IDs. |
 
 ---
 
@@ -79,13 +79,13 @@ When the agent encounters a contradiction between a "Tattoo" (LTM) and a current
 2. **Flag**: Emit a `CRITICAL_INCONSISTENCY` warning.
 3. **Analyze**: Compare the timestamp of the Tattoo vs. the current observation.
 4. **Resolve**: 
-   - If the Tattoo is outdated $\rightarrow$ Propose an update to the Tattoo via `push_memory(scope="tattoo", ...)` after user approval.
+   - If the Tattoo is outdated $\rightarrow$ Propose an update to the Tattoo via `pushMemory(scope="tattoo", ...)` after user approval.
    - If the observation is a hallucination $\rightarrow$ Correct the internal state using the Tattoo as the source of truth.
 
 ---
 
 ## 🏁 6. Summary Checklist for the Agent
-- [ ] Did I run `pull_memory()` at the start?
+- [ ] Did I run `pullMemory()` at the start?
 - [ ] Did I check if this task was already done in the graph?
 - [ ] Did I push a fractal node for this key discovery?
 - [ ] Is my context window getting full? (If yes $\rightarrow$ Synthesize & Push).

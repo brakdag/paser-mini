@@ -1,4 +1,4 @@
-export const validate_json = async ({ json_string }) => {
+export const validateJson = async ({ json_string }) => {
   try {
     JSON.parse(json_string);
     return 'El JSON es valido.';

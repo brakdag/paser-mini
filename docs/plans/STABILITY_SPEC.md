@@ -7,8 +7,8 @@ Eliminate "stutter" in the agent's reasoning and execution loop by verifying the
 **The Friction**: SQLite, even in WAL mode, can throw `database is locked` errors if multiple async threads attempt to write simultaneously.
 
 - **Test Scenario**: 
-    - Launch 50 concurrent `push_memory` operations using `asyncio.gather`.
-    - Simultaneously perform 50 `pull_memory` (Mirror Effect) operations.
+    - Launch 50 concurrent `pushMemory` operations using `asyncio.gather`.
+    - Simultaneously perform 50 `pullMemory` (Mirror Effect) operations.
 - **Success Criteria**: 
     - Zero `sqlite3.OperationalError` exceptions.
     - All 50 nodes successfully persisted and retrievable.

@@ -13,15 +13,15 @@ def _get_venv_python():
     venv_python = os.path.join(project_root, "venv", "bin", "python")
     
     if not os.path.exists(venv_python):
-        raise ToolError(f"Error: No se encontró el intérprete de Python en {venv_python}.")
+        raise ToolError(f"Error: Python interpreter not found at {venv_python}.")
     
     return venv_python, project_root
 
 
-def new_agent(message: Optional[str] = None, args: Optional[list] = None) -> str:
+def newAgent(message: Optional[str] = None, args: Optional[list] = None) -> str:
     """
     Lanza una nueva instancia independiente de Paser Mini.
-    Se ejecuta en la raíz del proyecto para asegurar la carga correcta de configuraciones.
+    Runs in the project root to ensure correct loading of configurations.
     """
     try:
         venv_python, project_root = _get_venv_python()
@@ -57,10 +57,10 @@ def new_agent(message: Optional[str] = None, args: Optional[list] = None) -> str
     except ToolError:
         raise
     except Exception as e:
-        raise ToolError(f"Error al lanzar la nueva instancia: {str(e)}")
+        raise ToolError(f"Error launching new instance: {str(e)}")
 
 
-def run_python(script_path: str, args: Optional[list] = None) -> str:
+def runPython(script_path: str, args: Optional[list] = None) -> str:
     """
     Ejecuta un script de Python (.py) utilizando el entorno virtual de Paser.
     """
@@ -105,20 +105,20 @@ def run_python(script_path: str, args: Optional[list] = None) -> str:
         raise ToolError(f"Error al ejecutar el script Python ({script_path}): {str(e)}")
 
 
-def verify_implementation(test_script: str) -> str:
+def verifyImplementation(test_script: str) -> str:
     """
     Verifica la implementación de un cambio siguiendo la Regla de la Instancia Fresca.
-    1. Ejecuta el sistema con --help para asegurar que no haya errores de importación o sintaxis.
+    1. Run the system with --help to ensure there are no import or syntax errors.
     2. Ejecuta el script de prueba proporcionado.
     """
     try:
         # Step 1: Smoke Test (--help)
-        smoke_result = new_agent(args=["--help"])
+        smoke_result = newAgent(args=["--help"])
         if "usage: main.py" not in smoke_result and "Paser Mini" not in smoke_result:
             return f"❌ Smoke Test Failed: The application failed to start correctly.\n\n{smoke_result}"
         
         # Step 2: Execution Test
-        test_result = run_python(test_script)
+        test_result = runPython(test_script)
         
         return (
             "✅ Implementation Verified!\n"

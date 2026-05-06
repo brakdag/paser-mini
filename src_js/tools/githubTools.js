@@ -1,6 +1,6 @@
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
-import { get_current_repo } from './gitTools.js';
+import { getCurrentRepo } from './gitTools.js';
 
 const GITHUB_API_URL = 'https://api.github.com';
 
@@ -41,9 +41,9 @@ export const get_authenticated_user = async () => {
   }
 };
 
-export const list_issues = async ({ repo = '' }) => {
+export const listIssues = async ({ repo = '' }) => {
   try {
-    const targetRepo = repo ? resolveRepo(repo) : (await get_current_repo());
+    const targetRepo = repo ? resolveRepo(repo) : (await getCurrentRepo());
     const headers = await getHeaders();
     const response = await client.get(`/repos/${targetRepo}/issues`, { headers });
     return response.data;
@@ -52,9 +52,9 @@ export const list_issues = async ({ repo = '' }) => {
   }
 };
 
-export const create_issue = async ({ title, body, repo = '' }) => {
+export const createIssue = async ({ title, body, repo = '' }) => {
   try {
-    const targetRepo = repo ? resolveRepo(repo) : (await get_current_repo());
+    const targetRepo = repo ? resolveRepo(repo) : (await getCurrentRepo());
     const headers = await getHeaders();
     const response = await client.post(`/repos/${targetRepo}/issues`, { title, body }, { headers });
     return `Issue #${response.data.number} created successfully.`;
@@ -63,9 +63,9 @@ export const create_issue = async ({ title, body, repo = '' }) => {
   }
 };
 
-export const edit_issue = async ({ issue_number, repo = '', title, body }) => {
+export const editIssue = async ({ issue_number, repo = '', title, body }) => {
   try {
-    const targetRepo = repo ? resolveRepo(repo) : (await get_current_repo());
+    const targetRepo = repo ? resolveRepo(repo) : (await getCurrentRepo());
     const headers = await getHeaders();
     const data = {};
     if (title) data.title = title;
@@ -77,9 +77,9 @@ export const edit_issue = async ({ issue_number, repo = '', title, body }) => {
   }
 };
 
-export const close_issue = async ({ issue_number, repo = '' }) => {
+export const closeIssue = async ({ issue_number, repo = '' }) => {
   try {
-    const targetRepo = repo ? resolveRepo(repo) : (await get_current_repo());
+    const targetRepo = repo ? resolveRepo(repo) : (await getCurrentRepo());
     const headers = await getHeaders();
     await client.patch(`/repos/${targetRepo}/issues/${issue_number}`, { state: 'closed' }, { headers });
     return `Issue #${issue_number} closed successfully.`;
@@ -88,9 +88,9 @@ export const close_issue = async ({ issue_number, repo = '' }) => {
   }
 };
 
-export const post_comment = async ({ issue_number, body, repo = '' }) => {
+export const postComment = async ({ issue_number, body, repo = '' }) => {
   try {
-    const targetRepo = repo ? resolveRepo(repo) : (await get_current_repo());
+    const targetRepo = repo ? resolveRepo(repo) : (await getCurrentRepo());
     const headers = await getHeaders();
     await client.post(`/repos/${targetRepo}/issues/${issue_number}/comments`, { body }, { headers });
     return `Comment posted to issue #${issue_number}.`;
@@ -101,7 +101,7 @@ export const post_comment = async ({ issue_number, body, repo = '' }) => {
 
 export const add_label = async ({ issue_number, label, repo = '' }) => {
   try {
-    const targetRepo = repo ? resolveRepo(repo) : (await get_current_repo());
+    const targetRepo = repo ? resolveRepo(repo) : (await getCurrentRepo());
     const headers = await getHeaders();
     await client.post(`/repos/${targetRepo}/issues/${issue_number}/labels`, { labels: [label] }, { headers });
     return `Label '${label}' added to issue #${issue_number}.`;
@@ -112,7 +112,7 @@ export const add_label = async ({ issue_number, label, repo = '' }) => {
 
 export const remove_label = async ({ issue_number, label, repo = '' }) => {
   try {
-    const targetRepo = repo ? resolveRepo(repo) : (await get_current_repo());
+    const targetRepo = repo ? resolveRepo(repo) : (await getCurrentRepo());
     const headers = await getHeaders();
     await client.delete(`/repos/${targetRepo}/issues/${issue_number}/labels/${label}`, { headers });
     return `Label '${label}' removed from issue #${issue_number}.`;
@@ -123,7 +123,7 @@ export const remove_label = async ({ issue_number, label, repo = '' }) => {
 
 export const get_issue_comments = async ({ issue_number, repo = '' }) => {
   try {
-    const targetRepo = repo ? resolveRepo(repo) : (await get_current_repo());
+    const targetRepo = repo ? resolveRepo(repo) : (await getCurrentRepo());
     const headers = await getHeaders();
     const response = await client.get(`/repos/${targetRepo}/issues/${issue_number}/comments`, { headers });
     return response.data;

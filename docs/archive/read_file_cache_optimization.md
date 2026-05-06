@@ -1,10 +1,10 @@
-# Plan: `read_file` Cache Optimization to Prevent Amnesia Loops
+# Plan: `readFile` Cache Optimization to Prevent Amnesia Loops
 
 ## 1. Objective
-Prevent the agent from entering an infinite loop of `read_file` calls when it has lost the file content from its context window, but the token-saving system (`READ_CACHE`) prevents re-reading.
+Prevent the agent from entering an infinite loop of `readFile` calls when it has lost the file content from its context window, but the token-saving system (`READ_CACHE`) prevents re-reading.
 
 ## 2. Current Problem Analysis
-The current implementation of `read_file` in `paser/tools/file_tools.py` uses a `set` called `READ_CACHE`:
+The current implementation of `readFile` in `paser/tools/file_tools.py` uses a `set` called `READ_CACHE`:
 - **Call 1:** The file hash is added to the set and the content is returned.
 - **Call 2:** If the hash already exists, a `ToolError("No changes since last read")` is raised.
 

@@ -106,7 +106,7 @@ export class CommandHandler {
     }
 
     if (inputStripped.startsWith('/') || inputStripped.startsWith(':')) {
-      this.ui.displayError('Comando no válido');
+      this.ui.displayError('Invalid command. See /help for available commands.');
       return true;
     }
 

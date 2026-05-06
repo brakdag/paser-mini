@@ -23,7 +23,7 @@ def is_binary_file(path: Path) -> bool:
         return True
 
 
-def read_file(path: str) -> str:
+def readFile(path: str) -> str:
     safe_path = context.get_safe_path(path)
     if not safe_path.is_file():
         raise ToolError('Not found')
@@ -49,7 +49,7 @@ def clear_read_cache():
     """Clears the file read cache to force re-reading of files."""
     READ_CACHE.clear()
 
-def write_file(path: str, content: str) -> str:
+def writeFile(path: str, content: str) -> str:
     if len(content.encode('utf-8')) > FILE_SIZE_LIMIT:
         raise ToolError('Content too large')
     try:
@@ -63,7 +63,7 @@ def write_file(path: str, content: str) -> str:
     except OSError as e:
         raise ToolError(f"Write error: {e.strerror}")
 
-def remove_file(path: str) -> str:
+def removeFile(path: str) -> str:
     safe_path = context.get_safe_path(path)
     try:
         try:
@@ -76,7 +76,7 @@ def remove_file(path: str) -> str:
     except OSError as e:
         raise ToolError(f"Remove error: {e.strerror}")
 
-def list_dir(path: str = '.') -> str:
+def listDir(path: str = '.') -> str:
     try:
         safe_path = context.get_safe_path(path)
         items = list(itertools.islice((p.name for p in safe_path.iterdir()), MAX_LIST_RESULTS))
@@ -84,7 +84,7 @@ def list_dir(path: str = '.') -> str:
     except OSError as e:
         raise ToolError(f"Access error: {e.strerror}")
 
-def replace_string(path: str, search_text: str, replace_text: str) -> str:
+def replaceString(path: str, search_text: str, replace_text: str) -> str:
     if not search_text:
         raise ToolError('Search text cannot be empty')
     try:
@@ -118,7 +118,7 @@ def replace_string(path: str, search_text: str, replace_text: str) -> str:
     except OSError as e:
         raise ToolError(f"Modify error: {e.strerror}")
 
-def rename_path(origen: str, destino: str) -> str:
+def renamePath(origen: str, destino: str) -> str:
     try:
         context.get_safe_path(origen).rename(context.get_safe_path(destino))
         return 'OK'
@@ -127,7 +127,7 @@ def rename_path(origen: str, destino: str) -> str:
     except OSError as e:
         raise ToolError(f"Rename error: {e.strerror}")
 
-def copy_file(origen: str, destino: str) -> str:
+def copyFile(origen: str, destino: str) -> str:
     try:
         src = context.get_safe_path(origen)
         dst = context.get_safe_path(destino)
@@ -139,7 +139,7 @@ def copy_file(origen: str, destino: str) -> str:
     except OSError as e:
         raise ToolError(f"Copy error: {e.strerror}")
 
-def get_tree() -> str:
+def getTree() -> str:
     try:
         result = subprocess.run(
             ["git", "ls-files"],
@@ -151,7 +151,7 @@ def get_tree() -> str:
     except (subprocess.CalledProcessError, FileNotFoundError) as e:
         raise ToolError(f"Git error: {str(e)}")
 
-def git_diff(path: str) -> str:
+def gitDiff(path: str) -> str:
     try:
         safe_path = context.get_safe_path(path)
         result = subprocess.run(
@@ -168,7 +168,7 @@ def git_diff(path: str) -> str:
     except Exception as e:
         raise ToolError(f"Unexpected error: {str(e)}")
 
-def restore_file(path: str) -> str:
+def restoreFile(path: str) -> str:
     try:
         safe_path = context.get_safe_path(path)
         subprocess.run(
@@ -185,7 +185,7 @@ def restore_file(path: str) -> str:
     except Exception as e:
         raise ToolError(f"Unexpected error: {str(e)}")
 
-def code_formatter(path: str) -> str:
+def codeFormatter(path: str) -> str:
     try:
         safe_path = context.get_safe_path(path)
         if not safe_path.is_file():
@@ -207,7 +207,7 @@ def code_formatter(path: str) -> str:
         raise ToolError(f"Unexpected error: {str(e)}")
 
 
-def concat_file(destination: str, source: str) -> str:
+def concatFile(destination: str, source: str) -> str:
     try:
         dst_path = context.get_safe_path(destination)
         src_path = context.get_safe_path(source)

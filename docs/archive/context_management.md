@@ -34,7 +34,7 @@ El mecanismo de purga FIFO descrito en este documento es el disparador técnico 
 
 - **El Conflicto**: La purga automática elimina la historia, lo que puede causar pérdida de objetivos y "alucinaciones" por falta de contexto.
 - **La Solución**: El agente debe monitorear el conteo de tokens (vía `count_tokens`). Cuando el sistema se acerque al `context_window_limit` (específicamente al 80%), el agente debe ejecutar el flujo de **Memory Flush** definido en `memento_operational_guide.md` antes de que la purga FIFO elimine la información vital.
-- **Flujo**: `Token Count > 80%` $\rightarrow$ `Agent Synthesis` $\rightarrow$ `push_memory()` $\rightarrow$ `FIFO Purge (System)` $\rightarrow$ `Awakening (Agent)`.
+- **Flujo**: `Token Count > 80%` $\rightarrow$ `Agent Synthesis` $\rightarrow$ `pushMemory()` $\rightarrow$ `FIFO Purge (System)` $\rightarrow$ `Awakening (Agent)`.
 
 ## Architectural Impact
 - **`paser/core/chat_manager.py`**:

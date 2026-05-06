@@ -26,7 +26,7 @@ Transform `paser-mini` into an autonomous maintenance agent that uses GitHub Iss
 
 ### 2. GitHub Integration Layer
 - [ ] Implement `list_eligible_issues()`: Filter by `#ai-assistance` and absence of `paser-processing`.
-- [ ] Implement `post_comment(issue_id, text)`.
+- [ ] Implement `postComment(issue_id, text)`.
 - [ ] Implement `manage_label(issue_id, label, action='add'|'remove')`.
 - [ ] Implement `get_latest_comments(issue_id)` to detect user feedback.
 
@@ -84,9 +84,9 @@ Containerize the agent for seamless deployment and automatic recovery using Dock
 ## Achievements
 - **System Prompt**: Added `GITHUB_SYSTEM_INSTRUCTION` to mandate communication via comments and forbid new issues for acknowledgments.
 - **Tooling Integration**: 
-    - Registered `post_comment` in `src/tools/registry.py`.
-    - Added `post_comment` definition to `src/tools/registry_positional.json`.
-    - Created `src/core/schemas/post_comment.json` to enable `SchemaValidator` support.
+    - Registered `postComment` in `src/tools/registry.py`.
+    - Added `postComment` definition to `src/tools/registry_positional.json`.
+    - Created `src/core/schemas/postComment.json` to enable `SchemaValidator` support.
 - **Robustness Improvements**: 
     - Modified `src/core/smart_parser.py` to sanitize tool names (removing trailing `()`).
     - Aligned argument names (`issue_number`, `body`) across the schema, catalog, and function signature to resolve `Missing required argument` errors.

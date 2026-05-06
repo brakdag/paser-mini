@@ -7,11 +7,11 @@ class ToolError(Exception):
 
 class Context:
     def __init__(self):
-        # Definimos la raíz como el directorio actual de ejecución
+        # Define the root as the current execution directory
         self.root = Path(os.getcwd()).resolve()
 
     def get_safe_path(self, path: str) -> Path:
-        """Resuelve la ruta y verifica que esté dentro de la raíz del proyecto."""
+        """Resolves the path and verifies it is within the project root."""
         try:
             p = Path(path).resolve()
             if not str(p).startswith(str(self.root)):

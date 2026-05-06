@@ -3,7 +3,7 @@ import { promisify } from 'util';
 
 const execPromise = promisify(exec);
 
-export const get_current_repo = async () => {
+export const getCurrentRepo = async () => {
   try {
     const { stdout } = await execPromise('git remote get-url origin');
     const url = stdout.trim();

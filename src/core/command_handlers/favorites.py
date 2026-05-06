@@ -8,19 +8,12 @@ class FavoriteCommands:
                     "No favorite models saved. Use /fav+ to add the current one."
                 )
                 return True
-            header = "| ID | Model (Provider) | Temp | ID | Model (Provider) | Temp |\n|---|---|---|---|---|---|\n"
+            header = "| ID | Model (Provider) | Temp |\n|---|---|---|\n"
             rows = []
-            for i in range(0, len(favorites), 2):
-                f1 = favorites[i]
-                m1 = f"{f1['model']} ({f1['provider']})"
-                t1 = f1["temp"]
-                if i + 1 < len(favorites):
-                    f2 = favorites[i + 1]
-                    m2 = f"{f2['model']} ({f2['provider']})"
-                    t2 = f2["temp"]
-                    rows.append(f"| {i} | {m1} | {t1} | {i+1} | {m2} | {t2} |")
-                else:
-                    rows.append(f"| {i} | {m1} | {t1} | | | |")
+            for i, f in enumerate(favorites):
+                m = f"{f['model']} ({f['provider']})"
+                t = f["temp"]
+                rows.append(f"| {i} | {m} | {t} |")
             ui.display_panel("Favorite Models", header + "\n".join(rows), style="green")
             return True
         elif parts[1] == "+":

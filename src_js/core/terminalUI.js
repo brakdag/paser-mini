@@ -72,7 +72,8 @@ export class TerminalUI {
     });
 
     formatted = formatted.replace(/`([^`]+)`/g, (_, code) => {
-      return chalk.bgGray.black(` ${code} `);
+      // Cambiado de bgGray.black a cyan para coincidir con la estética de Python
+      return chalk.cyan(` ${code} `);
     });
 
     formatted = formatted.replace(/\*\*(.*?)\*\*/g, (_, content) => {
@@ -143,7 +144,6 @@ export class TerminalUI {
     
     const finalMsg = `${toolIcon} ${name} (${detail}) ${statusIcon}`;
     
-    // Limpiamos la línea del spinner y escribimos el resultado final
     process.stdout.write('\r\x1b[K' + color(finalMsg) + '\n');
 
     if (spinner) {

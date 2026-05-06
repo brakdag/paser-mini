@@ -5,7 +5,7 @@ import fs from 'fs';
 
 const execPromise = promisify(exec);
 
-export const analyze_pyright = async ({ path: targetPath = '.' }) => {
+export const analyzePyright = async ({ path: targetPath = '.' }) => {
   try {
     let pyrightPath = path.join(process.cwd(), 'venv', 'bin', 'pyright');
     if (!fs.existsSync(pyrightPath)) {

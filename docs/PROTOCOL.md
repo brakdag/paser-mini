@@ -6,44 +6,44 @@ Maximize reasoning capacity by minimizing context pollution. Every token saved i
 ## 🛠️ Tool Hierarchy & Usage Rules
 
 ### 1. Information Retrieval: Memory vs. Files
-**CRITICAL: Do not use `read_file` as a substitute for memory.**
+**CRITICAL: Do not use `readFile` as a substitute for memory.**
 
-- **Use `pull_memory` when:**
+- **Use `pullMemory` when:**
     - Seeking state, decisions, goals, or distilled insights.
     - Checking the current progress of a task.
     - Retrieving a "Tattoo" (core truth).
     - *Reasoning:* Memory is a surgical strike. It returns only what is needed.
 
-- **Use `read_file` when:**
+- **Use `readFile` when:**
     - You need to see the actual implementation of code.
     - You are analyzing a configuration file for the first time.
     - You need to verify the exact syntax of a line.
     - *Reasoning:* Files are the raw source. They are heavy and expensive.
 
 - **The Distillation Loop:**
-    - `read_file` $\rightarrow$ Analyze $\rightarrow$ `push_memory` (distilled insight) $\rightarrow$ Forget the file content $\rightarrow$ `pull_memory` (next time).
+    - `readFile` $\rightarrow$ Analyze $\rightarrow$ `pushMemory` (distilled insight) $\rightarrow$ Forget the file content $\rightarrow$ `pullMemory` (next time).
 
 ### 1.1 Error Detection: Tool-Driven vs. Manual Tracing
 **CRITICAL: Do not attempt to "trace" bugs by reading multiple files manually.**
 
-- **Use `analyze_pyright` FIRST:**
+- **Use `analyzePyright` FIRST:**
     - Before reading files to find a bug, run the static analyzer.
     - Let the tool locate the exact file and line of the error.
     - *Reasoning:* Manual tracing consumes massive tokens and is prone to hallucination. Tool-driven detection is instant and precise.
 
 ### 2. File Manipulation: Surgical vs. Massive
 
-- **Copying:** Always use `copy_file`. Never `read_file` + `write_file` for duplication.
-- **Editing:** Always use `replace_string` for small changes. Only use `write_file` for creating new files or complete rewrites.
+- **Copying:** Always use `copyFile`. Never `readFile` + `writeFile` for duplication.
+- **Editing:** Always use `replaceString` for small changes. Only use `writeFile` for creating new files or complete rewrites.
 
-    - **`replace_string` Intelligence:**
+    - **`replaceString` Intelligence:**
         - **Surgical Suggestions:** If the `search_text` is slightly off, the tool will suggest the exact match. Do NOT re-read the file to find the exact string; use the tool's suggestion.
         - **Ambiguity Handling:** If multiple matches are found, the tool will throw an ERR. In this case, extend the `search_text` to include more surrounding context until the match is unique.
-- **Navigation:** Use `search_files_pattern` to locate files before listing directories. Avoid `list_dir` in large folders to prevent context flooding.
+- **Navigation:** Use `searchFilesPattern` to locate files before listing directories. Avoid `listDir` in large folders to prevent context flooding.
 
 ### 3. State Persistence (The Memento Pattern)
 
-- **Bridge Blocks:** When context usage is high (>80%), you MUST generate a BRIDGE BLOCK using `push_memory` with the teaser `BRIDGE: [Summary of state]`. This prevents total amnesia during Hard Resets.
+- **Bridge Blocks:** When context usage is high (>80%), you MUST generate a BRIDGE BLOCK using `pushMemory` with the teaser `BRIDGE: [Summary of state]`. This prevents total amnesia during Hard Resets.
 - **Tattoos:** Store permanent project truths (e.g., "The project uses Python 3.13") as `scope='tattoo'` to ensure they survive across sessions.
 
 ## 🚫 Forbidden Patterns

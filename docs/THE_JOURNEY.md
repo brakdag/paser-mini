@@ -62,7 +62,7 @@ The API sends back a JSON response. The `GeminiAdapter` captures it, extracts th
 But wait! What if you asked: *"What files are in this folder?"* The AI can't see your files... unless it uses a **Tool**.
 
 1. **The Detection**: Before showing the response to you, `ChatManager` passes the AI's text through the `SmartToolParser` (`src/core/smart_parser.py`).
-2. **The Discovery**: The parser finds a `<TOOL_CALL>` tag. The AI is saying: *"I need to use `list_dir` to answer this!"*
+2. **The Discovery**: The parser finds a `<TOOL_CALL>` tag. The AI is saying: *"I need to use `listDir` to answer this!"*
 3. **The Execution**: `ChatManager` hands the call to the `ExecutionEngine` (`src/core/execution_engine.py`), which finds the actual Python function in `src/tools/file_tools.py`.
 4. **The Feedback**: The tool returns the list of files. This result is wrapped in a `<TOOL_RESPONSE>` and sent **back to the AI**.
 5. **The Final Answer**: The AI reads the tool's output and finally says: *"The files in this folder are..."*

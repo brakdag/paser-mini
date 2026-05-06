@@ -1,7 +1,7 @@
 # Plan: Implement Timeout for Pyright Analysis
 
 ## 1. Goal
-Prevent the `analyze_pyright` tool from hanging the autonomous agent by implementing a strict execution timeout for the underlying `pyright` process.
+Prevent the `analyzePyright` tool from hanging the autonomous agent by implementing a strict execution timeout for the underlying `pyright` process.
 
 ## 2. Technical Analysis
 - **Current Implementation**: The tool uses `subprocess.run` in `paser/tools/system_tools.py` without a `timeout` parameter. 
@@ -11,7 +11,7 @@ Prevent the `analyze_pyright` tool from hanging the autonomous agent by implemen
 ## 3. Implementation Steps
 
 ### Step 1: Modify `paser/tools/system_tools.py`
-- Update the `analyze_pyright` function to include a `timeout` argument in the `subprocess.run` call.
+- Update the `analyzePyright` function to include a `timeout` argument in the `subprocess.run` call.
 - Recommended timeout: **60 seconds** (sufficient for most project sizes while preventing indefinite hangs).
 - Wrap the call in a `try...except` block to specifically catch `subprocess.TimeoutExpired`.
 
@@ -22,11 +22,11 @@ Prevent the `analyze_pyright` tool from hanging the autonomous agent by implemen
 ## 4. Verification Plan
 
 ### Functional Testing
-- **Normal Execution**: Run `analyze_pyright` on a standard directory to ensure it still returns results correctly.
+- **Normal Execution**: Run `analyzePyright` on a standard directory to ensure it still returns results correctly.
 - **Timeout Verification**: (Simulated) Temporarily set the timeout to a very low value (e.g., `0.1` seconds) to verify that the `ToolError` is correctly raised and handled by the agent.
 
 ### Static Analysis
-- Run `analyze_pyright` on the modified code to ensure no new type errors were introduced.
+- Run `analyzePyright` on the modified code to ensure no new type errors were introduced.
 
 ## 5. Risk Assessment
 - **False Positives**: Very large projects might legitimately take more than 60 seconds. However, for the scope of `paser-mini`, 60s is a reasonable upper bound. If this becomes an issue, the timeout could be made configurable via `config.json`.

@@ -9,7 +9,7 @@ Memento is Paser Mini's long-term memory (LTM) system. Unlike the volatile short
 - **Fractals (`scope='fractal'`)**: General knowledge, technical insights, and session summaries. These are the "experiences" and "learnings" of the agent.
 
 ### 2. The Mirror Effect
-The **Mirror** is the agent's awakening sequence. By calling `pull_memory()` without arguments, the agent retrieves:
+The **Mirror** is the agent's awakening sequence. By calling `pullMemory()` without arguments, the agent retrieves:
 - All **Vital Tattoos**.
 - The **Root Summary** (the most recent high-level state of the project).
 
@@ -17,14 +17,14 @@ This ensures the agent never "forgets" who it is or what it is doing after a con
 
 ## ⚙️ How to Use
 
-### Storing Knowledge (`push_memory`)
+### Storing Knowledge (`pushMemory`)
 Use this tool to save insights that should survive a context wipe.
-- **Example (Tattoo)**: `push_memory(scope="tattoo", value="The project must always follow PEP 8 strictly.")`
-- **Example (Fractal)**: `push_memory(scope="fractal", value="The database connection is handled in database.py using a persistent connection.", key="db_connection")`
+- **Example (Tattoo)**: `pushMemory(scope="tattoo", value="The project must always follow PEP 8 strictly.")`
+- **Example (Fractal)**: `pushMemory(scope="fractal", value="The database connection is handled in database.py using a persistent connection.", key="db_connection")`
 
-### Retrieving Knowledge (`pull_memory`)
-- **The Mirror**: `pull_memory()` $\rightarrow$ Get identity and root state.
-- **Specific Node**: `pull_memory(key="db_connection")` $\rightarrow$ Get a specific insight.
+### Retrieving Knowledge (`pullMemory`)
+- **The Mirror**: `pullMemory()` $\rightarrow$ Get identity and root state.
+- **Specific Node**: `pullMemory(key="db_connection")` $\rightarrow$ Get a specific insight.
 - **Navigation**:
     - `direction="next"` / `"prev"`: Walk through the narrative history of memories.
     - `direction="up"` / `"down"`: Move between abstract summaries and detailed nodes.
@@ -41,7 +41,7 @@ To maintain peak reasoning, Paser Mini avoids context saturation through a three
 
 | Goal | Strategy |
 | :--- | :--- |
-| **Identity/Status** | Call `pull_memory()` (Mirror) |
-| **Fact Check** | `pull_memory(key="...")` |
-| **History** | `pull_memory(direction="prev")` |
-| **Deep Dive** | `pull_memory(key="...")` $\rightarrow$ `direction="down"` |
+| **Identity/Status** | Call `pullMemory()` (Mirror) |
+| **Fact Check** | `pullMemory(key="...")` |
+| **History** | `pullMemory(direction="prev")` |
+| **Deep Dive** | `pullMemory(key="...")` $\rightarrow$ `direction="down"` |

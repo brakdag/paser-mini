@@ -28,8 +28,8 @@ class NvidiaRestClient:
 
     async def _apply_rate_limit(self, current_tokens: int = 1000):
         """
-        Implementa la lógica de ventana deslizante y RPM automático
-        basada en la configuración global del sistema.
+        Implements sliding window logic and automatic RPM
+        based on the global system configuration.
         """
         async with self._lock:
             # 1. Obtener configuración actual
@@ -45,7 +45,7 @@ class NvidiaRestClient:
             now = asyncio.get_event_loop().time()
             min_interval = 60.0 / rpm_limit
 
-            # 3. Ventana Deslizante: Calcular espera basada en la última petición
+            # 3. Sliding Window: Calculate wait based on the last request
             if self.request_timestamps:
                 last_request_time = self.request_timestamps[-1]
                 elapsed = now - last_request_time
@@ -56,7 +56,7 @@ class NvidiaRestClient:
                     now = asyncio.get_event_loop().time()
 
             self.request_timestamps.append(now)
-            # Mantenemos solo la última petición para el cálculo de intervalo mínimo
+            # Keep only the last request to calculate the minimum interval
             if len(self.request_timestamps) > 1:
                 self.request_timestamps.popleft()
 
@@ -64,7 +64,7 @@ class NvidiaRestClient:
         url = f"{self.base_url}/chat/completions"
         payload["stream"] = stream
         
-        # Estimación simple de tokens para el RPM automático
+        # Simple token estimation for automatic RPM
         token_estimate = 0
         for msg in payload.get("messages", []):
             token_estimate += len(str(msg.get("content", ""))) // 4
@@ -73,8 +73,8 @@ class NvidiaRestClient:
             await self._apply_rate_limit(token_estimate)
             return self._stream_request(url, payload)
         
-        # Eliminamos el retry_handler interno para evitar el double-retry
-        # El retry es gestionado ahora exclusivamente por el NvidiaAdapter
+        # Remove internal retry_handler to avoid double-retry
+        # Retry is now managed exclusively by the NvidiaAdapter
         return await self._post_request(url, payload, token_estimate)
 
     async def _post_request(self, url, payload, token_estimate=1000):

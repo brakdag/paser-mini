@@ -60,14 +60,14 @@ class SmartToolParser:
 1. Esquemas JSON para cada herramienta:
 
 {  
- "read_file": {  
+ "readFile": {  
  "type": "object",  
  "required": ["path"],  
  "properties": {  
  "path": {"type": "string", "pattern": "^[\\w\\-./]+$"}  
  }  
  },  
- "write_file": {  
+ "writeFile": {  
  "type": "object",  
  "required": ["path", "content"],  
  "properties": {  

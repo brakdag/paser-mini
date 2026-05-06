@@ -12,7 +12,7 @@ This document outlines the technical plan to resolve stability vulnerabilities i
 - **Observed Behavior**: `subprocess.run` is called without a timeout for `find` and `grep` operations.
 - **Risk**: Potential for the application to hang indefinitely if the system call blocks (e.g., due to network file systems or circular directories).
 - **Technical Solution**:
-  - Add `timeout=80` to all `subprocess.run` calls in `search_files_pattern` and `search_text_global`.
+  - Add `timeout=80` to all `subprocess.run` calls in `searchFilesPattern` and `searchTextGlobal`.
   - Wrap calls in a `try-except` block to handle `subprocess.TimeoutExpired` and return a clear `ToolError` to the agent.
 
 ### 2.2. Memory Leak in File Read Cache

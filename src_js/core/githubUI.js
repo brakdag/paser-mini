@@ -14,8 +14,8 @@ export class GitHubUI {
   displayMessage(text) {
     console.log(`[POSTING TO GITHUB] Issue #${this.issueNumber}: ${text}`);
     try {
-      // Nota: githubTools.post_comment es async
-      githubTools.post_comment({
+      // Nota: githubTools.postComment es async
+      githubTools.postComment({
         issue_number: this.issueNumber,
         body: text,
         repo: this.repo

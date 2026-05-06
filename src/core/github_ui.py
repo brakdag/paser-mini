@@ -13,7 +13,7 @@ class GitHubUI(UserInterface):
 
     def __init__(self, issue_number: int, repo: Optional[str] = None):
         self.issue_number = issue_number
-        self.repo = repo or github_tools.get_current_repo()
+        self.repo = repo or github_tools.getCurrentRepo()
 
     async def request_input(self, prompt: str, history: Optional[Any] = None) -> str:
         return ""
@@ -21,7 +21,7 @@ class GitHubUI(UserInterface):
     def display_message(self, text: str):
         logger.info(f"[POSTING TO GITHUB] {text}")
         try:
-            github_tools.post_comment(self.issue_number, text, self.repo)
+            github_tools.postComment(self.issue_number, text, self.repo)
         except Exception as e:
             logger.error(f"Failed to post comment to GitHub: {e}")
 

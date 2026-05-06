@@ -2,7 +2,7 @@
 
 ## 1. The Problem: The "Exact Match" Wall
 
-Autonomous AI agents often struggle with `replace_string` tools because LLMs are probabilistic, while file systems are deterministic. A single missing space, a different indentation (tabs vs spaces), or a slight variation in a line break causes the tool to fail.
+Autonomous AI agents often struggle with `replaceString` tools because LLMs are probabilistic, while file systems are deterministic. A single missing space, a different indentation (tabs vs spaces), or a slight variation in a line break causes the tool to fail.
 
 When the agent has a large context, it suffers from "Context Noise," leading it to hallucinate the exact string it needs to replace, resulting in multiple failed attempts, wasted tokens, and agent frustration.
 

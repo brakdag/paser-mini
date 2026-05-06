@@ -1,13 +1,13 @@
 [
   [
-    "read_file",
+    "readFile",
     "Read file content",
     {
       "path": "string"
     }
   ],
   [
-    "write_file",
+    "writeFile",
     "Write content to file. Returns 'OK' on success.",
     {
       "path": "string",
@@ -15,21 +15,21 @@
     }
   ],
   [
-    "remove_file",
+    "removeFile",
     "Delete file. Returns 'OK' on success. Throws ERR if not found.",
     {
       "path": "string"
     }
   ],
   [
-    "list_dir",
+    "listDir",
     "List directory contents",
     {
       "path": "string"
     }
   ],
   [
-    "replace_string",
+    "replaceString",
     "Search and replace string. Returns 'OK' on success. If no exact match is found, it may suggest a similar line using fuzzy matching. Throws ERR if ambiguous or not found.",
     {
       "path": "string",
@@ -38,28 +38,28 @@
     }
   ],
   [
-    "analyze_pyright",
+    "analyzePyright",
     "Run pyright analysis",
     {
       "path": "string"
     }
   ],
   [
-    "search_text_global",
+    "searchTextGlobal",
     "Search string in all files",
     {
       "query": "string"
     }
   ],
   [
-    "search_files_pattern",
+    "searchFilesPattern",
     "Search files by pattern",
     {
       "pattern": "string"
     }
   ],
   [
-    "rename_path",
+    "renamePath",
     "Move/Rename path. Returns 'OK' on success. Throws ERR if origin not found.",
     {
       "origin": "string",
@@ -67,7 +67,7 @@
     }
   ],
   [
-    "copy_file",
+    "copyFile",
     "Copy file from origin to destination. Returns 'OK' on success.",
     {
       "origin": "string",
@@ -75,14 +75,14 @@
     }
   ],
   [
-    "validate_json",
+    "validateJson",
     "Validates if a string is a valid JSON",
     {
       "json_string": "string"
     }
   ],
   [
-    "run_python",
+    "runPython",
     "Executes a Python script (.py) using the Paser venv. Runs in the script's directory.",
     {
       "script_path": "string",
@@ -90,7 +90,7 @@
     }
   ],
   [
-    "new_agent",
+    "newAgent",
     "Launches a new independent instance of Paser Mini in the project root.",
     {
       "message": "string",
@@ -98,7 +98,7 @@
     }
   ],
   [
-    "push_memory",
+    "pushMemory",
     "Stores a piece of information in the long-term memory graph. Use scope='tattoo' for core truths, 'fractal' for general knowledge.",
     {
       "scope": "string",
@@ -108,7 +108,7 @@
     }
   ],
   [
-    "pull_memory",
+    "pullMemory",
     "Retrieves information from the long-term memory graph. No args = The Mirror effect. Use direction='next'/'prev' for narrative navigation.",
     {
       "scope": "string",
@@ -117,38 +117,38 @@
     }
   ],
   [
-    "get_token_count",
+    "getTokenCount",
     "Returns the current token count of the conversation history and its percentage relative to the limit.",
     {}
   ],
   [
-    "get_tree",
+    "getTree",
     "Get the project file tree (very fast)",
     {}
   ],
   [
-    "git_diff",
+    "gitDiff",
     "Show differences of a file using git diff",
     {
       "path": "string"
     }
   ],
   [
-    "restore_file",
+    "restoreFile",
     "Restore a file to its previous state using git restore",
     {
       "path": "string"
     }
   ],
   [
-    "code_formatter",
+    "codeFormatter",
     "Format Python code according to PEP 8 using black",
     {
       "path": "string"
     }
   ],
   [
-    "concat_file",
+    "concatFile",
     "Concatenates the content of the source file to the end of the destination file.",
     {
       "destination": "string",
@@ -156,14 +156,14 @@
     }
   ],
   [
-    "verify_implementation",
+    "verifyImplementation",
     "Verifies a code change following the Fresh Instance Rule. Runs --help smoke test and a provided test script.",
     {
       "test_script": "string"
     }
   ],
   [
-    "get_json_structure",
+    "getJsonStructure",
     "Returns the keys and structure of a JSON node at a given path.",
     {
       "file_path": "string",
@@ -171,7 +171,7 @@
     }
   ],
   [
-    "get_json_node",
+    "getJsonNode",
     "Retrieves the content of a specific JSON node using a path.",
     {
       "file_path": "string",
@@ -179,7 +179,7 @@
     }
   ],
   [
-    "get_json_array_info",
+    "getJsonArrayInfo",
     "Returns the length and item type of a JSON array at a given path.",
     {
       "file_path": "string",
@@ -187,7 +187,7 @@
     }
   ],
   [
-    "update_json_node",
+    "updateJsonNode",
     "Updates a specific JSON node with a new value using a path.",
     {
       "file_path": "string",
@@ -196,14 +196,14 @@
     }
   ],
   [
-    "list_issues",
+    "listIssues",
     "List issues in a GitHub repository",
     {
       "repo": "string"
     }
   ],
   [
-    "create_issue",
+    "createIssue",
     "Create a new issue in a GitHub repository",
     {
       "title": "string",
@@ -212,7 +212,7 @@
     }
   ],
   [
-    "edit_issue",
+    "editIssue",
     "Edit an existing issue in a GitHub repository",
     {
       "issue_number": "integer",
@@ -222,7 +222,7 @@
     }
   ],
   [
-    "close_issue",
+    "closeIssue",
     "Close an issue in a GitHub repository",
     {
       "issue_number": "integer",
@@ -230,7 +230,7 @@
     }
   ],
   [
-    "post_comment",
+    "postComment",
     "Post a comment to a specific GitHub issue.",
     {
       "issue_number": "integer",
@@ -238,12 +238,12 @@
     }
   ],
   [
-    "get_current_repo",
+    "getCurrentRepo",
     "Get the current GitHub repository name",
     {}
   ],
   [
-    "git_diff_all",
+    "gitDiffAll",
     "Show all changes in the current repository using git diff",
     {}
   ]

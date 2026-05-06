@@ -19,10 +19,10 @@ Replace the current multi-attempt JSON parser with a robust, single-pass parser 
 ### Schema Files Location
 ```
 paser/core/schemas/
-├── read_file.json
-├── write_file.json
-├── run_python.json
-├── push_memory.json
+├── readFile.json
+├── writeFile.json
+├── runPython.json
+├── pushMemory.json
 └── [all other tools]
 ```
 

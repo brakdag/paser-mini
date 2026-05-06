@@ -12,8 +12,8 @@ Redefine the maximum file reading and writing limits to prevent context window o
 
 ## Proposed Specification
 - **Hard Limit (Read & Write)**: **100 KB**.
-- **Read Behavior**: If a file exceeds 100KB, `read_file` returns: `ERR: File too large (limit 100KB). Please use a more specific tool or request a partial read.`
-- **Write Behavior**: If the content to be written exceeds 100KB, `write_file` (and `replace_string`) must return: `ERR: Content too large (limit 100KB). Please split the content into smaller files.`
+- **Read Behavior**: If a file exceeds 100KB, `readFile` returns: `ERR: File too large (limit 100KB). Please use a more specific tool or request a partial read.`
+- **Write Behavior**: If the content to be written exceeds 100KB, `writeFile` (and `replaceString`) must return: `ERR: Content too large (limit 100KB). Please split the content into smaller files.`
 - **Justification**: 
     - Maintains symmetry: The agent can always read what it writes.
     - Protects the context window and TPM consumption.

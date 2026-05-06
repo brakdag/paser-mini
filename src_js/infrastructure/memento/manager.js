@@ -129,7 +129,7 @@ export class MementoManager {
       return res;
     }
 
-    return 'ERR: Invalid pull_memory arguments.';
+    return 'ERR: Invalid pullMemory arguments.';
   }
 
   getLatestBridge() {

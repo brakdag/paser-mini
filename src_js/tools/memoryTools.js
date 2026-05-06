@@ -10,7 +10,7 @@ export const setMemoryContext = (assistant, chatManager) => {
   currentChatManager = chatManager;
 };
 
-export const push_memory = async ({ role, scope, value, key, pointers }) => {
+export const pushMemory = async ({ role, scope, value, key, pointers }) => {
   try {
     return await memento.pushMemory(role, scope, value, key, pointers);
   } catch (e) {
@@ -18,7 +18,7 @@ export const push_memory = async ({ role, scope, value, key, pointers }) => {
   }
 };
 
-export const pull_memory = async ({ scope, key, direction }) => {
+export const pullMemory = async ({ scope, key, direction }) => {
   try {
     return await memento.pullMemory(scope, key, direction);
   } catch (e) {
@@ -26,7 +26,7 @@ export const pull_memory = async ({ scope, key, direction }) => {
   }
 };
 
-export const get_token_count = async () => {
+export const getTokenCount = async () => {
   try {
     if (!currentAssistant) {
       return 'ERR: Assistant not initialized in memory tools.';

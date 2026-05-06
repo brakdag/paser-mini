@@ -41,7 +41,7 @@ class MementoManager:
         pattern = r'\[#(\d+),\s*\d{4}-\d{2}-\d{2}.*?\]'
         return [int(m) for m in re.findall(pattern, text)]
 
-    async def push_memory(self, role: str, scope: str, value: str, key: Optional[str] = None, pointers: Optional[List[int]] = None) -> str:
+    async def pushMemory(self, role: str, scope: str, value: str, key: Optional[str] = None, pointers: Optional[List[int]] = None) -> str:
         # 1. Determine Level and Validate
         level = self._determine_level(value)
         
@@ -73,7 +73,7 @@ class MementoManager:
 
         return f"Memory stored as node #{node_id} ({level})"
 
-    async def pull_memory(self, scope: Optional[str] = None, key: Optional[str] = None, direction: Optional[str] = None) -> str:
+    async def pullMemory(self, scope: Optional[str] = None, key: Optional[str] = None, direction: Optional[str] = None) -> str:
         # The Mirror Effect
         if scope is None and key is None and direction is None:
             mirror = await self.db.get_mirror()
@@ -138,7 +138,7 @@ class MementoManager:
             
             return res
 
-        return "ERR: Invalid pull_memory arguments."
+        return "ERR: Invalid pullMemory arguments."
 
     async def get_latest_bridge(self) -> Optional[Dict[str, Any]]:
         """Retrieves the most recent bridge block for session leaps."""

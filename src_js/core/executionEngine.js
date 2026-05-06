@@ -15,20 +15,20 @@ export class ExecutionEngine {
     this.stopRequested = false;
 
     this._detailMappers = {
-      'read_file': (a) => path.basename(a.path || ''),
-      'write_file': (a) => path.basename(a.path || ''),
-      'remove_file': (a) => path.basename(a.path || ''),
-      'replace_string': (a) => path.basename(a.path || ''),
-      'list_dir': (a) => a.path || '',
+      'readFile': (a) => path.basename(a.path || ''),
+      'writeFile': (a) => path.basename(a.path || ''),
+      'removeFile': (a) => path.basename(a.path || ''),
+      'replaceString': (a) => path.basename(a.path || ''),
+      'listDir': (a) => a.path || '',
       'create_dir': (a) => a.path || '',
-      'rename_path': (a) => path.basename(a.origen || '') + ' -> ' + path.basename(a.destino || ''),
-      'push_memory': (a) => a.key || 'unknown',
-      'pull_memory': (a) => a.key || 'unknown',
+      'renamePath': (a) => path.basename(a.origen || '') + ' -> ' + path.basename(a.destino || ''),
+      'pushMemory': (a) => a.key || 'unknown',
+      'pullMemory': (a) => a.key || 'unknown',
       'run_instance': (a) => a.target || 'unknown',
-      'search_text_global': (a) => "'" + (a.query || '') + "'",
-      'search_files_pattern': (a) => 'pattern: ' + (a.pattern || ''),
-      'analyze_pyright': (a) => path.basename(a.path || ''),
-      'run_python': (a) => path.basename(a.scriptPath || ''),
+      'searchTextGlobal': (a) => "'" + (a.query || '') + "'",
+      'searchFilesPattern': (a) => 'pattern: ' + (a.pattern || ''),
+      'analyzePyright': (a) => path.basename(a.path || ''),
+      'runPython': (a) => path.basename(a.scriptPath || ''),
     };
   }
 
@@ -74,9 +74,9 @@ export class ExecutionEngine {
       const toolFunc = this.tools[name];
       const result = await toolFunc(args);
 
-      if (name === 'pull_memory') {
+      if (name === 'pullMemory') {
         this.ui.displayMessage('🧠 **Memento Pull**: Accessing node #' + args.key);
-      } else if (name === 'push_memory') {
+      } else if (name === 'pushMemory') {
         this.ui.displayMessage('✍️ **Memento Push**: ' + result);
       } else if (name === 'run_instance') {
         this.ui.displayMessage('🚀 **Instance Test Output**\n\n' + '```text\n' + result + '\n```');

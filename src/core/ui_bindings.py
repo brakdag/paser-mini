@@ -7,7 +7,7 @@ class UIBindings:
     def get_bindings(ui_instance):
         kb = KeyBindings()
 
-        # Esc: Ahora no cambia de modo, simplemente se deja pasar o se puede usar para interrupción
+        # Esc: No longer changes mode, simply passed through or used for interruption
         @kb.add('escape')
         def _(event):
             pass

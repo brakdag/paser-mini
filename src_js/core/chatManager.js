@@ -41,7 +41,7 @@ export class ChatManager {
 
   async run(initialInput = null) {
     logger.info('Initializing ChatManager.run');
-    this.ui.displayInfo('Paser Mini initialized. Type /quit to exit.');
+
     const model = this.configManager.get('model_name', 'gemini-2.0-flash');
     this.assistant.startChat(model, this.systemInstruction, this.temperature);
 

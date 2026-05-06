@@ -10,21 +10,13 @@ export class FavoriteCommands {
         return true;
       }
 
-      let header = '| ID | Model (Provider) | Temp | ID | Model (Provider) | Temp |\n|---|---|---|---|---|---|\n';
+      let header = '| ID | Model (Provider) | Temp |\n|---|---|---|\n';
       let rows = [];
-      for (let i = 0; i < favorites.length; i += 2) {
-        const f1 = favorites[i];
-        const m1 = `${f1.model} (${f1.provider})`;
-        const t1 = f1.temp;
-
-        if (i + 1 < favorites.length) {
-          const f2 = favorites[i + 1];
-          const m2 = `${f2.model} (${f2.provider})`;
-          const t2 = f2.temp;
-          rows.push(`| ${i} | ${m1} | ${t1} | ${i + 1} | ${m2} | ${t2} |`);
-        } else {
-          rows.push(`| ${i} | ${m1} | ${t1} | | | |`);
-        }
+      for (let i = 0; i < favorites.length; i++) {
+        const f = favorites[i];
+        const m = `${f.model} (${f.provider})`;
+        const t = f.temp;
+        rows.push(`| ${i} | ${m} | ${t} |`);
       }
       ui.displayMessage('--- Favorite Models ---\n' + header + rows.join('\n'));
       return true;

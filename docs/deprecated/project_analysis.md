@@ -22,7 +22,7 @@ Paser Mini is a minimalist autonomous agent based on the ReAct pattern, using Go
 - **File Tools**: Secure file operations restricted to the project root.
 - **Search Tools**: Global text and file pattern searching.
 - **Instance Tools**: Ability to launch new `paser-mini` instances for delegation or testing.
-- **Memory Tools**: Interface to the Memento system (`push_memory`, `pull_memory`).
+- **Memory Tools**: Interface to the Memento system (`pushMemory`, `pullMemory`).
 
 ## Key Mechanisms
 

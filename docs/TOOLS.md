@@ -4,34 +4,34 @@ This document serves as the definitive reference for the tools available to the 
 
 ### 📁 File System & Navigation
 
-- **Reading**: `read_file` (content), `list_dir` (contents), `get_tree` (visual project structure).
-- **Writing/Editing**: `write_file` (full rewrite), `replace_string` (surgical search/replace), `concat_file` (append source to destination).
-- **Management**: `remove_file` (delete), `rename_path` (move/rename), `copy_file` (duplicate), `restore_file` (git restore).
+- **Reading**: `readFile` (content), `listDir` (contents), `getTree` (visual project structure).
+- **Writing/Editing**: `writeFile` (full rewrite), `replaceString` (surgical search/replace), `concatFile` (append source to destination).
+- **Management**: `removeFile` (delete), `renamePath` (move/rename), `copyFile` (duplicate), `restoreFile` (git restore).
 
 ### 🔍 Search & Analysis
 
-- **Global Search**: `search_text_global` (content search), `search_files_pattern` (filename pattern).
-- **Code Intelligence**: `analyze_pyright` (static analysis), `git_diff` (version control differences).
+- **Global Search**: `searchTextGlobal` (content search), `searchFilesPattern` (filename pattern).
+- **Code Intelligence**: `analyzePyright` (static analysis), `gitDiff` (version control differences).
 
 ### 🧠 Memento (Cognitive Memory)
 
-**The Distillation Loop**: `read_file` $\rightarrow$ Analyze $\rightarrow$ `push_memory` (distilled insight) $\rightarrow$ Forget file content $\rightarrow$ `pull_memory` (future retrieval).
+**The Distillation Loop**: `readFile` $\rightarrow$ Analyze $\rightarrow$ `pushMemory` (distilled insight) $\rightarrow$ Forget file content $\rightarrow$ `pullMemory` (future retrieval).
 
-- **Capture**: `push_memory(scope, value, key, pointers)` - Persist insights. Use `scope='tattoo'` for permanent project truths and `scope='fractal'` for general knowledge.
-- **Retrieval**: `pull_memory(scope, key, direction)` - Access historical context, navigate the narrative (next/prev), or trigger the "Mirror Effect" (all vitals).
+- **Capture**: `pushMemory(scope, value, key, pointers)` - Persist insights. Use `scope='tattoo'` for permanent project truths and `scope='fractal'` for general knowledge.
+- **Retrieval**: `pullMemory(scope, key, direction)` - Access historical context, navigate the narrative (next/prev), or trigger the "Mirror Effect" (all vitals).
 
 ### 🛠️ Technical Execution
 
-- **Python Sandbox**: `run_python` - Executes a Python script using the project venv. Runs in the script's directory.
-- **Formatting**: `code_formatter` - Format Python code according to PEP 8 using black.
-- **Orchestration**: `new_agent` - Launches a new independent instance of Paser Mini in the project root.
-- **Metrics**: `get_token_count` - Returns current token usage and percentage relative to the limit.
+- **Python Sandbox**: `runPython` - Executes a Python script using the project venv. Runs in the script's directory.
+- **Formatting**: `codeFormatter` - Format Python code according to PEP 8 using black.
+- **Orchestration**: `newAgent` - Launches a new independent instance of Paser Mini in the project root.
+- **Metrics**: `getTokenCount` - Returns current token usage and percentage relative to the limit.
 
 ### ⚡ JSON Intelligence
 
-- **Validation**: `validate_json` - Checks if a string is valid JSON.
-- **Structural Analysis**: `get_json_structure` (keys/structure), `get_json_array_info` (length/item type).
-- **Surgical Access**: `get_json_node` (retrieve specific node), `update_json_node` (update specific node).
+- **Validation**: `validateJson` - Checks if a string is valid JSON.
+- **Structural Analysis**: `getJsonStructure` (keys/structure), `getJsonArrayInfo` (length/item type).
+- **Surgical Access**: `getJsonNode` (retrieve specific node), `updateJsonNode` (update specific node).
 
 ---
-**Constraint**: Always prioritize the most surgical tool. If you can use `replace_string`, never use `write_file`. Every token saved is reasoning capacity gained.
+**Constraint**: Always prioritize the most surgical tool. If you can use `replaceString`, never use `writeFile`. Every token saved is reasoning capacity gained.
