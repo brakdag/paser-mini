@@ -1,56 +1,56 @@
 # 🛠️ Paser Mini: Tool Validation Suite
 
-Este documento sirve como benchmark para validar la operatividad de las herramientas del agente. El objetivo es ejecutar cada desafío y confirmar que la herramienta responde según lo esperado.
+This document serves as a benchmark to validate the operability of the agent's tools. The goal is to execute each challenge and confirm that the tool responds as expected.
 
-## 📋 Instrucciones para el Agente
-1. Lee cada desafío secuencialmente.
-2. Ejecuta las herramientas necesarias para completar la tarea.
-3. Verifica el resultado.
-4. Si una herramienta falla, reporta el error exacto y el argumento utilizado.
-
----
-
-## 🧪 Desafíos de Validación
-
-### 1. Operaciones de Archivos (Básico)
-- [ ] **Creación y Lectura**: Crea un archivo llamado `test_agent_val.txt` con el contenido "Validación de herramientas exitosa". Luego, léelo para confirmar que el contenido es correcto.
-- [ ] **Modificación**: Usa `replaceString` para cambiar "exitosa" por "completada" en `test_agent_user.txt`.
-- [ ] **Limpieza**: Elimina el archivo `test_agent_val.txt`.
-
-### 2. Exploración y Búsqueda
-- [ ] **Mapeo de Directorio**: Lista el contenido de la carpeta `src/core/schemas` y cuenta cuántos archivos `.json` hay.
-- [ ] **Búsqueda Global**: Busca la cadena "Paser Mini" en todo el proyecto y enumera los archivos donde aparece.
-- [ ] **Patrones de Archivo**: Busca todos los archivos que terminen en `.js` dentro de `src_js/core`.
-
-### 3. Manipulación de JSON
-- [ ] **Estructura**: Crea un archivo `test_data.json` con un objeto anidado (ej: `{"user": {"id": 1, "meta": {"role": "admin"}}}`).
-- [ ] **Acceso**: Usa `getJsonNode` para extraer el valor de `user.meta.role`.
-- [ ] **Actualización**: Usa `updateJsonNode` para cambiar el rol a "super-admin" y verifica el cambio.
-
-### 4. Memoria y Contexto (Memento)
-- [ ] **Almacenamiento**: Guarda en la memoria (`pushMemory`) la siguiente información: `{"key": "test_secret", "value": "Paser-12345"}`.
-- [ ] **Recuperación**: Recupera la información usando `pullMemory` con la clave `test_secret`.
-
-### 5. Herramientas de Desarrollo
-- [ ] **Análisis de Código**: Ejecuta `analyzePyright` sobre cualquier archivo `.py` del proyecto y reporta si hay errores.
-- [ ] **Ejecución de Script**: Crea un script simple de Python que imprima "Hello from Paser" y ejecútalo usando `runPython`.
-
-### 6. Flujo de Trabajo Complejo (Stress Test)
-- [ ] **El Desafío del Auditor**: 
-    1. Busca todos los archivos en `src_js/` que contengan la palabra "TODO" o "FIXME".
-    2. Crea un archivo llamado `audit_report.md`.
-    3. Escribe en ese archivo una lista de los archivos encontrados y la línea aproximada.
-    4. Lee el reporte final para confirmar que la auditoría se completó.
-    5. Elimina el reporte.
+## 📋 Instructions for the Agent
+1. Read each challenge sequentially.
+2. Execute the necessary tools to complete the task.
+3. Verify the result.
+4. If a tool fails, report the exact error and the argument used.
 
 ---
 
-## 🚩 Matriz de Resultados
-| Categoría | Estado | Notas |
+## 🧪 Validation Challenges
+
+### 1. File Operations (Basic)
+- [ ] **Creation and Reading**: Create a file called `test_agent_val.txt` with the content "Tool validation successful". Then, read it to confirm the content is correct.
+- [ ] **Modification**: Use `replaceString` to change "successful" to "completed" in `test_agent_user.txt`.
+- [ ] **Cleanup**: Delete the file `test_agent_val.txt`.
+
+### 2. Exploration and Search
+- [ ] **Directory Mapping**: List the contents of the `src_js/core/commandHandlers/schemas` folder and count how many `.js` files there are.
+- [ ] **Global Search**: Search for the string "Paser Mini" throughout the project and list the files where it appears.
+- [ ] **File Patterns**: Search for all files ending in `.js` within `src_js/core`.
+
+### 3. JSON Manipulation
+- [ ] **Structure**: Create a file `test_data.json` with a nested object (e.g., `{"user": {"id": 1, "meta": {"role": "admin"}}}`).
+- [ ] **Access**: Use `getJsonNode` to extract the value of `user.meta.role`.
+- [ ] **Update**: Use `updateJsonNode` to change the role to "super-admin" and verify the change.
+
+### 4. Memory and Context (Memento)
+- [ ] **Storage**: Save the following information in memory (`pushMemory`): `{"key": "test_secret", "value": "Paser-12345"}`.
+- [ ] **Retrieval**: Retrieve the information using `pullMemory` with the key `test_secret`.
+
+### 5. Development Tools
+- [ ] **Code Analysis**: Run `analyzePyright` on any `.js` or `.ts` file in the project and report if there are errors.
+- [ ] **Instance Orchestration**: Use `newAgent` to launch a secondary instance and verify it can read the `README.md` of the project.
+
+### 6. Complex Workflow (Stress Test)
+- [ ] **The Auditor's Challenge**: 
+    1. Search for all files in `src_js/` that contain the word "TODO" or "FIXME".
+    2. Create a file called `audit_report.md`.
+    3. Write a list of the files found and the approximate line in that file.
+    4. Read the final report to confirm the audit is complete.
+    5. Delete the report.
+
+---
+
+## 🚩 Results Matrix
+| Category | Status | Notes |
 | :--- | :---: | :--- |
-| Archivos | ✅ | |
-| Búsqueda | ✅ | |
+| Files | ✅ | |
+| Search | ✅ | |
 | JSON | ✅ | |
-| Memoria | ✅ | |
+| Memory | ✅ | |
 | Dev Tools | ✅ | |
-| Flujo Complejo | ✅ | |
+| Complex Flow | ✅ | |

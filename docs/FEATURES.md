@@ -10,7 +10,7 @@
     - Optimized for low latency and minimal token consumption.
 
 3.  **Secure File Access:**
-    - All operations are restricted to `PROJECT_ROOT` via `get_safe_path` validation.
+    - All operations are restricted to `PROJECT_ROOT` via strict path validation to prevent directory traversal attacks.
 
 4.  **Memento Memory System:**
     - **Cognitive Graph**: A long-term memory system using a graph-based SQLite database to store core truths (Tattoos) and technical insights (Fractals).

@@ -1,6 +1,8 @@
---- Session Started: 2026-05-06T15:20:05.084Z ---
-[2026-05-06T15:20:06.859Z] [INFO] Initializing ChatManager.run 
-[2026-05-06T15:20:09.800Z] [INFO] Starting processTurn {"userInput":"hola"}
-[2026-05-06T15:20:18.296Z] [DEBUG] Received response from assistant {"responseLength":1065}
-[2026-05-06T15:23:45.780Z] [INFO] Starting processTurn {"userInput":"necesito que seas mi traductor de español a inglés te parece?"}
-[2026-05-06T15:24:20.330Z] [DEBUG] Received response from assistant {"responseLength":6296}
+--- Session Started: 2026-05-06T16:10:24.334Z ---
+[2026-05-06T16:10:24.648Z] [INFO] Initializing ChatManager.run 
+[2026-05-06T16:10:32.516Z] [INFO] Starting processTurn {"userInput":"hola"}
+[2026-05-06T16:10:56.344Z] [DEBUG] Received response from assistant {"responseLength":65}
+[2026-05-06T16:13:59.324Z] [INFO] Starting processTurn {"userInput":"[13:13] <gustavo> * se rasca la  cabeza *"}
+[2026-05-06T16:14:29.554Z] [DEBUG] Received response from assistant {"responseLength":133}
+[2026-05-06T16:16:56.385Z] [INFO] Starting processTurn {"userInput":"que viste en last_request.json?"}
+[2026-05-06T16:17:17.248Z] [DEBUG] Received response from assistant {"responseLength":922}

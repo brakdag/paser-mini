@@ -27,16 +27,15 @@ export const AVAILABLE_TOOLS = {
     "getTree": fileTools.getTree,
     "validateJson": utilTools.validateJson,
         "setNickname": utilTools.setNickname,
-    "runPython": instanceTools.runPython,
     "newAgent": instanceTools.newAgent,
     "pushMemory": memoryTools.pushMemory,
     "pullMemory": memoryTools.pullMemory,
     "getTokenCount": memoryTools.getTokenCount,
     "gitDiff": fileTools.gitDiff,
     "restoreFile": fileTools.restoreFile,
-    "codeFormatter": fileTools.codeFormatter,
+
     "concatFile": fileTools.concatFile,
-    "verifyImplementation": instanceTools.verifyImplementation,
+
     "getJsonStructure": jsonTools.getJsonStructure,
     "getJsonNode": jsonTools.getJsonNode,
     "getJsonArrayInfo": jsonTools.getJsonArrayInfo,

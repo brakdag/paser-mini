@@ -2,10 +2,10 @@
 
 To avoid path resolution errors, always remember the following structure:
 
-- **Source Root**: `src/`
-- **Core Logic**: `src/core/` (ChatManager, ExecutionEngine, etc.)
-- **Infrastructure**: `src/infrastructure/` (Database, Adapters)
-- **Tools**: `src/tools/` (File tools, Memory tools)
-- **Config**: `src/config/`
+- **Source Root**: `src_js/`
+- **Core Logic**: `src_js/core/` (ChatManager, ExecutionEngine, etc.)
+- **Infrastructure**: `src_js/infrastructure/` (Database, Adapters)
+- **Tools**: `src_js/tools/` (File tools, Memory tools)
+- **Config**: `src_js/config/`
 
-**Rule**: If a file is a Python module, it is almost certainly inside `src/`.
+**Rule**: All core logic and tool implementations are written in JavaScript/Node.js and reside within the `src_js/` directory.

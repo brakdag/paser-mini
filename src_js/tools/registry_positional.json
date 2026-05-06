@@ -88,14 +88,7 @@
       "newNickname": "string"
     }
   ],
-  [
-    "runPython",
-    "Executes a Python script (.py) using the Paser venv. Runs in the script's directory.",
-    {
-      "script_path": "string",
-      "args": "list"
-    }
-  ],
+
   [
     "newAgent",
     "Launches a new independent instance of Paser Mini in the project root.",
@@ -147,13 +140,7 @@
       "path": "string"
     }
   ],
-  [
-    "codeFormatter",
-    "Format Python code according to PEP 8 using black",
-    {
-      "path": "string"
-    }
-  ],
+
   [
     "concatFile",
     "Concatenates the content of the source file to the end of the destination file.",
@@ -162,13 +149,7 @@
       "source": "string"
     }
   ],
-  [
-    "verifyImplementation",
-    "Verifies a code change following the Fresh Instance Rule. Runs --help smoke test and a provided test script.",
-    {
-      "test_script": "string"
-    }
-  ],
+
   [
     "getJsonStructure",
     "Returns the keys and structure of a JSON node at a given path.",

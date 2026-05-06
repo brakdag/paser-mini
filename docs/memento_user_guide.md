@@ -19,8 +19,8 @@ This ensures the agent never "forgets" who it is or what it is doing after a con
 
 ### Storing Knowledge (`pushMemory`)
 Use this tool to save insights that should survive a context wipe.
-- **Example (Tattoo)**: `pushMemory(scope="tattoo", value="The project must always follow PEP 8 strictly.")`
-- **Example (Fractal)**: `pushMemory(scope="fractal", value="The database connection is handled in database.py using a persistent connection.", key="db_connection")`
+- **Example (Tattoo)**: `pushMemory(scope="tattoo", value="The project must follow the Airbnb JavaScript Style Guide strictly.")`
+- **Example (Fractal)**: `pushMemory(scope="fractal", value="The database connection is handled in database.js using a persistent connection.", key="db_connection")`
 
 ### Retrieving Knowledge (`pullMemory`)
 - **The Mirror**: `pullMemory()` $\rightarrow$ Get identity and root state.

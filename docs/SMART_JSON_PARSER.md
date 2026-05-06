@@ -1,27 +1,27 @@
-# Smart JSON Parser: Documentación Técnica
+# Smart JSON Parser: Technical Documentation
 
-## 1. Arquitectura del Parser
-El sistema utiliza un parser unificado (`SmartToolParser`) que reemplaza los intentos múltiples de `json.loads` y `ast.literal_eval` por un flujo de trabajo de una sola pasada con validación de esquemas.
+## 1. Parser Architecture
+The system utilizes a unified parser (`SmartToolParser`) that replaces multiple attempts of `JSON.parse` and fallback evaluations with a single-pass workflow featuring schema validation.
 
-### Componentes Clave
-- **SmartToolParser**: Parser central con preprocesamiento de strings (limpieza de comentarios, comillas, etc.).
-- **SchemaValidator**: Motor de validación basado en esquemas JSON (`src/core/schemas/`).
-- **AutoCorrector**: Corrige errores comunes (comillas simples, trailing commas, unicode malformado).
-- **ValidationResult**: Estructura de respuesta que detalla errores a nivel de campo.
+### Key Components
+- **SmartToolParser**: Central parser with string preprocessing (cleaning comments, quotes, etc.).
+- **SchemaValidator**: Validation engine based on JSON schemas located in `src_js/core/commandHandlers/schemas/`.
+- **AutoCorrector**: Fixes common errors (single quotes, trailing commas, malformed unicode).
+- **ValidationResult**: Response structure detailing field-level errors.
 
-## 2. Flujo de Ejecución
-1. **Preprocesamiento**: Limpieza de caracteres problemáticos.
-2. **Parseo**: Intento único de `json.loads` con corrección automática si falla.
-3. **Validación de Esquema**: Verificación de tipos, rangos y campos requeridos según el esquema de la herramienta.
-4. **Normalización**: Ajuste de la estructura de datos para el motor de ejecución.
+## 2. Execution Flow
+1. **Preprocessing**: Cleaning problematic characters.
+2. **Parsing**: Single attempt using `JSON.parse` with automatic correction if it fails.
+3. **Schema Validation**: Verification of types, ranges, and required fields according to the tool's schema.
+4. **Normalization**: Adjustment of the data structure for the execution engine.
 
 ## 3. Tool Schemas
-Los esquemas se encuentran en `src/core/schemas/`. Cada herramienta tiene un archivo `.json` que define:
-- `required`: Campos obligatorios.
-- `properties`: Tipos de datos y restricciones (ej. `maxLength`, `pattern`).
+Schemas are located in `src_js/core/commandHandlers/schemas/`. Each tool has a `.js` file (exporting a JSON object) that defines:
+- `required`: Mandatory fields.
+- `properties`: Data types and constraints (e.g., `maxLength`, `pattern`).
 
-## 4. Beneficios Operativos
-- **Eficiencia**: Reducción del 75% en el consumo de tokens al evitar reintentos.
-- **Velocidad**: 70% más rápido al eliminar el fallback múltiple.
-- **Claridad**: Errores específicos por campo en lugar de fallos genéricos.
-- **Seguridad**: Validación estricta de tipos que evita la inyección de datos malformados en las herramientas.
+## 4. Operational Benefits
+- **Efficiency**: 75% reduction in token consumption by avoiding retries.
+- **Speed**: 70% faster by eliminating multiple fallbacks.
+- **Clarity**: Field-specific errors instead of generic failures.
+- **Security**: Strict type validation preventing malformed data injection into tools.
