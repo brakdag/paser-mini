@@ -12,6 +12,7 @@ export class NvidiaAdapter {
     this.history = [];
     this.systemInstruction = '';
     this.temperature = 0.7;
+    this.lastPayload = null;
   }
 
   setRetryCallback(callback) {
@@ -27,14 +28,22 @@ export class NvidiaAdapter {
 
   async sendMessage(message, role = 'user', maxTokens = 512) {
     const apiRole = role === 'model' ? 'assistant' : role;
-    this.history.push({ role: apiRole, content: message });
+    this.history.push({ 
+      role: apiRole, 
+      content: message, 
+      timestamp: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) 
+    });
 
     const payload = {
       model: this.currentModel,
-      messages: this.history,
+      messages: this.history.map(m => {
+        const { timestamp, ...rest } = m;
+        return rest;
+      }),
       temperature: this.temperature,
       max_tokens: maxTokens
     };
+    this.lastPayload = payload;
 
     try {
       // Execute via retry handler to ensure resilience against 429s and 5xxs
@@ -44,7 +53,11 @@ export class NvidiaAdapter {
       );
 
       const content = response.choices[0].message.content;
-      this.history.push({ role: 'assistant', content: content });
+      this.history.push({
+        role: 'assistant',
+        content: content,
+        timestamp: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+      });
       return content;
     } catch (e) {
       const errorMsg = e.response?.data?.error?.message || e.message;

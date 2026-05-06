@@ -7,6 +7,7 @@ export class GeminiAdapter {
     this.currentModel = 'gemini-2.0-flash';
     this.systemInstruction = null;
     this.temperature = 0.7;
+    this.lastPayload = null;
   }
 
   startChat(modelName, systemInstruction, temperature = 0.7) {
@@ -17,7 +18,10 @@ export class GeminiAdapter {
   }
 
   _buildPayload() {
-    const contents = JSON.parse(JSON.stringify(this.history));
+    const contents = JSON.parse(JSON.stringify(this.history)).map(c => {
+      const { timestamp, ...rest } = c;
+      return rest;
+    });
     const payload = {
       contents: contents,
       generationConfig: {
@@ -57,9 +61,14 @@ export class GeminiAdapter {
 
   async sendMessage(message, role = 'user') {
     const parts = [{ text: message }];
-    this.history.push({ role, parts });
+    this.history.push({ 
+      role, 
+      parts, 
+      timestamp: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) 
+    });
 
     const payload = this._buildPayload();
+    this.lastPayload = payload;
     const modelName = this.currentModel.replace(/^models\//, '');
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${this.apiKey}`;
 
@@ -88,7 +97,11 @@ export class GeminiAdapter {
       textContent = this._filterThoughts(textContent);
 
       if (textContent) {
-        this.history.push({ role: 'model', parts: [{ text: textContent }] });
+        this.history.push({
+          role: 'model',
+          parts: [{ text: textContent }],
+          timestamp: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+        });
         return textContent;
       }
 

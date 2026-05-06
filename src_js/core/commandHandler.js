@@ -6,6 +6,7 @@ import { MementoManager } from '../infrastructure/memento/manager.js';
 import { GeminiAdapter } from '../infrastructure/gemini/adapter.js';
 import { NvidiaAdapter } from '../infrastructure/nvidia/adapter.js';
 
+import fs from 'fs/promises';
 export class CommandHandler {
   constructor(chatManager, ui) {
     this.chatManager = chatManager;
@@ -73,6 +74,37 @@ export class CommandHandler {
     }
 
     if (inputStripped === '/clear') return SystemCommands.handleClear(this.ui);
+    
+        if (inputStripped.startsWith('/me ')) {
+          const action = inputStripped.slice(4).trim();
+          const formattedAction = `* ${action} *`;
+          this.ui.displayChatMessage('user', formattedAction);
+          await this.chatManager.processTurn(this.ui.formatChatMessage('user', formattedAction));
+          return true;
+        }
+    if (inputStripped === '/compact') {
+      this.ui.displayInfo('Compacting history into IRC log...');
+      return await this.chatManager.compactHistory();
+    }
+    
+        if (inputStripped.startsWith('/s')) {
+          const parts = inputStripped.split(/\s+/);
+          const filename = parts[1] || 'last_request.json';
+          const lastPayload = this.chatManager.assistant.lastPayload;
+    
+          if (!lastPayload) {
+            this.ui.displayError('No request payload available to save.');
+            return true;
+          }
+    
+          try {
+            await fs.writeFile(filename, JSON.stringify(lastPayload, null, 4), 'utf8');
+            this.ui.displayInfo(`Last request payload saved to ${filename}`);
+          } catch (e) {
+            this.ui.displayError(`Error saving payload: ${e.message}`);
+          }
+          return true;
+        }
     if (inputStripped === '/config') return ConfigCommands.handleConfig(this.chatManager, this.ui);
     if (inputStripped.startsWith('/models')) return await ModelCommands.handleModels(this.chatManager, this.ui, inputStripped.split(/\s+/));
     if (inputStripped.startsWith('/fav')) return await FavoriteCommands.handleFav(this.chatManager, this.ui, inputStripped.split(/\s+/));
@@ -100,7 +132,7 @@ export class CommandHandler {
     }
 
     if (inputStripped === '/help') {
-      const helpText = `\nAvailable Commands:\n-------------------\n/help       - Show this help menu\n/config     - Show current system configuration\n/models     - Change AI model and temperature\n/fav        - Manage favorite models (/fav, /fav+, /fav -<idx>, /fav <idx>)\n/reset      - Hard Reset: Clear history and Leap via Bridge Block\n/r <msg>    - Rewrite: Remove last interaction and re-prompt\n/w <t> <r> <p> - Set window, RPM, and TPM\n/clear      - Clear terminal\n/q, /quit, /exit - Exit application\n`;
+      const helpText = `\nAvailable Commands:\n-------------------\n/help       - Show this help menu\n/config     - Show current system configuration\n/models     - Change AI model and temperature\n/fav        - Manage favorite models (/fav, /fav+, /fav -<idx>, /fav <idx>)\n/reset      - Hard Reset: Clear history and Leap via Bridge Block\n/r <msg>    - Rewrite: Remove last interaction and re-prompt\n/w <t> <r> <p> - Set window, RPM, and TPM\n/clear      - Clear terminal\n/me <action> - Perform an action (roleplay)\n/compact    - Compact history into IRC log and reset context\n/s [file]   - Save last request payload to JSON\n/q, /quit, /exit - Exit application\n`;
       this.ui.displayMessage(helpText);
       return true;
     }

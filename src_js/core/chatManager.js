@@ -33,6 +33,7 @@ export class ChatManager {
         this.ui.agentNickname = agentNickname;
     
     this.stopRequested = false;
+    this.logOpened = false;
   }
 
   saveConfig(key, value) {
@@ -49,17 +50,36 @@ export class ChatManager {
     const model = this.configManager.get('model_name', 'gemini-2.0-flash');
     this.assistant.startChat(model, this.systemInstruction, this.temperature);
 
-    if (initialInput) await this.processTurn(initialInput);
+    this.ui.clearLog();
+
+    if (initialInput) {
+      const logMsg = this.ui.getLogOpenedString();
+      this.ui.displayChatMessage('user', logMsg);
+      this.logOpened = true;
+      const formattedInput = this.ui.formatChatMessage('user', initialInput);
+      await this.processTurn(logMsg + '\n' + formattedInput);
+    }
 
     process.stdin.setEncoding('utf8');
     process.stdin.resume();
 
     while (!this.stopRequested) {
-      const input = await this.ui.requestInput();
+      let input = await this.ui.requestInput();
       
       if (!input) continue;
 
-      this.ui.displayChatMessage('user', input);
+      let messageForAI = '';
+      if (!this.logOpened) {
+        const logMsg = this.ui.getLogOpenedString();
+        this.ui.displayChatMessage('user', logMsg);
+        this.logOpened = true;
+        messageForAI = logMsg + '\n';
+      }
+
+      if (!input.startsWith('/me ')) {
+        this.ui.displayChatMessage('user', input);
+      }
+      messageForAI += this.ui.formatChatMessage('user', input);
 
       if (await this.commandHandler.handle(input)) {
         if (this.stopRequested) break;
@@ -67,7 +87,7 @@ export class ChatManager {
       }
 
       try {
-        await this.processTurn(input);
+        await this.processTurn(messageForAI);
       } catch (e) {
         this.ui.displayError('Critical error in processTurn: ' + e.message);
         console.error(e);
@@ -104,9 +124,9 @@ export class ChatManager {
         for (const call of toolCalls) {
           if (call.data) {
             consecutiveErrors = 0; 
-            const { response } = await this.engine.executeToolCall(call.data.name, call.data.args, { id: call.data.id });
-            if (call.data.name === 'setNickname' && response.startsWith('Nickname updated to: ')) {
-              this.ui.agentNickname = response.split(': ')[1];
+            const { response, result } = await this.engine.executeToolCall(call.data.name, call.data.args, { id: call.data.id });
+            if (call.data.name === 'setNickname' && typeof result === 'string' && result.startsWith('Nickname updated to: ')) {
+              this.ui.agentNickname = result.split(': ')[1];
             }
             toolResults.push(response);
           } else if (call.error) {
@@ -132,5 +152,33 @@ export class ChatManager {
 
   stopExecution() {
     this.stopRequested = true;
+  }
+
+
+  async compactHistory() {
+    try {
+      const fs = await import('fs/promises');
+      const logContent = await fs.readFile('session.log', 'utf8');
+      
+      if (!logContent || logContent.trim() === '') {
+        this.ui.displayError('No log file found to compact.');
+        return true;
+      }
+
+      const log = `--- Session History Compaction ---\n${logContent}\n--- End of Compaction ---`;
+
+      // Hard reset the assistant to clear context window
+      this.assistant.hardReset();
+
+      // Send the compacted log as the first user message
+      const prompt = `The following is a log of our previous conversation for context:\n\n${log}\n\nContinue from here.`;
+      await this.processTurn(prompt);
+      
+      this.ui.displayInfo('History compacted and context window reset.');
+      return true;
+    } catch (e) {
+      this.ui.displayError('Error during compaction: ' + e.message);
+      return true;
+    }
   }
 }

@@ -98,6 +98,7 @@ export class ExecutionEngine {
           callData.id,
           true
         ),
+        result: result,
         success: true,
       };
     } catch (e) {

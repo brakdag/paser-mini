@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import ora from 'ora';
+import fs from 'fs';
 
 export class TerminalUI {
   constructor(options = {}) {
@@ -7,6 +8,23 @@ export class TerminalUI {
     this.activeSpinners = new Map();
     this.uiMode = 'INSERT';
     this.agentNickname = 'paser_mini';
+  }
+
+
+  writeToLog(text) {
+    try {
+      fs.appendFileSync('session.log', text + '\n', 'utf8');
+    } catch (e) {
+      console.error(`[Log Error] ${e.message}`);
+    }
+  }
+
+  clearLog() {
+    try {
+      fs.writeFileSync('session.log', '', 'utf8');
+    } catch (e) {
+      console.error(`[Log Error] ${e.message}`);
+    }
   }
 
   setUiMode(mode) {
@@ -87,15 +105,33 @@ export class TerminalUI {
     return formatted;
   }
 
+  formatChatMessage(nickname, text, time = null) {
+    const t = time || new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    return `[${t}] <${nickname}> ${text}`;
+  }
+
   displayChatMessage(nickname, text) {
-    const now = new Date();
-    const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const formatted = this.formatChatMessage(nickname, text);
     const renderedText = this.formatMarkdown(text);
     
     const nameColor = nickname === this.agentNickname ? chalk.cyan : chalk.green;
-    const prefix = `[${time}] <${nameColor(nickname)}>`;
+    const prefix = formatted.split(' ')[0] + ' ' + `<${nameColor(nickname)}>`;
     
     process.stdout.write(`${prefix} ${renderedText}\n`);
+    this.writeToLog(formatted);
+  }
+
+  getLogOpenedString() {
+    const now = new Date();
+    const datePart = now.toDateString();
+    const timePart = now.toTimeString().split(' ')[0];
+    const [dayName, month, day, year] = datePart.split(' ');
+    return `--- Log opened ${dayName} ${month} ${day} ${timePart} ${year}`;
+  }
+
+  displayLogOpened() {
+    const logMsg = this.getLogOpenedString();
+    this.displayChatMessage('user', logMsg);
   }
 
   displayMessage(text) {
@@ -155,8 +191,13 @@ export class TerminalUI {
     const statusIcon = success ? '✓' : '✗';
     const statusColor = success ? chalk.green : chalk.red;
     const prefix = `[${time}] <${nameColor(this.agentNickname)}>`;
+    const finalMsg = `${prefix} * ${name} (${detail}) ${statusColor(statusIcon)}`;
     
-    console.log(`${prefix} * ${name} (${detail}) ${statusColor(statusIcon)}`);
+    console.log(finalMsg);
+    this.writeToLog(finalMsg.replace(/\x1b\[\d+m/g, '')); // Remove ANSI colors for log file
+    // Note: statusColor(statusIcon) contains ANSI, we need the plain text
+    const plainStatus = success ? '✓' : '✗';
+    this.writeToLog(`${prefix} * ${name} (${detail}) ${plainStatus}`);
 
     if (spinner) {
       this.activeSpinners.delete(name);
