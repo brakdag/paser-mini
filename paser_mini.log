@@ -1,26 +1,9 @@
---- Session Started: 2026-05-06T11:43:55.728Z ---
-[2026-05-06T11:43:57.685Z] [INFO] Initializing ChatManager.run 
-[2026-05-06T11:44:00.117Z] [INFO] Starting processTurn {"userInput":"--- Log opened Wed May 06 08:43:59 2026\n[08:44] <user> hola"}
-[2026-05-06T11:44:00.122Z] [DEBUG] Nvidia Auto-RPM: Adjusted limit to 119 based on tokens 
-[2026-05-06T11:44:01.667Z] [DEBUG] Received response from assistant {"responseLength":34}
-[2026-05-06T11:44:09.257Z] [INFO] Starting processTurn {"userInput":"[08:44] <user> como te llamas?"}
-[2026-05-06T11:44:09.261Z] [DEBUG] Nvidia Auto-RPM: Adjusted limit to 118 based on tokens 
-[2026-05-06T11:44:10.227Z] [DEBUG] Received response from assistant {"responseLength":50}
-[2026-05-06T11:44:21.602Z] [INFO] Starting processTurn {"userInput":"[08:44] <user> ponete un nick que te represente"}
-[2026-05-06T11:44:21.605Z] [DEBUG] Nvidia Auto-RPM: Adjusted limit to 117 based on tokens 
-[2026-05-06T11:44:23.078Z] [DEBUG] Received response from assistant {"responseLength":100}
-[2026-05-06T11:44:24.674Z] [DEBUG] Nvidia Auto-RPM: Adjusted limit to 114 based on tokens 
-[2026-05-06T11:44:46.354Z] [INFO] Starting processTurn {"userInput":"[08:44] <user> ahhh porque ese nick que significa?"}
-[2026-05-06T11:44:46.357Z] [DEBUG] Nvidia Auto-RPM: Adjusted limit to 113 based on tokens 
-[2026-05-06T11:44:47.972Z] [DEBUG] Received response from assistant {"responseLength":618}
-[2026-05-06T11:45:21.032Z] [INFO] Starting processTurn {"userInput":"[08:45] <gustavo> * changed the channel topic to: Destructores de la Friccion *"}
-[2026-05-06T11:45:21.036Z] [DEBUG] Nvidia Auto-RPM: Adjusted limit to 104 based on tokens 
-[2026-05-06T11:45:22.444Z] [DEBUG] Received response from assistant {"responseLength":194}
-[2026-05-06T11:45:46.204Z] [INFO] Starting processTurn {"userInput":"[08:45] <user> * esta pensativo *"}
-[2026-05-06T11:45:46.207Z] [DEBUG] Nvidia Auto-RPM: Adjusted limit to 102 based on tokens 
-[2026-05-06T11:45:48.565Z] [DEBUG] Received response from assistant {"responseLength":244}
-[2026-05-06T11:47:23.694Z] [INFO] Starting processTurn {"userInput":"[08:47] <user> queres revisar el proyecto?"}
-[2026-05-06T11:47:23.697Z] [DEBUG] Nvidia Auto-RPM: Adjusted limit to 99 based on tokens 
-[2026-05-06T11:47:24.714Z] [DEBUG] Received response from assistant {"responseLength":65}
-[2026-05-06T11:47:24.822Z] [DEBUG] Nvidia Auto-RPM: Adjusted limit to 51 based on tokens 
-[2026-05-06T11:47:24.823Z] [DEBUG] Nvidia Rate Limit: Waiting 0.05147058823529414s to maintain 51 RPM 
+--- Session Started: 2026-05-06T12:31:22.612Z ---
+[2026-05-06T12:31:24.553Z] [INFO] Initializing ChatManager.run 
+[2026-05-06T12:31:29.062Z] [DEBUG] Nvidia Auto-RPM: Adjusted limit to 250 based on tokens 
+[2026-05-06T12:31:58.876Z] [INFO] Starting processTurn {"userInput":"[09:31] <user> hola"}
+[2026-05-06T12:32:00.593Z] [DEBUG] Received response from assistant {"responseLength":34}
+[2026-05-06T12:32:25.439Z] [INFO] Starting processTurn {"userInput":"[09:32] <user> hola"}
+[2026-05-06T12:32:27.411Z] [DEBUG] Received response from assistant {"responseLength":33}
+[2026-05-06T12:32:35.790Z] [INFO] Starting processTurn {"userInput":"[09:32] <user> todo bien?"}
+[2026-05-06T12:32:37.510Z] [DEBUG] Received response from assistant {"responseLength":34}
