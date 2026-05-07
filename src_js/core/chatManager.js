@@ -67,7 +67,8 @@ export class ChatManager {
 
     if (initialInput) {
       const logMsg = this.ui.getLogOpenedString();
-      this.ui.displayChatMessage(this.ui.userNickname, logMsg);
+      this.ui.displayChatMessage('system', logMsg);
+      this.ui.displayChatMessage('system', '*** Session resumed from ./session_history.log');
       this.logOpened = true;
       this.assistant.injectMessage('server', logMsg);
       await this.processTurn(initialInput);
@@ -82,7 +83,8 @@ export class ChatManager {
 
       if (!this.logOpened) {
         const logMsg = this.ui.getLogOpenedString();
-        this.ui.displayChatMessage(this.ui.userNickname, logMsg);
+        this.ui.displayChatMessage('system', logMsg);
+        this.ui.displayChatMessage('system', '*** Session resumed from ./session_history.log');
         this.logOpened = true;
         this.assistant.injectMessage('server', logMsg);
       }

@@ -170,6 +170,8 @@ export class TerminalUI {
     this.writeToLog(`*** ${text}`);
   }
 
+
+
   displayPanel(title, message, style = 'none') {
     const border = '\u2500'.repeat(title.length + 4);
     const panelColor = style === 'warning' ? chalk.yellow : chalk.blue;
