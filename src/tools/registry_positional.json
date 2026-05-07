@@ -126,10 +126,7 @@
     "pushMemory",
     "Stores in memento.log. To reference MUST use the #ID format (e.g., #1)",
     {
-      "scope": "string",
-      "value": "string",
-      "key": "string",
-      "pointers": "list"
+      "value": "string"
     }
   ],
   [

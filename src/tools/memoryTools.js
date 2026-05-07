@@ -10,9 +10,9 @@ export const setMemoryContext = (assistant, chatManager) => {
   currentChatManager = chatManager;
 };
 
-export const pushMemory = async ({ role = 'agent', scope, value, key, pointers }) => {
+export const pushMemory = async (value) => {
   try {
-    return await memento.pushMemory(role, scope, value, key, pointers);
+    return await memento.pushMemory('agent', 'general', value);
   } catch (e) {
     return `ERR: ${e.message}`;
   }
