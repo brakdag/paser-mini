@@ -10,6 +10,9 @@ export class TerminalUI {
 
     this.agentNickname = 'paser_mini';
     this.userNickname = 'user';
+    this.inputQueue = [];
+    this.rl = null;
+    this.inputResolver = null;
   }
 
 
@@ -252,25 +255,36 @@ export class TerminalUI {
     process.stdout.write('\x1Bc');
   }
 
+  initInput() {
+    if (this.rl) return;
+    this.rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+      terminal: true
+    });
+
+    this.rl.on('line', (line) => {
+      const trimmed = line.trim();
+      if (trimmed) {
+        if (this.inputResolver) {
+          const resolve = this.inputResolver;
+          this.inputResolver = null;
+          resolve(trimmed);
+        } else {
+          this.inputQueue.push(trimmed);
+        }
+      }
+    });
+  }
+
   async requestInput(prompt = '\u276f ') {
+    if (this.inputQueue.length > 0) {
+      return this.inputQueue.shift();
+    }
+
     return new Promise((resolve) => {
-      const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
-        prompt: prompt,
-        terminal: true
-      });
-
-      rl.prompt();
-
-      rl.on('line', (line) => {
-        rl.close();
-        resolve(line.trim());
-      });
-
-      rl.on('close', () => {
-        // No manual setRawMode needed, readline handles it
-      });
+      this.inputResolver = resolve;
+      this.rl.prompt(prompt);
     });
   }
 

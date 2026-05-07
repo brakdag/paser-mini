@@ -28,4 +28,6 @@ config/config.json
 config/paser_memory.db
 .migration/
 session.log
+session_history.log
 last_request.json
+paser_mini.log

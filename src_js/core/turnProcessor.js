@@ -1,6 +1,15 @@
 import { LatexTranslator } from './latexTranslator.js';
 import { logger } from './logger.js';
 
+class UserInterruptException extends Error {
+  constructor(message = 'User interrupted the agent') {
+    super(message);
+    this.name = 'UserInterruptException';
+  }
+}
+
+const DESTRUCTIVE_TOOLS = ['removeFile', 'writeFile', 'replaceString', 'executeBash'];
+
 export class TurnProcessor {
   constructor(assistant, tools, parser, engine, ui, repetitionDetector) {
     this.assistant = assistant;
@@ -64,6 +73,18 @@ export class TurnProcessor {
         let toolResults = [];
         for (const call of toolCalls) {
           if (call.data) {
+            // Zero-Friction Intervention Check
+            const isDestructive = DESTRUCTIVE_TOOLS.includes(call.data.name);
+            if (this.ui.inputQueue && this.ui.inputQueue.length > 0) {
+              if (isDestructive) {
+                logger.info('Destructive tool interrupted by user input');
+                throw new UserInterruptException();
+              }
+              // For non-destructive tools, we can choose to interrupt or continue.
+              // To be truly responsive, we interrupt any turn if the user speaks.
+              throw new UserInterruptException();
+            }
+
             consecutiveErrors = 0; 
             const { response, result } = await this.engine.executeToolCall(call.data.name, call.data.args, { id: call.data.id });
             if (call.data.name === 'setNickname' && typeof result === 'string' && result.startsWith('*** ')) {

@@ -74,8 +74,9 @@ export class ChatManager {
       await this.processTurn(initialInput);
     }
 
-    process.stdin.setEncoding('utf8');
-    process.stdin.resume();
+    if (this.ui.initInput) {
+      this.ui.initInput();
+    }
 
     while (!this.stopRequested) {
       let input = await this.ui.requestInput();
@@ -100,8 +101,14 @@ export class ChatManager {
         // Proactive Context Management
         await this.checkAndManageContext();
       } catch (e) {
-        this.ui.displayError('Critical error in processTurn: ' + e.message);
-        console.error(e);
+        if (e.name === 'UserInterruptException') {
+          logger.info('Turn interrupted by user input');
+          // The interrupted input is already in the queue and will be picked up by the next loop iteration
+          this.ui.displayInfo('Agent interrupted. Processing new request...');
+        } else {
+          this.ui.displayError('Critical error in processTurn: ' + e.message);
+          console.error(e);
+        }
       }
     }
   }
