@@ -4,7 +4,7 @@ This document serves as the definitive reference for the tools available to the 
 
 ### 📁 File System & Navigation
 
-- **Reading**: `readFile` (content), `listDir` (contents), `getTree` (visual project structure).
+- **Reading**: `readFile` (content), `listDir` (contents), `getTrackedFiles` (visual project structure).
 - **Writing/Editing**: `writeFile` (full rewrite), `replaceString` (surgical search/replace), `concatFile` (append source to destination).
 - **Management**: `removeFile` (delete), `renamePath` (move/rename), `copyFile` (duplicate), `restoreFile` (git restore).
 

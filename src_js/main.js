@@ -77,6 +77,7 @@ async function main() {
   
   chatManager.configManager = configManager;
 
+  memoryTools.setMemoryContext(assistant, chatManager);
   await chatManager.run(options.message);
 }
 

@@ -1,0 +1,17 @@
+{
+  "project": "Paser Mini",
+  "version": 2,
+  "features": [
+    "File System",
+    "JSON Manipulation",
+    "Git Integration"
+  ],
+  "metadata": {
+    "author": "brakdag",
+    "status": "active",
+    "tags": {
+      "priority": "high",
+      "type": "core"
+    }
+  }
+}

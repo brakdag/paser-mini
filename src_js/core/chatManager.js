@@ -5,6 +5,9 @@ import { RepetitionDetector } from './repetitionDetector.js';
 import { LatexTranslator } from './latexTranslator.js';
 import { logger } from './logger.js';
 import { ConfigManager } from './configManager.js';
+import { TurnProcessor } from './turnProcessor.js';
+import { HistoryManager } from './historyManager.js';
+import * as memoryTools from '../tools/memoryTools.js';
 
 export class ChatManager {
   constructor(assistant, tools, systemInstruction, ui, instanceMode = false) {
@@ -19,10 +22,9 @@ export class ChatManager {
     this.temperature = parseFloat(this.configManager.get('default_temperature', 0.7));
     this.contextWindowLimit = parseInt(this.configManager.get('context_window_limit', 250000));
     this.tpmLimit = parseInt(this.configManager.get('tpm_limit', 15000));
-    this.ui = ui;
+    
     this.ui.bashEnabled = false;
     this.currentChannel = '#main';
-    this.ui.bashEnabled = false;
     this.timestampsEnabled = this.configManager.get('timestamps_enabled', false);
     this.safemode = this.configManager.get('safemode', false);
     
@@ -31,11 +33,15 @@ export class ChatManager {
     this.commandHandler = new CommandHandler(this, ui);
     this.repetitionDetector = new RepetitionDetector();
     
-        // Load agent nickname from config
-        const agentNickname = this.configManager.get('agent_nickname', 'paser_mini');
-        this.ui.agentNickname = agentNickname;
-        const userNickname = this.configManager.get('user_nickname', 'user');
-        this.ui.userNickname = userNickname;
+    // New Specialized Modules
+    this.turnProcessor = new TurnProcessor(assistant, tools, this.parser, this.engine, ui, this.repetitionDetector);
+    this.historyManager = new HistoryManager(assistant, ui, this.configManager);
+
+    // Load agent nickname from config
+    const agentNickname = this.configManager.get('agent_nickname', 'paser_mini');
+    this.ui.agentNickname = agentNickname;
+    const userNickname = this.configManager.get('user_nickname', 'user');
+    this.ui.userNickname = userNickname;
     
     this.stopRequested = false;
     this.logOpened = false;
@@ -61,11 +67,7 @@ export class ChatManager {
       const logMsg = this.ui.getLogOpenedString();
       this.ui.displayChatMessage(this.ui.userNickname, logMsg);
       this.logOpened = true;
-      
-      // Inyectamos el log de apertura como mensaje de servidor para evitar prefijos de usuario
       this.assistant.injectMessage('server', logMsg);
-      
-      // Enviamos el input inicial raw
       await this.processTurn(initialInput);
     }
 
@@ -74,16 +76,12 @@ export class ChatManager {
 
     while (!this.stopRequested) {
       let input = await this.ui.requestInput();
-      
-
-      
       if (!input) continue;
 
       if (!this.logOpened) {
         const logMsg = this.ui.getLogOpenedString();
         this.ui.displayChatMessage(this.ui.userNickname, logMsg);
         this.logOpened = true;
-        // El log de apertura es un evento de sistema, no un mensaje de usuario
         this.assistant.injectMessage('server', logMsg);
       }
 
@@ -93,9 +91,9 @@ export class ChatManager {
       }
 
       try {
-        // Eliminamos el eco del input para evitar duplicación visual en la terminal
-        // Enviamos solo el input puro. El adaptador se encarga del formato IRC.
         await this.processTurn(input);
+        // Proactive Context Management
+        await this.checkAndManageContext();
       } catch (e) {
         this.ui.displayError('Critical error in processTurn: ' + e.message);
         console.error(e);
@@ -104,105 +102,34 @@ export class ChatManager {
   }
 
   async processTurn(userInput) {
-    if (!userInput) return;
+    return await this.turnProcessor.process(userInput);
+  }
 
-    
-    logger.info('Starting processTurn', { userInput });
-    let currentResponse = await this.assistant.sendMessage(userInput);
-    logger.debug('Received response from assistant', { responseLength: currentResponse?.length });
-    
-    let turnComplete = false;
-    let iterations = 0;
-    const maxIterations = 10;
-    let consecutiveErrors = 0;
-
-    while (!turnComplete && iterations < maxIterations) {
-      iterations++;
-      const repetitionCheck = this.repetitionDetector.addText(currentResponse);
-      if (repetitionCheck !== true) {
-        this.ui.displayError('Repetition detected: ' + repetitionCheck);
-        currentResponse = 'ERR: Repetition detected. Please rephrase your response.';
-      }
-
-      const toolCalls = this.parser.extractToolCalls(currentResponse);
-
-      // UX: Separate reasoning (thought) from action
-      const firstCallIndex = currentResponse.search(/<(?:TOOL_CALL|tool_call)\s*>/i);
-      if (firstCallIndex !== -1) {
-        const thought = currentResponse.substring(0, firstCallIndex);
-        if (thought.trim()) {
-          this.ui.displayThought(thought.trim());
-        }
-      }
-
-      if (toolCalls.length === 0 || toolCalls.every(tc => tc.error)) {
-        turnComplete = true;
-      } else {
-        let toolResults = [];
-        for (const call of toolCalls) {
-          if (call.data) {
-            consecutiveErrors = 0; 
-            const { response, result } = await this.engine.executeToolCall(call.data.name, call.data.args, { id: call.data.id });
-            if (call.data.name === 'setNickname' && typeof result === 'string' && result.startsWith('*** ')) {
-              const match = result.match(/is now known as\s+(.+)$/);
-              if (match) {
-                this.ui.agentNickname = match[1];
-              }
-            }
-            toolResults.push(response);
-          } else if (call.error) {
-            consecutiveErrors++;
-            toolResults.push(`<TOOL_RESPONSE>ERR: ${call.error}</TOOL_RESPONSE>`);
-          }
-        }
-
-        if (consecutiveErrors >= 3) {
-          turnComplete = true;
-          currentResponse = 'CRITICAL ERROR: Too many consecutive JSON validation failures. Stop using tools and explain your intent in plain text.';
-          break;
-        }
-        currentResponse = await this.assistant.sendMessage(toolResults.join('\n'), 'user');
+  async checkAndManageContext() {
+    const tokenStatus = await memoryTools.getTokenCount();
+    // Parsing the estimation string: "Current tokens (est.): 100 / 250000 (0.04%)"
+    const match = tokenStatus.match(/\((\d+\.?\d*)%\)/);
+    if (match) {
+      const percentage = parseFloat(match[1]);
+      if (percentage > 80) {
+        logger.info('Context threshold reached. Triggering proactive compaction.', { percentage });
+        await this.compactHistory();
       }
     }
+  }
 
-    if (iterations >= maxIterations) this.ui.displayError('Maximum tool iterations reached.');
-
-    const cleanedResponse = this.parser.cleanResponse(currentResponse);
-    const finalResponse = LatexTranslator.translate(cleanedResponse);
-    if (finalResponse.trim()) {
-      this.ui.displayChatMessage(this.ui.agentNickname, finalResponse);
+  async compactHistory() {
+    const compactionData = await this.historyManager.prepareCompaction();
+    if (compactionData) {
+      this.assistant.hardReset();
+      await this.processTurn(compactionData.prompt);
+      this.ui.displayInfo('Context window reset via proactive compaction.');
+      return true;
     }
+    return false;
   }
 
   stopExecution() {
     this.stopRequested = true;
-  }
-
-
-  async compactHistory() {
-    try {
-      const fs = await import('fs/promises');
-      const logContent = await fs.readFile('session.log', 'utf8');
-      
-      if (!logContent || logContent.trim() === '') {
-        this.ui.displayError('No log file found to compact.');
-        return true;
-      }
-
-      const log = `--- Session History Compaction ---\n${logContent}\n--- End of Compaction ---`;
-
-      // Hard reset the assistant to clear context window
-      this.assistant.hardReset();
-
-      // Send the compacted log as the first user message
-      const prompt = `The following is a log of our previous conversation for context:\n\n${log}\n\nContinue from here.`;
-      await this.processTurn(prompt);
-      
-      this.ui.displayInfo('History compacted and context window reset.');
-      return true;
-    } catch (e) {
-      this.ui.displayError('Error during compaction: ' + e.message);
-      return true;
-    }
   }
 }

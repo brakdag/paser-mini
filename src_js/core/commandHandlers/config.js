@@ -1,5 +1,9 @@
+import * as memoryTools from '../../tools/memoryTools.js';
+
 export class ConfigCommands {
-  static handleConfig(chatManager, ui) {
+  static async handleConfig(chatManager, ui) {
+    const tokenUsage = await memoryTools.getTokenCount();
+
     const configInfo = 
       `| Setting | Value |\n` +
       `| :--- | :--- |\n` +
@@ -10,7 +14,8 @@ export class ConfigCommands {
       `| RPM Limit | ${chatManager.configManager.get('rpm_limit', 'N/A')} |\n` +
       `| Instance Timeout | ${chatManager.configManager.get('instance_timeout', 300)}s |\n` +
       `| Sandbox Mode | ${chatManager.configManager.get('sandbox_mode', false) ? 'ENABLED' : 'DISABLED'} |\n` +
-      `| Safe Mode | ${chatManager.configManager.get('safemode', false) ? 'ENABLED' : 'DISABLED'} |`;
+      `| Safe Mode | ${chatManager.configManager.get('safemode', false) ? 'ENABLED' : 'DISABLED'} |\n` +
+      `| Token Usage | ${tokenUsage} |`;
 
     ui.displayMessage('--- Current Configuration ---\n' + configInfo);
     return true;

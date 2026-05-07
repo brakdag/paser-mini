@@ -28,15 +28,20 @@ export const pullMemory = async ({ scope, key, direction }) => {
 
 export const getTokenCount = async () => {
   try {
-    if (!currentAssistant) {
-      return 'ERR: Assistant not initialized in memory tools.';
+    if (!currentAssistant || !currentChatManager) {
+      return 'ERR: Memory context not initialized.';
     }
 
-    const count = await currentAssistant.countTokens(currentAssistant.history);
-    const limit = currentChatManager?.contextWindowLimit || 250000;
+    // Local fast estimation: character count / 4 (matches RPD-saving strategy)
+    const historyData = typeof currentAssistant.history === 'string' 
+      ? currentAssistant.history 
+      : JSON.stringify(currentAssistant.history || []);
+    
+    const count = Math.ceil(historyData.length / 4);
+    const limit = currentChatManager.contextWindowLimit || 250000;
 
     const percentage = (count / limit) * 100;
-    return `Current tokens: ${count} / ${limit} (${percentage.toFixed(2)}%)`;
+    return `Current tokens (est.): ${count} / ${limit} (${percentage.toFixed(2)}%)`;
   } catch (e) {
     return `ERR: ${e.message}`;
   }

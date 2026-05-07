@@ -125,7 +125,7 @@ export const copyFile = async ({ origin, destination }) => {
   }
 };
 
-export const getTree = async () => {
+export const getTrackedFiles = async () => {
   try {
     const { stdout } = await execPromise('git ls-files | head -n 100', { timeout: 30000 });
     return stdout || 'No files found in git index.';

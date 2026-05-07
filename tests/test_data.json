@@ -1,0 +1,17 @@
+{
+  "project": "Paser Mini",
+  "version": "1.1.0",
+  "settings": {
+    "debug": true,
+    "timeout": 30
+  },
+  "tags": [
+    "AI",
+    "UX",
+    "Agent"
+  ],
+  "metadata": {
+    "author": "Brakdag",
+    "created": "2026-05-07"
+  }
+}

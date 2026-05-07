@@ -1,4 +1,18 @@
 import axios from 'axios';
+import axiosRetry from 'axios-retry';
+
+axiosRetry(axios, {
+  retries: 5,
+  retryDelay: axiosRetry.exponentialDelay,
+  retryCondition: (error) => {
+    const status = error.response?.status;
+    const recoverableStatuses = [429, 500, 502, 503, 504];
+    return axiosRetry.isNetworkOrIdempotentRequestError(error) || recoverableStatuses.includes(status);
+  },
+  onRetry: (retryCount, error, requestConfig) => {
+    console.log(`[${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}] -!- [GeminiAdapter] API Retry ${retryCount}/5 due to: ${error.response?.status || error.message}`);
+  }
+});
 
 export class GeminiAdapter {
   constructor(userNickname = 'user', agentNickname = 'assistant') {
