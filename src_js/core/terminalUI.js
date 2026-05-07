@@ -210,6 +210,13 @@ export class TerminalUI {
     this.activeSpinners.set(name, spinner);
   }
 
+  updateMonitoring(name, text) {
+    const spinner = this.activeSpinners.get(name);
+    if (spinner) {
+      spinner.text = text;
+    }
+  }
+
   endToolMonitoring(name, success, detail) {
     const spinner = this.activeSpinners.get(name);
     if (spinner) {

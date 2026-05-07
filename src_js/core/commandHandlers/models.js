@@ -38,4 +38,36 @@ export class ModelCommands {
     }
     return true;
   }
+
+  static async handleModelsCheck(chatManager, ui, parts) {
+    if (typeof chatManager.assistant.checkAvailability !== 'function') {
+      ui.displayError('Model check is only available for NVIDIA provider.');
+      return true;
+    }
+
+    const models = await chatManager.assistant.getAvailableModels();
+    if (models.length === 0) {
+      ui.displayError('No models found to check.');
+      return true;
+    }
+
+    const unavailable = [];
+    ui.startToolMonitoring('Model Scan', 'Initializing...');
+
+    for (let i = 0; i < models.length; i++) {
+      const model = models[i];
+      ui.updateMonitoring('Model Scan', `Checking ${i + 1}/${models.length}: ${model}`);
+      
+      const isAvailable = await chatManager.assistant.checkAvailability(model);
+      if (!isAvailable) {
+        unavailable.push(model);
+      }
+    }
+
+    chatManager.configManager.save('unavailable_models', unavailable);
+    ui.endToolMonitoring('Model Scan', true, `Scan complete. ${unavailable.length} models unavailable.`);
+    ui.displayInfo(`Diagnostic finished. Updated unavailable_models list (${unavailable.length} entries).`);
+    
+    return true;
+  }
 }
