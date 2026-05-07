@@ -34,7 +34,7 @@ Use this tool to save insights that must survive a context wipe.
 
 Rank is the organic measure of a memory's value. Instead of a predefined hierarchy, importance is emergent:
 1. **Creation**: Every memory starts at `Rank: 0`.
-2. **Referencing**: When an entry is cited in a new memory, its Rank increases. To reference a memory and trigger a rank increment, you MUST use an HTML anchor tag in the `value` field: `<a href="#ID">Reference Text</a>` (e.g., `<a href="#1">The core mission</a>`).
+2. **Referencing**: When an entry is cited in a new memory, its Rank increases. To reference a memory and trigger a rank increment, you MUST use the #ID format in the `value` field (e.g., #1).
 3. **Visibility**: High-rank entries are the "North Stars" of the project, representing the most validated and frequently used truths.
 
 ## 🔴 Navigation Summary

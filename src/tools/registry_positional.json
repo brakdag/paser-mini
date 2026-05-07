@@ -124,7 +124,7 @@
   ],
   [
     "pushMemory",
-    "Stores in memento.log. To reference MUST use an HTML/a anchor tag in the value ej:href=#1",
+    "Stores in memento.log. To reference MUST use the #ID format (e.g., #1)",
     {
       "scope": "string",
       "value": "string",
