@@ -4,7 +4,7 @@ This document provides the definitive map of the Paser Mini codebase. The projec
 
 ```text
 .
-├── src_js/                       # Source code root (JavaScript)
+├── src/                       # Source code root (JavaScript)
 │   ├── main.js                # Application entry point
 │   ├── core/                  # The "Brain": ReAct engine & state management
 │   │   ├── chatManager.js    # Message queue & session orchestration

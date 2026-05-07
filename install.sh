@@ -48,7 +48,7 @@ PROJECT_ROOT=\$(cd "\$SCRIPT_DIR/.." && pwd)
 # Change directory to project root so that process.cwd() is correct
 cd "\$PROJECT_ROOT"
 
-node src_js/main.js "\$@"
+node src/main.js "\$@"
 EOF
 
 chmod +x "$PROJECT_ROOT/bin/paser-mini"

@@ -2,10 +2,10 @@
   "name": "paser-mini-js",
   "version": "0.1.0",
   "description": "Updated description via test",
-  "main": "src_js/main.js",
+  "main": "src/main.js",
   "type": "module",
   "scripts": {
-    "start": "node src_js/main.js"
+    "start": "node src/main.js"
   },
   "dependencies": {
     "zod": "^3.22.0",
