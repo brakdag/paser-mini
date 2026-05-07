@@ -10,8 +10,10 @@ export const setMemoryContext = (assistant, chatManager) => {
   currentChatManager = chatManager;
 };
 
-export const pushMemory = async (value) => {
+export const pushMemory = async (args) => {
   try {
+    const value = typeof args === 'string' ? args : args.value;
+    if (!value) return 'ERR: No value provided for memory.';
     return await memento.pushMemory('agent', 'general', value);
   } catch (e) {
     return `ERR: ${e.message}`;
