@@ -1,10 +1,11 @@
---- Session Started: 2026-05-07T11:11:33.071Z ---
-[2026-05-07T11:11:33.972Z] [INFO] Initializing ChatManager.run 
-[2026-05-07T11:11:48.816Z] [INFO] Starting processTurn {"userInput":"hola venimos de acá ./session_history.log"}
-[2026-05-07T11:11:52.421Z] [DEBUG] Received response from assistant {"responseLength":95}
-[2026-05-07T11:14:08.445Z] [INFO] Starting processTurn {"userInput":"No recuerdo como se ponían los encabezados en IRC, para indicar tema del día o fijar para que cada vez que comencemos un chat el mismo sistema informe que venimos de ./session_history.log, asi no lo tengo que poner yo."}
-[2026-05-07T11:14:39.509Z] [DEBUG] Received response from assistant {"responseLength":3603}
-[2026-05-07T11:17:06.482Z] [INFO] Starting processTurn {"userInput":"claro, que no sería el topic, pero se que se fijaban temas que tenian *** o sea el op ponia coasas apenas uno se unia a un #canal"}
-[2026-05-07T11:18:10.707Z] [DEBUG] Received response from assistant {"responseLength":7722}
-[2026-05-07T11:20:25.983Z] [INFO] Starting processTurn {"userInput":"debería verse esto [08:11] --- Log opened Thu May 07 08:11:48 2026 y a continuación eso otro pero tambien con el tiempo"}
-[2026-05-07T11:21:49.233Z] [DEBUG] Received response from assistant {"responseLength":9379}
+--- Session Started: 2026-05-07T11:44:51.248Z ---
+[2026-05-07T11:44:53.187Z] [INFO] Initializing ChatManager.run 
+[2026-05-07T11:45:20.234Z] [INFO] Starting processTurn {"userInput":"y ahora podrías probar readFile con tail, para leer el historial de la session anterior."}
+[2026-05-07T11:45:28.778Z] [DEBUG] Received response from assistant {"responseLength":74}
+[2026-05-07T11:46:55.528Z] [INFO] Starting processTurn {"userInput":"teníamos algun issue abierto?"}
+[2026-05-07T11:46:58.941Z] [DEBUG] Received response from assistant {"responseLength":70}
+[2026-05-07T11:47:48.926Z] [INFO] Starting processTurn {"userInput":"dale"}
+[2026-05-07T11:48:03.244Z] [DEBUG] Received response from assistant {"responseLength":1019}
+[2026-05-07T11:51:40.051Z] [INFO] Starting processTurn {"userInput":"dale, cerralo, y tambien revisá porque no queda grabado en el log lo que yo escribo."}
+[2026-05-07T11:52:01.995Z] [DEBUG] Received response from assistant {"responseLength":2115}
+[2026-05-07T11:52:47.802Z] [INFO] Starting processTurn {"userInput":"tampoco quedan grabados en el log los eventos del sistema."}

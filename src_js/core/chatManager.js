@@ -95,6 +95,7 @@ export class ChatManager {
       }
 
       try {
+        this.ui.displayChatMessage(this.ui.userNickname, input);
         await this.processTurn(input);
         // Proactive Context Management
         await this.checkAndManageContext();

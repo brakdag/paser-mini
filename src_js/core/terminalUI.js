@@ -119,7 +119,7 @@ export class TerminalUI {
     const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
     // Respect IRC aesthetics: system events do not have nicknames
-    if (trimmedText.startsWith('---') || trimmedText.startsWith('***')) {
+    if (trimmedText.startsWith('---') || trimmedText.startsWith('***') || trimmedText.startsWith('-!-')) {
       const formatted = `[${time}] ${trimmedText}`;
       process.stdout.write(`${chalk.white(`[${time}]`)} ${renderedText}\n`);
       this.writeToLog(formatted);

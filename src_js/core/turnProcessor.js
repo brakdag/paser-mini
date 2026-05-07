@@ -31,6 +31,7 @@ export class TurnProcessor {
       iterations++;
       const repetitionCheck = this.repetitionDetector.addText(currentResponse);
       if (repetitionCheck !== true) {
+        this.ui.displayChatMessage('system', `-!- [RepetitionDetector] Repetition detected: ${repetitionCheck}`);
         this.ui.displayError('Repetition detected: ' + repetitionCheck);
         currentResponse = 'ERR: Repetition detected. Please rephrase your response.';
       }

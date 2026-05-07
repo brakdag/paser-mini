@@ -1,9 +1,10 @@
 [
   [
     "readFile",
-    "Read file content",
+    "Read file content. Use 'tail' to read only the last N lines (bypasses size limit).",
     {
-      "path": "string"
+      "path": "string",
+      "tail": "number"
     }
   ],
   [

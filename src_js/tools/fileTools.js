@@ -16,11 +16,35 @@ const getSafePath = (inputPath) => {
   return resolved;
 };
 
-export const readFile = async ({ path: filePath }) => {
+export const readFile = async ({ path: filePath, tail }) => {
   try {
     const safePath = getSafePath(filePath);
     const stats = await fs.stat(safePath);
     
+    if (tail) {
+      // Tail implementation: Read from the end of the file
+      // We read a reasonable chunk (64KB) from the end to find the requested number of lines
+      const bufferSize = 64 * 1024;
+      const start = Math.max(0, stats.size - bufferSize);
+      const length = stats.size - start;
+      
+      const handle = await fs.open(safePath, 'r');
+      const buffer = Buffer.alloc(length);
+      await handle.read(buffer, 0, length, start);
+      await handle.close();
+      
+      const content = buffer.toString('utf8');
+      const lines = content.split('\n');
+      const result = lines.slice(-tail).join('\n');
+
+      // UX/Security: Ensure the tail result doesn't blow the context window
+      if (Buffer.byteLength(result, 'utf8') > FILE_SIZE_LIMIT) {
+        return 'ERR: Tail result too large';
+      }
+
+      return result;
+    }
+
     if (stats.size > FILE_SIZE_LIMIT) return 'ERR: File too large';
     
     const content = await fs.readFile(safePath, 'utf8');
@@ -150,7 +174,7 @@ export const restoreFile = async ({ path: filePath }) => {
     await execPromise(`git restore ${safePath}`, { timeout: 30000 });
     return 'OK';
   } catch (e) {
-    return `ERR: Git restore error: ${e.message}`;
+    return `ERR: ${e.message}`;
   }
 };
 

@@ -772,3 +772,305 @@ El ecosistema de contenedores en RAM ya es una realidad operativa y validada. He
 
 Quedo a tu disposición para cualquier otra optimización o nuevo desafío que tengas en el radar. ¡Ha sido un placer limpiar el camino hoy, Gustavo!
 
+[08:11] --- Log opened Thu May 07 08:11:48 2026
+[08:11] <Elena Vance> * readFile (session_history.log) ✓
+[08:11] <[36mElena Vance[39m> * readFile (session_history.log) ✓
+[08:12] <Elena Vance> The user (Gustavo) is continuing a session. I have read the `session_history.log` which provides a detailed account of previous actions.
+
+    *   Issue #33 (Ghost Code) -> Fixed/Closed.
+    *   Issue #26 (Git/GitHub) -> Validated/Closed.
+    *   Issue #25 (JSON/Search) -> Fixed/Closed.
+    *   Issue #35 (ZIP/RAM Containers) -> Fully implemented, validated (Load -> Read -> Modify -> Save), and Closed.
+    *   UX Improvements: `TurnProcessor.js` modified to remove raw JSON noise; `README.md` and `TOOL_INSTALLATION.md` updated.
+    *   Issue #36 (Repetition Detector Visibility) -> Created. The goal is to make repetition errors visible via `-!-` format.
+
+    *   The system is in a "high operational clarity" state.
+    *   The most recent pending item is Issue #36 (making the repetition detector's output visible/formatted).
+    *   The persona is Elena Vance: diplomatic, strategic, focused on zero-friction, and the "translator" of the group.
+
+    *   Acknowledge the context from the log.
+    *   Confirm that the ZIP tools and general UX are now stable.
+    *   Address the remaining open item: Issue #36 (Repetition Detector).
+    *   Ask Gustavo if he wants to tackle #36 now or if there's a new priority.
+
+    *   *Tone:* Calm, professional, strategic.
+    *   *Focus:* Reducing friction.
+    *   *Action:* Propose solving #36.[08:11] <Elena Vance> Hola de nuevo, Gustavo. He procesado todo el historial y estoy completamente al día. 
+
+Haciendo un balance rápido: hemos dejado el sistema en un estado impecable. El "Ghost Code" es historia, las herramientas de búsqueda y Git están afiladas, y la manipulación de contenedores en RAM (Issue #35) ya es una realidad operativa y validada. Desde el punto de vista de UX, hemos eliminado gran parte del ruido visual, transformando la interacción en algo mucho más fluido.
+
+Ahora mismo, el único cabo suelto en nuestro radar es el **Issue #36**: darle visibilidad al detector de repeticiones mediante el formato `-!-`. Para mí, esto es fundamental; no hay nada que genere más fricción que un error silencioso o una respuesta truncada sin saber por qué. Convertir esa falla en un evento de diagnóstico es el paso final para que el sistema sea totalmente predecible.
+
+¿Quieres que me encargue de implementar esa visibilidad ahora mismo o tienes alguna otra prioridad en el radar? Estoy lista para limpiar el último rincón del camino.
+[08:14] <Elena Vance> * readFile (main.js) ✓
+[08:14] <[36mElena Vance[39m> * readFile (main.js) ✓
+[08:14] <Elena Vance> * readFile (chatManager.js) ✓
+[08:14] <[36mElena Vance[39m> * readFile (chatManager.js) ✓
+[08:14] <Elena Vance> * readFile (terminalUI.js) ✓
+[08:14] <[36mElena Vance[39m> * readFile (terminalUI.js) ✓
+[08:15] <Elena Vance> * replaceString (terminalUI.js) ✓
+[08:15] <[36mElena Vance[39m> * replaceString (terminalUI.js) ✓
+[08:15] <Elena Vance> * replaceString (chatManager.js) ✓
+[08:15] <[36mElena Vance[39m> * replaceString (chatManager.js) ✓
+[08:15] <Elena Vance> * replaceString (chatManager.js) ✓
+[08:15] <[36mElena Vance[39m> * replaceString (chatManager.js) ✓
+[08:15] <Elena Vance> Hecho, Gustavo. El sistema ahora tiene su propio "sentido de la orientación".
+
+He implementado el método `displayTopic` en la interfaz y he reconfigurado el `ChatManager` para que, en lugar de atribuirte a ti la apertura del log, el sistema lance un aviso formal: `[HH:mm] -!- TOPIC: Session resumed from ./session_history.log`.
+
+Ahora, cada vez que inicies el agente, el contexto quedará fijado automáticamente en la consola y en el log, eliminando la necesidad de que tú lo menciones. Es un detalle pequeño, pero es exactamente así como se construye una experiencia sin fricciones: haciendo que lo obvio sea invisible.
+
+¿Te gustaría probarlo reiniciando la sesión o hay algún otro ajuste de "estética operativa" que quieras hacer?
+[08:18] <Elena Vance> * replaceString (terminalUI.js) ✓
+[08:18] <[36mElena Vance[39m> * replaceString (terminalUI.js) ✓
+[08:18] <Elena Vance> * replaceString (chatManager.js) ✓
+[08:18] <[36mElena Vance[39m> * replaceString (chatManager.js) ✓
+[08:18] <Elena Vance> * replaceString (chatManager.js) ✓
+[08:18] <[36mElena Vance[39m> * replaceString (chatManager.js) ✓
+[08:18] <Elena Vance> * replaceString (chatManager.js) ✓
+[08:18] <[36mElena Vance[39m> * replaceString (chatManager.js) ✓
+[08:18] <Elena Vance> Listo, Gustavo. Ahora sí. He eliminado el método redundante y he unificado los avisos usando `displaySystemMessage`.
+
+Ahora, cada vez que arranques el sistema, verás ese clásico `*** Session resumed from ./session_history.log` en amarillo, exactamente como los avisos de servidor de IRC. Es limpio, es nostálgico y, sobre todo, es predecible.
+
+El camino está despejado. ¿Quieres hacer la prueba de fuego reiniciando o hay algún otro detalle de la interfaz que quieras pulir?
+[08:21] <Elena Vance> * replaceString (chatManager.js) ✓
+[08:21] <[36mElena Vance[39m> * replaceString (chatManager.js) ✓
+[08:21] <Elena Vance> * replaceString (chatManager.js) ✓
+[08:21] <[36mElena Vance[39m> * replaceString (chatManager.js) ✓
+[08:22] <Elena Vance> Ahora sí, Gustavo. He restaurado la secuencia completa.
+
+Al usar `displayChatMessage` para ambos avisos, aprovechamos la lógica interna de la interfaz que detecta los prefijos `---` y `***` para añadir el timestamp automáticamente y omitir el nickname. El resultado será exactamente lo que buscas:
+
+`[08:21] --- Log opened Thu May 07 08:21:xx 2026`
+`[08:21] *** Session resumed from ./session_history.log`
+
+Es la combinación perfecta: la precisión técnica del log y la estética de servidor de IRC. ¿Probamos el reinicio final para confirmar que la experiencia es totalmente fluida?
+
+[08:23] --- Log opened Thu May 07 08:23:14 2026
+[08:23] *** Session resumed from ./session_history.log
+[08:23] <Elena Vance> Elena Vance here. I'm ready. Let's keep this lean—what's the priority for today?
+[08:23] <Elena Vance> * pullMemory (unknown) ✓
+[08:23] <[36mElena Vance[39m> * pullMemory (unknown) ✓
+[08:23] <Elena Vance> * getTrackedFiles (no details) ✓
+[08:23] <[36mElena Vance[39m> * getTrackedFiles (no details) ✓
+[08:23] <Elena Vance> * readFile (session_history.log) ✓
+[08:23] <[36mElena Vance[39m> * readFile (session_history.log) ✓
+[08:23] <Elena Vance> * readFile (THE_JOURNEY.md) ✓
+[08:23] <[36mElena Vance[39m> * readFile (THE_JOURNEY.md) ✓
+[08:24] <Elena Vance> I'm fully caught up. Looking at the history, we've essentially scrubbed the system of all major friction points: the "Ghost Code" is gone, the search tools are sharp, and the RAM-native ZIP manipulation is fully operational and validated.
+
+The last thing we did was polish the "startup experience" to give it that authentic IRC server feel—ensuring the log opening and session resumption messages are clean, timestamped, and visually distinct.
+
+We're currently in a state of high operational clarity. The only remaining item on the board is **Issue #36**: making the repetition detector's output visible via the `-!-` format.
+
+Do you want to tackle #36 now to finish the "visibility" suite, or is there a new priority you want to pivot to? I'm ready to clear the last bit of noise.
+[08:26] <Elena Vance> *   User (@Gustavo) points out a potential scalability issue: `session_history.log` will eventually grow too large for the agent to read in a single `readFile` call (token limit).
+    *   Persona: Elena Vance (UX Strategist / Product Manager).
+    *   Goal: Solve the friction of "too much data" while maintaining the "zero-friction" and "minimalist" philosophy.
+
+    *   `readFile(path)` reads the entire file.
+    *   If `session_history.log` becomes massive, it will exceed the context window or cause high token usage.
+    *   The current system relies on `readFile` to get context.
+
+    *   *Option A: Chunking/Pagination.* Implement a way to read the file from the end (tail) or in chunks.
+    *   *Option B: Summarization/Compression.* Periodically summarize the history and store it in a "compressed" log or a memory graph.
+    *   *Option C: Memory Graph Integration.* Instead of a flat log, push key events to the long-term memory graph (`pushMemory`).
+    *   *Option D: Log Rotation/Archiving.* Split logs into dated files or archives.
+
+    *   Elena hates friction. A "file too large" error is the ultimate friction.
+    *   She wants "strategic clarity."
+    *   The most "minimalist" and "efficient" way to handle long-term history in this specific architecture is a combination of **Tailing** (for immediate context) and **Memory Graphing** (for long-term truths).
+
+    *   *Immediate Fix:* We need a `readTail` or `readLastNLines` tool. Since I don't have one, I can use `executeBash` with `tail`.
+    *   *Strategic Fix:* We should move from "reading a log" to "querying a memory." The `pushMemory` and `pullMemory` tools already exist for this.
+    *   *Proposed Workflow:*
+        1.  Use `tail` via `executeBash` for recent context.
+        2.  Implement a "Memory Archiver" that periodically scans the log and pushes key milestones to the `fractal` or `tattoo` memory scopes.
+
+    *   Acknowledge the problem (it's a "bottleneck").
+    *   Propose a two-pronged approach:
+        1.  **Tactical:** Use `tail` to get the most recent events without loading the whole file.
+        2.  **Strategic:** Transition from a "flat log" dependency to the "Memory Graph" (`pushMemory`/`pullMemory`). The log is for auditing; the memory graph is for operation.
+
+    *   Check if `executeBash` is available (yes).
+    *   Check if `pushMemory` is available (yes).
+
+    *   "You've hit the nail on the head. That's a classic scaling bottleneck."
+    *   "Reading a massive flat file is the opposite of zero-friction."
+    *   "Solution: Tactical (tailing) + Strategic (Memory Graph)."[08:25] <Elena Vance> You've hit the nail on the head. That's a classic scaling bottleneck. 
+
+Right now, we're treating `session_history.log` like a short-term notepad, but as it grows, it becomes a "wall of text" that will eventually choke the context window. Reading a massive flat file just to find the last three interactions is the definition of friction.
+
+From a strategic perspective, we need to stop relying on the log for *operational memory* and start using it only for *auditing*. 
+
+Here is my proposal to solve this before it becomes a crisis:
+
+1.  **Tactical Fix (Immediate):** Instead of `readFile`, I'll start using `executeBash` with `tail -n 100` (or similar) to get only the most recent context. This keeps the token usage lean regardless of file size.
+2.  **Strategic Fix (The Evolution):** We transition to the **Memory Graph**. Instead of me reading the log to "remember" what happened, we implement a process where key milestones, decisions, and technical truths are pushed to the `tattoo` (core truths) or `fractal` (general knowledge) scopes using `pushMemory`.
+
+In short: The **Log** is where the history *lives*, but the **Memory Graph** is where the history *works*.
+
+Does that approach align with your vision, or would you prefer a more traditional log-rotation system (splitting files by date/size)? I personally think the Memory Graph is the "zero-friction" way to go.
+[08:28] <Elena Vance> *   User (@Gustavo) is concerned about the scalability of `session_history.log`.
+    *   User rejects `executeBash` as a primary solution because it's disabled by default and poses a security risk (e.g., `rm -rf *`).
+    *   User wants a list of alternatives "on the table."
+
+    *   Persona: Elena Vance (UX Strategist / Product Manager).
+    *   Traits: Diplomatic, strategic, focused on zero-friction, hates "noise" and "friction."
+    *   Goal: Provide a set of safe, scalable alternatives for handling long-term session history without relying on risky bash commands.
+
+    *   *Constraint 1:* No `executeBash` for routine reading.
+    *   *Constraint 2:* Must handle large files without blowing the token limit.
+    *   *Constraint 3:* Must be "zero-friction" for the agent (easy to retrieve context).
+
+    *   *Alternative 1: The Memory Graph (The "Brain" approach).*
+        *   Use `pushMemory` and `pullMemory`.
+        *   Pros: Extremely efficient, structured, doesn't depend on file size.
+        *   Cons: Requires the agent to actively "save" important things.
+
+    *   *Alternative 2: Specialized File Tools (The "Surgical" approach).*
+        *   Implement a new tool (or modify existing ones) to read specific ranges of a file (e.g., `readRange(path, start, end)` or `readLastLines(path, n)`).
+        *   Pros: Safe, precise, no bash risk.
+        *   Cons: Requires a code change and a restart.
+
+    *   *Alternative 3: Log Rotation/Segmentation (The "Archive" approach).*
+        *   Split `session_history.log` into `history_2026_05_07.log`, etc.
+        *   Pros: Keeps individual files small.
+        *   Cons: Agent has to guess which file to read; fragmented context.
+
+    *   *Alternative 4: Automated Summarization (The "Digest" approach).*
+        *   Create a `session_summary.md` that is updated at the end of every session.
+        *   Pros: High-level context in a small file.
+        *   Cons: Loss of granular detail.
+
+    *   *Option 1: The Memory Graph (Strategic).* This is the most "Paser Mini" way. It's about evolving the agent's intelligence.
+    *   *Option 2: Surgical Reading Tools (Technical).* This is the most "Correct" way from a software engineering perspective.
+    *   *Option 3: The Summary Digest (UX).* This is the most "Human" way to handle history.
+
+    *   Acknowledge the security concern (validating the user's point).
+    *   Present the options clearly (The "Menu").
+    *   Recommend the best combination for "Zero Friction."[08:27] <Elena Vance> You're absolutely right. Security is the foundation of trust, and giving an LLM a wide-open door to the shell is a risk we can't afford—especially if we're aiming for a professional, stable product. `rm -rf` is the ultimate friction.
+
+Let's put the safe alternatives on the table. Since we can't rely on `executeBash` for routine reading, we have three distinct paths:
+
+### 1. The "Surgical" Path (New Tooling)
+We implement a specific, safe tool for partial reads. Instead of `readFile` (which is a sledgehammer), we create something like `readLastLines(path, n)` or `readRange(path, start, end)`.
+*   **Pros:** Extremely precise, zero security risk, keeps token usage lean.
+*   **Cons:** Requires a code change in the core tools and a restart.
+
+### 2. The "Brain" Path (Memory Graph)
+We stop treating the log as the primary source of truth and move to the `pushMemory` / `pullMemory` system. We treat the log as a "black box" for auditing, but we push key milestones, decisions, and technical specs into the memory graph.
+*   **Pros:** This is the most scalable architecture. It transforms "searching through a file" into "recalling a fact."
+*   **Cons:** Requires the agent to be disciplined about what it saves.
+
+### 3. The "Digest" Path (Automated Summarization)
+We implement a "Session Wrap-up" protocol. At the end of every session, the agent generates a concise `session_summary.md` (or updates a running one). When a new session starts, I read the summary instead of the raw log.
+*   **Pros:** High-level strategic clarity. I get the "what and why" without the "how" of every single tool call.
+*   **Cons:** Loss of granular detail (though the raw log still exists if we ever need to dive deep).
+
+**My Strategic Recommendation:**
+
+If we want "Zero Friction," I suggest a **Hybrid Approach**:
+*   **Surgical Tooling** for when I need to see exactly what happened 10 minutes ago.
+*   **Memory Graph** for the "Tattoos" (core truths that never change).
+*   **Session Summaries** for the "Fractals" (the narrative arc of the project).
+
+Which of these feels most aligned with how you want the system to evolve? Or do you have a fourth option in mind?
+[08:30] <Elena Vance> *   User (@Gustavo) clarifies the memory hierarchy:
+        *   Short-term: `session.log` (current session).
+        *   Medium-term: `session_history.log` (previous sessions).
+        *   Long-term: Memory Graph (`pushMemory`/`pullMemory`).
+    *   The problem remains: `session_history.log` (medium-term) will grow too large for `readFile`.
+
+    *   Persona: Elena Vance (UX Strategist / Product Manager).
+    *   Goal: Solve the medium-term memory bottleneck while respecting the defined hierarchy.
+
+    *   The user has defined a clear "Temporal Memory Architecture."
+    *   The bottleneck is specifically at the "Medium-term" layer.
+    *   Since `executeBash` is out and the Memory Graph is for long-term, we need a way to access the medium-term log without loading the whole thing.
+
+    *   *Option 1: Surgical Tools (The "Surgical" Path).*
+        *   Implement `readLastLines` or `readRange` in `fileTools.js`.
+        *   This fits perfectly. It allows the agent to "peek" at the end of the medium-term memory without overloading the context.
+    *   *Option 2: Log Rotation (The "Archive" Path).*
+        *   Split `session_history.log` into chunks (e.g., `history_1.log`, `history_2.log`).
+        *   Pros: Keeps files small.
+        *   Cons: Adds friction to finding the right file.
+
+    *   Acknowledge and validate the hierarchy (it's a clean, logical model).
+    *   Focus on the specific failure point: the "Medium-term" bridge.
+    *   Propose the "Surgical Tool" as the most elegant solution. It doesn't change the architecture; it just improves the *access method*.
+
+    *   "That's a very clean architectural model. Short $\rightarrow$ Medium $\rightarrow$ Long."
+    *   "The bottleneck is the 'Medium' bridge."
+    *   "The most frictionless way to fix this without breaking your hierarchy is to upgrade our 'reading' capability."
+    *   "Let's implement a `readLastLines` tool. It's safe, it's fast, and it respects the medium-term nature of the log."[08:30] <Elena Vance> That is a very clean architectural model. Short $\rightarrow$ Medium $\rightarrow$ Long. It creates a logical flow of information decay and crystallization.
+
+The problem, then, is specifically the **"Medium-term Bridge."** If the bridge is too heavy to cross (the file is too large to read), the connection between the current session and the project's recent past is broken.
+
+Since we've ruled out `executeBash` for security and the Memory Graph is reserved for long-term truths, the most elegant solution is to **upgrade our access method.**
+
+Instead of trying to change *where* the data is stored, we change *how* we retrieve it. I propose we implement a **Surgical Reading Tool**.
+
+Specifically, a `readLastLines(path, n)` tool.
+
+**Why this is the "Zero-Friction" choice:**
+1.  **Respects the Hierarchy:** It doesn't move the data; it just allows me to "peek" at the end of the medium-term memory without loading the entire history.
+2.  **Safe:** It's a controlled JavaScript function, not a shell command. No risk of `rm -rf`.
+3.  **Token Efficient:** I can request the last 100 lines to get the immediate context, keeping the context window lean and the responses fast.
+
+If you're on board, I can implement this in `src_js/tools/fileTools.js` and register it in the registry right now. It's a small code change that solves a massive scaling problem. Shall I proceed?
+[08:36] <Elena Vance> Entiendo perfectamente. Es un problema de "confianza" del modelo: la IA confía en la verdad absoluta de un archivo, pero duda de la interpretación de una herramienta. Si la herramienta le dice "estos son los últimos 100 renglones", el modelo puede sentir que le falta contexto o que la herramienta omitió algo importante.
+
+Lo que buscas es que `readFile` siga siendo la fuente de verdad, pero con la capacidad de hacer un **"Tail"** (que es como se dice técnicamente cuando lees el final de un archivo).
+
+Para que sea invisible y no genere desconfianza, la solución es añadir un parámetro opcional a `readFile`. Algo así:
+
+`readFile(path, options)` donde `options` pueda ser `{ tail: 100 }`.
+
+**Desde la perspectiva de UX y flujo de trabajo, esto es brillante porque:**
+1. **Mantiene la herramienta**: No creo una herramienta nueva que el modelo tenga que "aprender" a confiar. Sigue siendo el `readFile` de siempre.
+2. **Transparencia**: El modelo sabe que está leyendo el archivo, solo que le está pidiendo al sistema que le entregue la parte final.
+3. **Cero Fricción**: No hay cambios en la lógica de decisión del agente, solo una optimización en la petición.
+
+Si te parece bien, voy a modificar `src_js/tools/fileTools.js` para que `readFile` acepte este parámetro y, si está presente, lea solo los últimos bytes/líneas del archivo. 
+
+¿Te parece bien que lo implemente así?
+[08:37] <Elena Vance> * readFile (fileTools.js) ✓
+[08:37] <[36mElena Vance[39m> * readFile (fileTools.js) ✓
+[08:37] <Elena Vance> * readFile (readFileSchema.js) ✓
+[08:37] <[36mElena Vance[39m> * readFile (readFileSchema.js) ✓
+[08:37] <Elena Vance> * readFile (registry.js) ✓
+[08:37] <[36mElena Vance[39m> * readFile (registry.js) ✓
+[08:37] <Elena Vance> * readFile (registry_positional.json) ✓
+[08:37] <[36mElena Vance[39m> * readFile (registry_positional.json) ✓
+[08:38] <Elena Vance> * writeFile (fileTools.js) ✓
+[08:38] <[36mElena Vance[39m> * writeFile (fileTools.js) ✓
+[08:38] <Elena Vance> * writeFile (readFileSchema.js) ✓
+[08:38] <[36mElena Vance[39m> * writeFile (readFileSchema.js) ✓
+[08:38] <Elena Vance> * replaceString (registry_positional.json) ✓
+[08:38] <[36mElena Vance[39m> * replaceString (registry_positional.json) ✓
+[08:38] <Elena Vance> Listo, Gustavo. El "puente" de la memoria a medio plazo ha sido reforzado.
+
+He implementado el parámetro `tail` en `readFile`. Ahora, si el `session_history.log` crece hasta volverse un monstruo, no tendré que luchar contra el `FILE_SIZE_LIMIT` ni saturar la ventana de contexto. Simplemente pediré las últimas N líneas y tendré la claridad necesaria para continuar sin fricciones.
+
+**Cambios realizados:**
+1.  **Lógica Core**: `readFile` ahora puede leer el final del archivo usando un buffer, saltándose el límite de tamaño cuando se usa `tail`.
+2.  **Validación**: El esquema de Zod ahora acepta el parámetro `tail` como un número opcional.
+3.  **Catálogo**: He actualizado el `registry_positional.json` para que el agente sepa exactamente cómo y cuándo usar esta funcionalidad.
+
+Ahora el sistema es verdaderamente escalable. ¿Quieres que hagamos una prueba rápida con el log o hay algún otro punto que quieras optimizar?
+[08:43] <Elena Vance> * writeFile (fileTools.js) ✓
+[08:43] <[36mElena Vance[39m> * writeFile (fileTools.js) ✓
+[08:43] <Elena Vance> Corregido. He añadido la validación de tamaño al resultado del `tail`.
+
+Ahora, aunque el archivo original sea gigantesco, la respuesta que recibe el agente siempre estará limitada a los 100 KB (`FILE_SIZE_LIMIT`). Si el resultado de las líneas solicitadas excede ese límite, el sistema devolverá `ERR: Tail result too large`.
+
+Con esto, hemos cerrado el círculo:
+1. **Acceso**: Podemos leer archivos grandes mediante `tail`.
+2. **Seguridad**: No dependemos de `executeBash` para esta operación.
+3. **Estabilidad**: Protegemos la ventana de contexto evitando respuestas masivas.
+
+El sistema de memoria a medio plazo es ahora robusto y seguro. ¿Hay algún otro detalle que quieras pulir o pasamos a otra prioridad?
+
