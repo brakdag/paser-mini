@@ -2,7 +2,6 @@ import { SmartToolParser } from './smartParser.js';
 import { ExecutionEngine } from './executionEngine.js';
 import { CommandHandler } from './commandHandler.js';
 import { RepetitionDetector } from './repetitionDetector.js';
-import { LatexTranslator } from './latexTranslator.js';
 import { logger } from './logger.js';
 import { ConfigManager } from './configManager.js';
 import { TurnProcessor } from './turnProcessor.js';
@@ -17,34 +16,58 @@ export class ChatManager {
     this.systemInstruction = systemInstruction;
     this.ui = ui;
     this.instanceMode = instanceMode;
-    
+
     // Configuration Integration
     this.configManager = new ConfigManager();
-    this.temperature = parseFloat(this.configManager.get('default_temperature', 0.7));
-    this.contextWindowLimit = parseInt(this.configManager.get('context_window_limit', 250000));
+    this.temperature = parseFloat(
+      this.configManager.get('default_temperature', 0.7)
+    );
+    this.contextWindowLimit = parseInt(
+      this.configManager.get('context_window_limit', 250000)
+    );
     this.tpmLimit = parseInt(this.configManager.get('tpm_limit', 15000));
-    
+
     this.ui.bashEnabled = false;
     this.currentChannel = '#main';
-    this.timestampsEnabled = this.configManager.get('timestamps_enabled', false);
+    this.timestampsEnabled = this.configManager.get(
+      'timestamps_enabled',
+      false
+    );
     this.safemode = this.configManager.get('safemode', false);
-    
+
     this.parser = new SmartToolParser();
     registerAllSchemas(this.parser.validator);
-    this.engine = new ExecutionEngine(assistant, tools, this.parser, ui, instanceMode);
+    this.engine = new ExecutionEngine(
+      assistant,
+      tools,
+      this.parser,
+      ui,
+      instanceMode
+    );
     this.commandHandler = new CommandHandler(this, ui);
     this.repetitionDetector = new RepetitionDetector();
-    
+
     // New Specialized Modules
-    this.turnProcessor = new TurnProcessor(assistant, tools, this.parser, this.engine, ui, this.repetitionDetector);
-    this.historyManager = new HistoryManager(assistant, ui, this.configManager);
+    this.turnProcessor = new TurnProcessor(
+      assistant,
+      tools,
+      this.parser,
+      this.engine,
+      ui,
+      this.repetitionDetector
+    );
+    this.historyManager = new HistoryManager(
+      assistant,
+      ui,
+      this.configManager
+    );
 
     // Load agent nickname from config
     const agentNickname = this.configManager.get('agent_nickname', 'paser_mini');
     this.ui.agentNickname = agentNickname;
     const userNickname = this.configManager.get('user_nickname', 'user');
     this.ui.userNickname = userNickname;
-    
+
     this.stopRequested = false;
     this.logOpened = false;
   }
@@ -68,7 +91,10 @@ export class ChatManager {
     if (initialInput) {
       const logMsg = this.ui.getLogOpenedString();
       this.ui.displayChatMessage('system', logMsg);
-      this.ui.displayChatMessage('system', '*** Session resumed from ./session_history.log');
+      this.ui.displayChatMessage(
+        'system',
+        '*** Session resumed from ./session_history.log'
+      );
       this.logOpened = true;
       this.assistant.injectMessage('server', logMsg);
       await this.processTurn(initialInput);
@@ -81,18 +107,25 @@ export class ChatManager {
     while (!this.stopRequested) {
       try {
         let input = await this.ui.requestInput();
-        if (!input) continue;
+        if (!input) {
+          continue;
+        }
 
         if (!this.logOpened) {
           const logMsg = this.ui.getLogOpenedString();
           this.ui.displayChatMessage('system', logMsg);
-          this.ui.displayChatMessage('system', '*** Session resumed from ./session_history.log');
+          this.ui.displayChatMessage(
+            'system',
+            '*** Session resumed from ./session_history.log'
+          );
           this.logOpened = true;
           this.assistant.injectMessage('server', logMsg);
         }
 
         if (await this.commandHandler.handle(input)) {
-          if (this.stopRequested) break;
+          if (this.stopRequested) {
+            break;
+          }
           continue;
         }
 
@@ -103,7 +136,6 @@ export class ChatManager {
       } catch (e) {
         if (e.name === 'UserInterruptException') {
           logger.info('Turn interrupted by user input');
-          // The interrupted input is already in the queue and will be picked up by the next loop iteration
           this.ui.displayInfo('Agent interrupted. Processing new request...');
         } else {
           this.ui.displayError('Critical error in processTurn: ' + e.message);
@@ -119,12 +151,15 @@ export class ChatManager {
 
   async checkAndManageContext() {
     const tokenStatus = await memoryTools.getTokenCount();
-    // Parsing the estimation string: "Current tokens (est.): 100 / 250000 (0.04%)"
+    // Parsing the estimation string: "Current tokens (est.): 100 / 250000"
     const match = tokenStatus.match(/\((\d+\.?\d*)%\)/);
     if (match) {
       const percentage = parseFloat(match[1]);
       if (percentage > 80) {
-        logger.info('Context threshold reached. Triggering proactive compaction.', { percentage });
+        logger.info(
+          'Context threshold reached. Triggering proactive compaction.',
+          { percentage }
+        );
         await this.compactHistory();
       }
     }
