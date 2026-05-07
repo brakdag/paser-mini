@@ -39,7 +39,6 @@
     }
   ],
 
-
   [
     "analyzeCode",
     "Run static analysis for JS/TS codebase to detect type and syntax errors",
@@ -125,7 +124,7 @@
   ],
   [
     "pushMemory",
-    "Stores a piece of information in memento.log. Use scope='tattoo' for core truths, 'fractal' for general knowledge. To reference another memory and increase its Rank, you MUST use an HTML anchor tag in the value: <a href="#ID">text</a>.",
+    "Stores in memento.log. To reference MUST use an HTML anchor tag 'a' in the value ej:href=#1",
     {
       "scope": "string",
       "value": "string",
@@ -147,11 +146,7 @@
     "Returns the current token count of the conversation history and its percentage relative to the limit.",
     {}
   ],
-  [
-    "getTrackedFiles",
-    "Get the project file tree (very fast)",
-    {}
-  ],
+  ["getTrackedFiles", "Get the project file tree (very fast)", {}],
   [
     "gitDiff",
     "Show differences of a file using git diff",
@@ -251,11 +246,7 @@
       "body": "string"
     }
   ],
-  [
-    "getCurrentRepo",
-    "Get the current GitHub repository name",
-    {}
-  ],
+  ["getCurrentRepo", "Get the current GitHub repository name", {}],
   [
     "gitDiffAll",
     "Show all changes in the current repository using git diff",
@@ -308,3 +299,4 @@
     }
   ]
 ]
+
