@@ -131,8 +131,6 @@ export class ChatManager {
 
         this.ui.displayChatMessage(this.ui.userNickname, input);
         await this.processTurn(input);
-        // Proactive Context Management
-        await this.checkAndManageContext();
       } catch (e) {
         if (e.name === 'UserInterruptException') {
           logger.info('Turn interrupted by user input');
@@ -147,33 +145,6 @@ export class ChatManager {
 
   async processTurn(userInput) {
     return await this.turnProcessor.process(userInput);
-  }
-
-  async checkAndManageContext() {
-    const tokenStatus = await memoryTools.getTokenCount();
-    // Parsing the estimation string: "Current tokens (est.): 100 / 250000"
-    const match = tokenStatus.match(/\((\d+\.?\d*)%\)/);
-    if (match) {
-      const percentage = parseFloat(match[1]);
-      if (percentage > 80) {
-        logger.info(
-          'Context threshold reached. Triggering proactive compaction.',
-          { percentage }
-        );
-        await this.compactHistory();
-      }
-    }
-  }
-
-  async compactHistory() {
-    const compactionData = await this.historyManager.prepareCompaction();
-    if (compactionData) {
-      this.assistant.hardReset();
-      await this.processTurn(compactionData.prompt);
-      this.ui.displayInfo('Context window reset via proactive compaction.');
-      return true;
-    }
-    return false;
   }
 
   stopExecution() {
