@@ -1,8 +1,7 @@
---- Session Started: 2026-05-07T12:55:28.815Z ---
-[2026-05-07T12:55:29.407Z] [INFO] Initializing ChatManager.run 
-[2026-05-07T12:55:32.974Z] [INFO] Starting processTurn {"userInput":"bueno continuamos"}
-[2026-05-07T12:55:35.259Z] [WARN] [09:55] -!- [GeminiAdapter] API Retry 1/5 due to: 500 
-[2026-05-07T12:55:37.306Z] [WARN] [09:55] -!- [GeminiAdapter] API Retry 2/5 due to: 500 
-[2026-05-07T12:55:43.030Z] [DEBUG] Received response from assistant {"responseLength":66}
-[2026-05-07T12:55:56.557Z] [INFO] Starting processTurn {"userInput":"todo bien?"}
-[2026-05-07T12:56:04.191Z] [DEBUG] Received response from assistant {"responseLength":84}
+--- Session Started: 2026-05-07T13:13:50.240Z ---
+[2026-05-07T13:13:51.492Z] [INFO] Initializing ChatManager.run 
+[2026-05-07T13:13:57.022Z] [INFO] Starting processTurn {"userInput":"buenas"}
+[2026-05-07T13:14:05.126Z] [DEBUG] Received response from assistant {"responseLength":42}
+[2026-05-07T13:14:23.597Z] [INFO] NvidiaAdapter: Models fetched {"count":136}
+[2026-05-07T13:14:34.678Z] [INFO] NvidiaAdapter: Models fetched {"count":137}
+[2026-05-07T13:14:36.128Z] [INFO] NvidiaAdapter: Chat started {"model":"openai/gpt-oss-20b","temperature":0}

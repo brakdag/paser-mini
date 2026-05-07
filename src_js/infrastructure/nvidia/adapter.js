@@ -22,6 +22,13 @@ export class NvidiaAdapter {
     logger.info('NvidiaAdapter: Chat started', { model: this.currentModel, temperature });
   }
 
+  _filterThoughts(text) {
+    if (!text) return '';
+    let cleaned = text.replace(/<(thought|reasoning)>[\s\S]*?<\/\1>/gi, '');
+    cleaned = cleaned.replace(/^(\[\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, '');
+    return cleaned.trim();
+  }
+
   async sendMessage(message, role = 'user', maxTokens = 512) {
     // 1. Add message to state (IRC formatted)
     this.state.addMessage(role, message);
@@ -42,7 +49,8 @@ export class NvidiaAdapter {
     try {
       logger.debug('NvidiaAdapter: Sending request', { model: this.currentModel, payload });
       const data = await this.transport.post(url, payload, headers);
-      const content = data.choices?.[0]?.message?.content || '';
+      const rawContent = data.choices?.[0]?.message?.content || '';
+      const content = this._filterThoughts(rawContent);
       
       if (content) {
         logger.info('NvidiaAdapter: Response received', { length: content.length });
