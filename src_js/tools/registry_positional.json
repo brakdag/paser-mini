@@ -263,5 +263,44 @@
     {
       "message": "string"
     }
+  ],
+  [
+    "loadZip",
+    "Loads a ZIP/compressed file into memory for manipulation.",
+    {
+      "filePath": "string"
+    }
+  ],
+  [
+    "readZipFile",
+    "Reads the content of a specific file within a loaded ZIP container.",
+    {
+      "zipId": "string",
+      "internalPath": "string"
+    }
+  ],
+  [
+    "writeZipFile",
+    "Writes or updates a file within a loaded ZIP container in RAM.",
+    {
+      "zipId": "string",
+      "internalPath": "string",
+      "content": "string"
+    }
+  ],
+  [
+    "saveZip",
+    "Saves the current state of a loaded ZIP container from RAM to disk.",
+    {
+      "zipId": "string",
+      "outputPath": "string"
+    }
+  ],
+  [
+    "listZipFiles",
+    "Lists all files contained within a loaded ZIP container.",
+    {
+      "zipId": "string"
+    }
   ]
 ]

@@ -1,4 +1,6 @@
---- Session Started: 2026-05-07T09:01:05.797Z ---
-[2026-05-07T09:01:07.584Z] [INFO] Initializing ChatManager.run 
-[2026-05-07T09:01:18.031Z] [INFO] Starting processTurn {"userInput":"hola, como andamos?"}
-[2026-05-07T09:01:24.054Z] [DEBUG] Received response from assistant {"responseLength":187}
+--- Session Started: 2026-05-07T09:46:02.936Z ---
+[2026-05-07T09:46:03.447Z] [INFO] Initializing ChatManager.run 
+[2026-05-07T09:46:08.867Z] [INFO] Starting processTurn {"userInput":"session_history.log"}
+[2026-05-07T09:46:21.627Z] [DEBUG] Received response from assistant {"responseLength":322}
+[2026-05-07T09:47:34.829Z] [INFO] Starting processTurn {"userInput":"see ./session_history.log"}
+[2026-05-07T09:47:45.063Z] [DEBUG] Received response from assistant {"responseLength":1056}
