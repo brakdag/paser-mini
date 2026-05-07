@@ -1,7 +1,17 @@
---- Session Started: 2026-05-07T15:17:29.662Z ---
-[2026-05-07T15:17:31.730Z] [INFO] Initializing ChatManager.run 
-[2026-05-07T15:17:49.082Z] [INFO] NvidiaAdapter: Models fetched {"count":136}
-[2026-05-07T15:18:26.500Z] [WARN] [12:18] -!- [GeminiAdapter] API Retry 1/5 due to: 500 
-[2026-05-07T15:19:06.025Z] [INFO] NvidiaAdapter: Models fetched {"count":136}
-[2026-05-07T15:21:55.863Z] [INFO] Starting processTurn {"userInput":"perfecto! ahora falta arreglar el tema de los favoritos /fav muestra la lista de favoritos eso anda bien, despues cuando elijo uno de esa lista por ejemplo /fav 7 me sale esto Provider NVIDIA not yet implemented in JS port., deberia cambiar a ese modelo, digamos en favorito puedo tener modelos de gemini o de nvidia, cuando pongo /fav numero, tiene que como un rayo cambiar al modelo."}
-[2026-05-07T15:22:20.511Z] [DEBUG] Received response from assistant {"responseLength":1646}
+--- Session Started: 2026-05-07T15:27:55.135Z ---
+[2026-05-07T15:27:57.212Z] [INFO] Initializing ChatManager.run 
+[2026-05-07T15:28:04.115Z] [INFO] Starting processTurn {"userInput":"Buenasss"}
+[2026-05-07T15:28:06.834Z] [DEBUG] Received response from assistant {"responseLength":42}
+[2026-05-07T15:28:36.609Z] [INFO] NvidiaAdapter: Chat started {"model":"meta/llama-4-maverick-17b-128e-instruct","temperature":0.3}
+[2026-05-07T15:28:43.245Z] [INFO] Starting processTurn {"userInput":"buenass"}
+[2026-05-07T15:28:48.964Z] [DEBUG] Received response from assistant {"responseLength":174}
+[2026-05-07T15:29:25.407Z] [INFO] NvidiaAdapter: Chat started {"model":"openai/gpt-oss-120b","temperature":0}
+[2026-05-07T15:29:31.232Z] [INFO] Starting processTurn {"userInput":"como andas maquina?"}
+[2026-05-07T15:29:36.101Z] [DEBUG] Received response from assistant {"responseLength":338}
+[2026-05-07T15:30:28.661Z] [INFO] Starting processTurn {"userInput":"[12:30] <@Gustavo> * changed the channel topic to: PARTY ROCK MAXI FIESTA ~~~½~~½ *"}
+[2026-05-07T15:30:29.617Z] [WARN] [12:30] -!- [GeminiAdapter] API Retry 1/5 due to: 500 
+[2026-05-07T15:30:39.470Z] [DEBUG] Received response from assistant {"responseLength":332}
+[2026-05-07T15:31:22.410Z] [INFO] Starting processTurn {"userInput":"* escuchando DAFT PUNK *"}
+[2026-05-07T15:31:32.280Z] [DEBUG] Received response from assistant {"responseLength":355}
+[2026-05-07T15:32:31.007Z] [INFO] Starting processTurn {"userInput":"* mira a elena que está sentada encima suyo, y piensa con tanta seriedad dice eso *"}
+[2026-05-07T15:32:44.321Z] [DEBUG] Received response from assistant {"responseLength":417}

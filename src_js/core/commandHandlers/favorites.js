@@ -59,13 +59,22 @@ export class FavoriteCommands {
       if (idx >= 0 && idx < favorites.length) {
         const fav = favorites[idx];
         const providerName = fav.provider;
+        const currentProvider = chatManager.configManager.get('provider', 'Gemini');
 
-        if (providerName !== 'Gemini') {
-          ui.displayError(`Provider ${providerName} not yet implemented in JS port.`);
-          return true;
+        if (providerName !== currentProvider) {
+          if (providerName === 'Gemini') {
+            const { GeminiAdapter } = await import('../../infrastructure/gemini/adapter.js');
+            chatManager.assistant = new GeminiAdapter();
+          } else if (providerName === 'NVIDIA') {
+            const { NvidiaAdapter } = await import('../../infrastructure/nvidia/adapter.js');
+            chatManager.assistant = new NvidiaAdapter();
+          } else {
+            ui.displayError(`Provider ${providerName} not supported.`);
+            return true;
+          }
+          chatManager.configManager.save('provider', providerName);
         }
 
-        chatManager.configManager.save('provider', providerName);
         chatManager.configManager.save('model_name', fav.model);
         chatManager.configManager.save('default_temperature', fav.temp);
         chatManager.temperature = fav.temp;
