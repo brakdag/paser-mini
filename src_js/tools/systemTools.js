@@ -5,9 +5,10 @@ import fs from 'fs';
 
 const execPromise = promisify(exec);
 
+
 export const analyzeCode = async ({ path: targetPath = '.' }) => {
   try {
-    // Usamos npx para asegurar que pyright esté disponible sin depender de una instalación global o venv
+    // Análisis estático de JS/TS
     const { stdout } = await execPromise(`npx pyright --outputjson ${targetPath}`, { timeout: 60000 });
     
     if (stdout.trim() === '') {
@@ -15,7 +16,6 @@ export const analyzeCode = async ({ path: targetPath = '.' }) => {
     }
     return stdout;
   } catch (e) {
-    // Pyright returns a non-zero code if errors are found
     if (e.stdout) return e.stdout;
     return `ERR: Analysis error: ${e.message}`;
   }

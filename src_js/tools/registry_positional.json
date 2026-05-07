@@ -38,13 +38,16 @@
       "replace_text": "string"
     }
   ],
+
+
   [
     "analyzeCode",
-    "Run pyright analysis",
+    "Run static analysis for JS/TS codebase to detect type and syntax errors",
     {
       "path": "string"
     }
   ],
+
   [
     "lintCode",
     "Run ESLint analysis",

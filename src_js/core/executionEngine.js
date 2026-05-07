@@ -27,7 +27,8 @@ export class ExecutionEngine {
       'runInstance': (a) => a.target || 'unknown',
       'searchTextGlobal': (a) => "'" + (a.query || '') + "'",
       'searchFilesPattern': (a) => 'pattern: ' + (a.pattern || ''),
-      'analyzeCode': (a) => path.basename(a.path || ''),
+      
+            'analyzeCode': (a) => path.basename(a.path || ''),
             'lintCode': (a) => path.basename(a.path || ''),
                   'generateDocs': (a) => `Docs for ${path.basename(a.path || '.')} -> ${a.outputDir || 'docs/api'}`,
                         'executeBash': (a) => a.command.substring(0, 50) + (a.command.length > 50 ? '...' : ''),

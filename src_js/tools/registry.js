@@ -19,9 +19,11 @@ export const AVAILABLE_TOOLS = {
     "writeFile": fileTools.writeFile,
     "removeFile": fileTools.removeFile,
         "createDir": fileTools.createDir,
+        
+            "analyzeCode": systemTools.analyzeCode,
     "listDir": fileTools.listDir,
     "replaceString": fileTools.replaceString,
-    "analyzeCode": systemTools.analyzeCode,
+
         "lintCode": systemTools.lintCode,
             "generateDocs": systemTools.generateDocs,
                 "executeBash": systemTools.executeBash,

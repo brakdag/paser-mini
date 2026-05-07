@@ -5,7 +5,7 @@ import readline from 'readline';
 
 export class TerminalUI {
   constructor(options = {}) {
-    this.noSpinner = options.noSpinner || false;
+    this.noSpinner = true; // Forced to true to prevent TTY crashes during tool execution
     this.activeSpinners = new Map();
 
     this.agentNickname = 'paser_mini';
@@ -148,9 +148,7 @@ export class TerminalUI {
   }
 
   _restorePrompt() {
-    if (this.rl) {
-      this.rl.prompt('\u276f ');
-    }
+    // Removed rl.prompt to prevent redundant calls and potential terminal crashes
   }
 
   getLogOpenedString() {
@@ -294,16 +292,16 @@ export class TerminalUI {
     });
   }
 
-  async requestInput(prompt = '\u276f ') {
+  async requestInput(prompt = '> ') {
     if (this.inputQueue.length > 0) {
       const input = this.inputQueue.shift();
-      this.rl.prompt(prompt);
+      process.stdout.write(prompt);
       return input;
     }
 
     return new Promise((resolve) => {
       this.inputResolver = resolve;
-      this.rl.prompt(prompt);
+      process.stdout.write(prompt);
     });
   }
 
