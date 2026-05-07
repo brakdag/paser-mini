@@ -1,6 +1,7 @@
 import { ConversationState } from '../conversationState.js';
 import { PayloadMapper } from '../payloadMapper.js';
 import { TransportLayer } from '../transportLayer.js';
+import axios from 'axios';
 import { logger } from '../../core/logger.js';
 
 export class NvidiaAdapter {
@@ -116,10 +117,19 @@ export class NvidiaAdapter {
         messages: [{ role: 'user', content: 'hi' }],
         max_tokens: 1
       };
-      await this.transport.post(url, payload, headers);
+
+      // Implementamos el timeout de 1 segundo y la lógica de 404
+      await axios.post(url, payload, {
+        headers,
+        timeout: 1000
+      });
       return true;
     } catch (e) {
-      return false;
+      if (e.response && e.response.status === 404) {
+        return false; // No disponible
+      }
+      // Si es timeout o cualquier otro error, asumimos que está disponible
+      return true;
     }
   }
 

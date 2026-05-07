@@ -1,7 +1,47 @@
---- Session Started: 2026-05-07T13:13:50.240Z ---
-[2026-05-07T13:13:51.492Z] [INFO] Initializing ChatManager.run 
-[2026-05-07T13:13:57.022Z] [INFO] Starting processTurn {"userInput":"buenas"}
-[2026-05-07T13:14:05.126Z] [DEBUG] Received response from assistant {"responseLength":42}
-[2026-05-07T13:14:23.597Z] [INFO] NvidiaAdapter: Models fetched {"count":136}
-[2026-05-07T13:14:34.678Z] [INFO] NvidiaAdapter: Models fetched {"count":137}
-[2026-05-07T13:14:36.128Z] [INFO] NvidiaAdapter: Chat started {"model":"openai/gpt-oss-20b","temperature":0}
+--- Session Started: 2026-05-07T14:25:45.077Z ---
+[2026-05-07T14:25:45.751Z] [INFO] Initializing ChatManager.run 
+[2026-05-07T14:25:57.790Z] [INFO] Starting processTurn {"userInput":"perfecto entonces ahora no vamos a tener problema de envenenamiento de contexto"}
+[2026-05-07T14:26:02.179Z] [DEBUG] Received response from assistant {"responseLength":305}
+[2026-05-07T14:26:41.475Z] [INFO] Starting processTurn {"userInput":"hay algún issue?"}
+[2026-05-07T14:26:44.049Z] [DEBUG] Received response from assistant {"responseLength":70}
+[2026-05-07T14:26:47.374Z] [WARN] [11:26] -!- [GeminiAdapter] API Retry 1/5 due to: 503 
+[2026-05-07T14:28:11.425Z] [INFO] Starting processTurn {"userInput":"pero hay que hacer una migración prolija, que estrategia se puede usar para que no se rompa el programa o que no encuentre esos archivos"}
+[2026-05-07T14:28:27.890Z] [DEBUG] Received response from assistant {"responseLength":1070}
+[2026-05-07T14:29:10.426Z] [INFO] Starting processTurn {"userInput":"pero acordate que las funciones de busqueda tienen limite de 10, asique con cuidado."}
+[2026-05-07T14:29:15.311Z] [WARN] [11:29] -!- [GeminiAdapter] API Retry 1/5 due to: 503 
+[2026-05-07T14:29:21.102Z] [DEBUG] Received response from assistant {"responseLength":487}
+[2026-05-07T14:29:47.457Z] [INFO] Starting processTurn {"userInput":"dale!"}
+[2026-05-07T14:29:53.512Z] [DEBUG] Received response from assistant {"responseLength":76}
+[2026-05-07T14:29:58.313Z] [WARN] [11:29] -!- [GeminiAdapter] API Retry 1/5 due to: 503 
+[2026-05-07T14:30:56.451Z] [INFO] Starting processTurn {"userInput":"dale, cualquier cosa usas notifyUser, asi podes seguir trabajando sin interupciones."}
+[2026-05-07T14:30:58.389Z] [WARN] [11:30] -!- [GeminiAdapter] API Retry 1/5 due to: 500 
+[2026-05-07T14:31:10.253Z] [DEBUG] Received response from assistant {"responseLength":1079}
+[2026-05-07T14:34:01.790Z] [INFO] Starting processTurn {"userInput":"buenisimo, entonces se puede decir que cerramos el issue"}
+[2026-05-07T14:34:10.807Z] [DEBUG] Received response from assistant {"responseLength":487}
+[2026-05-07T14:34:28.734Z] [INFO] Starting processTurn {"userInput":"que otro issue hay?"}
+[2026-05-07T14:34:39.581Z] [DEBUG] Received response from assistant {"responseLength":548}
+[2026-05-07T14:37:21.346Z] [INFO] Starting processTurn {"userInput":"bueno entonces vamos a agregar un nuevo issue, que tiene que ver con los modelos de nvidia, usamos /models para ver los modelos disponibles, y hay modelos que no estan disponibles, pero, eso lo toma desde un archivo, anteriormente teníamos la funcion /models_check, que lo que hacia es mandar un request al modelo, si el modelo respondia con un 404 es que no estaba disponible, si el modelo no respondia o demoraba, dabamos porque estaba disponible (porque hay modelos que demoran 1minuto en procesar un request) entonces le metiamos un timeout de 1 segundo y listo, si no contestaba error en 1 segundo es que estaba disponible. Tenemos que no se si está esa función, si no está tenemos que crearla."}
+[2026-05-07T14:37:35.929Z] [DEBUG] Received response from assistant {"responseLength":1806}
+[2026-05-07T14:39:30.480Z] [WARN] [11:39] -!- [GeminiAdapter] API Retry 1/5 due to: 500 
+[2026-05-07T14:41:15.816Z] [INFO] Starting processTurn {"userInput":"✖ Maximum tool iterations reached. ¿en cuanto estaba esto, tenemos que aumentarlo?"}
+[2026-05-07T14:41:32.459Z] [DEBUG] Received response from assistant {"responseLength":1617}
+[2026-05-07T14:42:10.757Z] [INFO] Starting processTurn {"userInput":"el limite de tareas, subamoslo, en cuanto está?"}
+[2026-05-07T14:42:32.525Z] [DEBUG] Received response from assistant {"responseLength":2910}
+[2026-05-07T14:42:55.982Z] [INFO] Starting processTurn {"userInput":"maximum tool iterations, en cuanto esta?"}
+[2026-05-07T14:43:07.824Z] [DEBUG] Received response from assistant {"responseLength":1349}
+[2026-05-07T14:43:45.624Z] [INFO] Starting processTurn {"userInput":"debe ser el de los turnos TURNS, busca algo asi."}
+[2026-05-07T14:43:51.863Z] [DEBUG] Received response from assistant {"responseLength":502}
+[2026-05-07T14:44:30.858Z] [INFO] Starting processTurn {"userInput":"buscalo, asi podemos aumentarlo"}
+[2026-05-07T14:44:46.089Z] [DEBUG] Received response from assistant {"responseLength":1680}
+[2026-05-07T14:48:29.765Z] [INFO] Starting processTurn {"userInput":"pero si supuestamente el modelo tuyo no puede usar function calling, estamos en una capa que ignora eso. Pero quizá por error se toca la perilla del function calling"}
+[2026-05-07T14:48:32.397Z] [WARN] [11:48] -!- [GeminiAdapter] API Retry 1/5 due to: 500 
+[2026-05-07T14:49:07.607Z] [DEBUG] Received response from assistant {"responseLength":3876}
+[2026-05-07T14:52:45.907Z] [INFO] Starting processTurn {"userInput":"exactamente nosotros no lo hacemos porque queremos \"violar las leyes\", sino por compatibilidad. Hay muchos modelos que no tienen function calling y no podríamos usarlos si nos limitamos."}
+[2026-05-07T14:53:00.391Z] [DEBUG] Received response from assistant {"responseLength":1806}
+[2026-05-07T14:56:12.277Z] [INFO] Starting processTurn {"userInput":"exactamente!, lo que hacen los proveedores de servicios de ia, es fragmentar el negocio, esto lo hizo directv, los canales de cable, agregaron el \"codificado\", para vender un paquete distinto, no por problema de infraestructura, porque la señal llega, sino para fragmetnar los clientes."}
+[2026-05-07T14:56:34.304Z] [DEBUG] Received response from assistant {"responseLength":2155}
+[2026-05-07T15:00:08.232Z] [INFO] Starting processTurn {"userInput":"entiendo que quieren fragmentar el modelo para los que quieren \"chatear\" de los que quieren \"programar\", o quieren hacer tareas autonomas. los clientes de chateo, serán empresas que necesitan asistentes virtuales,"}
+[2026-05-07T15:00:31.115Z] [DEBUG] Received response from assistant {"responseLength":2662}
+[2026-05-07T15:04:24.403Z] [INFO] Starting processTurn {"userInput":"sabemos que al final de todo está el espacio multidimensional, estamos en una etapa previa, cuando la IA llegue al espacio multidimensional del embedding, programar cualquier cosa va a ser navegar en ese espacio, no va a hacer falta escribir código, es el nivel zen. Por mientras paser-mini va a ser lo que eleve la IA, en ese camino el camino hacia la singularidad."}
+[2026-05-07T15:04:27.110Z] [WARN] [12:04] -!- [GeminiAdapter] API Retry 1/5 due to: 500 
+[2026-05-07T15:04:45.521Z] [DEBUG] Received response from assistant {"responseLength":2557}

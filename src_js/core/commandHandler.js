@@ -169,6 +169,7 @@ export class CommandHandler {
           return true;
         }
     if (inputStripped === '/config') return ConfigCommands.handleConfig(this.chatManager, this.ui);
+    if (inputStripped === '/models_check') return await ModelCommands.handleModelsCheck(this.chatManager, this.ui, inputStripped.split(/\s+/));
     if (inputStripped.startsWith('/models')) return await ModelCommands.handleModels(this.chatManager, this.ui, inputStripped.split(/\s+/));
     if (inputStripped.startsWith('/fav')) return await FavoriteCommands.handleFav(this.chatManager, this.ui, inputStripped.split(/\s+/));
 

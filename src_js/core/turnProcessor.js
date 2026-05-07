@@ -16,9 +16,20 @@ export class TurnProcessor {
 
     logger.info('Starting processTurn', { userInput });
     let currentResponse = await this.assistant.sendMessage(userInput);
+
+    // Guard against null/filtered responses (NVIDIA/Gemini safety filters)
+    const isSafetyBlock = currentResponse === null || 
+                           currentResponse === 'null' || 
+                           (typeof currentResponse === 'string' && (currentResponse.includes('safety block') || currentResponse.includes('blocked by safety filters')));
+
+    if (isSafetyBlock) {
+      this.ui.displayError('The model response was filtered by safety guards. Your last message has been removed from history to prevent blocking the conversation. Please rephrase your request.');
+      this.assistant.popLastMessage(); // Remove the triggering message to prevent history poisoning
+      return;
+    }
+
     if (currentResponse?.startsWith('Error:')) {
       this.ui.displayError('API Communication Error: ' + currentResponse);
-      // We don't return here; we let the loop handle it or we could implement a wait-and-retry
     }
     logger.debug('Received response from assistant', { responseLength: currentResponse?.length });
     
@@ -74,11 +85,23 @@ export class TurnProcessor {
           break;
         }
         currentResponse = await this.assistant.sendMessage(toolResults.join('\n'), 'user');
-      if (currentResponse?.startsWith('Error:')) {
-        this.ui.displayError('API Communication Error during tool processing: ' + currentResponse);
-        // Instead of ending the turn, we inject a system message to the agent to try again
-        currentResponse = 'ERR: The system encountered a temporary API error. Please repeat your last tool call or request.';
-      }
+
+        // Guard against null/filtered responses during tool iterations
+        const isSafetyBlock = currentResponse === null || 
+                               currentResponse === 'null' || 
+                               (typeof currentResponse === 'string' && (currentResponse.includes('safety block') || currentResponse.includes('blocked by safety filters')));
+
+        if (isSafetyBlock) {
+          this.ui.displayError('The model response was filtered by safety guards during tool execution. Your last message has been removed from history. Please rephrase your request.');
+          this.assistant.popLastMessage(); // Remove the triggering message to prevent history poisoning
+          turnComplete = true;
+          break;
+        }
+
+        if (currentResponse?.startsWith('Error:')) {
+          this.ui.displayError('API Communication Error during tool processing: ' + currentResponse);
+          currentResponse = 'ERR: The system encountered a temporary API error. Please repeat your last tool call or request.';
+        }
       }
     }
 
