@@ -33,11 +33,13 @@ export const getTokenCount = async () => {
     }
 
     // Local fast estimation: character count / 4 (matches RPD-saving strategy)
+    const systemInstruction = currentChatManager.systemInstruction || '';
     const historyData = typeof currentAssistant.history === 'string' 
       ? currentAssistant.history 
       : JSON.stringify(currentAssistant.history || []);
     
-    const count = Math.ceil(historyData.length / 4);
+    const totalLength = systemInstruction.length + historyData.length;
+    const count = Math.ceil(totalLength / 4);
     const limit = currentChatManager.contextWindowLimit || 250000;
 
     const percentage = (count / limit) * 100;

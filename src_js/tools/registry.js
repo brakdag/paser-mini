@@ -63,7 +63,10 @@ export const AVAILABLE_TOOLS = {
 const registryPath = path.join(process.cwd(), 'src_js/tools/registry_positional.json');
 const full_catalog = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
 
-const TOOL_CATALOG = full_catalog.map(t => `${t[0]}(${Object.keys(t[2]).join(', ')}) - ${t[1]}`).join('\n');
+const TOOL_CATALOG = full_catalog
+  .filter(t => t[0] !== 'executeBash')
+  .map(t => `${t[0]}(${Object.keys(t[2]).join(', ')}) - ${t[1]}`)
+  .join('\n');
 
 const _S = String.fromCharCode(60) + "TOOL" + "_CALL" + String.fromCharCode(62);
 const _E = String.fromCharCode(60) + "/" + "TOOL" + "_CALL" + String.fromCharCode(62);

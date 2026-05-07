@@ -79,23 +79,23 @@ export class ChatManager {
     }
 
     while (!this.stopRequested) {
-      let input = await this.ui.requestInput();
-      if (!input) continue;
-
-      if (!this.logOpened) {
-        const logMsg = this.ui.getLogOpenedString();
-        this.ui.displayChatMessage('system', logMsg);
-        this.ui.displayChatMessage('system', '*** Session resumed from ./session_history.log');
-        this.logOpened = true;
-        this.assistant.injectMessage('server', logMsg);
-      }
-
-      if (await this.commandHandler.handle(input)) {
-        if (this.stopRequested) break;
-        continue;
-      }
-
       try {
+        let input = await this.ui.requestInput();
+        if (!input) continue;
+
+        if (!this.logOpened) {
+          const logMsg = this.ui.getLogOpenedString();
+          this.ui.displayChatMessage('system', logMsg);
+          this.ui.displayChatMessage('system', '*** Session resumed from ./session_history.log');
+          this.logOpened = true;
+          this.assistant.injectMessage('server', logMsg);
+        }
+
+        if (await this.commandHandler.handle(input)) {
+          if (this.stopRequested) break;
+          continue;
+        }
+
         this.ui.displayChatMessage(this.ui.userNickname, input);
         await this.processTurn(input);
         // Proactive Context Management

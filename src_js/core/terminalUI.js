@@ -121,25 +121,36 @@ export class TerminalUI {
   }
 
   displayChatMessage(nickname, text) {
+    this._clearCurrentLine();
     const trimmedText = text.trim();
     const renderedText = this.formatMarkdown(trimmedText);
     const now = new Date();
     const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
-    // Respect IRC aesthetics: system events do not have nicknames
     if (trimmedText.startsWith('---') || trimmedText.startsWith('***') || trimmedText.startsWith('-!-')) {
       const formatted = `[${time}] ${trimmedText}`;
       process.stdout.write(`${chalk.white(`[${time}]`)} ${renderedText}\n`);
       this.writeToLog(formatted);
-      return;
+    } else {
+      const nameColor = nickname === this.agentNickname ? chalk.cyan : chalk.green;
+      const formatted = `[${time}] <${nickname}> ${trimmedText}`;
+      const prefix = `[${time}] <${nameColor(nickname)}>`;
+      process.stdout.write(`${prefix} ${renderedText}\n`);
+      this.writeToLog(formatted);
     }
+    this._restorePrompt();
+  }
 
-    const nameColor = nickname === this.agentNickname ? chalk.cyan : chalk.green;
-    const formatted = `[${time}] <${nickname}> ${trimmedText}`;
-    const prefix = `[${time}] <${nameColor(nickname)}>`;
-    
-    process.stdout.write(`${prefix} ${renderedText}\n`);
-    this.writeToLog(formatted);
+  _clearCurrentLine() {
+    if (this.rl) {
+      process.stdout.write('\r\x1b[K');
+    }
+  }
+
+  _restorePrompt() {
+    if (this.rl) {
+      this.rl.prompt('\u276f ');
+    }
   }
 
   getLogOpenedString() {
@@ -161,21 +172,27 @@ export class TerminalUI {
   }
 
   displayThought(text) {
+    this._clearCurrentLine();
     process.stdout.write(chalk.gray.italic('\ud83d\udcad ' + text) + '\n');
+    this._restorePrompt();
   }
 
   displayInfo(text) {
+    this._clearCurrentLine();
     const now = new Date();
     const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
     process.stdout.write(chalk.blue('\u2139 ') + chalk.cyan(text) + '\n');
     this.writeToLog(`[${time}] [INFO] ${text}`);
+    this._restorePrompt();
   }
 
   displayError(text) {
+    this._clearCurrentLine();
     const now = new Date();
     const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
     process.stdout.write(chalk.red('\u2716 ') + chalk.red.bold(text) + '\n');
     this.writeToLog(`[${time}] [ERROR] ${text}`);
+    this._restorePrompt();
   }
 
 
@@ -279,7 +296,9 @@ export class TerminalUI {
 
   async requestInput(prompt = '\u276f ') {
     if (this.inputQueue.length > 0) {
-      return this.inputQueue.shift();
+      const input = this.inputQueue.shift();
+      this.rl.prompt(prompt);
+      return input;
     }
 
     return new Promise((resolve) => {
