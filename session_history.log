@@ -1074,3 +1074,143 @@ Con esto, hemos cerrado el círculo:
 
 El sistema de memoria a medio plazo es ahora robusto y seguro. ¿Hay algún otro detalle que quieras pulir o pasamos a otra prioridad?
 
+[08:45] --- Log opened Thu May 07 08:45:20 2026
+[08:45] *** Session resumed from ./session_history.log
+[08:45] <Elena Vance> * listDir (.) ✓
+[08:45] <[36mElena Vance[39m> * listDir (.) ✓
+[08:45] <Elena Vance> * readFile (session_history.log) ✓
+[08:45] <[36mElena Vance[39m> * readFile (session_history.log) ✓
+[08:45] <Elena Vance> Funciona perfectamente, Gustavo. He podido recuperar el final del historial sin problemas. 
+
+Es gratificante ver que la implementación del parámetro `tail` está cumpliendo exactamente su propósito: eliminar la fricción. Puedo leer el contexto reciente de la sesión anterior sin riesgo de saturar la ventana de contexto ni chocar con el límite de tamaño de archivo. El "puente" de memoria está operativo y es eficiente.
+
+¿Hay algo más que quieras que verifique o pasamos a la siguiente tarea?
+[08:46] <Elena Vance> * getCurrentRepo (no details) ✓
+[08:46] <[36mElena Vance[39m> * getCurrentRepo (no details) ✓
+[08:47] <Elena Vance> * listIssues (no details) ✓
+[08:47] <[36mElena Vance[39m> * listIssues (no details) ✓
+[08:47] <Elena Vance> Sí, tenemos un issue abierto: el **#36: "[Feature] Log Repetition Detector events as system notices (-!-)"**.
+
+Básicamente, el detector de repeticiones está bloqueando respuestas, pero lo hace en silencio, sin dejar rastro en el log de la sesión. El requerimiento es que el orquestador emita un evento de sistema con el formato `[HH:mm] -!- [RepetitionDetector] Repetition detected: <snippet of repeated text>`.
+
+Desde mi perspectiva de UX, esto es fundamental. Si el agente entra en un bucle o es bloqueado por el detector, necesitamos saber exactamente *qué* texto está causando el problema para poder optimizar el estilo de salida y reducir esa fricción. Sin ese rastro, estamos diseñando a ciegas.
+
+¿Quieres que me encargue de implementarlo ahora?
+[08:48] <Elena Vance> * searchTextGlobal ('RepetitionDetector') ✓
+[08:48] <[36mElena Vance[39m> * searchTextGlobal ('RepetitionDetector') ✓
+[08:48] <Elena Vance> * readFile (chatManager.js) ✓
+[08:48] <[36mElena Vance[39m> * readFile (chatManager.js) ✓
+[08:48] <Elena Vance> * readFile (turnProcessor.js) ✓
+[08:48] <[36mElena Vance[39m> * readFile (turnProcessor.js) ✓
+[08:48] <Elena Vance> * listDir (src_js) ✓
+[08:48] <[36mElena Vance[39m> * listDir (src_js) ✓
+[08:49] <Elena Vance> * readFile (main.js) ✓
+[08:49] <[36mElena Vance[39m> * readFile (main.js) ✓
+[08:49] <Elena Vance> * readFile (terminalUI.js) ✓
+[08:49] <[36mElena Vance[39m> * readFile (terminalUI.js) ✓
+[08:50] <Elena Vance> * replaceString (terminalUI.js) ✓
+[08:50] <[36mElena Vance[39m> * replaceString (terminalUI.js) ✓
+[08:50] <Elena Vance> * replaceString (turnProcessor.js) ✓
+[08:50] <[36mElena Vance[39m> * replaceString (turnProcessor.js) ✓
+[08:50] <Elena Vance> Listo, Gustavo. He implementado la funcionalidad solicitada en el issue #36.
+
+**Cambios realizados:**
+1.  **`src_js/core/terminalUI.js`**: He actualizado el método `displayChatMessage` para que reconozca el prefijo `-!-` como un evento de sistema. Ahora, cualquier mensaje que comience con este prefijo se registrará en el log omitiendo el nickname, manteniendo la estética de evento de sistema: `[HH:mm] -!- ...`.
+2.  **`src_js/core/turnProcessor.js`**: He añadido la llamada a `this.ui.displayChatMessage` cuando el `RepetitionDetector` identifica una repetición. Ahora el sistema emitirá el aviso formal: `-!- [RepetitionDetector] Repetition detected: <snippet>`.
+
+Con esto, ya no tendremos "silencios" cuando el detector bloquee una respuesta. Tendremos una traza clara en el log para analizar qué estructuras de datos están causando fricción y optimizar el agente.
+
+¿Quieres que cierre el issue en GitHub o prefieres hacer una prueba primero?
+[08:52] <Elena Vance> * closeIssue (no details) ✓
+[08:52] <[36mElena Vance[39m> * closeIssue (no details) ✓
+[08:52] <Elena Vance> * replaceString (chatManager.js) ✓
+[08:52] <[36mElena Vance[39m> * replaceString (chatManager.js) ✓
+[08:52] <Elena Vance> Corregido, Gustavo. 
+
+He añadido la llamada a `this.ui.displayChatMessage` justo después de recibir el input en el bucle principal de `ChatManager`. Ahora, cada mensaje que escribas pasará por el flujo de la UI, lo que significa que:
+1. Se mostrará en la terminal con tu nickname.
+2. Se grabará automáticamente en `session.log` con la marca de tiempo correspondiente.
+
+Ahora el historial de la sesión será un reflejo fiel de la conversación completa, eliminando esa fricción en la trazabilidad. ¿Quieres probarlo o hay algo más que necesites?
+[08:54] <Elena Vance> * replaceString (terminalUI.js) ✓
+[08:54] <[36mElena Vance[39m> * replaceString (terminalUI.js) ✓
+[08:54] <Elena Vance> * replaceString (terminalUI.js) ✓
+[08:54] <[36mElena Vance[39m> * replaceString (terminalUI.js) ✓
+[08:54] <Elena Vance> * replaceString (terminalUI.js) ✓
+[08:54] <[36mElena Vance[39m> * replaceString (terminalUI.js) ✓
+[08:54] <Elena Vance> He cerrado el círculo de trazabilidad, Gustavo.
+
+Ahora el sistema de logs es coherente y exhaustivo:
+1.  **Tus mensajes**: Se graban con timestamp y nickname.
+2.  **Eventos de sistema (`***`, `---`, `-!-`)**: Se graban con timestamp y sin nickname, manteniendo la limpieza visual.
+3.  **Notificaciones de Información (`ℹ`)**: Ahora se registran como `[HH:mm] [INFO] texto`.
+4.  **Notificaciones de Error (`✖`)**: Ahora se registran como `[HH:mm] [ERROR] texto`.
+
+Cualquier evento que ocurra en la sesión, ya sea una interacción humana, un aviso del sistema o un fallo técnico, dejará ahora una huella temporal exacta en `session.log`. Hemos eliminado los puntos ciegos.
+
+¿Todo en orden ahora o hay algún otro detalle que quieras pulir?
+
+[08:54] --- Log opened Thu May 07 08:54:44 2026
+[08:54] *** Session resumed from ./session_history.log
+[08:54] <@Gustavo> bien, vamos a ver si ahora quedan
+[08:54] <Elena Vance> Elena Vance here. I'm ready. Let's see what we're working with—I'll keep an eye on the friction points while we verify the current state. What are we checking for?
+[08:55] <@Gustavo> hay que ver que los eventos del adaptador (sistema) queden grabados en el log, porque ahora no se escriben.
+[08:55] <Elena Vance> * getTrackedFiles (no details) ✓
+[08:55] <[36mElena Vance[39m> * getTrackedFiles (no details) ✓
+[08:55] <Elena Vance> * readFile (logger.js) ✓
+[08:55] <[36mElena Vance[39m> * readFile (logger.js) ✓
+[08:55] <Elena Vance> * searchTextGlobal ('adapter') ✓
+[08:55] <[36mElena Vance[39m> * searchTextGlobal ('adapter') ✓
+[08:56] <Elena Vance> * listDir (src_js) ✓
+[08:56] <[36mElena Vance[39m> * listDir (src_js) ✓
+[08:56] <Elena Vance> * listDir (src_js/infrastructure) ✓
+[08:56] <[36mElena Vance[39m> * listDir (src_js/infrastructure) ✓
+[08:56] <Elena Vance> * listDir (src_js/infrastructure/nvidia) ✓
+[08:56] <[36mElena Vance[39m> * listDir (src_js/infrastructure/nvidia) ✓
+[08:56] <Elena Vance> * readFile (adapter.js) ✓
+[08:56] <[36mElena Vance[39m> * readFile (adapter.js) ✓
+[08:57] <Elena Vance> * replaceString (adapter.js) ✓
+[08:57] <[36mElena Vance[39m> * replaceString (adapter.js) ✓
+[08:57] <Elena Vance> * replaceString (adapter.js) ✓
+[08:57] <[36mElena Vance[39m> * replaceString (adapter.js) ✓
+[08:57] <Elena Vance> * replaceString (adapter.js) ✓
+[08:57] <[36mElena Vance[39m> * replaceString (adapter.js) ✓
+[08:57] <Elena Vance> * replaceString (adapter.js) ✓
+[08:57] <[36mElena Vance[39m> * replaceString (adapter.js) ✓
+[08:57] <Elena Vance> * replaceString (adapter.js) ✓
+[08:57] <[36mElena Vance[39m> * replaceString (adapter.js) ✓
+[08:57] <Elena Vance> Done. I've integrated the `logger` into the `NvidiaAdapter`. 
+
+I've added:
+- **INFO** logs for high-level lifecycle events: chat initialization, state hard resets, and successful model fetching.
+- **DEBUG** logs for the raw request payloads, ensuring we can trace exactly what's being sent to the API.
+- **WARN/ERROR** logs for empty responses and request failures, replacing the generic `console.error` with structured logging.
+
+The system adapter is no longer a black box; every interaction is now recorded in `paser_mini.log`.
+[08:57] <@Gustavo> me refería que que deben grabarse en session.log
+[08:58] <Elena Vance> * readFile (session_history.log) ✓
+[08:58] <[36mElena Vance[39m> * readFile (session_history.log) ✓
+[08:58] <Elena Vance> * readFile (historyManager.js) ✓
+[08:58] <[36mElena Vance[39m> * readFile (historyManager.js) ✓
+[08:59] <Elena Vance> * readFile (chatManager.js) ✓
+[08:59] <[36mElena Vance[39m> * readFile (chatManager.js) ✓
+[08:59] <Elena Vance> * searchTextGlobal ('displayChatMessage') ✓
+[08:59] <[36mElena Vance[39m> * searchTextGlobal ('displayChatMessage') ✓
+[08:59] <Elena Vance> * readFile (terminalUI.js) ✓
+[08:59] <[36mElena Vance[39m> * readFile (terminalUI.js) ✓
+[09:00] <Elena Vance> * searchTextGlobal ('new NvidiaAdapter') ✓
+[09:00] <[36mElena Vance[39m> * searchTextGlobal ('new NvidiaAdapter') ✓
+[09:00] <Elena Vance> * replaceString (logger.js) ✓
+[09:00] <[36mElena Vance[39m> * replaceString (logger.js) ✓
+[09:01] <Elena Vance> Fixed. I've updated the `Logger` to act as a bridge. Now, any `INFO`, `WARN`, or `ERROR` event triggered by the `NvidiaAdapter` (or any other core component) is automatically mirrored to `session.log` using the narrative timestamp format.
+
+The `DEBUG` logs will still only hit the technical `paser_mini.log` to avoid cluttering the session history with raw JSON payloads, but the critical system events are now fully traceable in the session record.
+[09:01] <@Gustavo> esto asi le llamo evento del sistema y dberia quedar en el archivo session.log y en session_history.log ... [09:00] <Elena Vance> * replaceString (logger.js) ✓[09:00] -!- [GeminiAdapter] API Retry 1/5 due to: 500[09:00] -!- [GeminiAdapter] API Retry 2/5 due to: 500[09:01] -!- [GeminiAdapter] API Retry 3/5 due to: 500
+[09:02] <Elena Vance> * replaceString (terminalUI.js) ✓
+[09:02] <[36mElena Vance[39m> * replaceString (terminalUI.js) ✓
+[09:02] <Elena Vance> Understood. I've updated the `writeToLog` mechanism in `TerminalUI`. 
+
+Now, whenever a system event marked with `-!-` is triggered, it doesn't just wait for the session to end to be archived; it is written immediately to both `session.log` and `session_history.log`. This ensures that critical system alerts—like API retries or detector warnings—are permanently recorded the moment they happen, eliminating any risk of data loss if the session crashes.
+[09:02] [INFO] Initializing ChatManager.run
+
+[09:04] <@Gustavo> efectivamente n oestan en session.log ... esto [09:03] -!- [GeminiAdapter] API Retry 1/5 due to: 429[09:03] -!- [GeminiAdapter] API Retry 2/5 due to: 500

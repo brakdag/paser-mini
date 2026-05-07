@@ -1,11 +1,8 @@
---- Session Started: 2026-05-07T11:44:51.248Z ---
-[2026-05-07T11:44:53.187Z] [INFO] Initializing ChatManager.run 
-[2026-05-07T11:45:20.234Z] [INFO] Starting processTurn {"userInput":"y ahora podrías probar readFile con tail, para leer el historial de la session anterior."}
-[2026-05-07T11:45:28.778Z] [DEBUG] Received response from assistant {"responseLength":74}
-[2026-05-07T11:46:55.528Z] [INFO] Starting processTurn {"userInput":"teníamos algun issue abierto?"}
-[2026-05-07T11:46:58.941Z] [DEBUG] Received response from assistant {"responseLength":70}
-[2026-05-07T11:47:48.926Z] [INFO] Starting processTurn {"userInput":"dale"}
-[2026-05-07T11:48:03.244Z] [DEBUG] Received response from assistant {"responseLength":1019}
-[2026-05-07T11:51:40.051Z] [INFO] Starting processTurn {"userInput":"dale, cerralo, y tambien revisá porque no queda grabado en el log lo que yo escribo."}
-[2026-05-07T11:52:01.995Z] [DEBUG] Received response from assistant {"responseLength":2115}
-[2026-05-07T11:52:47.802Z] [INFO] Starting processTurn {"userInput":"tampoco quedan grabados en el log los eventos del sistema."}
+--- Session Started: 2026-05-07T12:02:53.721Z ---
+[2026-05-07T12:02:55.727Z] [INFO] Initializing ChatManager.run 
+[2026-05-07T12:03:02.966Z] [INFO] Starting processTurn {"userInput":"bueno a ver si ahora anda?"}
+[2026-05-07T12:03:14.556Z] [DEBUG] Received response from assistant {"responseLength":175}
+[2026-05-07T12:03:37.068Z] [INFO] Starting processTurn {"userInput":"okey, voy a revisar"}
+[2026-05-07T12:03:42.776Z] [DEBUG] Received response from assistant {"responseLength":172}
+[2026-05-07T12:04:21.908Z] [INFO] Starting processTurn {"userInput":"efectivamente n oestan en session.log ... esto [09:03] -!- [GeminiAdapter] API Retry 1/5 due to: 429[09:03] -!- [GeminiAdapter] API Retry 2/5 due to: 500"}
+[2026-05-07T12:04:28.924Z] [DEBUG] Received response from assistant {"responseLength":504}

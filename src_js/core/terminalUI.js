@@ -16,6 +16,11 @@ export class TerminalUI {
   writeToLog(text) {
     try {
       fs.appendFileSync('session.log', text + '\n', 'utf8');
+      
+      // Immediate persistence for system events (-!-)
+      if (text.includes('-!-')) {
+        fs.appendFileSync('session_history.log', text + '\n', 'utf8');
+      }
     } catch (e) {
       console.error(`[Log Error] ${e.message}`);
     }
@@ -157,17 +162,22 @@ export class TerminalUI {
   }
 
   displayInfo(text) {
+    const now = new Date();
+    const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
     process.stdout.write(chalk.blue('\u2139 ') + chalk.cyan(text) + '\n');
+    this.writeToLog(`[${time}] [INFO] ${text}`);
   }
 
   displayError(text) {
+    const now = new Date();
+    const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
     process.stdout.write(chalk.red('\u2716 ') + chalk.red.bold(text) + '\n');
+    this.writeToLog(`[${time}] [ERROR] ${text}`);
   }
 
 
   displaySystemMessage(text) {
-    process.stdout.write(chalk.yellow(`*** ${text}\n`));
-    this.writeToLog(`*** ${text}`);
+    this.displayChatMessage('system', `*** ${text}`);
   }
 
 

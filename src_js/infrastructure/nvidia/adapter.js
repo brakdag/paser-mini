@@ -1,6 +1,7 @@
 import { ConversationState } from '../conversationState.js';
 import { PayloadMapper } from '../payloadMapper.js';
 import { TransportLayer } from '../transportLayer.js';
+import { logger } from '../../core/logger.js';
 
 export class NvidiaAdapter {
   constructor(userNickname = 'user', agentNickname = 'assistant') {
@@ -18,6 +19,7 @@ export class NvidiaAdapter {
     this.systemInstruction = systemInstruction;
     this.temperature = temperature;
     this.state.hardReset();
+    logger.info('NvidiaAdapter: Chat started', { model: this.currentModel, temperature });
   }
 
   async sendMessage(message, role = 'user', maxTokens = 512) {
@@ -38,16 +40,21 @@ export class NvidiaAdapter {
     const headers = { 'Authorization': `Bearer ${this.apiKey}` };
 
     try {
+      logger.debug('NvidiaAdapter: Sending request', { model: this.currentModel, payload });
       const data = await this.transport.post(url, payload, headers);
       const content = data.choices?.[0]?.message?.content || '';
       
       if (content) {
+        logger.info('NvidiaAdapter: Response received', { length: content.length });
         this.state.addMessage('model', content);
         return content;
       }
+      logger.warn('NvidiaAdapter: Empty response received');
       return 'Error: Empty response from NVIDIA';
     } catch (e) {
-      return `Error: ${e.response?.data?.error?.message || e.message}`;
+      const errorMsg = e.response?.data?.error?.message || e.message;
+      logger.error('NvidiaAdapter: Request failed', { error: errorMsg });
+      return `Error: ${errorMsg}`;
     }
   }
 
@@ -57,6 +64,7 @@ export class NvidiaAdapter {
 
   hardReset(historyOverride = null) {
     this.state.hardReset(historyOverride);
+    logger.info('NvidiaAdapter: State hard reset');
   }
 
   getHistory() {
@@ -82,9 +90,11 @@ export class NvidiaAdapter {
       const url = 'https://integrate.api.nvidia.com/v1/models';
       const headers = { 'Authorization': `Bearer ${this.apiKey}` };
       const data = await this.transport.get(url, {}, headers);
-      return data.data?.map(m => m.id) || [];
+      const models = data.data?.map(m => m.id) || [];
+      logger.info('NvidiaAdapter: Models fetched', { count: models.length });
+      return models;
     } catch (e) {
-      console.error(`Error fetching NVIDIA models: ${e.message}`);
+      logger.error('NvidiaAdapter: Error fetching models', { error: e.message });
       return [];
     }
   }

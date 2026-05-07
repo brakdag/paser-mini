@@ -12,8 +12,15 @@ class Logger {
     const timestamp = new Date().toISOString();
     const logEntry = `[${timestamp}] [${level}] ${message} ${data ? JSON.stringify(data) : ''}\n`;
     
-    // Escritura sincrónica para asegurar que el log se guarde incluso en un crash
+    // Technical log
     fs.appendFileSync(this.logFile, logEntry, 'utf8');
+
+    // Mirror to session log for non-debug events
+    if (level !== 'DEBUG') {
+      const sessionTime = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      const sessionEntry = `[${sessionTime}] [${level}] ${message}${data ? ' ' + JSON.stringify(data) : ''}\n`;
+      fs.appendFileSync('session.log', sessionEntry, 'utf8');
+    }
   }
 
   info(msg, data) { this._log('INFO', msg, data); }
