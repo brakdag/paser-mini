@@ -1,75 +1,66 @@
-# Tool Installation Guide
+# Tool Installation Guide: The Complete Workflow
 
-This document provides the step-by-step procedure for adding new tools to the Paser Mini ecosystem. To ensure the agent can discover, call, and validate tools correctly, all four steps must be completed.
+Adding a new tool to Paser Mini is a multi-step process. Because the agent relies on a strict pipeline (Prompt $\rightarrow$ Parser $\rightarrow$ Registry $\rightarrow$ Execution $\rightarrow$ Log), missing any of these steps will result in the tool being invisible or malfunctioning.
 
-## 🛠 Installation Workflow
+## 🛠 The 5-Step Installation Pipeline
 
-### 1. Implementation
-Create the tool logic in a JavaScript file within the `src_js/tools/` directory.
+### 1. Implementation (The Logic)
+Create the tool logic in a JavaScript file within `src_js/tools/`.
 - **File Location**: `src_js/tools/<tool_name>Tools.js`
-- **Error Handling**: Throw standard Error objects or custom error messages. The `ExecutionEngine` will capture these and return them as `<TOOL_RESPONSE>ERR: ...</TOOL_RESPONSE>` to the agent.
+- **Standard**: Use `async` functions. Return a string or a JSON-stringified object.
+- **Error Handling**: Throw standard `Error` objects. The `ExecutionEngine` captures these and wraps them in `<TOOL_RESPONSE>ERR: ...</TOOL_RESPONSE>` for the AI.
 - **Example**:
   ```javascript
   export async function myTool({ param }) {
-      if (!param) {
-          throw new Error("Parameter cannot be empty");
-      }
-      return "Success";
+      if (!param) throw new Error("Parameter cannot be empty");
+      return JSON.stringify({ status: "success", message: "Action completed" });
   }
   ```
 
-### 2. Registry Mapping
-Register the function so the system can execute it when called.
+### 2. Registry Mapping (The Bridge)
+Map the JavaScript function to a name the LLM can call.
 - **File**: `src_js/tools/registry.js`
-- **Action A**: Import the new tool function at the top of the file.
-- **Action B**: Add the function to the `AVAILABLE_TOOLS` object mapping the tool name (used by the LLM) to the JavaScript function.
-- **Example**:
-  ```javascript
-  import { myTool } from './myToolTools.js';
-  
-  export const AVAILABLE_TOOLS = {
-      // ... other tools
-      "my_tool": myTool,
-  };
-  ```
+- **Action A**: Import the function: `import { myTool } from './myToolTools.js';`
+- **Action B**: Add to `AVAILABLE_TOOLS`: `"my_tool": myTool,`
 
-### 3. LLM Catalog Update
-Update the catalog that is injected into the system prompt so the LLM knows the tool exists and how to use it.
+### 3. LLM Catalog Update (The Discovery)
+Define the tool's signature so it's injected into the System Prompt.
 - **File**: `src_js/tools/registry_positional.json`
-- **Format**: Add a list entry containing `[ "tool_name", "Description of what it does", { "arg_name": "type" } ]`.
-- **Example**:
-  ```json
-  [
-    "my_tool",
-    "Performs a specific action with a parameter",
-    {
-      "param": "string"
-    }
-  ]
-  ```
+- **Format**: `[ "tool_name", "Clear description of utility", { "arg_name": "type" } ]`
+- **Crucial**: The `tool_name` here must match the key in `registry.js` exactly.
 
-### 4. SmartParser Schema
-Create a validation schema to ensure the arguments passed by the LLM are correct before execution.
-- **File Location**: `src_js/core/commandHandlers/schemas/<tool_name>Schema.js`
+### 4. SmartParser Schema (The Guardrail)
+Prevent the agent from calling tools with invalid arguments.
+- **File Location**: `src_js/core/schemas/<tool_name>Schema.js`
 - **Standard**: JSON Schema Draft 07.
-- **Requirements**: Define the `type` as `object`, list the `properties`, and specify which fields are `required`.
+- **Requirement**: Define `type: "object"`, `properties`, and `required` fields.
 - **Example**:
   ```javascript
   export const myToolSchema = {
-    "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
-    "properties": {
-      "param": { "type": "string" }
-    },
+    "properties": { "param": { "type": "string" } },
     "required": ["param"],
     "additionalProperties": false
   };
   ```
 
+### 5. Response Capture & Logging (The UX)
+Ensure the tool's output is translated from raw JSON to a human-readable format in the chat log.
+- **Location**: `src_js/core/turnProcessor.js`
+- **Logic**: The `TurnProcessor` intercepts the `result` from the `ExecutionEngine` and uses `ui.displaySystemMessage` to log a clean summary before sending the raw `<TOOL_RESPONSE>` to the AI.
+- **Verification**: Check `session.log` to ensure you see `*** Tool <name> returned: <message>` instead of raw JSON.
+
 ---
-## ⚠️ Checklist for Deployment
-- [ ] Implementation file created in `src_js/tools/`?
-- [ ] Imported and added to `AVAILABLE_TOOLS` in `registry.js`?
-- [ ] Definition added to `registry_positional.json`?
-- [ ] JSON Schema created in `src_js/core/commandHandlers/schemas/`?
-- [ ] Tested with a real call to verify the full loop (Prompt $\rightarrow$ Parser $\rightarrow$ Registry $\rightarrow$ Execution)?
+
+## ⚠️ Deployment Checklist
+- [ ] **Logic**: File created in `src_js/tools/`?
+- [ ] **Registry**: Imported and mapped in `registry.js`?
+- [ ] **Catalog**: Entry added to `registry_positional.json`?
+- [ ] **Schema**: Validation file created in `src_js/core/schemas/`?
+- [ ] **UX**: Response is appearing cleanly in the chat log?
+- [ ] **End-to-End**: Tested a full call cycle (Prompt $\rightarrow$ Response)?
+
+## 🔍 Troubleshooting
+- **Tool not called?** Check `registry_positional.json` for typos in the name.
+- **Validation Error?** Check the schema in `src_js/core/schemas/` against the LLM's output.
+- **Raw JSON in log?** Verify the `TurnProcessor` is correctly calling `displaySystemMessage`.
