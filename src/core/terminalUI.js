@@ -1,0 +1,312 @@
+import chalk from 'chalk';
+import ora from 'ora';
+import fs from 'fs';
+import readline from 'readline';
+
+export class TerminalUI {
+  constructor(options = {}) {
+    this.noSpinner = true; // Forced to true to prevent TTY crashes during tool execution
+    this.activeSpinners = new Map();
+
+    this.agentNickname = 'paser_mini';
+    this.userNickname = 'user';
+    this.inputQueue = [];
+    this.rl = null;
+    this.inputResolver = null;
+  }
+
+
+  writeToLog(text) {
+    try {
+      fs.appendFileSync('session.log', text + '\n', 'utf8');
+      
+      // Immediate persistence for system events (-!-)
+      if (text.includes('-!-')) {
+        fs.appendFileSync('session_history.log', text + '\n', 'utf8');
+      }
+    } catch (e) {
+      console.error(`[Log Error] ${e.message}`);
+    }
+  }
+
+  clearLog() {
+    try {
+      if (fs.existsSync('session.log')) {
+        const content = fs.readFileSync('session.log', 'utf8');
+        if (content) {
+          fs.appendFileSync('session_history.log', content + '\n', 'utf8');
+        }
+      }
+      fs.writeFileSync('session.log', '', 'utf8');
+    } catch (e) {
+      console.error(`[Log Error] ${e.message}`);
+    }
+  }
+
+
+
+  /**
+   * Renderiza una tabla de Markdown en formato de terminal
+   */
+  renderTable(tableText) {
+    const lines = tableText.trim().split('\n');
+    if (lines.length < 2) return tableText;
+
+    const rows = lines
+      .filter(line => line.includes('|'))
+      .map(line => line.split('|').filter((cell, index, array) => {
+        if (index === 0 && cell.trim() === '') return false;
+        if (index === array.length - 1 && cell.trim() === '') return false;
+        return true;
+      }).map(cell => cell.trim()));
+
+    const dataRows = rows.filter(row => !row.every(cell => /^[:\s\-]*$/.test(cell)));
+
+    if (dataRows.length === 0) return tableText;
+
+    const colWidths = [];
+    dataRows.forEach(row => {
+      row.forEach((cell, i) => {
+        colWidths[i] = Math.max(colWidths[i] || 0, cell.length);
+      });
+    });
+
+    let output = '';
+    const separator = '+' + colWidths.map(w => '-'.repeat(w + 2)).join('+') + '+';
+
+    output += separator + '\n';
+    dataRows.forEach((row, rowIndex) => {
+      const line = '| ' + row.map((cell, i) => cell.padEnd(colWidths[i])).join(' | ') + ' |';
+      output += chalk.white(line) + '\n';
+      if (rowIndex === 0) output += separator + '\n';
+    });
+    output += separator;
+
+    return '\n' + output + '\n';
+  }
+
+  /**
+   * Formatea texto Markdown básico usando chalk para la terminal
+   */
+  formatMarkdown(text) {
+    if (!text) return '';
+
+    let formatted = text;
+
+    const tableRegex = /((?:^\s*\|.*\n?)+)/gm;
+    formatted = formatted.replace(tableRegex, (match) => this.renderTable(match));
+
+    formatted = formatted.replace(/```([\s\S]*?)```/g, (_, code) => {
+      return '\n' + chalk.gray(code.trim()) + '\n';
+    });
+
+    formatted = formatted.replace(/`([^`]+)`/g, (_, code) => {
+      return chalk.cyan(` ${code} `);
+    });
+
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, (_, content) => {
+      return chalk.bold(content);
+    });
+
+    formatted = formatted.replace(/\*(.*?)\*/g, (_, content) => {
+      return chalk.italic(content);
+    });
+
+    return formatted;
+  }
+
+  formatChatMessage(nickname, text, time = null) {
+    const t = time || new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    return `[${t}] <${nickname}> ${text}`;
+  }
+
+  displayChatMessage(nickname, text) {
+    this._clearCurrentLine();
+    const trimmedText = text.trim();
+    const renderedText = this.formatMarkdown(trimmedText);
+    const now = new Date();
+    const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+    if (trimmedText.startsWith('---') || trimmedText.startsWith('***') || trimmedText.startsWith('-!-')) {
+      const formatted = `[${time}] ${trimmedText}`;
+      process.stdout.write(`${chalk.white(`[${time}]`)} ${renderedText}\n`);
+      this.writeToLog(formatted);
+    } else {
+      const nameColor = nickname === this.agentNickname ? chalk.cyan : chalk.green;
+      const formatted = `[${time}] <${nickname}> ${trimmedText}`;
+      const prefix = `[${time}] <${nameColor(nickname)}>`;
+      process.stdout.write(`${prefix} ${renderedText}\n`);
+      this.writeToLog(formatted);
+    }
+    this._restorePrompt();
+  }
+
+  _clearCurrentLine() {
+    if (this.rl) {
+      process.stdout.write('\r\x1b[K');
+    }
+  }
+
+  _restorePrompt() {
+    // Removed rl.prompt to prevent redundant calls and potential terminal crashes
+  }
+
+  getLogOpenedString() {
+    const now = new Date();
+    const datePart = now.toDateString();
+    const timePart = now.toTimeString().split(' ')[0];
+    const [dayName, month, day, year] = datePart.split(' ');
+    return `--- Log opened ${dayName} ${month} ${day} ${timePart} ${year}`;
+  }
+
+  displayLogOpened() {
+    const logMsg = this.getLogOpenedString();
+    this.displayChatMessage('user', logMsg);
+  }
+
+  displayMessage(text) {
+    const renderedText = this.formatMarkdown(text);
+    process.stdout.write(renderedText + '\n');
+  }
+
+  displayThought(text) {
+    this._clearCurrentLine();
+    process.stdout.write(chalk.gray.italic('\ud83d\udcad ' + text) + '\n');
+    this._restorePrompt();
+  }
+
+  displayInfo(text) {
+    this._clearCurrentLine();
+    const now = new Date();
+    const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    process.stdout.write(chalk.blue('\u2139 ') + chalk.cyan(text) + '\n');
+    this.writeToLog(`[${time}] [INFO] ${text}`);
+    this._restorePrompt();
+  }
+
+  displayError(text) {
+    this._clearCurrentLine();
+    const now = new Date();
+    const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    process.stdout.write(chalk.red('\u2716 ') + chalk.red.bold(text) + '\n');
+    this.writeToLog(`[${time}] [ERROR] ${text}`);
+    this._restorePrompt();
+  }
+
+
+  displaySystemMessage(text) {
+    this.displayChatMessage('system', `*** ${text}`);
+  }
+
+
+
+  displayPanel(title, message, style = 'none') {
+    const border = '\u2500'.repeat(title.length + 4);
+    const panelColor = style === 'warning' ? chalk.yellow : chalk.blue;
+    
+    process.stdout.write('\n' + panelColor('\u250c' + border + '\u2510') + '\n');
+    process.stdout.write(panelColor('\u2502') + ' ' + chalk.bold(title) + ' ' + panelColor(' '.repeat(border.length - title.length - 2)) + ' ' + panelColor('\u2502') + '\n');
+    process.stdout.write(panelColor('\u251c' + '\u2500'.repeat(border.length) + '\u2524') + '\n');
+    process.stdout.write(panelColor('\u2502') + ' ' + message + ' ' + panelColor(' '.repeat(Math.max(0, border.length - message.length - 2))) + ' ' + panelColor('\u2502') + '\n');
+    process.stdout.write(panelColor('\u2514' + border + '\u2518') + '\n\n');
+  }
+
+  startToolMonitoring(name, detail) {
+    const toolIcon = '\ud83d\udee0\ufe0f'; // \ud83d\udee0\ufe0f
+    const msg = `${toolIcon} ${name} (${detail})...`;
+
+    if (this.noSpinner) {
+      process.stdout.write(chalk.yellow(msg) + '\n');
+      return;
+    }
+
+    const spinner = ora({
+      text: chalk.yellow(msg),
+      color: 'yellow'
+    }).start();
+
+    this.activeSpinners.set(name, spinner);
+  }
+
+  updateMonitoring(name, text) {
+    const spinner = this.activeSpinners.get(name);
+    if (spinner) {
+      spinner.text = text;
+    }
+  }
+
+  endToolMonitoring(name, success, detail) {
+    const spinner = this.activeSpinners.get(name);
+    if (spinner) {
+      spinner.stop();
+    }
+
+    const now = new Date();
+    const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const nameColor = chalk.cyan;
+    const statusIcon = success ? '✓' : '✗';
+    const statusColor = success ? chalk.green : chalk.red;
+    const prefix = `[${time}] <${nameColor(this.agentNickname)}>`;
+    const finalMsg = `${prefix} * ${name} (${detail}) ${statusColor(statusIcon)}`;
+    
+    console.log(finalMsg);
+    const plainStatus = success ? '✓' : '✗';
+    const plainPrefix = `[${time}] <${this.agentNickname}>`;
+    this.writeToLog(`${plainPrefix} * ${name} (${detail}) ${plainStatus}`);
+
+    if (spinner) {
+      this.activeSpinners.delete(name);
+    }
+  }
+
+  stopAllMonitoring() {
+    for (const [name, spinner] of this.activeSpinners) {
+      spinner.stop();
+    }
+    this.activeSpinners.clear();
+  }
+
+  clear() {
+    process.stdout.write('\x1Bc');
+  }
+
+  initInput() {
+    if (this.rl) return;
+    this.rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+      terminal: true
+    });
+
+    this.rl.on('line', (line) => {
+      const trimmed = line.trim();
+      if (trimmed) {
+        if (this.inputResolver) {
+          const resolve = this.inputResolver;
+          this.inputResolver = null;
+          resolve(trimmed);
+        } else {
+          this.inputQueue.push(trimmed);
+        }
+      }
+    });
+  }
+
+  async requestInput(prompt = '> ') {
+    if (this.inputQueue.length > 0) {
+      const input = this.inputQueue.shift();
+      process.stdout.write(prompt);
+      return input;
+    }
+
+    return new Promise((resolve) => {
+      this.inputResolver = resolve;
+      process.stdout.write(prompt);
+    });
+  }
+
+  async getConfirmation(message) {
+    const answer = await this.requestInput(message + ' [y/N] \u276f ');
+    return answer.toLowerCase() === 'y';
+  }
+}
