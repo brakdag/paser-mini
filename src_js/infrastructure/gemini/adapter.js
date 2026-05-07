@@ -1,5 +1,6 @@
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
+import { logger } from '../../core/logger.js';
 
 axiosRetry(axios, {
   retries: 5,
@@ -10,7 +11,7 @@ axiosRetry(axios, {
     return axiosRetry.isNetworkOrIdempotentRequestError(error) || recoverableStatuses.includes(status);
   },
   onRetry: (retryCount, error, requestConfig) => {
-    console.log(`[${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}] -!- [GeminiAdapter] API Retry ${retryCount}/5 due to: ${error.response?.status || error.message}`);
+    logger.warn(`[${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}] -!- [GeminiAdapter] API Retry ${retryCount}/5 due to: ${error.response?.status || error.message}`);
   }
 });
 

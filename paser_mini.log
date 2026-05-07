@@ -1,8 +1,8 @@
---- Session Started: 2026-05-07T12:02:53.721Z ---
-[2026-05-07T12:02:55.727Z] [INFO] Initializing ChatManager.run 
-[2026-05-07T12:03:02.966Z] [INFO] Starting processTurn {"userInput":"bueno a ver si ahora anda?"}
-[2026-05-07T12:03:14.556Z] [DEBUG] Received response from assistant {"responseLength":175}
-[2026-05-07T12:03:37.068Z] [INFO] Starting processTurn {"userInput":"okey, voy a revisar"}
-[2026-05-07T12:03:42.776Z] [DEBUG] Received response from assistant {"responseLength":172}
-[2026-05-07T12:04:21.908Z] [INFO] Starting processTurn {"userInput":"efectivamente n oestan en session.log ... esto [09:03] -!- [GeminiAdapter] API Retry 1/5 due to: 429[09:03] -!- [GeminiAdapter] API Retry 2/5 due to: 500"}
-[2026-05-07T12:04:28.924Z] [DEBUG] Received response from assistant {"responseLength":504}
+--- Session Started: 2026-05-07T12:55:28.815Z ---
+[2026-05-07T12:55:29.407Z] [INFO] Initializing ChatManager.run 
+[2026-05-07T12:55:32.974Z] [INFO] Starting processTurn {"userInput":"bueno continuamos"}
+[2026-05-07T12:55:35.259Z] [WARN] [09:55] -!- [GeminiAdapter] API Retry 1/5 due to: 500 
+[2026-05-07T12:55:37.306Z] [WARN] [09:55] -!- [GeminiAdapter] API Retry 2/5 due to: 500 
+[2026-05-07T12:55:43.030Z] [DEBUG] Received response from assistant {"responseLength":66}
+[2026-05-07T12:55:56.557Z] [INFO] Starting processTurn {"userInput":"todo bien?"}
+[2026-05-07T12:56:04.191Z] [DEBUG] Received response from assistant {"responseLength":84}

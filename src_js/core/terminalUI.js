@@ -225,10 +225,9 @@ export class TerminalUI {
     const finalMsg = `${prefix} * ${name} (${detail}) ${statusColor(statusIcon)}`;
     
     console.log(finalMsg);
-    this.writeToLog(finalMsg.replace(/\x1b\[\d+m/g, '')); // Remove ANSI colors for log file
-    // Note: statusColor(statusIcon) contains ANSI, we need the plain text
     const plainStatus = success ? '✓' : '✗';
-    this.writeToLog(`${prefix} * ${name} (${detail}) ${plainStatus}`);
+    const plainPrefix = `[${time}] <${this.agentNickname}>`;
+    this.writeToLog(`${plainPrefix} * ${name} (${detail}) ${plainStatus}`);
 
     if (spinner) {
       this.activeSpinners.delete(name);
