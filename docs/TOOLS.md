@@ -13,12 +13,12 @@ This document serves as the definitive reference for the tools available to the 
 - **Global Search**: `searchTextGlobal` (content search), `searchFilesPattern` (filename pattern).
 - **Code Intelligence**: `analyzeCode` (static analysis for JS/TS codebase), `gitDiff` (version control differences).
 
-### 🧠 Memento (Cognitive Memory)
+### 🧠 Memento (Cognitive Log)
 
-**The Distillation Loop**: `readFile` $\rightarrow$ Analyze $\rightarrow$ `pushMemory` (distilled insight) $\rightarrow$ Forget file content $\rightarrow$ `pullMemory` (future retrieval).
+**The Distillation Loop**: `readFile` $\rightarrow$ Analyze $\rightarrow$ `pushMemory` (log entry) $\rightarrow$ Forget file content $\rightarrow$ `pullMemory` (future retrieval).
 
-- **Capture**: `pushMemory(scope, value, key, pointers)` - Persist insights. Use `scope='tattoo'` for permanent project truths and `scope='fractal'` for general knowledge.
-- **Retrieval**: `pullMemory(scope, key, direction)` - Access historical context, navigate the narrative (next/prev), or trigger the "Mirror Effect" (all vitals).
+- **Capture**: `pushMemory(role, scope, value, key)` - Appends an entry to `memento.log` with a unique ID, timestamp, and initial `Rank: 0`. Use `scope='tattoo'` for core truths.
+- **Retrieval**: `pullMemory(scope, key, direction)` - Retrieves memories based on scope and key. Use `readFile("memento.log")` for full raw access.
 
 ### 🛠️ Technical Execution
 

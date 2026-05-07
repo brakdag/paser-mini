@@ -1,47 +1,46 @@
-# Memento: The Cognitive Graph Memory System
+# Memento: The Linear Cognitive Log
 
-Memento is Paser Mini's long-term memory (LTM) system. Unlike the volatile short-term memory of the context window, Memento allows the agent to store, retrieve, and navigate knowledge across sessions using a graph-based SQLite implementation.
+Memento is Paser Mini's long-term memory (LTM) system. To ensure zero friction and absolute transparency, Memento operates as a simple, append-only log file (`memento.log`). This replaces the previous complex graph-based system with a streamlined, chronological record of distilled insights.
 
-## ⚛️ Core Concepts
+## 📝 The Log Format
 
-### 1. Memory Types
-- **Vital Tattoos (`scope='tattoo'`)**: Core truths, identity, and fundamental constraints. These are the "DNA" of the agent and are always retrieved during the Mirror effect.
-- **Fractals (`scope='fractal'`)**: General knowledge, technical insights, and session summaries. These are the "experiences" and "learnings" of the agent.
+Every memory entry follows a strict, machine-readable structure:
 
-### 2. The Mirror Effect
-The **Mirror** is the agent's awakening sequence. By calling `pullMemory()` without arguments, the agent retrieves:
-- All **Vital Tattoos**.
-- The **Root Summary** (the most recent high-level state of the project).
+`[ID: X] [YYYY-MM-DD HH:mm:ss] [Rank: Y] <Category> Content`
 
-This ensures the agent never "forgets" who it is or what it is doing after a context reset.
+### Field Breakdown:
+- **ID**: A unique, incremental integer used for direct referencing (e.g., `#12`).
+- **Timestamp**: The exact date and time the memory was captured.
+- **Rank**: A numerical value representing the importance of the entry. All entries start at `Rank: 0`. The rank increases as the entry is referenced by other memories or the agent, highlighting the most critical project truths.
+- **Category**: A tag (e.g., `<tattoo>`, `<technical>`, `<decision>`) used to classify the type of information.
+- **Content**: The distilled insight or fact.
 
 ## ⚙️ How to Use
 
 ### Storing Knowledge (`pushMemory`)
-Use this tool to save insights that should survive a context wipe.
-- **Example (Tattoo)**: `pushMemory(scope="tattoo", value="The project must follow the Airbnb JavaScript Style Guide strictly.")`
-- **Example (Fractal)**: `pushMemory(scope="fractal", value="The database connection is handled in database.js using a persistent connection.", key="db_connection")`
+Use this tool to save insights that must survive a context wipe.
+- **Example**: `pushMemory(scope="tattoo", value="The project must follow the Airbnb JavaScript Style Guide strictly.")`
+- **Result**: `[ID: 42] [2026-05-07 18:45] [Rank: 0] <tattoo> The project must follow the Airbnb JavaScript Style Guide strictly.`
 
-### Retrieving Knowledge (`pullMemory`)
-- **The Mirror**: `pullMemory()` $\rightarrow$ Get identity and root state.
-- **Specific Node**: `pullMemory(key="db_connection")` $\rightarrow$ Get a specific insight.
-- **Navigation**:
-    - `direction="next"` / `"prev"`: Walk through the narrative history of memories.
-    - `direction="up"` / `"down"`: Move between abstract summaries and detailed nodes.
+### Retrieving Knowledge (`readFile`)
 
-## 🌅 Advanced Workflows
+**CRITICAL**: To ensure absolute data integrity and trust, the agent does NOT use a tool to read memories. Instead, it reads the raw log file directly.
 
-### The Context Jump
-To maintain peak reasoning, Paser Mini avoids context saturation through a three-phase process:
-1. **Distillation**: Extracting key knowledge into fractal nodes as the window fills (approx. 80% capacity).
-2. **The Bridge**: Creating a `BRIDGE: [Summary]` node that links the current state to the next session (approx. 95% capacity).
-3. **The Leap**: Clearing the context and re-initializing using the Bridge node to start fresh without losing progress.
+- **Retrieval Strategy**: Use `readFile("memento.log")` to access the full cognitive history.
+- **Analysis**: Once the file is read, the agent can manually locate entries by ID (e.g., `#42`) or keywords within the text.
+- **Reasoning**: Reading the raw file prevents "tool-bias" and ensures the agent sees the exact state of its long-term memory.
+
+## 🚀 The Rank System
+
+Rank is the organic measure of a memory's value. Instead of a predefined hierarchy, importance is emergent:
+1. **Creation**: Every memory starts at `Rank: 0`.
+2. **Referencing**: When an entry is cited in a new memory, its Rank increases. To reference a memory and trigger a rank increment, you MUST use an HTML anchor tag in the `value` field: `<a href="#ID">Reference Text</a>` (e.g., `<a href="#1">The core mission</a>`).
+3. **Visibility**: High-rank entries are the "North Stars" of the project, representing the most validated and frequently used truths.
 
 ## 🔴 Navigation Summary
 
 | Goal | Strategy |
 | :--- | :--- |
-| **Identity/Status** | Call `pullMemory()` (Mirror) |
-| **Fact Check** | `pullMemory(key="...")` |
-| **History** | `pullMemory(direction="prev")` |
-| **Deep Dive** | `pullMemory(key="...")` $\rightarrow$ `direction="down"` |
+| **Full State Recovery** | `pullMemory()` (The Mirror) |
+| **Fact Check** | `pullMemory(scope="category", key="keyword")` |
+| **Chronological Flow** | `pullMemory(scope="category", key="keyword", direction="next/prev")` |

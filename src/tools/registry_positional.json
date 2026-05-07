@@ -125,7 +125,7 @@
   ],
   [
     "pushMemory",
-    "Stores a piece of information in the long-term memory graph. Use scope='tattoo' for core truths, 'fractal' for general knowledge.",
+    "Stores a piece of information in memento.log. Use scope='tattoo' for core truths, 'fractal' for general knowledge. To reference another memory and increase its Rank, you MUST use an HTML anchor tag in the value: <a href="#ID">text</a>.",
     {
       "scope": "string",
       "value": "string",
@@ -135,7 +135,7 @@
   ],
   [
     "pullMemory",
-    "Retrieves information from the long-term memory graph. No args = The Mirror effect. Use direction='next'/'prev' for narrative navigation.",
+    "Retrieves information from memento.log based on scope and key. Use direction='next'/'prev' for narrative navigation.",
     {
       "scope": "string",
       "key": "string",

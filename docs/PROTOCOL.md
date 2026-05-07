@@ -8,7 +8,7 @@ Maximize reasoning capacity by minimizing context pollution. Every token saved i
 ### 1. Information Retrieval: Memory vs. Files
 **CRITICAL: Do not use `readFile` as a substitute for memory.**
 
-- **Use `pullMemory` when:**
+- **Use `readFile("memento.log")` when:**
     - Seeking state, decisions, goals, or distilled insights.
     - Checking the current progress of a task.
     - Retrieving a "Tattoo" (core truth).
@@ -43,7 +43,7 @@ Maximize reasoning capacity by minimizing context pollution. Every token saved i
 
 ### 3. State Persistence (The Memento Pattern)
 
-- **Bridge Blocks:** When context usage is high (>80%), you MUST generate a BRIDGE BLOCK using `pushMemory` with the teaser `BRIDGE: [Summary of state]`. This prevents total amnesia during Hard Resets.
+
 - **Tattoos:** Store permanent project truths (e.g., "The project uses Node.js") as `scope='tattoo'` to ensure they survive across sessions.
 
 ## 🚫 Forbidden Patterns
