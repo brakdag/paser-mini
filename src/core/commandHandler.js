@@ -132,6 +132,19 @@ export class CommandHandler {
       return true;
     }
 
+    if (inputStripped.startsWith('/paim ')) {
+      const message = inputStripped.slice(6).trim();
+      if (!message) {
+        this.ui.displayError('Usage: /paim <message>');
+        return true;
+      }
+
+      this.chatManager.assistant.injectMessage('model', message);
+      this.ui.displayChatMessage(this.chatManager.ui.agentNickname, message);
+
+      return true;
+    }
+
     if (inputStripped.startsWith('/join ')) {
       const channel = inputStripped.slice(6).trim();
       if (!channel.startsWith('#')) {
@@ -249,6 +262,7 @@ export class CommandHandler {
         '/me <action> - Perform an action (roleplay)\n' +
         '/compact    - Compact history into IRC log and reset context\n' +
         '/kick       - Kick agent: Nuclear reset, wipes all session memory\n' +
+        '/paim <msg>  - Simulate AI response (Pishin AI Message)\n' +
         '/join <#ch> - Change channel and mode (#charla, #work)\n' +
         '/s [file]   - Save last request payload to JSON\n' +
         '/q, /quit, /exit - Exit application\n';
