@@ -1,3 +1,4 @@
+--- HASH: a7447aa0e9d0573d8f333f308e6cf1dd5b320fb8a74302939fc85e312ce63ef3 ---
 import { MementoManager } from '../infrastructure/memento/manager.js';
 
 const memento = new MementoManager();
@@ -12,9 +13,22 @@ export const setMemoryContext = (assistant, chatManager) => {
 
 export const pushMemory = async (args) => {
   try {
-    const value = typeof args === 'string' ? args : args.value;
-    if (!value) return 'ERR: No value provided for memory.';
-    return await memento.pushMemory('agent', 'general', value);
+    // Support both string shorthand and structured object
+    const { 
+      role = 'agent', 
+      scope = 'general', 
+      value, 
+      key = null 
+    } = typeof args === 'string' ? { value: args } : (args || {});
+
+    if (value === undefined || value === null) {
+      return 'ERR: No value provided for memory.';
+    }
+
+    // Ensure value is a string to prevent crashes in _incrementReferencedRanks
+    const stringValue = String(value);
+
+    return await memento.pushMemory(role, scope, stringValue, key);
   } catch (e) {
     return `ERR: ${e.message}`;
   }
