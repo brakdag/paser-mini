@@ -1,4 +1,3 @@
---- HASH: a7447aa0e9d0573d8f333f308e6cf1dd5b320fb8a74302939fc85e312ce63ef3 ---
 import { MementoManager } from '../infrastructure/memento/manager.js';
 
 const memento = new MementoManager();
