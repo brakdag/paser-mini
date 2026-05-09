@@ -1,4 +1,4 @@
-import { LatexTranslator } from './latexTranslator.js';
+
 import { logger } from './logger.js';
 
 class UserInterruptException extends Error {
@@ -129,7 +129,7 @@ export class TurnProcessor {
     if (iterations >= maxIterations) this.ui.displayError('Maximum tool iterations reached.');
 
     const cleanedResponse = this.parser.cleanResponse(currentResponse);
-    const finalResponse = LatexTranslator.translate(cleanedResponse);
+    const finalResponse = cleanedResponse;
     if (finalResponse.trim()) {
       this.ui.displayChatMessage(this.ui.agentNickname, finalResponse);
     }
