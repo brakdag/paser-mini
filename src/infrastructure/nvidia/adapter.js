@@ -68,7 +68,16 @@ export class NvidiaAdapter {
   }
 
   injectMessage(role, content, timestamp = null) {
-    this.state.addMessage(role, content, timestamp);
+    if (this.state.renderingMode === 'FOUNTAIN') {
+      this.state.addMessage(role, content, timestamp);
+    } else {
+      this.state.addMessage(role, content, timestamp);
+    }
+    // Note: state.addMessage already handles formatting
+  }
+
+  setRenderingMode(mode) {
+    this.state.setRenderingMode(mode);
   }
 
   hardReset(historyOverride = null) {

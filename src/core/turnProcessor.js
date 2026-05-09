@@ -24,7 +24,14 @@ export class TurnProcessor {
     if (!userInput) return;
 
     logger.info('Starting processTurn', { userInput });
-    let currentResponse = await this.assistant.sendMessage(userInput);
+
+    let processedInput = userInput;
+    if (this.ui.renderingMode === 'FOUNTAIN') {
+      const nick = (userInput.startsWith('* SCENE:') || userInput.startsWith('* ACTION:')) ? 'system' : this.ui.userNickname;
+      processedInput = this.ui._renderFountain(nick, userInput);
+    }
+
+    let currentResponse = await this.assistant.sendMessage(processedInput);
 
     // Guard against null/filtered responses (NVIDIA/Gemini safety filters)
     const isSafetyBlock = currentResponse === null || 
@@ -105,7 +112,12 @@ export class TurnProcessor {
           currentResponse = 'CRITICAL ERROR: Too many consecutive JSON validation failures. Stop using tools and explain your intent in plain text.';
           break;
         }
-        currentResponse = await this.assistant.sendMessage(toolResults.join('\n'), 'user');
+        currentResponse = await this.assistant.sendMessage(
+          this.ui.renderingMode === 'FOUNTAIN' 
+            ? this.ui._renderFountain('system', toolResults.join('\n')) 
+            : toolResults.join('\n'), 
+          'user'
+        );
 
         // Guard against null/filtered responses during tool iterations
         const isSafetyBlock = currentResponse === null || 

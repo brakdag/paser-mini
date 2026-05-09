@@ -25,6 +25,11 @@ export class GeminiAdapter {
     this.lastPayload = null;
     this.userNickname = userNickname;
     this.agentNickname = agentNickname;
+    this.renderingMode = 'IRC';
+  }
+
+  setRenderingMode(mode) {
+    this.renderingMode = mode;
   }
 
   startChat(modelName, systemInstruction, temperature = 0.7) {
@@ -76,6 +81,8 @@ export class GeminiAdapter {
   }
 
   _formatMessage(role, text, timestamp) {
+    if (this.renderingMode === 'FOUNTAIN') return text;
+
     if (role === 'server' || text.startsWith('---') || text.startsWith('***') || text.startsWith('<TOOL_RESPONSE>')) {
       return `[${timestamp}] ${text}`;
     }

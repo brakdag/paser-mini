@@ -9,6 +9,7 @@ export class ConfigCommands {
       `| :--- | :--- |\n` +
       `| Model | ${chatManager.assistant.currentModel} |\n` +
       `| Temperature | ${chatManager.temperature} |\n` +
+      `| Rendering Mode | ${chatManager.ui.renderingMode} |\n` +
       `| Context Window | ${chatManager.configManager.get('context_window_limit', 'N/A')} tokens |\n` +
       `| TPM Limit | ${chatManager.configManager.get('tpm_limit', 'N/A')} |\n` +
       `| RPM Limit | ${chatManager.configManager.get('rpm_limit', 'N/A')} |\n` +

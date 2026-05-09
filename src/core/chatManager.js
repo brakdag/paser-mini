@@ -68,6 +68,10 @@ export class ChatManager {
     const userNickname = this.configManager.get('user_nickname', 'user');
     this.ui.userNickname = userNickname;
 
+    // Rendering Mode Persistence
+    const currentMode = this.configManager.get('rendering_mode', 'IRC');
+    this.setRenderingMode(currentMode);
+
     this.stopRequested = false;
     this.logOpened = false;
   }
@@ -78,6 +82,18 @@ export class ChatManager {
       return;
     }
     this.configManager.save(key, value);
+  }
+
+  setRenderingMode(mode) {
+    this.saveConfig('rendering_mode', mode);
+    this.ui.setRenderingMode(mode);
+    if (this.assistant) {
+      if (this.assistant.setRenderingMode) {
+        this.assistant.setRenderingMode(mode);
+      } else if (this.assistant.state && this.assistant.state.setRenderingMode) {
+        this.assistant.state.setRenderingMode(mode);
+      }
+    }
   }
 
   async run(initialInput = null) {
@@ -119,7 +135,10 @@ export class ChatManager {
             '*** Session resumed from ./session_history.log'
           );
           this.logOpened = true;
-          this.assistant.injectMessage('server', logMsg);
+          const formattedLog = this.ui.renderingMode === 'FOUNTAIN' 
+          ? this.ui._renderFountain('system', logMsg) 
+          : logMsg;
+        this.assistant.injectMessage('server', formattedLog);
         }
 
         if (await this.commandHandler.handle(input)) {

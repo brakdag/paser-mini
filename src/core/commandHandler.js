@@ -74,6 +74,18 @@ export class CommandHandler {
       return true;
     }
 
+    if (inputStripped === '/fountain') {
+      this.chatManager.setRenderingMode('FOUNTAIN');
+      this.ui.displayInfo('Rendering mode set to Fountain (Screenplay)');
+      return true;
+    }
+
+    if (inputStripped === '/irc') {
+      this.chatManager.setRenderingMode('IRC');
+      this.ui.displayInfo('Rendering mode set to IRC (Default)');
+      return true;
+    }
+
     if (inputStripped === '/clear') {
       return SystemCommands.handleClear(this.ui);
     }
@@ -82,10 +94,8 @@ export class CommandHandler {
       const topic = inputStripped.slice(6).trim();
       this.ui.displaySystemMessage(`Topic changed to: ${topic}`);
 
-      const actionMsg = `changed the channel topic to: ${topic}`;
-      await this.chatManager.processTurn(
-        this.ui.formatChatMessage(this.chatManager.ui.userNickname, `* ${actionMsg} *`)
-      );
+      const actionMsg = `SCENE: ${topic}`;
+      await this.chatManager.processTurn(`* ${actionMsg} *`);
 
       return true;
     }
@@ -104,9 +114,7 @@ export class CommandHandler {
       this.ui.displaySystemMessage(`${oldNick} is now known as ${newNick}`);
 
       const actionMsg = `user changed their nickname to ${newNick}`;
-      await this.chatManager.processTurn(
-        this.ui.formatChatMessage(this.chatManager.ui.userNickname, `* ${actionMsg} *`)
-      );
+      await this.chatManager.processTurn(`* ${actionMsg} *`);
 
       return true;
     }
@@ -116,6 +124,25 @@ export class CommandHandler {
       const formattedAction = `* ${action} *`;
       this.ui.displayChatMessage(this.chatManager.ui.userNickname, formattedAction);
       await this.chatManager.processTurn(formattedAction);
+      return true;
+    }
+
+    if (inputStripped.startsWith('/action ')) {
+      const actionText = inputStripped.slice(8).trim();
+      if (!actionText) {
+        this.ui.displayError('Usage: /action <description>');
+        return true;
+      }
+
+      if (this.ui.renderingMode === 'FOUNTAIN') {
+        this.ui.displaySystemMessage(actionText);
+        const formatted = this.ui._renderFountain('system', `* ACTION: ${actionText} *`);
+        this.chatManager.assistant.injectMessage('server', formatted);
+      } else {
+        const formattedAction = `*** [Action]: ${actionText}`;
+        this.ui.displaySystemMessage(formattedAction);
+        this.chatManager.assistant.injectMessage('server', formattedAction);
+      }
       return true;
     }
 
@@ -139,7 +166,10 @@ export class CommandHandler {
         return true;
       }
 
-      this.chatManager.assistant.injectMessage('model', message);
+      const content = this.ui.renderingMode === 'FOUNTAIN' 
+        ? this.ui._renderFountain(this.ui.agentNickname, message) 
+        : message;
+      this.chatManager.assistant.injectMessage('model', content);
       this.ui.displayChatMessage(this.chatManager.ui.agentNickname, message);
 
       return true;
@@ -147,24 +177,33 @@ export class CommandHandler {
 
     if (inputStripped.startsWith('/join ')) {
       const channel = inputStripped.slice(6).trim();
-      if (!channel.startsWith('#')) {
+
+      if (this.ui.renderingMode !== 'FOUNTAIN' && !channel.startsWith('#')) {
         this.ui.displayError('Channel name must start with # (e.g., /join #work)');
         return true;
       }
 
       this.chatManager.currentChannel = channel;
 
-      let modeDesc = 'General purpose mode.';
-      if (channel === '#charla') {
-        modeDesc = 'Casual, friendly, and conversational mode.';
-      } else if (channel === '#work') {
-        modeDesc = 'Professional, focused, and highly efficient engineering mode.';
+      if (this.ui.renderingMode === 'FOUNTAIN') {
+        this.ui.displaySystemMessage(`Scene changed to: ${channel}`);
+        await this.chatManager.processTurn(`* SCENE: ${channel} *`);
+      } else {
+        let modeDesc = 'General purpose mode.';
+        if (channel === '#charla') {
+          modeDesc = 'Casual, friendly, and conversational mode.';
+        } else if (channel === '#work') {
+          modeDesc = 'Professional, focused, and highly efficient engineering mode.';
+        }
+
+        const systemMsg = `Joined channel ${channel}. Mode: ${modeDesc}`;
+        this.ui.displaySystemMessage(systemMsg);
+
+        const content = this.ui.renderingMode === 'FOUNTAIN' 
+          ? this.ui._renderFountain('system', systemMsg) 
+          : systemMsg;
+        this.chatManager.assistant.injectMessage('server', content);
       }
-
-      const systemMsg = `Joined channel ${channel}. Mode: ${modeDesc}`;
-      this.ui.displaySystemMessage(systemMsg);
-
-      this.chatManager.assistant.injectMessage('server', systemMsg);
 
       return true;
     }
@@ -176,7 +215,10 @@ export class CommandHandler {
       const bashInstruction = 'SYSTEM UPDATE: Bash access has been enabled. ' +
         'You now have access to the tool `executeBash(command: string)`, ' +
         'which allows you to execute shell commands in the project root.';
-      this.chatManager.assistant.injectMessage('server', bashInstruction);
+      const content = this.ui.renderingMode === 'FOUNTAIN' 
+        ? this.ui._renderFountain('system', bashInstruction) 
+        : bashInstruction;
+      this.chatManager.assistant.injectMessage('server', content);
 
       return true;
     }
@@ -257,10 +299,13 @@ export class CommandHandler {
         '/r <msg>    - Rewrite: Remove last interaction and re-prompt\n' +
         '/w <t> <r> <p> - Set window, RPM, and TPM\n' +
         '/clear      - Clear terminal\n' +
+        '/fountain   - Set rendering mode to Screenplay\n' +
+        '/irc        - Set rendering mode to IRC (default)\n' +
         '/topic <text> - Change the channel topic\n' +
         '/nick <name> - Change the agent\'s nickname\n' +
         '/me <action> - Perform an action (roleplay)\n' +
         '/compact    - Compact history into IRC log and reset context\n' +
+        '/action <txt> - Perform a narrative action (full-width)\n' +
         '/kick       - Kick agent: Nuclear reset, wipes all session memory\n' +
         '/paim <msg>  - Simulate AI response (Pishin AI Message)\n' +
         '/join <#ch> - Change channel and mode (#charla, #work)\n' +

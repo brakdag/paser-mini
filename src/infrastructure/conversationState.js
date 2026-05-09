@@ -3,6 +3,11 @@ export class ConversationState {
     this.userNickname = userNickname;
     this.agentNickname = agentNickname;
     this.history = [];
+    this.renderingMode = 'IRC';
+  }
+
+  setRenderingMode(mode) {
+    this.renderingMode = mode;
   }
 
   getTimestamp() {
@@ -10,6 +15,8 @@ export class ConversationState {
   }
 
   _formatMessage(role, text, timestamp = this.getTimestamp()) {
+    if (this.renderingMode === 'FOUNTAIN') return text;
+    
     // Preserve IRC aesthetics: system events (starting with ---, *** or <TOOL_RESPONSE>) do not have nicknames
     if (text.startsWith('---') || text.startsWith('***') || text.startsWith('<TOOL_RESPONSE>')) {
       return `[${timestamp}] ${text}`;

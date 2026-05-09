@@ -10,11 +10,64 @@ export class TerminalUI {
 
     this.agentNickname = 'paser_mini';
     this.userNickname = 'user';
+    this.renderingMode = 'IRC'; // 'IRC' or 'FOUNTAIN'
     this.inputQueue = [];
     this.rl = null;
     this.inputResolver = null;
   }
 
+
+  setRenderingMode(mode) {
+    this.renderingMode = mode;
+  }
+
+  _wrapText(text, start, end) {
+    const width = end - start;
+    const words = text.split(/\s+/);
+    let lines = [];
+    let currentLine = '';
+
+    words.forEach(word => {
+      if ((currentLine + (currentLine ? ' ' : '') + word).length <= width) {
+        currentLine += (currentLine ? ' ' : '') + word;
+      } else {
+        lines.push(currentLine);
+        currentLine = word;
+      }
+    });
+    lines.push(currentLine);
+
+    return lines.map(line => ' '.repeat(start) + line).join('\n');
+  }
+
+  _renderFountain(nickname, text) {
+    const trimmedText = text.trim();
+    let output = '';
+
+    if (nickname === 'system') {
+      // Scene Heading or Action
+      if (trimmedText.startsWith('* SCENE:')) {
+        const sceneText = trimmedText.replace(/^\* SCENE:\s*|\s*\*$/g, '').toUpperCase();
+        output = '\n' + sceneText + '\n';
+      } else {
+        const cleanText = trimmedText.replace(/^(\* ACTION:\s*|\*\*\*|---|-!-)\s*|\s*\*$/g, '');
+        output = this._wrapText(cleanText, 0, 75);
+      }
+    } else {
+      // Character and Dialogue/Parenthetical
+      output += ' '.repeat(37) + nickname.toUpperCase() + '\n';
+      
+      if (trimmedText.startsWith('*')) {
+        // Parenthetical
+        const cleanText = trimmedText.replace(/^\*\s*|\s*\*$/g, '');
+        output += this._wrapText(`(${cleanText})`, 31, 60);
+      } else {
+        // Dialogue
+        output += this._wrapText(trimmedText, 25, 60);
+      }
+    }
+    return output;
+  }
 
   writeToLog(text) {
     try {
@@ -123,6 +176,21 @@ export class TerminalUI {
   displayChatMessage(nickname, text) {
     this._clearCurrentLine();
     const trimmedText = text.trim();
+
+    if (this.renderingMode === 'FOUNTAIN') {
+      const fountainText = this._renderFountain(nickname, trimmedText);
+      const renderedText = this.formatMarkdown(fountainText);
+      process.stdout.write(renderedText + '\n');
+      
+      // Log as IRC format for consistency in session.log
+      const now = new Date();
+      const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      const logEntry = `[${time}] <${nickname}> ${trimmedText}`;
+      this.writeToLog(logEntry);
+      this._restorePrompt();
+      return;
+    }
+
     const renderedText = this.formatMarkdown(trimmedText);
     const now = new Date();
     const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
