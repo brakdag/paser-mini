@@ -116,13 +116,8 @@
 
     [
     "pushMemory",
-    "Stores in memento.log. To reference MUST use the #ID format (e.g., #1). Supports role, scope, and key for organization.",
-    {
-      "value": "string",
-      "role": "string",
-      "scope": "string",
-      "key": "string"
-    }
+    "Stores in memento.log. To reference MUST use the #ID format (e.g., #1).",
+    "string"
   ],
   [
     "getTokenCount",

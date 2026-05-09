@@ -10,24 +10,13 @@ export const setMemoryContext = (assistant, chatManager) => {
   currentChatManager = chatManager;
 };
 
-export const pushMemory = async (args) => {
+export const pushMemory = async (value) => {
   try {
-    // Support both string shorthand and structured object
-    const { 
-      role = 'agent', 
-      scope = 'general', 
-      value, 
-      key = null 
-    } = typeof args === 'string' ? { value: args } : (args || {});
-
-    if (value === undefined || value === null) {
+    if (!value) {
       return 'ERR: No value provided for memory.';
     }
 
-    // Ensure value is a string to prevent crashes in _incrementReferencedRanks
-    const stringValue = String(value);
-
-    return await memento.pushMemory(role, scope, stringValue, key);
+    return await memento.pushMemory('agent', 'general', String(value), null);
   } catch (e) {
     return `ERR: ${e.message}`;
   }
