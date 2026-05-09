@@ -182,11 +182,8 @@ export class TerminalUI {
       const renderedText = this.formatMarkdown(fountainText);
       process.stdout.write(renderedText + '\n');
       
-      // Log as IRC format for consistency in session.log
-      const now = new Date();
-      const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-      const logEntry = `[${time}] <${nickname}> ${trimmedText}`;
-      this.writeToLog(logEntry);
+      // Log the actual rendered layout to preserve the screenplay structure
+      this.writeToLog(renderedText);
       this._restorePrompt();
       return;
     }
