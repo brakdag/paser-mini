@@ -317,7 +317,12 @@ export class TerminalUI {
     console.log(finalMsg);
     const plainStatus = success ? '✓' : '✗';
     const plainPrefix = `[${time}] <${this.agentNickname}>`;
+      if (this.renderingMode === 'FOUNTAIN') {
+    const cleanToolLog = `${name} (${detail}) ${plainStatus}`;
+    this.writeToLog(this._renderFountain('system', `* ACTION: ${cleanToolLog}`));
+  } else {
     this.writeToLog(`${plainPrefix} * ${name} (${detail}) ${plainStatus}`);
+  }
 
     if (spinner) {
       this.activeSpinners.delete(name);
