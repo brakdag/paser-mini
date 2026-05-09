@@ -4,7 +4,5 @@ REAL_SCRIPT_PATH=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$REAL_SCRIPT_PATH")
 PROJECT_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
 
-# Change directory to project root so that process.cwd() is correct
-cd "$PROJECT_ROOT"
-
-node src/main.js "$@"
+# Execute node using the absolute path to main.js to preserve the user's CWD
+node "$PROJECT_ROOT/src/main.js" "$@"
