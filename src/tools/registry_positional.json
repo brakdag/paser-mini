@@ -114,14 +114,6 @@
     }
   ],
 
-  [
-    "newAgent",
-    "Launches a new independent instance of Paser Mini in the project root.",
-    {
-      "message": "string",
-      "args": "list"
-    }
-  ],
     [
     "pushMemory",
     "Stores in memento.log. To reference MUST use the #ID format (e.g., #1). Supports role, scope, and key for organization.",
@@ -130,15 +122,6 @@
       "role": "string",
       "scope": "string",
       "key": "string"
-    }
-  ],
-  [
-    "pullMemory",
-    "Retrieves information from memento.log based on scope and key. Use direction='next'/'prev' for narrative navigation.",
-    {
-      "scope": "string",
-      "key": "string",
-      "direction": "string"
     }
   ],
   [

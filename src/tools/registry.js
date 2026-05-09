@@ -35,9 +35,9 @@ export const AVAILABLE_TOOLS = {
   getTrackedFiles: fileTools.getTrackedFiles,
   validateJson: utilTools.validateJson,
   setNickname: utilTools.setNickname,
-  newAgent: instanceTools.newAgent,
+  
   pushMemory: memoryTools.pushMemory,
-  pullMemory: memoryTools.pullMemory,
+  
   getTokenCount: memoryTools.getTokenCount,
   gitDiff: fileTools.gitDiff,
   restoreFile: fileTools.restoreFile,
