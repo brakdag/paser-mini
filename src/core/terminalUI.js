@@ -53,6 +53,14 @@ export class TerminalUI {
         const cleanText = trimmedText.replace(/^(\* ACTION:\s*|\*\*\*|---|-!-)\s*|\s*\*$/g, '');
         output = this._wrapText(cleanText, 0, 75);
       }
+    } else if (nickname === 'dialogue') {
+      // Dialogue without nickname
+      if (trimmedText.startsWith('*')) {
+        const cleanText = trimmedText.replace(/^\*\s*|\s*\*$/g, '');
+        output += this._wrapText(`(${cleanText})`, 31, 60);
+      } else {
+        output += this._wrapText(trimmedText, 25, 60);
+      }
     } else {
       // Character and Dialogue/Parenthetical
       output += ' '.repeat(37) + nickname.toUpperCase() + '\n';

@@ -33,6 +33,12 @@ export class TurnProcessor {
 
     let currentResponse = await this.assistant.sendMessage(processedInput);
 
+    if (this.ui.renderingMode === 'FOUNTAIN') {
+      const formatted = this.ui._renderFountain(this.ui.agentNickname, currentResponse);
+      await this.assistant.popLastMessage();
+      await this.assistant.injectMessage('model', formatted);
+    }
+
     // Guard against null/filtered responses (NVIDIA/Gemini safety filters)
     const isSafetyBlock = currentResponse === null || 
                            currentResponse === 'null' || 
@@ -46,6 +52,7 @@ export class TurnProcessor {
 
     if (currentResponse?.startsWith('Error:')) {
       this.ui.displayError('API Communication Error: ' + currentResponse);
+      return;
     }
     logger.debug('Received response from assistant', { responseLength: currentResponse?.length });
     
@@ -130,6 +137,12 @@ export class TurnProcessor {
           'user'
         );
 
+        if (this.ui.renderingMode === 'FOUNTAIN') {
+          const formatted = this.ui._renderFountain(this.ui.agentNickname, currentResponse);
+          await this.assistant.popLastMessage();
+          await this.assistant.injectMessage('model', formatted);
+        }
+
         // Guard against null/filtered responses during tool iterations
         const isSafetyBlock = currentResponse === null || 
                                currentResponse === 'null' || 
@@ -144,7 +157,7 @@ export class TurnProcessor {
 
         if (currentResponse?.startsWith('Error:')) {
           this.ui.displayError('API Communication Error during tool processing: ' + currentResponse);
-          currentResponse = 'ERR: The system encountered a temporary API error. Please repeat your last tool call or request.';
+          return;
         }
       }
     }
