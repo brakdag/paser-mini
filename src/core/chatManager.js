@@ -94,6 +94,36 @@ export class ChatManager {
     }
   }
 
+  async switchProvider(provider, model, temperature) {
+    const oldAssistant = this.assistant;
+    let newAssistant;
+
+    if (provider === 'NVIDIA') {
+      const { NvidiaAdapter } = await import('../infrastructure/nvidia/adapter.js');
+      newAssistant = new NvidiaAdapter();
+    } else {
+      const { GeminiAdapter } = await import('../infrastructure/gemini/adapter.js');
+      newAssistant = new GeminiAdapter();
+    }
+
+    // Migrate history
+    if (oldAssistant && oldAssistant.getHistory) {
+      const history = oldAssistant.getHistory();
+      if (history && history.length > 0) {
+        history.forEach(msg => newAssistant.injectMessage(msg.role, msg.text));
+      }
+    }
+
+    this.assistant = newAssistant;
+    this.assistant.startChat(model, this.systemInstruction, temperature);
+
+    // Synchronize references
+    if (this.turnProcessor) this.turnProcessor.assistant = newAssistant;
+    if (this.engine) this.engine.assistant = newAssistant;
+
+    logger.info(`Provider switched to ${provider} | Model: ${model}`);
+  }
+
   async run(initialInput = null) {
     logger.info('Initializing ChatManager.run');
 

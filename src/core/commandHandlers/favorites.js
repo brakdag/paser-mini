@@ -62,16 +62,7 @@ export class FavoriteCommands {
         const currentProvider = chatManager.configManager.get('provider', 'Gemini');
 
         if (providerName !== currentProvider) {
-          if (providerName === 'Gemini') {
-            const { GeminiAdapter } = await import('../../infrastructure/gemini/adapter.js');
-            chatManager.assistant = new GeminiAdapter();
-          } else if (providerName === 'NVIDIA') {
-            const { NvidiaAdapter } = await import('../../infrastructure/nvidia/adapter.js');
-            chatManager.assistant = new NvidiaAdapter();
-          } else {
-            ui.displayError(`Provider ${providerName} not supported.`);
-            return true;
-          }
+          await chatManager.switchProvider(providerName, fav.model, fav.temp);
           chatManager.configManager.save('provider', providerName);
         }
 

@@ -14,11 +14,11 @@ export class AICommands {
     ui.displayMessage('Select Provider:\n0: Gemini\n1: NVIDIA');
     const choice = await ui.requestInput('Provider: ');
     if (choice === '0') {
-      chatManager.assistant = new GeminiAdapter();
+      await chatManager.switchProvider('Gemini', chatManager.configManager.get('model_name', 'gemini-2.0-flash'), chatManager.temperature);
       chatManager.configManager.save('provider', 'Gemini');
       ui.displayInfo('Connected to Gemini');
     } else if (choice === '1') {
-      chatManager.assistant = new NvidiaAdapter();
+      await chatManager.switchProvider('NVIDIA', chatManager.configManager.get('model_name', 'meta/llama-3.1-405b-instruct'), chatManager.temperature);
       chatManager.configManager.save('provider', 'NVIDIA');
       ui.displayInfo('Connected to NVIDIA');
     } else {
