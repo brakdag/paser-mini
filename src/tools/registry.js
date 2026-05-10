@@ -11,6 +11,7 @@ import * as jsonTools from "./jsonTools.js";
 import * as githubTools from "./githubTools.js";
 import * as gitTools from "./gitTools.js";
 import * as notificationTools from "./notificationTools.js";
+import * as fountainTools from "./fountainTools.js";
 import * as zipTools from "./zipTools.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -60,6 +61,7 @@ export const AVAILABLE_TOOLS = {
   getCurrentRepo: gitTools.getCurrentRepo,
   gitDiffAll: gitTools.gitDiffAll,
   notifyUser: notificationTools.notifyUser,
+  insertSceneFountain: fountainTools.insertSceneFountain,
   loadZip: zipTools.loadZip,
   readZipFile: zipTools.readZipFile,
   writeZipFile: zipTools.writeZipFile,

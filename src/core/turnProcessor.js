@@ -94,6 +94,17 @@ export class TurnProcessor {
 
             consecutiveErrors = 0; 
             const { response, result } = await this.engine.executeToolCall(call.data.name, call.data.args, { id: call.data.id });
+            
+            if (result && result.type === 'FOUNTAIN_INJECTION') {
+              this.ui.displayChatMessage('system', result.content);
+              this.assistant.injectMessage('user', result.content);
+              
+              const okResponse = this.parser.formatToolResponse('OK', call.data.id, true);
+              this.assistant.injectMessage('user', okResponse);
+              
+              return;
+            }
+
             if (call.data.name === 'setNickname' && typeof result === 'string' && result.startsWith('*** ')) {
               const match = result.match(/is now known as\s+(.+)$/);
               if (match) {

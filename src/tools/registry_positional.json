@@ -238,6 +238,14 @@
     }
   ],
   [
+    "insertSceneFountain",
+    "Insert a Fountain scene into the chat as a user message.",
+    {
+      "scene": "string",
+      "action": "string"
+    }
+  ],
+  [
     "loadZip",
     "Loads a ZIP/compressed file into memory for manipulation.",
     {

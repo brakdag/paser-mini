@@ -6,7 +6,6 @@ import { logger } from './logger.js';
 import { ConfigManager } from './configManager.js';
 import { TurnProcessor } from './turnProcessor.js';
 import { HistoryManager } from './historyManager.js';
-import { registerAllSchemas } from '../tools/schemaRegistry.js';
 import * as memoryTools from '../tools/memoryTools.js';
 
 export class ChatManager {
@@ -36,7 +35,6 @@ export class ChatManager {
     this.safemode = this.configManager.get('safemode', false);
 
     this.parser = new SmartToolParser();
-    registerAllSchemas(this.parser.validator);
     this.engine = new ExecutionEngine(
       assistant,
       tools,
