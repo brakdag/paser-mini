@@ -110,7 +110,10 @@ export class ChatManager {
     if (oldAssistant && oldAssistant.getHistory) {
       const history = oldAssistant.getHistory();
       if (history && history.length > 0) {
-        history.forEach(msg => newAssistant.injectMessage(msg.role, msg.text));
+        history.forEach(msg => {
+      const text = msg.text || (msg.parts && msg.parts[0] && msg.parts[0].text) || '';
+      newAssistant.injectMessage(msg.role, text);
+    });
       }
     }
 

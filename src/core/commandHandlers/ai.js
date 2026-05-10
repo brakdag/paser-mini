@@ -9,22 +9,25 @@ export class AICommands {
   }
 
   static async handleConnect(chatManager, ui) {
-    const { GeminiAdapter } = await import('../infrastructure/gemini/adapter.js');
-    const { NvidiaAdapter } = await import('../infrastructure/nvidia/adapter.js');
     ui.displayMessage('Select Provider:\n0: Gemini\n1: NVIDIA');
     const choice = await ui.requestInput('Provider: ');
+    
+    let provider, model;
     if (choice === '0') {
-      await chatManager.switchProvider('Gemini', chatManager.configManager.get('model_name', 'gemini-2.0-flash'), chatManager.temperature);
-      chatManager.configManager.save('provider', 'Gemini');
-      ui.displayInfo('Connected to Gemini');
+      provider = 'Gemini';
+      model = 'gemini-2.0-flash';
     } else if (choice === '1') {
-      await chatManager.switchProvider('NVIDIA', chatManager.configManager.get('model_name', 'meta/llama-3.1-405b-instruct'), chatManager.temperature);
-      chatManager.configManager.save('provider', 'NVIDIA');
-      ui.displayInfo('Connected to NVIDIA');
+      provider = 'NVIDIA';
+      model = 'meta/llama-3.1-405b-instruct';
     } else {
       ui.displayError('Invalid provider.');
       return true;
-    }
+    } 
+
+    await chatManager.switchProvider(provider, model, chatManager.temperature);
+    chatManager.configManager.save('provider', provider);
+    chatManager.configManager.save('model_name', model);
+    ui.displayInfo(`Connected to ${provider}`);
     return true;
   }
 }
