@@ -7,14 +7,14 @@ export class RepetitionDetector {
   }
 
   /**
-   * Analiza el texto en busca de repeticiones cíclicas
+   * Analyzes text for cyclic repetitions
    * @param {string} text 
-   * @returns {string|boolean} Retorna la secuencia repetida si se detecta, o true si es válido
+   * @returns {string|boolean} Returns the repeated sequence if detected, or true if valid
    */
   addText(text) {
     if (!text) return true;
 
-    // Tokenización simple basada en palabras
+    // Simple tokenization based on words
     const tokens = text.match(/\w+/g) || [];
 
     for (const token of tokens) {
@@ -25,12 +25,12 @@ export class RepetitionDetector {
 
       if (this.buffer.length < this.n * 2) continue;
 
-      // Extraer el n-grama actual y el anterior
+      // Extract current and previous n-grams
       const currentNgram = this.buffer.slice(-this.n).join(' ');
       const previousNgram = this.buffer.slice(-this.n * 2, -this.n).join(' ');
 
       if (currentNgram === previousNgram) {
-        // Contar cuántas veces aparece este n-grama en el buffer actual
+        // Count how many times this n-gram appears in the current buffer
         let count = 0;
         for (let i = 0; i <= this.buffer.length - this.n; i += this.n) {
           const segment = this.buffer.slice(i, i + this.n).join(' ');

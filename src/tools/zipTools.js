@@ -23,12 +23,12 @@ export const readZipFile = async ({ zipId, internalPath }) => {
     if (!zip) return 'ERR: No se encontró un contenedor activo con ese zipId';
     
     const file = zip.file(internalPath);
-    if (!file) return 'ERR: El archivo no existe dentro del contenedor';
+    if (!file) return 'ERR: File does not exist within the container';
     
     const content = await file.async('string');
     return JSON.stringify({ internalPath, content });
   } catch (e) {
-    return `ERR: Error leyendo archivo interno: ${e.message}`;
+    return `ERR: Error reading internal file: ${e.message}`;
   }
 };
 
@@ -40,7 +40,7 @@ export const writeZipFile = async ({ zipId, internalPath, content }) => {
     zip.file(internalPath, content);
     return JSON.stringify({ internalPath, message: 'Archivo actualizado en RAM' });
   } catch (e) {
-    return `ERR: Error escribiendo archivo interno: ${e.message}`;
+    return `ERR: Error writing internal file: ${e.message}`;
   }
 };
 
@@ -69,6 +69,6 @@ export const listZipFiles = async ({ zipId }) => {
     const files = Object.keys(zip.files);
     return JSON.stringify({ files });
   } catch (e) {
-    return `ERR: Error listando archivos: ${e.message}`;
+    return `ERR: Error listing files: ${e.message}`;
   }
 };

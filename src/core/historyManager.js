@@ -24,8 +24,8 @@ export class HistoryManager {
 
       const log = `--- Session History Compaction ---\n${logContent}\n--- End of Compaction ---`;
 
-      // El ChatManager se encargará de llamar a assistant.hardReset()
-      // y de enviar el prompt para mantener la responsabilidad del flujo en el orquestador.
+      // ChatManager will be responsible for calling assistant.hardReset()
+      // and sending the prompt to keep flow responsibility within the orchestrator.
       return {
         prompt: `The following is a log of our previous conversation for context:\n\n${log}\n\nContinue from here.`,
         type: 'compaction'

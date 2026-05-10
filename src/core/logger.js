@@ -4,7 +4,7 @@ import path from 'path';
 class Logger {
   constructor() {
     this.logFile = path.join(process.cwd(), 'paser_mini.log');
-    // Limpiar el log al iniciar la aplicación
+    // Clear the log when starting the application
     fs.writeFileSync(this.logFile, `--- Session Started: ${new Date().toISOString()} ---\n`);
   }
 

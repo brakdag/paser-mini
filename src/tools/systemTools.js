@@ -41,7 +41,7 @@ export const lintCode = async ({ path: targetPath = '.' }) => {
 
 export const generateDocs = async ({ path: targetPath = '.', outputDir = 'docs/api' }) => {
   try {
-    // Aseguramos que el directorio de salida exista
+    // Ensure the output directory exists
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }

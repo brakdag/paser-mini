@@ -7,7 +7,7 @@ export class GitHubUI {
   }
 
   async requestInput(prompt, history = null) {
-    // En modo GitHub, la entrada es gestionada por el orquestador vía cola de mensajes
+    // In GitHub mode, input is managed by the orchestrator via message queue
     return '';
   }
 

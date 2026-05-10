@@ -32,7 +32,7 @@ export class ModelCommands {
       chatManager.temperature = newTemp;
       chatManager.assistant.startChat(modelName, chatManager.systemInstruction, newTemp);
       
-      ui.displayInfo(`Modelo cambiado a ${modelName} | Temperatura: ${newTemp}`);
+      ui.displayInfo(`Model changed to ${modelName} | Temperature: ${newTemp}`);;
     } catch (e) {
       ui.displayError('Invalid model index or temperature.');
     }

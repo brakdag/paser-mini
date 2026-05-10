@@ -12,7 +12,7 @@ export class SchemaValidator {
   }
 
   /**
-   * Registra un esquema de Zod para una herramienta específica
+   * Registers a Zod schema for a specific tool
    * @param {string} toolName 
    * @param {import('zod').ZodSchema} schema 
    */
@@ -21,7 +21,7 @@ export class SchemaValidator {
   }
 
   /**
-   * Valida los argumentos de una herramienta
+   * Validates tool arguments
    * @param {string} toolName 
    * @param {any} args 
    * @returns {ValidationResult}

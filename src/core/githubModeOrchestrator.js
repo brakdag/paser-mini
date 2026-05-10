@@ -89,7 +89,7 @@ export class GitHubModeOrchestrator {
 
       const initialPrompt = `SYSTEM: You have been assigned to GitHub Issue #${issueNumber}.\nIssue Description: ${issueBody}\n\nPlease acknowledge the request, analyze the problem, and provide a detailed plan of action to the user via a comment on this issue. Do NOT create new issues.`;
 
-      // Ejecutamos el chat en una promesa separada para poder monitorear comentarios
+      // Execute the chat in a separate promise to monitor comments
       const runPromise = chatManager.run(initialPrompt);
 
       while (!runPromise.status === 'fulfilled') {
@@ -99,7 +99,7 @@ export class GitHubModeOrchestrator {
           console.log(`User feedback received on issue #${issueNumber}. Interrupting...`);
           
           chatManager.stopExecution();
-          // Inyectamos el comentario en el flujo del chat
+          // Inject the comment into the chat flow
           await chatManager.processTurn(new_comment);
         }
         await new Promise(resolve => setTimeout(resolve, 10000));

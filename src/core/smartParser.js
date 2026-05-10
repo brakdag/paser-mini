@@ -2,7 +2,7 @@ import { AutoCorrector } from './autoCorrector.js';
 import validator from './schemaRegistry.js';
 
 export class SmartToolParser {
-  // Regex optimizada: limita la captura a 10k caracteres para evitar el bloqueo del hilo principal
+  // Optimized regex: limits capture to 10k characters to avoid blocking the main thread
   static TOOL_PATTERN = /<(?:TOOL_CALL|tool_call)\s*>([\s\S]{1,10000}?)(?:<\/(?:TOOL_CALL|tool_call)>|$)/gis;
 
   constructor() {
