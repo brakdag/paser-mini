@@ -5,8 +5,9 @@ import { GeminiAdapter } from '../infrastructure/gemini/adapter.js';
 import { AVAILABLE_TOOLS } from '../tools/registry.js';
 
 export class GitHubModeOrchestrator {
-  constructor(systemInstruction) {
+  constructor(systemInstruction, tools) {
     this.systemInstruction = systemInstruction;
+    this.tools = tools;
     this.processingLabel = 'paser-processing';
     this.triggerHashtag = '#ai-assistance';
     this.botLogin = null;
@@ -79,7 +80,7 @@ export class GitHubModeOrchestrator {
       const assistant = new GeminiAdapter();
       const chatManager = new ChatManager(
         assistant,
-        AVAILABLE_TOOLS,
+        this.tools,
         this.systemInstruction,
         ui,
         true // instanceMode

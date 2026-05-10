@@ -8,7 +8,8 @@ export class ExecutionEngine {
     toolParser,
     ui,
     instanceMode = false,
-    tracker = null
+    tracker = null,
+    pureMode = false
   ) {
     this.assistant = assistant;
     this.tools = tools;
@@ -16,6 +17,7 @@ export class ExecutionEngine {
     this.ui = ui;
     this.instanceMode = instanceMode;
     this.toolTracker = tracker || new ToolAttemptTracker();
+    this.strictPureMode = pureMode || false;
     this.turnCount = 0;
     this.maxTurns = 10000;
     this.stopRequested = false;
@@ -45,6 +47,16 @@ export class ExecutionEngine {
   }
 
   async executeToolCall(name, args, callData) {
+    if (this.strictPureMode) {
+      return {
+        response: this.toolParser.formatToolResponse(
+          'ERR: Pure Mode active. Tool execution is strictly disabled.',
+          callData.id,
+          false
+        ),
+        success: false,
+      };
+    }
     if (!this.toolTracker.recordAttempt(name, args)) {
       return {
         response: this.toolParser.formatToolResponse(

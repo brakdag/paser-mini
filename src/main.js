@@ -29,6 +29,7 @@ async function main() {
     .option('-si, --system-instruction <instruction>', 'Custom system instructions')
     .option('-isi, --inject-system-instruction <instruction>', 'Inject instruction at the start of system prompt')
     .option('-fsi, --file-system-instruction <path>', 'Path to file for system instruction injection')
+    .option('-nsi, --no-system-instruction', 'Run without system instructions')
     .option('--github-mode', 'Run in GitHub mode: process issues with #ai-assistance')
     .parse(process.argv);
 
@@ -37,7 +38,8 @@ async function main() {
 
   if (options.githubMode) {
     const { GitHubModeOrchestrator } = await import('./core/githubModeOrchestrator.js');
-    const orchestrator = new GitHubModeOrchestrator(options.systemInstruction || SYSTEM_INSTRUCTION);
+    const tools = options.noSystemInstruction ? {} : AVAILABLE_TOOLS;
+    const orchestrator = new GitHubModeOrchestrator(options.noSystemInstruction ? '' : (options.systemInstruction || SYSTEM_INSTRUCTION), tools);
     await orchestrator.runForever();
     return;
   }
@@ -49,28 +51,30 @@ async function main() {
   const agentNick = configManager.get('agent_nickname', 'assistant');
   const assistant = provider === 'NVIDIA' ? new NvidiaAdapter(userNick, agentNick) : new GeminiAdapter(userNick, agentNick);
   
-  const baseInstr = options.systemInstruction || SYSTEM_INSTRUCTION;
-  let injection = '';
+  let sysInstr = '';
+  if (!options.noSystemInstruction) {
+    const baseInstr = options.systemInstruction || SYSTEM_INSTRUCTION;
+    let injection = '';
 
-  if (options.injectSystemInstruction) {
-    injection = options.injectSystemInstruction;
-  } else if (options.fileSystemInstruction) {
-    try {
-      injection = fs.readFileSync(options.fileSystemInstruction, 'utf8');
-    } catch (e) {
-      console.error(`Error reading instruction file: ${e.message}`);
-      process.exit(1);
+    if (options.injectSystemInstruction) {
+      injection = options.injectSystemInstruction;
+    } else if (options.fileSystemInstruction) {
+      try {
+        injection = fs.readFileSync(options.fileSystemInstruction, 'utf8');
+      } catch (e) {
+        console.error(`Error reading instruction file: ${e.message}`);
+        process.exit(1);
+      }
     }
-  }
 
-  // Explicitly define Identity vs Protocols to ensure persona adoption
-  const sysInstr = injection 
-    ? `IDENTITY AND PERSONA:\n${injection}\n\nCORE OPERATIONAL PROTOCOLS:\n${baseInstr}` 
-    : baseInstr;
+    sysInstr = injection 
+      ? `IDENTITY AND PERSONA:\n${injection}\n\nCORE OPERATIONAL PROTOCOLS:\n${baseInstr}` 
+      : baseInstr;
+  }
 
   const chatManager = new ChatManager(
     assistant,
-    AVAILABLE_TOOLS,
+    options.noSystemInstruction ? {} : AVAILABLE_TOOLS,
     sysInstr,
     ui
   );

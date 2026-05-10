@@ -40,7 +40,9 @@ export class ChatManager {
       tools,
       this.parser,
       ui,
-      instanceMode
+      instanceMode,
+      null,
+      this.systemInstruction === ''
     );
     this.commandHandler = new CommandHandler(this, ui);
     this.repetitionDetector = new RepetitionDetector();
@@ -158,7 +160,7 @@ export class ChatManager {
           continue;
         }
 
-        if (!this.logOpened) {
+        if (!this.logOpened && this.systemInstruction) {
           const logMsg = this.ui.getLogOpenedString();
           this.ui.displayChatMessage('system', logMsg);
           this.ui.displayChatMessage(
