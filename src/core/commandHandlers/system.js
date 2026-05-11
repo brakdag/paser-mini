@@ -14,7 +14,7 @@ export class SystemCommands {
   static async handleReset(chatManager, ui) {
     ui.displayInfo('Performing Hard Reset (The Leap)...');
     const manager = new MementoManager();
-    const bridge = manager.getLatestBridge();
+    const bridge = await manager.pullMemory('bridge', null, 'next');
     let newHistory = [];
     if (bridge) {
       const bridgeMsg = `[MEMENTO LEAP: RESTORED SESSION STATE]\nNode #${bridge.id} | ${bridge.content}`;

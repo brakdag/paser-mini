@@ -6,7 +6,6 @@ import { logger } from './logger.js';
 import { ConfigManager } from './configManager.js';
 import { TurnProcessor } from './turnProcessor.js';
 import { HistoryManager } from './historyManager.js';
-import * as memoryTools from '../tools/memoryTools.js';
 
 export class ChatManager {
   constructor(assistant, tools, systemInstruction, ui, instanceMode = false) {
@@ -15,63 +14,23 @@ export class ChatManager {
     this.systemInstruction = systemInstruction;
     this.ui = ui;
     this.instanceMode = instanceMode;
-
-    // Configuration Integration
     this.configManager = new ConfigManager();
-    this.temperature = parseFloat(
-      this.configManager.get('default_temperature', 0.7)
-    );
-    this.contextWindowLimit = parseInt(
-      this.configManager.get('context_window_limit', 250000)
-    );
+    this.temperature = parseFloat(this.configManager.get('default_temperature', 0.7));
+    this.contextWindowLimit = parseInt(this.configManager.get('context_window_limit', 250000));
     this.tpmLimit = parseInt(this.configManager.get('tpm_limit', 15000));
-
     this.ui.bashEnabled = false;
     this.currentChannel = '#main';
-    this.timestampsEnabled = this.configManager.get(
-      'timestamps_enabled',
-      false
-    );
+    this.timestampsEnabled = this.configManager.get('timestamps_enabled', false);
     this.safemode = this.configManager.get('safemode', false);
-
     this.parser = new SmartToolParser();
-    this.engine = new ExecutionEngine(
-      assistant,
-      tools,
-      this.parser,
-      ui,
-      instanceMode,
-      null,
-      this.systemInstruction === ''
-    );
+    this.engine = new ExecutionEngine(assistant, tools, this.parser, ui, instanceMode, null, this.systemInstruction === '');
     this.commandHandler = new CommandHandler(this, ui);
     this.repetitionDetector = new RepetitionDetector();
-
-    // New Specialized Modules
-    this.turnProcessor = new TurnProcessor(
-      assistant,
-      tools,
-      this.parser,
-      this.engine,
-      ui,
-      this.repetitionDetector
-    );
-    this.historyManager = new HistoryManager(
-      assistant,
-      ui,
-      this.configManager
-    );
-
-    // Load agent nickname from config
-    const agentNickname = this.configManager.get('agent_nickname', 'paser_mini');
-    this.ui.agentNickname = agentNickname;
-    const userNickname = this.configManager.get('user_nickname', 'user');
-    this.ui.userNickname = userNickname;
-
-    // Rendering Mode Persistence
-    const currentMode = this.configManager.get('rendering_mode', 'IRC');
-    this.setRenderingMode(currentMode);
-
+    this.turnProcessor = new TurnProcessor(assistant, tools, this.parser, this.engine, ui, this.repetitionDetector);
+    this.historyManager = new HistoryManager(assistant, ui, this.configManager);
+    this.ui.agentNickname = this.configManager.get('agent_nickname', 'paser_mini');
+    this.ui.userNickname = this.configManager.get('user_nickname', 'user');
+    this.setRenderingMode(this.configManager.get('rendering_mode', 'IRC'));
     this.stopRequested = false;
     this.logOpened = false;
   }

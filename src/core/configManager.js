@@ -2,8 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export class ConfigManager {
   constructor() {
@@ -13,30 +12,20 @@ export class ConfigManager {
 
   _loadConfig() {
     try {
-      if (fs.existsSync(this.configPath)) {
-        const data = fs.readFileSync(this.configPath, 'utf8');
-        return JSON.parse(data);
-      }
+      return fs.existsSync(this.configPath) ? JSON.parse(fs.readFileSync(this.configPath, 'utf8')) : {};
     } catch (e) {
-      console.error(`Error loading config: ${e.message}`);
+      return {};
     }
-    return {};
   }
 
   get(key, defaultValue = null) {
-    return this.config[key] !== undefined ? this.config[key] : defaultValue;
+    return this.config[key] ?? defaultValue;
   }
 
   save(key, value) {
     this.config[key] = value;
-    try {
-      const dir = path.dirname(this.configPath);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-      }
-      fs.writeFileSync(this.configPath, JSON.stringify(this.config, null, 4), 'utf8');
-    } catch (e) {
-      console.error(`Error saving config: ${e.message}`);
-    }
+    const dir = path.dirname(this.configPath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(this.configPath, JSON.stringify(this.config, null, 4), 'utf8');
   }
 }

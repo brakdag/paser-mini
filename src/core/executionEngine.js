@@ -2,15 +2,7 @@ import path from 'path';
 import { ToolAttemptTracker } from './toolTracker.js';
 
 export class ExecutionEngine {
-  constructor(
-    assistant,
-    tools,
-    toolParser,
-    ui,
-    instanceMode = false,
-    tracker = null,
-    pureMode = false
-  ) {
+  constructor(assistant, tools, toolParser, ui, instanceMode = false, tracker = null, pureMode = false) {
     this.assistant = assistant;
     this.tools = tools;
     this.toolParser = toolParser;
@@ -21,7 +13,6 @@ export class ExecutionEngine {
     this.turnCount = 0;
     this.maxTurns = 10000;
     this.stopRequested = false;
-
     this._detailMappers = {
       'readFile': (a) => path.basename(a.path || ''),
       'writeFile': (a) => path.basename(a.path || ''),
@@ -29,19 +20,16 @@ export class ExecutionEngine {
       'replaceString': (a) => path.basename(a.path || ''),
       'listDir': (a) => a.path || '',
       'createDir': (a) => a.path || '',
-      'renamePath': (a) => 
-        path.basename(a.origin || '') + ' -> ' + path.basename(a.destination || ''),
+      'renamePath': (a) => `${path.basename(a.origin || '')} -> ${path.basename(a.destination || '')}`,
       'pushMemory': (a) => a.key || 'unknown',
       'pullMemory': (a) => a.key || 'unknown',
       'runInstance': (a) => a.target || 'unknown',
       'searchTextGlobal': (a) => `${a.query || ''}`,
-      'searchFilesPattern': (a) => 'pattern: ' + (a.pattern || ''),
+      'searchFilesPattern': (a) => `pattern: ${a.pattern || ''}`,
       'analyzeCode': (a) => path.basename(a.path || ''),
       'lintCode': (a) => path.basename(a.path || ''),
-      'generateDocs': (a) => 
-        `Docs for ${path.basename(a.path || '.')} -> ${a.outputDir || 'docs/api'}`,
-      'executeBash': (a) => 
-        a.command.substring(0, 50) + (a.command.length > 50 ? '...' : ''),
+      'generateDocs': (a) => `Docs for ${path.basename(a.path || '.')} -> ${a.outputDir || 'docs/api'}`,
+      'executeBash': (a) => a.command.substring(0, 50) + (a.command.length > 50 ? '...' : ''),
       'runPython': (a) => path.basename(a.scriptPath || ''),
     };
   }
