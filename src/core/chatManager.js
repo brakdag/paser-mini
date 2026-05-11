@@ -49,7 +49,7 @@ export class ChatManager {
     if (this.assistant) {
       if (this.assistant.setRenderingMode) {
         this.assistant.setRenderingMode(mode);
-      } else if (this.assistant.state && this.assistant.state.setRenderingMode) {
+      } else if (this.assistant.state?.setRenderingMode) {
         this.assistant.state.setRenderingMode(mode);
       }
     }
@@ -70,11 +70,11 @@ export class ChatManager {
     // Migrate history
     if (oldAssistant && oldAssistant.getHistory) {
       const history = oldAssistant.getHistory();
-      if (history && history.length > 0) {
+      if (history?.length > 0) {
         history.forEach(msg => {
-      const text = msg.text || (msg.parts && msg.parts[0] && msg.parts[0].text) || '';
-      newAssistant.injectMessage(msg.role, text);
-    });
+          const text = msg.text ?? msg.parts?.[0]?.text ?? '';
+          newAssistant.injectMessage(msg.role, text);
+        });
       }
     }
 
@@ -147,7 +147,7 @@ export class ChatManager {
           logger.info('Turn interrupted by user input');
           this.ui.displayInfo('Agent interrupted. Processing new request...');
         } else {
-          this.ui.displayError('Critical error in processTurn: ' + e.message);
+          this.ui.displayError(`Critical error in processTurn: ${e.message}`);
           console.error(e);
         }
       }

@@ -78,7 +78,7 @@ export class ExecutionEngine {
       };
     }
 
-    if (name === 'runInstance' && this.instanceMode) {
+    if (name === 'runInstance' && this.instanceMode === true) {
       return {
         response: this.toolParser.formatToolResponse(
           'ERR: Recursion disabled.',
@@ -92,9 +92,9 @@ export class ExecutionEngine {
     // Safe detail mapping
     let detail = 'no details';
     try {
-      const mapper = this._detailMappers[name] || (() => 'no details');
+      const mapper = this._detailMappers[name] ?? (() => 'no details');
       detail = mapper(args);
-    } catch {
+    } catch (e) {
       detail = 'error mapping details';
     }
 
@@ -127,13 +127,8 @@ export class ExecutionEngine {
     } catch (e) {
       this.toolTracker.recordFailure(name);
       this.ui.endToolMonitoring(name, false, detail);
-
       return {
-        response: this.toolParser.formatToolResponse(
-          'ERR: ' + e.message,
-          callData.id,
-          false
-        ),
+        response: this.toolParser.formatToolResponse(`ERR: ${e.message}`, callData.id, false),
         success: false,
       };
     }

@@ -15,8 +15,8 @@ export class AutoCorrector {
     fixed = fixed.replace(this.TRAILING_COMMA_PATTERN, '$1');
 
     // Balance braces/brackets
-    const counts = { "{": 0, "[": 0 };
-    const mapping = { "}": "{", "]": "[" };
+    const counts = { '{': 0, '[': 0 };
+    const mapping = { '}': '{', ']': '[' };
 
     for (const char of fixed) {
       if (char in counts) {
@@ -29,14 +29,14 @@ export class AutoCorrector {
     // Append missing closing tags
     for (const [openC, count] of Object.entries(counts)) {
       if (count > 0) {
-        fixed += (openC === "{" ? "}" : "]").repeat(count);
+        fixed += (openC === '{' ? '}' : ']').repeat(count);
       }
     }
 
     // Prepend missing opening tags
     for (const [openC, count] of Object.entries(counts)) {
       if (count < 0) {
-        fixed = (openC === "{" ? "{" : "[").repeat(Math.abs(count)) + fixed;
+        fixed = (openC === '{' ? '{' : '[').repeat(Math.abs(count)) + fixed;
       }
     }
 

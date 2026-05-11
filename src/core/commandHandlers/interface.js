@@ -55,6 +55,15 @@ export class InterfaceCommands {
     return true;
   }
 
+  static async handleInsertSceneFountain(chatManager, ui, scene, action) {
+    const formattedScene = scene.toUpperCase();
+    const formattedAction = action.startsWith('/') ? action : `/${action}`;
+    const output = `\n${formattedScene}\n${formattedAction}\n`;
+    ui.displaySystemMessage(`Injecting: ${output}`);
+    chatManager.assistant.injectMessage('user', output);
+    return 'OK';
+  }
+
   static async handleJoin(chatManager, ui, channel) {
     if (ui.renderingMode !== 'FOUNTAIN' && !channel.startsWith('#')) {
       ui.displayError('Channel name must start with # (e.g., /join #work)');

@@ -29,9 +29,12 @@ export const readFile = async ({ path: filePath, tail }) => {
       const length = stats.size - start;
       
       const handle = await fs.open(safePath, 'r');
-      const buffer = Buffer.alloc(length);
-      await handle.read(buffer, 0, length, start);
-      await handle.close();
+      try {
+        const buffer = Buffer.alloc(length);
+        await handle.read(buffer, 0, length, start);
+      } finally {
+        await handle.close();
+      }
       
       const content = buffer.toString('utf8');
       const lines = content.split('\n');

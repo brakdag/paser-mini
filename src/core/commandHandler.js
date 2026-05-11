@@ -24,6 +24,19 @@ const COMMAND_MAP = {
   '/config': ConfigCommands.handleConfig
 };
 
+const PREFIX_COMMANDS = {
+  '/r ': (cm, ui, input) => SessionCommands.handleRewrite(cm, ui, input.slice(3).trim()),
+  '/s ': (cm, ui, input) => SessionCommands.handleSavePayload(cm, ui, input.slice(3).trim() || 'last_request.json'),
+  '/topic ': (cm, ui, input) => InterfaceCommands.handleTopic(cm, ui, input.slice(7).trim()),
+  '/nick ': (cm, ui, input) => InterfaceCommands.handleNick(cm, ui, input.slice(6).trim()),
+  '/me ': (cm, ui, input) => InterfaceCommands.handleMe(cm, ui, input.slice(4).trim()),
+  '/action ': (cm, ui, input) => InterfaceCommands.handleAction(cm, ui, input.slice(8).trim()),
+  '/join ': (cm, ui, input) => InterfaceCommands.handleJoin(cm, ui, input.slice(6).trim()),
+  '/paim ': (cm, ui, input) => AICommands.handlePaim(cm, ui, input.slice(6).trim()),
+  '/models': (cm, ui, input) => ModelCommands.handleModels(cm, ui, input.split(/\s+/)),
+  '/fav': (cm, ui, input) => FavoriteCommands.handleFav(cm, ui, input.split(/\s+/))
+};
+
 export class CommandHandler {
   constructor(chatManager, ui) {
     this.chatManager = chatManager;
@@ -50,23 +63,15 @@ export class CommandHandler {
 
     if (COMMAND_MAP[lowerInput]) return COMMAND_MAP[lowerInput](this.chatManager, this.ui);
 
-    if (input.startsWith('/r ')) return SessionCommands.handleRewrite(this.chatManager, this.ui, input.slice(3).trim());
-    if (input.startsWith('/s ')) return SessionCommands.handleSavePayload(this.chatManager, this.ui, input.slice(3).trim() || 'last_request.json');
-    if (input.startsWith('/topic ')) return InterfaceCommands.handleTopic(this.chatManager, this.ui, input.slice(7).trim());
-    if (input.startsWith('/nick ')) return InterfaceCommands.handleNick(this.chatManager, this.ui, input.slice(6).trim());
-    if (input.startsWith('/me ')) return InterfaceCommands.handleMe(this.chatManager, this.ui, input.slice(4).trim());
-    if (input.startsWith('/action ')) return InterfaceCommands.handleAction(this.chatManager, this.ui, input.slice(8).trim());
-    if (input.startsWith('/join ')) return InterfaceCommands.handleJoin(this.chatManager, this.ui, input.slice(6).trim());
-    if (input.startsWith('/paim ')) return AICommands.handlePaim(this.chatManager, this.ui, input.slice(6).trim());
-    if (input.startsWith('/models')) return ModelCommands.handleModels(this.chatManager, this.ui, input.split(/\s+/));
-    if (input.startsWith('/fav')) return FavoriteCommands.handleFav(this.chatManager, this.ui, input.split(/\s+/));
+    const prefixKey = Object.keys(PREFIX_COMMANDS).find(key => lowerInput.startsWith(key));
+    if (prefixKey) return PREFIX_COMMANDS[prefixKey](this.chatManager, this.ui, input);
+
     if (input.startsWith('/w ')) return this._handleWindowConfig(input);
 
     if (input.startsWith('/') || input.startsWith(':')) {
       this.ui.displayError('Invalid command. See /help for available commands.');
       return true;
     }
-
     return false;
   }
 }

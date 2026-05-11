@@ -8,7 +8,7 @@ export class ToolAttemptTracker {
    * Registra un intento de llamada a una herramienta
    * @param {string} name 
    * @param {any} args 
-   * @returns {boolean} True si el intento es permitido, False si se detecta un bucle
+   * @returns {boolean} true if the attempt is allowed, false if a loop is detected
    */
   recordAttempt(name, args) {
     const argKey = JSON.stringify(args);
