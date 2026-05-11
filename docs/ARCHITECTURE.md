@@ -1,3 +1,4 @@
+<!-- Navigation: See /robots.txt for the Cognitive Navigation Map -->
 # Detailed Technical Architecture
 
 This project follows a modular ReAct (Reasoning and Acting) architecture. Below is the detailed breakdown of the components:

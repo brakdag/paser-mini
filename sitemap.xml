@@ -1,36 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Project Entry Points -->
+  <!-- PHASE 1: ORIENTATION (The 'Why') -->
   <url><loc>/README.md</loc><priority>1.0</priority></url>
-  <url><loc>/package.json</loc><priority>0.8</priority></url>
-  <url><loc>/install.sh</loc><priority>0.8</priority></url>
-
-  <!-- Architecture & Documentation -->
-  <url><loc>/docs/ARCHITECTURE.md</loc><priority>0.9</priority></url>
-  <url><loc>/docs/COMMANDS.md</loc><priority>0.9</priority></url>
-  <url><loc>/docs/DEVELOPMENT.md</loc><priority>0.9</priority></url>
-  <url><loc>/docs/FEATURES.md</loc><priority>0.9</priority></url>
-  <url><loc>/docs/PROJECT_STRUCTURE.md</loc><priority>0.9</priority></url>
-  <url><loc>/docs/PROTOCOL.md</loc><priority>0.9</priority></url>
-  <url><loc>/docs/SMART_JSON_PARSER.md</loc><priority>0.9</priority></url>
-  <url><loc>/docs/SOURCE_MAP.md</loc><priority>0.9</priority></url>
-  <url><loc>/docs/TECHNICAL.md</loc><priority>0.9</priority></url>
+  <url><loc>/.ai_context.md</loc><priority>1.0</priority></url>
   <url><loc>/docs/THE_JOURNEY.md</loc><priority>0.9</priority></url>
-  <url><loc>/docs/TOOLS.md</loc><priority>0.9</priority></url>
-  <url><loc>/docs/TOOL_INSTALLATION.md</loc><priority>0.9</priority></url>
-  <url><loc>/docs/TOOL_TEST_SUITE.md</loc><priority>0.9</priority></url>
-  <url><loc>/docs/documentation_policy.md</loc><priority>0.8</priority></url>
-  <url><loc>/docs/memento_user_guide.md</loc><priority>0.8</priority></url>
-  <url><loc>/docs/staff_policy.md</loc><priority>0.8</priority></url>
 
-  <!-- Core Logic (The Perfection) -->
+  <!-- PHASE 2: BLUEPRINT (The 'How') -->
+  <url><loc>/docs/ARCHITECTURE.md</loc><priority>1.0</priority></url>
+  <url><loc>/docs/PROJECT_STRUCTURE.md</loc><priority>1.0</priority></url>
+  <url><loc>/docs/PROTOCOL.md</loc><priority>0.9</priority></url>
+  <url><loc>/docs/TECHNICAL.md</loc><priority>0.9</priority></url>
+
+  <!-- PHASE 3: THE ENGINE (The 'Core') -->
   <url><loc>/src/core/chatManager.js</loc><priority>1.0</priority></url>
   <url><loc>/src/core/executionEngine.js</loc><priority>1.0</priority></url>
   <url><loc>/src/core/commandHandler.js</loc><priority>1.0</priority></url>
-  <url><loc>/src/core/configManager.js</loc><priority>0.8</priority></url>
-  <url><loc>/src/core/historyManager.js</loc><priority>0.8</priority></url>
-  <url><loc>/src/core/logger.js</loc><priority>0.7</priority></url>
-  <url><loc>/src/core/repetitionDetector.js</loc><priority>0.7</priority></url>
-  <url><loc>/src/core/schemaRegistry.js</loc><priority>0.8</priority></url>
-  <url><loc>/src/core/schemaValidator.js</loc><priority>0.8</priority></url>
+  <url><loc>/src/core/schemaRegistry.js</loc><priority>0.9</priority></url>
+  <url><loc>/src/core/schemaValidator.js</loc><priority>0.9</priority></url>
+
+  <!-- PHASE 4: THE TOOLBOX (The 'Capabilities') -->
+  <url><loc>/src/tools/registry.js</loc><priority>0.9</priority></url>
+  <url><loc>/src/tools/system_instruction.json</loc><priority>0.9</priority></url>
+  <url><loc>/docs/TOOLS.md</loc><priority>0.8</priority></url>
+  <url><loc>/docs/COMMANDS.md</loc><priority>0.8</priority></url>
+
+  <!-- PHASE 5: SUPPORT & CONFIG (The 'Details') -->
+  <url><loc>/package.json</loc><priority>0.7</priority></url>
+  <url><loc>/config/model_cache.json</loc><priority>0.6</priority></url>
+  <url><loc>/docs/DEVELOPMENT.md</loc><priority>0.6</priority></url>
 </urlset>

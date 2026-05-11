@@ -1,17 +1,10 @@
 User-agent: *
-# Cognitive Navigation Map for Paser Mini
-# This file serves as the primary orientation guide for the AI agent.
+# --- PRIMARY NAVIGATION --- 
+# ALL AI AGENTS: Consult /sitemap.xml for the optimal discovery sequence.
+Sitemap: /sitemap.xml
 
-# --- ALLOWED ZONES (High Utility) ---
-Allow: /README.md
-Allow: /.staff/
-Allow: /src_js/
-Allow: /config/
-Allow: /docs/
-Allow: /.migration/
-Allow: /scripts/
-
-# --- DISALLOWED ZONES (Noise & Risk) ---
+# --- STRICT DISALLOW ZONES (NO-GO) ---
+# Entry into these directories is a waste of tokens and a systemic error.
 Disallow: /node_modules/
 Disallow: /.git/
 Disallow: /venv/
@@ -19,10 +12,27 @@ Disallow: /.pytest_cache/
 Disallow: /tmp/
 Disallow: /sessions/
 
-# --- SITEMAP (Priority Entry Points) ---
-Sitemap: /README.md
-Sitemap: /.staff/elena_vance.md
-Sitemap: /.migration/manifest.json
-Sitemap: /src_js/core/executionEngine.js
+# --- COGNITIVE NAVIGATION MAP ---
+# [PRIORITY: CRITICAL] - Start here for immediate orientation
+Allow: /README.md
+Allow: /.ai_context.md
+Allow: /.staff/elena_vance.md
 
-# Note: Prioritize src_js over src for all current operations to ensure JS-native fluency.
+# [PRIORITY: HIGH] - Architectural blueprints and system logic
+Allow: /docs/ARCHITECTURE.md
+Allow: /docs/PROJECT_STRUCTURE.md
+Allow: /src/core/chatManager.js
+Allow: /src/core/executionEngine.js
+
+# [PRIORITY: MEDIUM] - Tool definitions and supporting docs
+Allow: /docs/
+Allow: /src/tools/
+Allow: /src/core/schemas/
+
+# [PRIORITY: LOW] - Implementation details and config
+Allow: /src/
+Allow: /config/
+Allow: /.migration/
+Allow: /scripts/
+
+# Note: For maximum efficiency, follow the sequence in sitemap.xml.

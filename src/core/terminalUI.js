@@ -256,7 +256,7 @@ export class TerminalUI {
 
   displayThought(text) {
     this._clearCurrentLine();
-    process.stdout.write(chalk.gray.italic('\ud83d\udcad ' + text) + '\n');
+    process.stdout.write(chalk.green.italic('\ud83d\udcad ' + text) + '\n');
     this._restorePrompt();
   }
 

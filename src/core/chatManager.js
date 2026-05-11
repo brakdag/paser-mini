@@ -1,3 +1,4 @@
+// Navigation: See /robots.txt for the Cognitive Navigation Map
 import { SmartToolParser } from './smartParser.js';
 import { ExecutionEngine } from './executionEngine.js';
 import { CommandHandler } from './commandHandler.js';

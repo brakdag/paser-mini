@@ -1,3 +1,4 @@
+<!-- Navigation: See /robots.txt for the Cognitive Navigation Map -->
 # Paser Mini
 **The Extreme Minimalist Autonomous Agent**
 
