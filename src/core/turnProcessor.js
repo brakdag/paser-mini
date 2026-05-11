@@ -11,6 +11,21 @@ class UserInterruptException extends Error {
 const DESTRUCTIVE_TOOLS = ['removeFile', 'writeFile', 'replaceString', 'executeBash'];
 
 export class TurnProcessor {
+  async #sendMessageWithRetry(message, role = 'user', attempt = 1) {
+    const maxRetries = 5;
+    const baseDelay = 1000;
+    try {
+      return await this.assistant.sendMessage(message, role);
+    } catch (error) {
+      if (attempt >= maxRetries) throw error;
+      const isRetryable = !error.response || [429, 500, 502, 503, 504].includes(error.response.status);
+      if (!isRetryable) throw error;
+      const delay = baseDelay * Math.pow(2, attempt - 1);
+      this.ui.displayError(`API Error: ${error.message}. Retrying in ${delay}ms... (Attempt ${attempt}/${maxRetries})`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return this.#sendMessageWithRetry(message, role, attempt + 1);
+    }
+  }
   constructor(assistant, tools, parser, engine, ui, repetitionDetector) {
     this.assistant = assistant;
     this.tools = tools;
@@ -31,7 +46,7 @@ export class TurnProcessor {
       processedInput = this.ui._renderFountain(nick, userInput);
     }
 
-    let currentResponse = await this.assistant.sendMessage(processedInput);
+    let currentResponse = await this.#sendMessageWithRetry(processedInput);
 
     if (this.ui.renderingMode === 'FOUNTAIN') {
       const formatted = this.ui._renderFountain(this.ui.agentNickname, currentResponse);
@@ -56,7 +71,7 @@ export class TurnProcessor {
     while (currentResponse?.startsWith('Error:') && apiRecoveryAttempts < maxApiRecoveries) {
       apiRecoveryAttempts++;
       this.ui.displayError(`API Communication Error (Attempt ${apiRecoveryAttempts}/${maxApiRecoveries}): ${currentResponse}`);
-      currentResponse = await this.assistant.sendMessage(`System Error: ${currentResponse}. Please attempt to recover or rephrase your last action.`);
+      currentResponse = await this.#sendMessageWithRetry(`System Error: ${currentResponse}. Please attempt to recover or rephrase your last action.`);
     }
 
     if (currentResponse?.startsWith('Error:')) {
@@ -139,7 +154,7 @@ export class TurnProcessor {
           currentResponse = 'CRITICAL ERROR: Too many consecutive JSON validation failures. Stop using tools and explain your intent in plain text.';
           break;
         }
-        currentResponse = await this.assistant.sendMessage(
+        currentResponse = await this.#sendMessageWithRetry(
           this.ui.renderingMode === 'FOUNTAIN' 
             ? this.ui._renderFountain('system', toolResults.join('\n')) 
             : toolResults.join('\n'), 
@@ -168,7 +183,7 @@ export class TurnProcessor {
           apiRecoveryAttempts++;
           if (apiRecoveryAttempts < maxApiRecoveries) {
             this.ui.displayError(`API Communication Error during tool processing (Attempt ${apiRecoveryAttempts}/${maxApiRecoveries}): ${currentResponse}`);
-            currentResponse = await this.assistant.sendMessage(`System Error: ${currentResponse}. Please attempt to recover or rephrase your last action.`);
+            currentResponse = await this.#sendMessageWithRetry(`System Error: ${currentResponse}. Please attempt to recover or rephrase your last action.`);
           } else {
             this.ui.displayError('Critical API failure during tool processing. Halting.');
             return;

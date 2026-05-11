@@ -13,6 +13,7 @@ import * as gitTools from "./gitTools.js";
 import * as notificationTools from "./notificationTools.js";
 import * as fountainTools from "./fountainTools.js";
 import * as zipTools from "./zipTools.js";
+import * as binaryTools from "./binaryTools.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,6 +27,7 @@ export const AVAILABLE_TOOLS = {
   removeFile: fileTools.removeFile,
   createDir: fileTools.createDir,
 
+  reloadSchemas: systemTools.reloadSchemas,
   analyzeCode: systemTools.analyzeCode,
   listDir: fileTools.listDir,
   replaceString: fileTools.replaceString,
@@ -67,6 +69,7 @@ export const AVAILABLE_TOOLS = {
   writeZipFile: zipTools.writeZipFile,
   saveZip: zipTools.saveZip,
   listZipFiles: zipTools.listZipFiles,
+  binaryAnalysis: binaryTools.handleHexCommand,
 };
 
 const registryPath = path.join(__dirname, "registry_positional.json");

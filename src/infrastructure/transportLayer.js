@@ -6,7 +6,7 @@ export class TransportLayer {
    */
   async get(url, params = {}, headers = {}) {
     try {
-      const response = await axios.get(url, { params, headers });
+      const response = await axios.get(url, { params, headers, timeout: 60000 });
       return response.data;
     } catch (e) {
       throw e;
@@ -20,13 +20,14 @@ export class TransportLayer {
     let lastError;
     for (let i = 0; i < retries; i++) {
       try {
-        const response = await axios.post(url, payload, { headers });
+        const response = await axios.post(url, payload, { headers, timeout: 60000 });
         return response.data;
       } catch (e) {
         lastError = e;
         // Retry on 429 (Rate Limit) or 5xx (Server Error)
         const status = e.response?.status;
-        if (status !== 429 && (status < 500 || status > 599)) {
+        const isTimeout = e.code === 'ECONNABORTED';
+        if (!isTimeout && status !== 429 && (status < 500 || status > 599)) {
           break; 
         }
         // Exponential backoff

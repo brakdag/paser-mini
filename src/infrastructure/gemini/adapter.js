@@ -125,7 +125,7 @@ export class GeminiAdapter {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${this.apiKey}`;
 
     try {
-      const response = await axios.post(url, payload);
+      const response = await axios.post(url, payload, { timeout: 60000 });
       const data = response.data;
 
       const candidates = data.candidates;
@@ -198,7 +198,7 @@ export class GeminiAdapter {
   async getAvailableModels() {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${this.apiKey}`;
-      const response = await axios.get(url);
+      const response = await axios.get(url, { timeout: 60000 });
       const models = response.data.models || [];
       return models
         .filter(m => m.name.includes('gemini') || m.name.includes('gemma'))

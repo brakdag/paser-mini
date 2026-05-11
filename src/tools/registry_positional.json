@@ -283,5 +283,21 @@
     {
       "zipId": "string"
     }
+  ],
+  [
+    "binaryAnalysis",
+    "Perform binary analysis on a file (inspect, extract, search, detect, convert)",
+    {
+      "action": "string",
+      "filePath": "string",
+      "offset": "number",
+      "length": "number",
+      "end": "number",
+      "outputFile": "string",
+      "pattern": "string",
+      "hexString": "string",
+      "type": "string",
+      "endianness": "string"
+    }
   ]
 ]

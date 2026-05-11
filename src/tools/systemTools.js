@@ -55,6 +55,17 @@ export const generateDocs = async ({ path: targetPath = '.', outputDir = 'docs/a
 };
 
 
+import { registerSchemas } from '../core/schemaRegistry.js';
+
+export const reloadSchemas = async () => {
+  try {
+    await registerSchemas();
+    return 'Schemas successfully reloaded from disk.';
+  } catch (e) {
+    return `ERR: Failed to reload schemas: ${e.message}`;
+  }
+}
+
 export const executeBash = async ({ command }) => {
   try {
     // Ejecutamos el comando asegurando que el directorio de trabajo sea la raíz del proyecto

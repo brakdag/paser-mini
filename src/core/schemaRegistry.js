@@ -19,7 +19,7 @@ async function registerSchemas() {
         const toolName = schemaName;
         
         try {
-          const module = await import(`./schemas/${file}`);
+          const module = await import(`./schemas/${file}?update=${Date.now()}`);
           const schema = module[schemaName + 'Schema'];
           
           if (schema) {
@@ -40,4 +40,5 @@ async function registerSchemas() {
 // Top-level await ensures all schemas are registered before the validator is exported
 await registerSchemas();
 
+export { registerSchemas };
 export default validator;

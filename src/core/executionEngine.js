@@ -31,6 +31,7 @@ export class ExecutionEngine {
       'generateDocs': (a) => `Docs for ${path.basename(a.path || '.')} -> ${a.outputDir || 'docs/api'}`,
       'executeBash': (a) => a.command.substring(0, 50) + (a.command.length > 50 ? '...' : ''),
       'runPython': (a) => path.basename(a.scriptPath || ''),
+      'binaryAnalysis': (a) => `${a.action || 'analysis'} on ${path.basename(a.filePath || 'unknown')}`,
     };
   }
 
