@@ -57,10 +57,13 @@ export class GeminiAdapter {
   _buildPayload() {
     const contents = JSON.parse(JSON.stringify(this.history)).map(c => {
       const { timestamp, ...rest } = c;
-      // Map internal 'server' role to 'user' for API compatibility
-      // The model will distinguish it by the text format ([HH:mm] Text)
       if (rest.role === 'server') {
         rest.role = 'user';
+      }
+      if (this.renderingMode === 'CLEAN') {
+        rest.parts = rest.parts.map(p => ({
+          text: p.text.replace(/^(\[\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, '').trim()
+        }));
       }
       return rest;
     });

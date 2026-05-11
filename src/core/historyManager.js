@@ -22,7 +22,11 @@ export class HistoryManager {
         return null;
       }
 
-      const log = `--- Session History Compaction ---\n${logContent}\n--- End of Compaction ---`;
+      let processedLog = logContent;
+    if (this.ui.renderingMode === 'CLEAN') {
+      processedLog = logContent.replace(/^\[\d{2}:\d{2}\]\s*<[^>]+>\s*/gm, '');
+    }
+    const log = `--- Session History Compaction ---\n${processedLog}\n--- End of Compaction ---`;
 
       // ChatManager will be responsible for calling assistant.hardReset()
       // and sending the prompt to keep flow responsibility within the orchestrator.

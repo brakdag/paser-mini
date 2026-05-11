@@ -35,8 +35,13 @@ export class NvidiaAdapter {
     this.state.addMessage(role, message);
 
     // 2. Map to NVIDIA JSON
+    const history = this.state.getRawHistory();
+    const processedHistory = this.state.renderingMode === 'CLEAN' 
+      ? history.map(m => ({ ...m, text: m.text.replace(/^(\[\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, '').trim() }))
+      : history;
+
     const payload = PayloadMapper.toNvidia(
-      this.state.getRawHistory(),
+      processedHistory,
       this.systemInstruction,
       this.temperature
     );
