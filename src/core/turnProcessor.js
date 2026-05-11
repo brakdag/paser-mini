@@ -97,12 +97,24 @@ export class TurnProcessor {
       const toolCalls = this.parser.extractToolCalls(currentResponse);
 
       // UX: Separate reasoning (thought) from action
-      const firstCallIndex = currentResponse.search(/<(?:TOOL_CALL|tool_call)\s*>/i);
-      if (firstCallIndex !== -1) {
-        const thought = currentResponse.substring(0, firstCallIndex);
-        if (thought.trim()) {
-          this.ui.displayThought(thought.trim());
-          logger.sessionLog(thought.trim());
+      // UX: Extract reasoning (thought) regardless of tool calls
+      const thoughtMatch = currentResponse.match(/<thought>([\s\S]*?)<\/thought>/i);
+      if (thoughtMatch && thoughtMatch[1]) {
+        const thought = thoughtMatch[1].trim();
+        this.ui.displayThought(thought);
+        logger.sessionLog(thought);
+        // Remove the thought block from the response to avoid double-displaying it as text
+        currentResponse = currentResponse.replace(thoughtMatch[0], '').trim();
+      } else {
+        // Fallback: If no explicit <thought> tags, check if there's text before the first tool call
+        const firstCallIndex = currentResponse.search(/<(?:TOOL_CALL|tool_call)\s*>/i);
+        if (firstCallIndex > 0) {
+          const thought = currentResponse.substring(0, firstCallIndex).trim();
+          if (thought) {
+            this.ui.displayThought(thought);
+            logger.sessionLog(thought);
+            currentResponse = currentResponse.substring(firstCallIndex).trim();
+          }
         }
       }
 

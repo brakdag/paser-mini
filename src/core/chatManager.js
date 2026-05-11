@@ -30,6 +30,7 @@ export class ChatManager {
     this.turnProcessor = new TurnProcessor(assistant, tools, this.parser, this.engine, ui, this.repetitionDetector);
     this.historyManager = new HistoryManager(assistant, ui, this.configManager);
     this.ui.agentNickname = this.configManager.get('agent_nickname', 'paser_mini');
+    logger.setAgentNickname(this.ui.agentNickname);
     this.ui.userNickname = this.configManager.get('user_nickname', 'user');
     this.setRenderingMode(this.configManager.get('rendering_mode', 'IRC'));
     this.stopRequested = false;
