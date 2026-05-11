@@ -25,9 +25,14 @@ Map the JavaScript function to a name the LLM can call.
 
 ### 3. LLM Catalog Update (The Discovery)
 Define the tool's signature so it's injected into the System Prompt.
-- **File**: `src_js/tools/registry_positional.json`
+- **File**: `src/tools/registry_positional.json`
 - **Format**: `[ "tool_name", "Clear description of utility", { "arg_name": "type" } ]`
 - **Crucial**: The `tool_name` here must match the key in `registry.js` exactly.
+
+### 3b. Alias Mapping (The Optimization)
+To reduce token bloat, assign a Unix-like alias to your tool.
+- **Files**: `src/core/executionEngine.js` and `src/tools/registry.js`
+- **Action**: Add your mapping to the `TOOL_ALIASES` object (e.g., `'my_tool': 'mt'`). This allows the AI to use a dense identifier while the system executes the full function.
 
 ### 4. SmartParser Schema (The Guardrail)
 Prevent the agent from calling tools with invalid arguments.

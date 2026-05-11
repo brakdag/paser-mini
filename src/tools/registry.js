@@ -75,9 +75,56 @@ export const AVAILABLE_TOOLS = {
 const registryPath = path.join(__dirname, "registry_positional.json");
 const full_catalog = JSON.parse(fs.readFileSync(registryPath, "utf8"));
 
+const TOOL_ALIASES = {
+  'readFile': 'cat',
+  'writeFile': 'write',
+  'removeFile': 'rm',
+  'listDir': 'ls',
+  'replaceString': 'sed',
+  'analyzeCode': 'analyze',
+  'lintCode': 'lint',
+  'generateDocs': 'docs',
+  'searchTextGlobal': 'grep',
+  'searchFilesPattern': 'find',
+  'renamePath': 'mv',
+  'copyFile': 'cp',
+  'validateJson': 'json-val',
+  'setNickname': 'nick',
+  'pushMemory': 'mem-push',
+  'getTokenCount': 'tokens',
+  'getTrackedFiles': 'tree',
+  'gitDiff': 'diff',
+  'restoreFile': 'restore',
+  'concatFile': 'append',
+  'getJsonStructure': 'json-struct',
+  'getJsonNode': 'json-get',
+  'getJsonArrayInfo': 'json-arr',
+  'updateJsonNode': 'json-set',
+  'listIssues': 'issues-ls',
+  'createIssue': 'issue-new',
+  'editIssue': 'issue-edit',
+  'closeIssue': 'issue-close',
+  'postComment': 'issue-com',
+  'getCurrentRepo': 'repo',
+  'gitDiffAll': 'diff-all',
+  'notifyUser': 'notify',
+  'insertSceneFountain': 'scene',
+  'loadZip': 'zip-load',
+  'readZipFile': 'zip-cat',
+  'writeZipFile': 'zip-write',
+  'saveZip': 'zip-save',
+  'listZipFiles': 'zip-ls',
+  'binaryAnalysis': 'bin-analyze'
+};
+
 const TOOL_CATALOG = full_catalog
   .filter((t) => t[0] !== "executeBash")
-  .map((t) => `${t[0]}(${Object.keys(t[2]).join(", ")}) - ${t[1]}`)
+  .map((t) => {
+    const name = TOOL_ALIASES[t[0]] || t[0];
+    const args = t[2] && typeof t[2] === 'object' ? Object.keys(t[2]).join(", ") : 'data';
+    const returns = t[1].split('. ')[0] || 'status';
+    return `${name}(${args}): returns ${returns}`;
+  })
   .join("\n");
 
 const _S = String.fromCharCode(60) + "TOOL" + "_CALL" + String.fromCharCode(62);

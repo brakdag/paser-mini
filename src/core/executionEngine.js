@@ -1,6 +1,48 @@
 import path from 'path';
 import { ToolAttemptTracker } from './toolTracker.js';
 
+const TOOL_ALIASES = {
+  'cat': 'readFile',
+  'write': 'writeFile',
+  'rm': 'removeFile',
+  'ls': 'listDir',
+  'sed': 'replaceString',
+  'analyze': 'analyzeCode',
+  'lint': 'lintCode',
+  'docs': 'generateDocs',
+  'grep': 'searchTextGlobal',
+  'find': 'searchFilesPattern',
+  'mv': 'renamePath',
+  'cp': 'copyFile',
+  'json-val': 'validateJson',
+  'nick': 'setNickname',
+  'mem-push': 'pushMemory',
+  'tokens': 'getTokenCount',
+  'tree': 'getTrackedFiles',
+  'diff': 'gitDiff',
+  'restore': 'restoreFile',
+  'append': 'concatFile',
+  'json-struct': 'getJsonStructure',
+  'json-get': 'getJsonNode',
+  'json-arr': 'getJsonArrayInfo',
+  'json-set': 'updateJsonNode',
+  'issues-ls': 'listIssues',
+  'issue-new': 'createIssue',
+  'issue-edit': 'editIssue',
+  'issue-close': 'closeIssue',
+  'issue-com': 'postComment',
+  'repo': 'getCurrentRepo',
+  'diff-all': 'gitDiffAll',
+  'notify': 'notifyUser',
+  'scene': 'insertSceneFountain',
+  'zip-load': 'loadZip',
+  'zip-cat': 'readZipFile',
+  'zip-write': 'writeZipFile',
+  'zip-save': 'saveZip',
+  'zip-ls': 'listZipFiles',
+  'bin-analyze': 'binaryAnalysis'
+};
+
 export class ExecutionEngine {
   constructor(assistant, tools, toolParser, ui, instanceMode = false, tracker = null, pureMode = false) {
     this.assistant = assistant;
@@ -36,6 +78,7 @@ export class ExecutionEngine {
   }
 
   async executeToolCall(name, args, callData) {
+    name = TOOL_ALIASES[name] || name;
     if (this.strictPureMode) {
       return {
         response: this.toolParser.formatToolResponse(
