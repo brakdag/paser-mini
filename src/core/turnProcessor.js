@@ -102,6 +102,7 @@ export class TurnProcessor {
         const thought = currentResponse.substring(0, firstCallIndex);
         if (thought.trim()) {
           this.ui.displayThought(thought.trim());
+          logger.sessionLog(thought.trim());
         }
       }
 

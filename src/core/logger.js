@@ -20,6 +20,8 @@ class Logger {
   info(msg, data) { this._log('INFO', msg, data); }
   warn(msg, data) { this._log('WARN', msg, data); }
   error(msg, data) { this._log('ERROR', msg, data); }
+
+  sessionLog(msg) { this._log('THOUGHT', msg); }
   debug(msg, data) { this._log('DEBUG', msg, data); }
 }
 

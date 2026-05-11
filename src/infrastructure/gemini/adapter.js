@@ -1,6 +1,6 @@
-import axios from 'axios';
-import axiosRetry from 'axios-retry';
-import { logger } from '../../core/logger.js';
+import axios from "axios";
+import axiosRetry from "axios-retry";
+import { logger } from "../../core/logger.js";
 
 axiosRetry(axios, {
   retries: 5,
@@ -8,24 +8,29 @@ axiosRetry(axios, {
   retryCondition: (error) => {
     const status = error.response?.status;
     const recoverableStatuses = [429, 500, 502, 503, 504];
-    return axiosRetry.isNetworkOrIdempotentRequestError(error) || recoverableStatuses.includes(status);
+    return (
+      axiosRetry.isNetworkOrIdempotentRequestError(error) ||
+      recoverableStatuses.includes(status)
+    );
   },
   onRetry: (retryCount, error, requestConfig) => {
-    logger.warn(`[${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}] -!- [GeminiAdapter] API Retry ${retryCount}/5 due to: ${error.response?.status || error.message}`);
-  }
+    logger.warn(
+      `[${new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}] -!- [GeminiAdapter] API Retry ${retryCount}/5 due to: ${error.response?.status || error.message}`,
+    );
+  },
 });
 
 export class GeminiAdapter {
-  constructor(userNickname = 'user', agentNickname = 'assistant') {
+  constructor(userNickname = "user", agentNickname = "assistant") {
     this.apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     this.history = [];
-    this.currentModel = 'gemini-2.0-flash';
+    this.currentModel = "gemini-2.0-flash";
     this.systemInstruction = null;
     this.temperature = 0.7;
     this.lastPayload = null;
     this.userNickname = userNickname;
     this.agentNickname = agentNickname;
-    this.renderingMode = 'IRC';
+    this.renderingMode = "IRC";
     this.lastRequestTime = 0;
     this.rpmLimit = 15;
   }
@@ -37,8 +42,10 @@ export class GeminiAdapter {
 
     if (elapsed < minInterval) {
       const waitTime = minInterval - elapsed;
-      logger.debug(`[GeminiAdapter] Rate Limit: Waiting ${waitTime / 1000}s to maintain ${this.rpmLimit} RPM`);
-      await new Promise(resolve => setTimeout(resolve, waitTime));
+      logger.debug(
+        `[GeminiAdapter] Rate Limit: Waiting ${waitTime / 1000}s to maintain ${this.rpmLimit} RPM`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
     }
     this.lastRequestTime = Date.now();
   }
@@ -55,14 +62,14 @@ export class GeminiAdapter {
   }
 
   _buildPayload() {
-    const contents = JSON.parse(JSON.stringify(this.history)).map(c => {
+    const contents = JSON.parse(JSON.stringify(this.history)).map((c) => {
       const { timestamp, ...rest } = c;
-      if (rest.role === 'server') {
-        rest.role = 'user';
+      if (rest.role === "server") {
+        rest.role = "user";
       }
-      if (this.renderingMode === 'CLEAN') {
-        rest.parts = rest.parts.map(p => ({
-          text: p.text.replace(/^(\[\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, '').trim()
+      if (this.renderingMode === "CLEAN") {
+        rest.parts = rest.parts.map((p) => ({
+          text: p.text.replace(/^(\[\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, "").trim(),
         }));
       }
       return rest;
@@ -70,13 +77,13 @@ export class GeminiAdapter {
     const payload = {
       contents: contents,
       generationConfig: {
-        temperature: this.temperature
-      }
+        temperature: this.temperature,
+      },
     };
 
     if (this.systemInstruction) {
       payload.systemInstruction = {
-        parts: [{ text: this.systemInstruction }]
+        parts: [{ text: this.systemInstruction }],
       };
     }
 
@@ -88,78 +95,93 @@ export class GeminiAdapter {
    * y causen bucles de razonamiento o ejecuciones falsas.
    */
   _filterThoughts(text) {
-    if (!text) return '';
+    if (!text) return "";
     // Elimina bloques <thought>...</thought> y cualquier cosa similar
-    let cleaned = text.replace(/<(thought|reasoning)>[\s\S]*?<\/\1>/gi, '');
-    
+    let cleaned = text.replace(/<(thought|reasoning)>[\s\S]*?<\/\1>/gi, "");
+
     // Elimina prefijos de IRC que el modelo pueda generar por imitación ([HH:mm] <Nick>)
-    cleaned = cleaned.replace(/^(\[\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, '');
-    
+    cleaned = cleaned.replace(/^(\[\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, "");
+
     return cleaned.trim();
   }
 
   _formatMessage(role, text, timestamp) {
-    if (this.renderingMode === 'FOUNTAIN') return text;
+    if (this.renderingMode === "FOUNTAIN") return text;
 
-    if (role === 'server' || text.startsWith('---') || text.startsWith('***') || text.startsWith('<TOOL_RESPONSE>')) {
+    if (
+      role === "server" ||
+      text.startsWith("---") ||
+      text.startsWith("***") ||
+      text.startsWith("<TOOL_RESPONSE>")
+    ) {
       return `[${timestamp}] ${text}`;
     }
-    const nickname = role === 'user' ? this.userNickname : this.agentNickname;
+    const nickname = role === "user" ? this.userNickname : this.agentNickname;
     return `[${timestamp}] <${nickname}> ${text}`;
   }
 
-  async sendMessage(message, role = 'user') {
+  async sendMessage(message, role = "user") {
     await this._applyRateLimit();
-    const timestamp = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const timestamp = new Date().toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
     const formattedMessage = this._formatMessage(role, message, timestamp);
     const parts = [{ text: formattedMessage }];
     this.history.push({
       role,
       parts,
-      timestamp
+      timestamp,
     });
 
     const payload = this._buildPayload();
     this.lastPayload = payload;
-    const modelName = this.currentModel.replace(/^models\//, '');
+    const modelName = this.currentModel.replace(/^models\//, "");
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${this.apiKey}`;
 
     try {
-      const response = await axios.post(url, payload, { timeout: 60000 });
+      const response = await axios.post(url, payload, { timeout: 600000 });
       const data = response.data;
 
       const candidates = data.candidates;
       if (!candidates || candidates.length === 0) {
-        return 'Error: No response candidates returned (possible safety block).';
+        return "Error: No response candidates returned (possible safety block).";
       }
 
       const candidate = candidates[0];
-      if (candidate.finishReason === 'SAFETY') {
-        return 'Error: Response blocked by safety filters.';
+      if (candidate.finishReason === "SAFETY") {
+        return "Error: Response blocked by safety filters.";
       }
 
       const content = candidate.content;
       if (!content || !content.parts || content.parts.length === 0) {
-        return 'Error: No content parts returned.';
+        return "Error: No content parts returned.";
       }
 
-      let textContent = content.parts.map(p => p.text).join('');
-      
+      let textContent = content.parts.map((p) => p.text).join("");
+
       // FILTRO CRÍTICO: Limpiamos los pensamientos antes de guardar en el historial
       textContent = this._filterThoughts(textContent);
 
       if (textContent) {
-        const timestamp = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-        const formattedMessage = this._formatMessage('model', textContent, timestamp);
+        const timestamp = new Date().toLocaleTimeString("en-GB", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        const formattedMessage = this._formatMessage(
+          "model",
+          textContent,
+          timestamp,
+        );
         this.history.push({
-          role: 'model',
+          role: "model",
           parts: [{ text: formattedMessage }],
-          timestamp
+          timestamp,
         });
         return textContent;
       }
 
-      return 'Error: Empty response';
+      return "Error: Empty response";
     } catch (e) {
       const errorMsg = e.response?.data?.error?.message || e.message;
       return `Error: ${errorMsg}`;
@@ -167,12 +189,17 @@ export class GeminiAdapter {
   }
 
   injectMessage(role, content, timestamp = null) {
-    const ts = timestamp || new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const ts =
+      timestamp ||
+      new Date().toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
     const formattedMessage = this._formatMessage(role, content, ts);
-    this.history.push({ 
-      role, 
+    this.history.push({
+      role,
       parts: [{ text: formattedMessage }],
-      timestamp: ts
+      timestamp: ts,
     });
   }
 
@@ -201,11 +228,11 @@ export class GeminiAdapter {
       const response = await axios.get(url, { timeout: 60000 });
       const models = response.data.models || [];
       return models
-        .filter(m => m.name.includes('gemini') || m.name.includes('gemma'))
-        .map(m => m.name);
+        .filter((m) => m.name.includes("gemini") || m.name.includes("gemma"))
+        .map((m) => m.name);
     } catch (e) {
       console.error(`Error fetching models: ${e.message}`);
-      return ['models/gemini-2.0-flash', 'models/gemini-1.5-flash'];
+      return ["models/gemini-2.0-flash", "models/gemini-1.5-flash"];
     }
   }
 }
