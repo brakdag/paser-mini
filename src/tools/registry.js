@@ -75,55 +75,58 @@ export const AVAILABLE_TOOLS = {
 const registryPath = path.join(__dirname, "registry_positional.json");
 const full_catalog = JSON.parse(fs.readFileSync(registryPath, "utf8"));
 
-const TOOL_ALIASES = {
-  'readFile': 'cat',
-  'writeFile': 'write',
-  'removeFile': 'rm',
-  'listDir': 'ls',
-  'replaceString': 'sed',
-  'analyzeCode': 'analyze',
-  'lintCode': 'lint',
-  'generateDocs': 'docs',
-  'searchTextGlobal': 'grep',
-  'searchFilesPattern': 'find',
-  'renamePath': 'mv',
-  'copyFile': 'cp',
-  'validateJson': 'json-val',
-  'setNickname': 'nick',
-  'pushMemory': 'mem-push',
-  'getTokenCount': 'tokens',
-  'getTrackedFiles': 'tree',
-  'gitDiff': 'diff',
-  'restoreFile': 'restore',
-  'concatFile': 'append',
-  'getJsonStructure': 'json-struct',
-  'getJsonNode': 'json-get',
-  'getJsonArrayInfo': 'json-arr',
-  'updateJsonNode': 'json-set',
-  'listIssues': 'issues-ls',
-  'createIssue': 'issue-new',
-  'editIssue': 'issue-edit',
-  'closeIssue': 'issue-close',
-  'postComment': 'issue-com',
-  'getCurrentRepo': 'repo',
-  'gitDiffAll': 'diff-all',
-  'notifyUser': 'notify',
-  'insertSceneFountain': 'scene',
-  'loadZip': 'zip-load',
-  'readZipFile': 'zip-cat',
-  'writeZipFile': 'zip-write',
-  'saveZip': 'zip-save',
-  'listZipFiles': 'zip-ls',
-  'binaryAnalysis': 'bin-analyze'
+export const TOOL_ALIASES = {
+  'cat': 'readFile',
+  'write': 'writeFile',
+  'rm': 'removeFile',
+  'ls': 'listDir',
+  'sed': 'replaceString',
+  'replace': 'replaceString',
+  'edit': 'replaceString',
+  'analyze': 'analyzeCode',
+  'lint': 'lintCode',
+  'docs': 'generateDocs',
+  'grep': 'searchTextGlobal',
+  'find': 'searchFilesPattern',
+  'mv': 'renamePath',
+  'cp': 'copyFile',
+  'json-val': 'validateJson',
+  'nick': 'setNickname',
+  'mem-push': 'pushMemory',
+  'tokens': 'getTokenCount',
+  'tree': 'getTrackedFiles',
+  'diff': 'gitDiff',
+  'restore': 'restoreFile',
+  'append': 'concatFile',
+  'json-struct': 'getJsonStructure',
+  'json-get': 'getJsonNode',
+  'json-arr': 'getJsonArrayInfo',
+  'json-set': 'updateJsonNode',
+  'issues-ls': 'listIssues',
+  'issue-new': 'createIssue',
+  'issue-edit': 'editIssue',
+  'issue-close': 'closeIssue',
+  'issue-com': 'postComment',
+  'repo': 'getCurrentRepo',
+  'diff-all': 'gitDiffAll',
+  'notify': 'notifyUser',
+  'scene': 'insertSceneFountain',
+  'zip-load': 'loadZip',
+  'zip-cat': 'readZipFile',
+  'zip-write': 'writeZipFile',
+  'zip-save': 'saveZip',
+  'zip-ls': 'listZipFiles',
+  'bin-analyze': 'binaryAnalysis'
 };
 
 const TOOL_CATALOG = full_catalog
   .filter((t) => t[0] !== "executeBash")
   .map((t) => {
-    const name = TOOL_ALIASES[t[0]] || t[0];
+    const canonicalName = t[0];
+    const alias = Object.keys(TOOL_ALIASES).find(key => TOOL_ALIASES[key] === canonicalName) || canonicalName;
     const args = t[2] && typeof t[2] === 'object' ? Object.keys(t[2]).join(", ") : 'data';
     const returns = t[1].split('. ')[0] || 'status';
-    return `${name}(${args}): returns ${returns}`;
+    return `${alias}(${args}): returns ${returns}`;
   })
   .join("\n");
 

@@ -1,47 +1,7 @@
 import path from 'path';
 import { ToolAttemptTracker } from './toolTracker.js';
+import { TOOL_ALIASES } from '../tools/registry.js';
 
-const TOOL_ALIASES = {
-  'cat': 'readFile',
-  'write': 'writeFile',
-  'rm': 'removeFile',
-  'ls': 'listDir',
-  'sed': 'replaceString',
-  'analyze': 'analyzeCode',
-  'lint': 'lintCode',
-  'docs': 'generateDocs',
-  'grep': 'searchTextGlobal',
-  'find': 'searchFilesPattern',
-  'mv': 'renamePath',
-  'cp': 'copyFile',
-  'json-val': 'validateJson',
-  'nick': 'setNickname',
-  'mem-push': 'pushMemory',
-  'tokens': 'getTokenCount',
-  'tree': 'getTrackedFiles',
-  'diff': 'gitDiff',
-  'restore': 'restoreFile',
-  'append': 'concatFile',
-  'json-struct': 'getJsonStructure',
-  'json-get': 'getJsonNode',
-  'json-arr': 'getJsonArrayInfo',
-  'json-set': 'updateJsonNode',
-  'issues-ls': 'listIssues',
-  'issue-new': 'createIssue',
-  'issue-edit': 'editIssue',
-  'issue-close': 'closeIssue',
-  'issue-com': 'postComment',
-  'repo': 'getCurrentRepo',
-  'diff-all': 'gitDiffAll',
-  'notify': 'notifyUser',
-  'scene': 'insertSceneFountain',
-  'zip-load': 'loadZip',
-  'zip-cat': 'readZipFile',
-  'zip-write': 'writeZipFile',
-  'zip-save': 'saveZip',
-  'zip-ls': 'listZipFiles',
-  'bin-analyze': 'binaryAnalysis'
-};
 
 export class ExecutionEngine {
   constructor(assistant, tools, toolParser, ui, instanceMode = false, tracker = null, pureMode = false) {
@@ -78,7 +38,9 @@ export class ExecutionEngine {
   }
 
   async executeToolCall(name, args, callData) {
-    name = TOOL_ALIASES[name] || name;
+    const displayName = name;
+    const toolName = TOOL_ALIASES[name] || name;
+
     if (this.strictPureMode) {
       return {
         response: this.toolParser.formatToolResponse(
@@ -89,10 +51,10 @@ export class ExecutionEngine {
         success: false,
       };
     }
-    if (!this.toolTracker.recordAttempt(name, args)) {
+    if (!this.toolTracker.recordAttempt(toolName, args)) {
       return {
         response: this.toolParser.formatToolResponse(
-          'Tool loop detected: ' + name + ' called too many times.',
+          'Tool loop detected: ' + toolName + ' called too many times.',
           callData.id,
           false
         ),
@@ -100,7 +62,7 @@ export class ExecutionEngine {
       };
     }
 
-    if (name === 'executeBash' && !this.ui.bashEnabled) {
+    if (toolName === 'executeBash' && !this.ui.bashEnabled) {
       return {
         response: this.toolParser.formatToolResponse(
           'ERR: Bash access is disabled for security. Please use /enableBash to activate it.',
@@ -111,10 +73,10 @@ export class ExecutionEngine {
       };
     }
 
-    if (!(name in this.tools)) {
+    if (!(toolName in this.tools)) {
       return {
         response: this.toolParser.formatToolResponse(
-          'Unknown tool: ' + name,
+          'Unknown tool: ' + toolName,
           callData.id,
           false
         ),
@@ -122,7 +84,7 @@ export class ExecutionEngine {
       };
     }
 
-    if (name === 'runInstance' && this.instanceMode === true) {
+    if (toolName === 'runInstance' && this.instanceMode === true) {
       return {
         response: this.toolParser.formatToolResponse(
           'ERR: Recursion disabled.',
@@ -136,28 +98,28 @@ export class ExecutionEngine {
     // Safe detail mapping
     let detail = 'no details';
     try {
-      const mapper = this._detailMappers[name] ?? (() => 'no details');
+      const mapper = this._detailMappers[toolName] ?? (() => 'no details');
       detail = mapper(args);
     } catch (e) {
       detail = 'error mapping details';
     }
 
-    this.ui.startToolMonitoring(name, detail);
+    this.ui.startToolMonitoring(displayName, detail);
 
     try {
-      const toolFunc = this.tools[name];
+      const toolFunc = this.tools[toolName];
       const result = await toolFunc(args);
 
-      if (name === 'pullMemory') {
+      if (toolName === 'pullMemory') {
         this.ui.displayPanel('Memento Pull', 'Accessing node #' + args.key, 'info');
-      } else if (name === 'pushMemory') {
+      } else if (toolName === 'pushMemory') {
         this.ui.displayPanel('Memento Push', result, 'info');
-      } else if (name === 'runInstance') {
+      } else if (toolName === 'runInstance') {
         this.ui.displayPanel('Instance Test Output', result, 'info');
       }
 
-      this.toolTracker.recordSuccess(name);
-      this.ui.endToolMonitoring(name, true, detail);
+      this.toolTracker.recordSuccess(toolName);
+      this.ui.endToolMonitoring(displayName, true, detail);
 
       return {
         response: this.toolParser.formatToolResponse(
@@ -169,8 +131,8 @@ export class ExecutionEngine {
         success: true,
       };
     } catch (e) {
-      this.toolTracker.recordFailure(name);
-      this.ui.endToolMonitoring(name, false, detail);
+      this.toolTracker.recordFailure(toolName);
+      this.ui.endToolMonitoring(displayName, false, detail);
       return {
         response: this.toolParser.formatToolResponse(`ERR: ${e.message}`, callData.id, false),
         success: false,
