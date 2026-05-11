@@ -50,8 +50,17 @@ export class TurnProcessor {
       return;
     }
 
+    let apiRecoveryAttempts = 0;
+    const maxApiRecoveries = 20;
+
+    while (currentResponse?.startsWith('Error:') && apiRecoveryAttempts < maxApiRecoveries) {
+      apiRecoveryAttempts++;
+      this.ui.displayError(`API Communication Error (Attempt ${apiRecoveryAttempts}/${maxApiRecoveries}): ${currentResponse}`);
+      currentResponse = await this.assistant.sendMessage(`System Error: ${currentResponse}. Please attempt to recover or rephrase your last action.`);
+    }
+
     if (currentResponse?.startsWith('Error:')) {
-      this.ui.displayError('API Communication Error: ' + currentResponse);
+      this.ui.displayError('Critical API failure after multiple attempts. Halting.');
       return;
     }
     logger.debug('Received response from assistant', { responseLength: currentResponse?.length });
@@ -156,8 +165,14 @@ export class TurnProcessor {
         }
 
         if (currentResponse?.startsWith('Error:')) {
-          this.ui.displayError('API Communication Error during tool processing: ' + currentResponse);
-          return;
+          apiRecoveryAttempts++;
+          if (apiRecoveryAttempts < maxApiRecoveries) {
+            this.ui.displayError(`API Communication Error during tool processing (Attempt ${apiRecoveryAttempts}/${maxApiRecoveries}): ${currentResponse}`);
+            currentResponse = await this.assistant.sendMessage(`System Error: ${currentResponse}. Please attempt to recover or rephrase your last action.`);
+          } else {
+            this.ui.displayError('Critical API failure during tool processing. Halting.');
+            return;
+          }
         }
       }
     }

@@ -26,6 +26,21 @@ export class GeminiAdapter {
     this.userNickname = userNickname;
     this.agentNickname = agentNickname;
     this.renderingMode = 'IRC';
+    this.lastRequestTime = 0;
+    this.rpmLimit = 15;
+  }
+
+  async _applyRateLimit() {
+    const minInterval = 60000 / this.rpmLimit;
+    const now = Date.now();
+    const elapsed = now - this.lastRequestTime;
+
+    if (elapsed < minInterval) {
+      const waitTime = minInterval - elapsed;
+      logger.debug(`[GeminiAdapter] Rate Limit: Waiting ${waitTime / 1000}s to maintain ${this.rpmLimit} RPM`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+    this.lastRequestTime = Date.now();
   }
 
   setRenderingMode(mode) {
@@ -91,6 +106,7 @@ export class GeminiAdapter {
   }
 
   async sendMessage(message, role = 'user') {
+    await this._applyRateLimit();
     const timestamp = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
     const formattedMessage = this._formatMessage(role, message, timestamp);
     const parts = [{ text: formattedMessage }];

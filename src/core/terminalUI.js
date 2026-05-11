@@ -196,6 +196,18 @@ export class TerminalUI {
       return;
     }
 
+    if (this.renderingMode === 'CLEAN') {
+      const renderedText = this.formatMarkdown(trimmedText);
+      process.stdout.write(renderedText + '\n');
+      
+      const now = new Date();
+      const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      this.writeToLog(`[${time}] <${nickname}> ${trimmedText}`);
+      
+      this._restorePrompt();
+      return;
+    }
+
     const renderedText = this.formatMarkdown(trimmedText);
     const now = new Date();
     const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });

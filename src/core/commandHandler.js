@@ -35,6 +35,7 @@ export class CommandHandler {
 
     if (input === '/fountain') return InterfaceCommands.handleFountain(this.chatManager, this.ui);
     if (input === '/irc') return InterfaceCommands.handleIRC(this.chatManager, this.ui);
+    if (input === '/clean') return InterfaceCommands.handleClean(this.chatManager, this.ui);
     if (input.startsWith('/topic ')) return InterfaceCommands.handleTopic(this.chatManager, this.ui, input.slice(7).trim());
     if (input.startsWith('/nick ')) return InterfaceCommands.handleNick(this.chatManager, this.ui, input.slice(6).trim());
     if (input.startsWith('/me ')) return InterfaceCommands.handleMe(this.chatManager, this.ui, input.slice(4).trim());

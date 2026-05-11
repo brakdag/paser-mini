@@ -11,6 +11,12 @@ export class InterfaceCommands {
     return true;
   }
 
+  static handleClean(chatManager, ui) {
+    chatManager.setRenderingMode('CLEAN');
+    ui.displayInfo('Rendering mode set to Clean (Minimalist)');
+    return true;
+  }
+
   static async handleTopic(chatManager, ui, topic) {
     ui.displaySystemMessage(`Topic changed to: ${topic}`);
     const actionMsg = `SCENE: ${topic}`;
@@ -82,6 +88,7 @@ export class InterfaceCommands {
       '/clear      - Clear terminal\n' +
       '/fountain   - Set rendering mode to Screenplay\n' +
       '/irc        - Set rendering mode to IRC (default)\n' +
+      '/clean      - Set rendering mode to Clean (Minimalist)\n' +
       '/topic <text> - Change the channel topic\n' +
       '/nick <name> - Change the agent\'s nickname\n' +
       '/me <action> - Perform an action (roleplay)\n' +
