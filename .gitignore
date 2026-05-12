@@ -32,3 +32,4 @@ session_history.log
 last_request.json
 paser_mini.log
 memento.log
+log/history.log
