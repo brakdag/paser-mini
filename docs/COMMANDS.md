@@ -17,7 +17,7 @@ These commands are handled locally by the `CommandHandler` and do not consume to
 - `/w <tokens> <rpm> <tpm>`: Set limits for the context window, Requests Per Minute, and Tokens Per Minute.
 
 ### 📋 Debugging & Data
-- `/s [filename]`: Save the last request payload to a JSON file (defaults to `last_request.json`). Useful for forensic analysis of AI behavior.
+- `/s [filename]`: Save the **raw** last request payload (the exact JSON object sent to the server) to a JSON file (defaults to `last_request.json`). Essential for forensic analysis and verifying the integrity of the communication layer.
 - `/t`: Display the current context window token usage.
 
 ### 👍 Interaction & Roleplay

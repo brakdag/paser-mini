@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const LOG_FILE = path.join(process.cwd(), 'memento.log');
+const LOG_FILE = path.join(process.cwd(), 'log', 'memento.log');
 
 export class MementoManager {
   async pushMemory(role, scope, value, key = null, pointers = []) {

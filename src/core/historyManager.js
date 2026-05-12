@@ -12,7 +12,7 @@ export class HistoryManager {
       const fs = await import('fs/promises');
       let logContent = '';
       try {
-        logContent = await fs.readFile('session.log', 'utf8');
+        logContent = await fs.readFile('log/session.log', 'utf8');
       } catch (e) {
         this.ui.displayError('No log file found to compact.');
         return null;

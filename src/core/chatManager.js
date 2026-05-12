@@ -100,13 +100,13 @@ export class ChatManager {
 
     if (initialInput) {
       const logMsg = this.ui.getLogOpenedString();
-      this.ui.displayChatMessage('system', logMsg);
-      this.ui.displayChatMessage(
-        'system',
-        '*** Session resumed from ./session_history.log'
-      );
+      const welcomeMsg = '-!- Session resumed from ./log/history.log';
+      const combinedMsg = `${logMsg}\n${welcomeMsg}`;
+
+      this.ui.displayChatMessage('system', combinedMsg);
+      this.assistant.injectMessage('server', combinedMsg);
+
       this.logOpened = true;
-      this.assistant.injectMessage('server', logMsg);
       await this.processTurn(initialInput);
     }
 
@@ -126,7 +126,7 @@ export class ChatManager {
           this.ui.displayChatMessage('system', logMsg);
           this.ui.displayChatMessage(
             'system',
-            '*** Session resumed from ./session_history.log'
+            '*** Session resumed from ./log/history.log'
           );
           this.logOpened = true;
           const formattedLog = this.ui.renderingMode === 'FOUNTAIN' 

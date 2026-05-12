@@ -67,10 +67,11 @@ export class GeminiAdapter {
       if (rest.role === "server") {
         rest.role = "user";
       }
+      // Eliminamos la limpieza en modo CLEAN para asegurar que el modelo reciba los timestamps y nicks,
+      // permitiéndole tener conciencia temporal y de identidad en el request.
+      // Esto garantiza la integridad de los datos para auditoría y razonamiento.
       if (this.renderingMode === "CLEAN") {
-        rest.parts = rest.parts.map((p) => ({
-          text: p.text.replace(/^(\[\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, "").trim(),
-        }));
+        // No hacemos nada, mantenemos el texto original con metadatos
       }
       return rest;
     });
@@ -135,7 +136,7 @@ export class GeminiAdapter {
     });
 
     const payload = this._buildPayload();
-    this.lastPayload = payload;
+    this.lastPayload = JSON.parse(JSON.stringify(payload)); // Captura una copia profunda del objeto real
     const modelName = this.currentModel.replace(/^models\//, "");
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${this.apiKey}`;
 
