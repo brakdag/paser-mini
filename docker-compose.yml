@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  agent-runtime:
+    image: node:lts-slim
+    container_name: paser_mini_runtime
+    user: "node"
+    working_dir: /home/node/app
+    command: tail -f /dev/null
+    volumes:
+      - ${PROJECT_PATH}:/home/node/app
+    environment:
+      - NODE_ENV=${NODE_ENV}
+    deploy:
+      resources:
+        limits:
+          cpus: '${CPU_LIMIT}'
+          memory: ${MEM_LIMIT}
+    networks:
+      - ${NETWORK_MODE}
+
+networks:
+  ${NETWORK_MODE}:
+    driver: bridge
+  none:
+    internal: true
