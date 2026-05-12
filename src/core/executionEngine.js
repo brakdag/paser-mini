@@ -35,6 +35,7 @@ export class ExecutionEngine {
       'executeBash': (a) => a.command.substring(0, 50) + (a.command.length > 50 ? '...' : ''),
       'runPython': (a) => path.basename(a.scriptPath || ''),
       'binaryAnalysis': (a) => `${a.action || 'analysis'} on ${path.basename(a.filePath || 'unknown')}`,
+      'sh': (a) => `sh: ${a.command.substring(0, 50)}${a.command.length > 50 ? '...' : ''}`,
     };
   }
 
@@ -93,6 +94,15 @@ export class ExecutionEngine {
           false
         ),
         success: false,
+      };
+    }
+
+    if (toolName === 'sh') {
+      const result = await this.tools[toolName](args);
+      return {
+        response: this.toolParser.formatToolResponse(result, callData.id, true),
+        result: result,
+        success: true,
       };
     }
 

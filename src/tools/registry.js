@@ -14,6 +14,7 @@ import * as notificationTools from "./notificationTools.js";
 import * as fountainTools from "./fountainTools.js";
 import * as zipTools from "./zipTools.js";
 import * as binaryTools from "./binaryTools.js";
+import * as dockerTools from "./dockerTools.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -70,6 +71,7 @@ export const AVAILABLE_TOOLS = {
   saveZip: zipTools.saveZip,
   listZipFiles: zipTools.listZipFiles,
   binaryAnalysis: binaryTools.handleHexCommand,
+  sh: dockerTools.sh,
 };
 
 const registryPath = path.join(__dirname, "registry_positional.json");
@@ -116,7 +118,8 @@ export const TOOL_ALIASES = {
   'zip-write': 'writeZipFile',
   'zip-save': 'saveZip',
   'zip-ls': 'listZipFiles',
-  'bin-analyze': 'binaryAnalysis'
+  'bin-analyze': 'binaryAnalysis',
+  'sh': 'sh'
 };
 
 const TOOL_CATALOG = full_catalog
