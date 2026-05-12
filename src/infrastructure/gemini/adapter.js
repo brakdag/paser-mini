@@ -14,14 +14,18 @@ axiosRetry(axios, {
     );
   },
   onRetry: (retryCount, error, requestConfig) => {
-    logger.warn(
-      `[${new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}] -!- [GeminiAdapter] API Retry ${retryCount}/5 due to: ${error.response?.status || error.message}`,
-    );
+    const time = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+    const msg = `[${time}] -!- [GeminiAdapter] API Retry ${retryCount}/5 due to: ${error.response?.status || error.message}`;
+    logger.warn(msg);
+    if (this.ui && this.ui.displayInfo) {
+      this.ui.displayInfo(`Reintentando conexión... (${retryCount}/5)`);
+    }
   },
 });
 
 export class GeminiAdapter {
-  constructor(userNickname = "user", agentNickname = "assistant") {
+  constructor(ui, userNickname = "user", agentNickname = "assistant") {
+    this.ui = ui;
     this.apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     this.history = [];
     this.currentModel = "gemini-2.0-flash";
@@ -185,7 +189,9 @@ export class GeminiAdapter {
       return "Error: Empty response";
     } catch (e) {
       const errorMsg = e.response?.data?.error?.message || e.message;
-      return `Error: ${errorMsg}`;
+      const error = new Error(errorMsg);
+      error.name = 'APIError';
+      throw error;
     }
   }
 

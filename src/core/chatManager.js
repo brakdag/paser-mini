@@ -29,6 +29,7 @@ export class ChatManager {
     this.repetitionDetector = new RepetitionDetector();
     this.turnProcessor = new TurnProcessor(assistant, tools, this.parser, this.engine, ui, this.repetitionDetector);
     this.historyManager = new HistoryManager(assistant, ui, this.configManager);
+    this.assistant.ui = ui; // Inyectamos la UI en el adaptador para los reintentos
     this.ui.agentNickname = this.configManager.get('agent_nickname', 'paser_mini');
     logger.setAgentNickname(this.ui.agentNickname);
     this.ui.userNickname = this.configManager.get('user_nickname', 'user');
@@ -148,6 +149,9 @@ export class ChatManager {
         if (e.name === 'UserInterruptException') {
           logger.info('Turn interrupted by user input');
           this.ui.displayInfo('Agent interrupted. Processing new request...');
+        } else if (e.name === 'APIError') {
+          this.ui.displayError(`Error de conexión con la IA: ${e.message}. La sesión sigue activa, intenta de nuevo en un momento.`);
+          console.error(e);
         } else {
           this.ui.displayError(`Critical error in processTurn: ${e.message}`);
           console.error(e);
