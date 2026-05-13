@@ -62,12 +62,15 @@ export class ChatManager {
     const oldAssistant = this.assistant;
     let newAssistant;
 
-    if (provider === 'NVIDIA') {
+        if (provider === 'NVIDIA') {
       const { NvidiaAdapter } = await import('../infrastructure/nvidia/adapter.js');
-      newAssistant = new NvidiaAdapter();
+      newAssistant = new NvidiaAdapter(this.ui.userNickname, this.ui.agentNickname);
+    } else if (provider === 'OPENROUTER') {
+      const { OpenRouterAdapter } = await import('../infrastructure/openrouter/adapter.js');
+      newAssistant = new OpenRouterAdapter(this.ui, this.ui.userNickname, this.ui.agentNickname);
     } else {
       const { GeminiAdapter } = await import('../infrastructure/gemini/adapter.js');
-      newAssistant = new GeminiAdapter();
+      newAssistant = new GeminiAdapter(this.ui, this.ui.userNickname, this.ui.agentNickname);
     }
 
     // Migrate history
