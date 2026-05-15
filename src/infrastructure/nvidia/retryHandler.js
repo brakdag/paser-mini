@@ -1,7 +1,7 @@
-import { logger } from '../../core/logger.js';
+import { logger } from "../../core/logger.js";
 
 export class NvidiaRetryHandler {
-  constructor(maxRetries = 5, callback = null) {
+  constructor(maxRetries = 5000, callback = null) {
     this.maxRetries = maxRetries;
     this.callback = callback;
   }
@@ -20,10 +20,10 @@ export class NvidiaRetryHandler {
         if (retries >= this.maxRetries) throw e;
 
         let delay = Math.pow(2, retries) * 1000;
-        let msg = '';
+        let msg = "";
 
         if (status === 429) {
-          const retryAfter = e.response.headers['retry-after'];
+          const retryAfter = e.response.headers["retry-after"];
           if (retryAfter && !isNaN(retryAfter)) {
             delay = parseInt(retryAfter, 10) * 1000;
           }
@@ -31,7 +31,7 @@ export class NvidiaRetryHandler {
         } else if ([500, 502, 503, 504].includes(status)) {
           msg = `Server error (${status}). Retrying in ${delay / 1000}s...`;
         } else if (status === 404) {
-          logger.error('Model not found (404). Stopping execution.');
+          logger.error("Model not found (404). Stopping execution.");
           throw e;
         } else {
           msg = `Unexpected error ${e.message}. Retrying in ${delay / 1000}s...`;
@@ -40,9 +40,10 @@ export class NvidiaRetryHandler {
         logger.warn(msg);
         if (this.callback) this.callback(msg);
 
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
         retries++;
       }
     }
   }
 }
+

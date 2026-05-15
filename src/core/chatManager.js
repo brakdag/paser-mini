@@ -64,7 +64,7 @@ export class ChatManager {
 
         if (provider === 'NVIDIA') {
       const { NvidiaAdapter } = await import('../infrastructure/nvidia/adapter.js');
-      newAssistant = new NvidiaAdapter(this.ui.userNickname, this.ui.agentNickname);
+      newAssistant = new NvidiaAdapter(this.ui.userNickname, this.ui.agentNickname, this.configManager);
     } else if (provider === 'OPENROUTER') {
       const { OpenRouterAdapter } = await import('../infrastructure/openrouter/adapter.js');
       newAssistant = new OpenRouterAdapter(this.ui, this.ui.userNickname, this.ui.agentNickname);

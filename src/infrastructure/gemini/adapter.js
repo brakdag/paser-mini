@@ -2,26 +2,7 @@ import axios from "axios";
 import axiosRetry from "axios-retry";
 import { logger } from "../../core/logger.js";
 
-axiosRetry(axios, {
-  retries: 5,
-  retryDelay: axiosRetry.exponentialDelay,
-  retryCondition: (error) => {
-    const status = error.response?.status;
-    const recoverableStatuses = [429, 500, 502, 503, 504];
-    return (
-      axiosRetry.isNetworkOrIdempotentRequestError(error) ||
-      recoverableStatuses.includes(status)
-    );
-  },
-  onRetry: (retryCount, error, requestConfig) => {
-    const time = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-    const msg = `[${time}] -!- [GeminiAdapter] API Retry ${retryCount}/5 due to: ${error.response?.status || error.message}`;
-    logger.warn(msg);
-    if (this.ui && this.ui.displayInfo) {
-      this.ui.displayInfo(`Reintentando conexión... (${retryCount}/5)`);
-    }
-  },
-});
+
 
 export class GeminiAdapter {
   constructor(ui, userNickname = "user", agentNickname = "assistant") {
@@ -37,6 +18,28 @@ export class GeminiAdapter {
     this.renderingMode = "IRC";
     this.lastRequestTime = 0;
     this.rpmLimit = 15;
+
+    this.client = axios.create();
+    axiosRetry(this.client, {
+      retries: 5,
+      retryDelay: axiosRetry.exponentialDelay,
+      retryCondition: (error) => {
+        const status = error.response?.status;
+        const recoverableStatuses = [429, 500, 502, 503, 504];
+        return (
+          axiosRetry.isNetworkOrIdempotentRequestError(error) ||
+          recoverableStatuses.includes(status)
+        );
+      },
+      onRetry: (retryCount, error) => {
+        const time = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+        const msg = `[${time}] -!- [GeminiAdapter] API Retry ${retryCount}/5 due to: ${error.response?.status || error.message}`;
+        logger.warn(msg);
+        if (this.ui && this.ui.displayInfo) {
+          this.ui.displayInfo(`Reintentando conexión... (${retryCount}/5)`);
+        }
+      },
+    });
   }
 
   async _applyRateLimit() {

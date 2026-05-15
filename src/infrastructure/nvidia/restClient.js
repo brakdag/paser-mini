@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { logger } from '../../core/logger.js';
+import { NvidiaRetryHandler } from './retryHandler.js';
 
 export class NvidiaRestClient {
   constructor(configManager) {
@@ -7,6 +8,7 @@ export class NvidiaRestClient {
     this.baseUrl = 'https://integrate.api.nvidia.com/v1';
     this.configManager = configManager;
     this.lastRequestTime = 0;
+    this.retryHandler = new NvidiaRetryHandler();
     this.client = axios.create({
       baseURL: this.baseUrl,
       headers: {
@@ -49,17 +51,18 @@ export class NvidiaRestClient {
     await this._applyRateLimit(tokenEstimate);
 
     if (stream) {
-      // Streaming implementation would require a different axios config or fetch
       throw new Error('Streaming not yet implemented in JS RestClient');
     }
 
-    const response = await this.client.post(url, payload);
+    const request = () => this.client.post(url, payload);
+    const response = await this.retryHandler.execute(request);
     return response.data;
   }
 
   async get(endpoint) {
     await this._applyRateLimit();
-    const response = await this.client.get(`/${endpoint}`);
+    const request = () => this.client.get(`/${endpoint}`);
+    const response = await this.retryHandler.execute(request);
     return response.data;
   }
 

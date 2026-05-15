@@ -1,13 +1,13 @@
 import { ConversationState } from '../conversationState.js';
 import { PayloadMapper } from '../payloadMapper.js';
-import { TransportLayer } from '../transportLayer.js';
+import { NvidiaRestClient } from './restClient.js';
 import axios from 'axios';
 import { logger } from '../../core/logger.js';
 
 export class NvidiaAdapter {
-  constructor(userNickname = 'user', agentNickname = 'assistant') {
+  constructor(userNickname = 'user', agentNickname = 'assistant', configManager) {
     this.state = new ConversationState(userNickname, agentNickname);
-    this.transport = new TransportLayer();
+    this.restClient = new NvidiaRestClient(configManager);
     this.currentModel = 'meta/llama-3.1-405b-instruct';
     this.systemInstruction = '';
     this.temperature = 0.7;
@@ -54,7 +54,8 @@ export class NvidiaAdapter {
 
     try {
       logger.debug('NvidiaAdapter: Sending request', { model: this.currentModel, payload });
-      const data = await this.transport.post(url, payload, headers);
+      // Using restClient which has retry logic
+      const data = await this.restClient.chatCompletions(payload);
       const rawContent = data.choices?.[0]?.message?.content || '';
       const content = this._filterThoughts(rawContent);
       
@@ -73,12 +74,7 @@ export class NvidiaAdapter {
   }
 
   injectMessage(role, content, timestamp = null) {
-    if (this.state.renderingMode === 'FOUNTAIN') {
-      this.state.addMessage(role, content, timestamp);
-    } else {
-      this.state.addMessage(role, content, timestamp);
-    }
-    // Note: state.addMessage already handles formatting
+    this.state.addMessage(role, content, timestamp);
   }
 
   setRenderingMode(mode) {
@@ -104,15 +100,12 @@ export class NvidiaAdapter {
   }
 
   async getAvailableModels() {
-  
-      if (!this.apiKey) {
-        console.error('NVIDIA_API_KEY is not defined in environment variables.');
-        return [];
-      }
+    if (!this.apiKey) {
+      console.error('NVIDIA_API_KEY is not defined in environment variables.');
+      return [];
+    }
     try {
-      const url = 'https://integrate.api.nvidia.com/v1/models';
-      const headers = { 'Authorization': `Bearer ${this.apiKey}` };
-      const data = await this.transport.get(url, {}, headers);
+      const data = await this.restClient.get('models');
       const models = data.data?.map(m => m.id) || [];
       logger.info('NvidiaAdapter: Models fetched', { count: models.length });
       return models;
@@ -124,17 +117,15 @@ export class NvidiaAdapter {
 
   async checkAvailability(modelName) {
     try {
-      const url = 'https://integrate.api.nvidia.com/v1/chat/completions';
-      const headers = { 'Authorization': `Bearer ${this.apiKey}` };
       const payload = {
         model: modelName,
         messages: [{ role: 'user', content: 'hi' }],
         max_tokens: 1
       };
 
-      // Implementamos el timeout de 1 segundo y la lógica de 404
-      await axios.post(url, payload, {
-        headers,
+      // We use axios directly here to respect the 1s timeout requirement for availability checks
+      await axios.post('https://integrate.api.nvidia.com/v1/chat/completions', payload, {
+        headers: { 'Authorization': `Bearer ${this.apiKey}` },
         timeout: 1000
       });
       return true;
@@ -153,6 +144,6 @@ export class NvidiaAdapter {
   }
 
   async close() {
-    // TransportLayer uses axios, no persistent connection to close
+    // No-op
   }
 }
