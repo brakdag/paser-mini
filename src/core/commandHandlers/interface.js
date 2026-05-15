@@ -78,11 +78,13 @@ export class InterfaceCommands {
       await chatManager.processTurn(`* SCENE: ${channel} *`);
     } else {
       let modeDesc = "General purpose mode.";
-      if (channel === "#charla")
+      if (channel === "#charla") {
         modeDesc = "Casual, friendly, and conversational mode.";
-      else if (channel === "#work")
+      }
+      else if (channel === "#work") {
         modeDesc =
           "Professional, focused, and highly efficient engineering mode.";
+      }
       const systemMsg = `Joined channel ${channel}. Mode: ${modeDesc}`;
       ui.displaySystemMessage(systemMsg);
       const content =

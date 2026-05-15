@@ -13,7 +13,7 @@ export class ConfigManager {
   _loadConfig() {
     try {
       return fs.existsSync(this.configPath) ? JSON.parse(fs.readFileSync(this.configPath, 'utf8')) : {};
-    } catch (e) {
+    } catch {
       return {};
     }
   }
@@ -25,7 +25,9 @@ export class ConfigManager {
   save(key, value) {
     this.config[key] = value;
     const dir = path.dirname(this.configPath);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
     fs.writeFileSync(this.configPath, JSON.stringify(this.config, null, 4), 'utf8');
   }
 }

@@ -8,12 +8,16 @@ export class ModelCommands {
       let rows = [];
       for (let i = 0; i < models.length; i += 2) {
         let m1 = models[i];
-        if (unavailable.includes(m1)) m1 = `~~${m1}~~`;
+        if (unavailable.includes(m1)) {
+        m1 = `~~${m1}~~`;
+      }
         let m2 = '';
         let idx2 = '';
         if (i + 1 < models.length) {
           m2 = models[i + 1];
-          if (unavailable.includes(m2)) m2 = `~~${m2}~~`;
+          if (unavailable.includes(m2)) {
+          m2 = `~~${m2}~~`;
+        }
           idx2 = (i + 1).toString();
         }
         rows.push(`| ${i} | ${m1} | ${idx2} | ${m2} |`);

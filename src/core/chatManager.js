@@ -88,8 +88,12 @@ export class ChatManager {
     this.assistant.startChat(model, this.systemInstruction, temperature);
 
     // Synchronize references
-    if (this.turnProcessor) this.turnProcessor.assistant = newAssistant;
-    if (this.engine) this.engine.assistant = newAssistant;
+    if (this.turnProcessor) {
+      this.turnProcessor.assistant = newAssistant;
+    }
+    if (this.engine) {
+      this.engine.assistant = newAssistant;
+    }
 
     logger.info(`Provider switched to ${provider} | Model: ${model}`);
   }

@@ -70,11 +70,7 @@ export class TurnProcessor {
 
     // Guard against null/filtered responses (NVIDIA/Gemini safety filters)
     const isSafetyBlock =
-      currentResponse === null ||
-      currentResponse === "null" ||
-      (typeof currentResponse === "string" &&
-        (currentResponse.includes("safety block") ||
-          currentResponse.includes("blocked by safety filters")));
+      currentResponse === null || currentResponse === "null";
 
     if (isSafetyBlock) {
       this.ui.displayError(
