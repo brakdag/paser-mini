@@ -1,11 +1,11 @@
+import axios from 'axios';
 import { ConversationState } from '../conversationState.js';
 import { PayloadMapper } from '../payloadMapper.js';
 import { NvidiaRestClient } from './restClient.js';
-import axios from 'axios';
 import { logger } from '../../core/logger.js';
 
 export class NvidiaAdapter {
-  constructor(userNickname = 'user', agentNickname = 'assistant', configManager) {
+  constructor(configManager, userNickname = 'user', agentNickname = 'assistant') {
     this.state = new ConversationState(userNickname, agentNickname);
     this.restClient = new NvidiaRestClient(configManager);
     this.currentModel = 'meta/llama-3.1-405b-instruct';
@@ -36,21 +36,21 @@ export class NvidiaAdapter {
 
     // 2. Map to NVIDIA JSON
     const history = this.state.getRawHistory();
-    const processedHistory = this.state.renderingMode === 'CLEAN' 
-      ? history.map(m => ({ ...m, text: m.text.replace(/^(\[\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, '').trim() }))
+    const processedHistory = this.state.renderingMode === 'CLEAN'
+      ? history.map((m) => ({ ...m, text: m.text.replace(/^(\[\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, '').trim() }))
       : history;
 
     const payload = PayloadMapper.toNvidia(
       processedHistory,
       this.systemInstruction,
-      this.temperature
+      this.temperature,
     );
     payload.model = this.currentModel;
     payload.max_tokens = maxTokens;
     this.lastPayload = payload;
 
     const url = 'https://integrate.api.nvidia.com/v1/chat/completions';
-    const headers = { 'Authorization': `Bearer ${this.apiKey}` };
+    const headers = { Authorization: `Bearer ${this.apiKey}` };
 
     try {
       logger.debug('NvidiaAdapter: Sending request', { model: this.currentModel, payload });
@@ -58,7 +58,7 @@ export class NvidiaAdapter {
       const data = await this.restClient.chatCompletions(payload);
       const rawContent = data.choices?.[0]?.message?.content || '';
       const content = this._filterThoughts(rawContent);
-      
+
       if (content) {
         logger.info('NvidiaAdapter: Response received', { length: content.length });
         this.state.addMessage('model', content);
@@ -106,12 +106,12 @@ export class NvidiaAdapter {
     }
     try {
       const data = await this.restClient.get('models');
-      const models = data.data?.map(m => m.id) || [];
+      const models = data.data?.map((m) => m.id) || [];
       logger.info('NvidiaAdapter: Models fetched', { count: models.length });
       return models;
     } catch (e) {
       logger.error('NvidiaAdapter: Error fetching models', { error: e.message });
-      return [];
+      return ['models/gemini-2.0-flash', 'models/gemini-1.5-flash'];
     }
   }
 
@@ -120,18 +120,18 @@ export class NvidiaAdapter {
       const payload = {
         model: modelName,
         messages: [{ role: 'user', content: 'hi' }],
-        max_tokens: 1
+        max_tokens: 1,
       };
 
       // We use axios directly here to respect the 1s timeout requirement for availability checks
       await axios.post('https://integrate.api.nvidia.com/v1/chat/completions', payload, {
-        headers: { 'Authorization': `Bearer ${this.apiKey}` },
-        timeout: 1000
+        headers: { Authorization: `Bearer ${this.apiKey}` },
+        timeout: 1000,
       });
       return true;
     } catch (e) {
       if (e.response && e.response.status === 404) {
-        return false; // No disponible
+        return false;
       }
       // Si es timeout o cualquier otro error, asumimos que está disponible
       return true;

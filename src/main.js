@@ -1,23 +1,13 @@
 import 'dotenv/config';
+import fs from 'fs';
 import { Command } from 'commander';
 import { GeminiAdapter } from './infrastructure/gemini/adapter.js';
 import { NvidiaAdapter } from './infrastructure/nvidia/adapter.js';
 import { TerminalUI } from './core/terminalUI.js';
 import { ChatManager } from './core/chatManager.js';
 import { ConfigManager } from './core/configManager.js';
-import fs from 'fs';
 import { SYSTEM_INSTRUCTION, AVAILABLE_TOOLS } from './tools/registry.js';
-import * as fileTools from './tools/fileTools.js';
-import * as gitTools from './tools/gitTools.js';
-import * as githubTools from './tools/githubTools.js';
 import * as memoryTools from './tools/memoryTools.js';
-import * as jsonTools from './tools/jsonTools.js';
-import * as searchTools from './tools/searchTools.js';
-import * as utilTools from './tools/utilTools.js';
-import * as systemTools from './tools/systemTools.js';
-import * as instanceTools from './tools/instanceTools.js';
-
-// Tool mapping is handled centrally in src_js/tools/registry.js
 
 async function main() {
   const program = new Command();
@@ -39,18 +29,23 @@ async function main() {
   if (options.githubMode) {
     const { GitHubModeOrchestrator } = await import('./core/githubModeOrchestrator.js');
     const tools = options.noSystemInstruction ? {} : AVAILABLE_TOOLS;
-    const orchestrator = new GitHubModeOrchestrator(options.noSystemInstruction ? '' : (options.systemInstruction || SYSTEM_INSTRUCTION), tools);
+    const orchestrator = new GitHubModeOrchestrator(
+      options.noSystemInstruction ? '' : (options.systemInstruction || SYSTEM_INSTRUCTION),
+      tools,
+    );
     await orchestrator.runForever();
     return;
   }
 
   const ui = new TerminalUI();
-  
+
   const provider = configManager.get('provider', 'Gemini');
   const userNick = configManager.get('user_nickname', 'user');
   const agentNick = configManager.get('agent_nickname', 'assistant');
-  const assistant = provider === 'NVIDIA' ? new NvidiaAdapter(userNick, agentNick, configManager) : new GeminiAdapter(ui, userNick, agentNick);
-  
+  const assistant = provider === 'NVIDIA'
+    ? new NvidiaAdapter(configManager, userNick, agentNick)
+    : new GeminiAdapter(ui, userNick, agentNick);
+
   let sysInstr = '';
   if (!options.noSystemInstruction) {
     const baseInstr = options.systemInstruction || SYSTEM_INSTRUCTION;
@@ -67,8 +62,8 @@ async function main() {
       }
     }
 
-    sysInstr = injection 
-      ? `IDENTITY AND PERSONA:\n${injection}\n\nCORE OPERATIONAL PROTOCOLS:\n${baseInstr}` 
+    sysInstr = injection
+      ? `IDENTITY AND PERSONA:\n${injection}\n\nCORE OPERATIONAL PROTOCOLS:\n${baseInstr}`
       : baseInstr;
   }
 
@@ -76,9 +71,9 @@ async function main() {
     assistant,
     options.noSystemInstruction ? {} : AVAILABLE_TOOLS,
     sysInstr,
-    ui
+    ui,
   );
-  
+
   chatManager.configManager = configManager;
 
   memoryTools.setMemoryContext(assistant, chatManager);
@@ -93,7 +88,7 @@ process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception thrown:', err);
 });
 
-main().catch(err => {
+main().catch((err) => {
   console.error('Critical Error:', err);
   process.exit(1);
 });

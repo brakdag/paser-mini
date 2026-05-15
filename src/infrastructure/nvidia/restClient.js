@@ -12,11 +12,11 @@ export class NvidiaRestClient {
     this.client = axios.create({
       baseURL: this.baseUrl,
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
+        Authorization: `Bearer ${this.apiKey}`,
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        Accept: 'application/json',
       },
-      timeout: 60000
+      timeout: 60000,
     });
   }
 
@@ -37,7 +37,7 @@ export class NvidiaRestClient {
     if (elapsed < minInterval) {
       const waitTime = minInterval - elapsed;
       logger.debug(`Nvidia Rate Limit: Waiting ${waitTime / 1000}s to maintain ${rpmLimit} RPM`);
-      await new Promise(resolve => setTimeout(resolve, waitTime));
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
     }
     this.lastRequestTime = Date.now();
   }
@@ -46,7 +46,10 @@ export class NvidiaRestClient {
     const url = '/chat/completions';
     payload.stream = stream;
 
-    const tokenEstimate = payload.messages?.reduce((acc, msg) => acc + Math.floor((msg.content?.length || 0) / 4), 0) || 1000;
+    const tokenEstimate = payload.messages?.reduce(
+      (acc, msg) => acc + Math.floor((msg.content?.length || 0) / 4),
+      0,
+    ) || 1000;
 
     await this._applyRateLimit(tokenEstimate);
 

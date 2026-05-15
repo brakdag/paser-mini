@@ -4,7 +4,7 @@ import path from 'path';
 const LOG_FILE = path.join(process.cwd(), 'log', 'memento.log');
 
 export class MementoManager {
-  async pushMemory(role, scope, value, key = null, pointers = []) {
+  async pushMemory(role, scope, value, key = null) {
     // 1. Handle Rank Increments for references
     this._incrementReferencedRanks(value);
 
@@ -14,9 +14,9 @@ export class MementoManager {
     const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
     const category = scope || 'general';
     const keyTag = key ? ` [Key: ${key}]` : '';
-    
+
     const entry = `[ID: ${nextId}] [${timestamp}] [Rank: 0] <${category}>${keyTag} ${value}\n`;
-    
+
     fs.appendFileSync(LOG_FILE, entry, 'utf8');
     return `Memory stored in memento.log as entry #${nextId}. Referenced ranks updated.`;
   }
@@ -26,9 +26,9 @@ export class MementoManager {
 
     const content = fs.readFileSync(LOG_FILE, 'utf8');
     const lines = content.split('\n').filter(Boolean);
-    
+
     // Filter by scope and key
-    const matches = lines.filter(line => {
+    const matches = lines.filter((line) => {
       const scopeMatch = scope ? line.includes(`<${scope}>`) : true;
       const keyMatch = key ? line.includes(`[Key: ${key}]`) : true;
       return scopeMatch && keyMatch;
@@ -47,14 +47,14 @@ export class MementoManager {
     const matches = [...text.matchAll(refPattern)];
     if (matches.length === 0) return;
 
-    const referencedIds = matches.map(m => m[1]);
-    let content = fs.readFileSync(LOG_FILE, 'utf8');
+    const referencedIds = matches.map((m) => m[1]);
+    const content = fs.readFileSync(LOG_FILE, 'utf8');
     let modified = false;
 
     const lines = content.split('\n');
-    const updatedLines = lines.map(line => {
+    const updatedLines = lines.map((line) => {
       if (!line) return line;
-      
+
       const idMatch = line.match(/^\[ID: (\d+)\]/);
       if (idMatch && referencedIds.includes(idMatch[1])) {
         modified = true;

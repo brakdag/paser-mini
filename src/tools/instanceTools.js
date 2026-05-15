@@ -9,7 +9,7 @@ export const newAgent = async ({ message = null, args = [] }) => {
   try {
     const timeout = config.get('instance_timeout', 300);
     let cmd = `node src_js/main.js --instance-mode`;
-    
+
     if (message) cmd += ` -m "${message}"`;
     if (args.length > 0) cmd += ` ${args.join(' ')}`;
 

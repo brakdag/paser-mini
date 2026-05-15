@@ -20,14 +20,14 @@ export const readFile = async ({ path: filePath, tail }) => {
   try {
     const safePath = getSafePath(filePath);
     const stats = await fs.stat(safePath);
-    
+
     if (tail) {
       // Tail implementation: Read from the end of the file
       // We read a reasonable chunk (64KB) from the end to find the requested number of lines
       const bufferSize = 64 * 1024;
       const start = Math.max(0, stats.size - bufferSize);
       const length = stats.size - start;
-      
+
       const handle = await fs.open(safePath, 'r');
       const buffer = Buffer.alloc(length);
       try {
@@ -35,7 +35,7 @@ export const readFile = async ({ path: filePath, tail }) => {
       } finally {
         await handle.close();
       }
-      
+
       const content = buffer.toString('utf8');
       const lines = content.split('\n');
       const result = lines.slice(-tail).join('\n');
@@ -49,7 +49,7 @@ export const readFile = async ({ path: filePath, tail }) => {
     }
 
     if (stats.size > FILE_SIZE_LIMIT) return 'ERR: File too large';
-    
+
     const content = await fs.readFile(safePath, 'utf8');
     if (!content) return '';
 
@@ -58,7 +58,7 @@ export const readFile = async ({ path: filePath, tail }) => {
       return 'ERR: No changes since last read';
     }
     READ_CACHE.set(safePath, content);
-    
+
     return content;
   } catch (e) {
     return `ERR: ${e.message}`;
@@ -119,19 +119,19 @@ export const renamePath = async ({ origin, destination }) => {
   }
 };
 
-export const replaceString = async ({ path: filePath, search_text, replace_text }) => {
+export const replaceString = async ({ path: filePath, searchText, replaceText }) => {
   try {
-    if (!search_text) return 'ERR: Search text cannot be empty';
+    if (!searchText) return 'ERR: Search text cannot be empty';
     const safePath = getSafePath(filePath);
     const content = await fs.readFile(safePath, 'utf8');
-    
-    const count = content.split(search_text).length - 1;
+
+    const count = content.split(searchText).length - 1;
     if (count === 0) return 'ERR: Not found';
     if (count > 1) return `ERR: Ambiguous: ${count} matches`;
 
-    const newContent = content.replace(search_text, replace_text);
+    const newContent = content.replace(searchText, replaceText);
     if (Buffer.byteLength(newContent, 'utf8') > FILE_SIZE_LIMIT) return 'ERR: Resulting content too large';
-    
+
     await fs.writeFile(safePath, newContent, 'utf8');
     READ_CACHE.delete(safePath);
     return 'OK';
@@ -195,13 +195,13 @@ export const concatFile = async ({ destination, source }) => {
   try {
     const safeDst = getSafePath(destination);
     const safeSrc = getSafePath(source);
-    
+
     const dstContent = await fs.readFile(safeDst, 'utf8');
     const srcContent = await fs.readFile(safeSrc, 'utf8');
     const combined = dstContent + srcContent;
-    
+
     if (Buffer.byteLength(combined, 'utf8') > FILE_SIZE_LIMIT) return 'ERR: Resulting file too large';
-    
+
     await fs.writeFile(safeDst, combined, 'utf8');
     return 'OK';
   } catch (e) {

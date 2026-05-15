@@ -4,21 +4,21 @@ export const PayloadMapper = {
    * Gemini expects: { contents: [ { role: 'user'|'model', parts: [ { text: '...' } ] } ] }
    */
   toGemini(history, systemInstruction, temperature) {
-    const contents = history.map(m => ({
-      role: m.role === 'model' ? 'model' : 'user', // Map 'server' and 'user' to 'user'
-      parts: [{ text: m.text }]
+    const contents = history.map((m) => ({
+      role: m.role === 'model' ? 'model' : 'user',
+      parts: [{ text: m.text }],
     }));
 
     const payload = {
-      contents: contents,
+      contents,
       generationConfig: {
-        temperature: temperature
-      }
+        temperature,
+      },
     };
 
     if (systemInstruction) {
       payload.systemInstruction = {
-        parts: [{ text: systemInstruction }]
+        parts: [{ text: systemInstruction }],
       };
     }
 
@@ -31,21 +31,21 @@ export const PayloadMapper = {
    */
   toNvidia(history, systemInstruction, temperature) {
     const messages = [];
-    
+
     if (systemInstruction) {
       messages.push({ role: 'system', content: systemInstruction });
     }
 
-    history.forEach(m => {
+    history.forEach((m) => {
       messages.push({
-        role: m.role === 'model' ? 'assistant' : 'user', // Map 'server' and 'user' to 'user'
-        content: m.text
+        role: m.role === 'model' ? 'assistant' : 'user',
+        content: m.text,
       });
     });
 
     return {
-      messages: messages,
-      temperature: temperature
+      messages,
+      temperature,
     };
-  }
+  },
 };
