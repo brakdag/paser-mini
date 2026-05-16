@@ -6,11 +6,11 @@ Welcome to the inner workings of Paser Mini. Instead of a dry technical manual, 
 
 ## 🌅 Phase 1: The Awakening (Startup)
 
-Everything begins in `src_js/main.js`. When you run `paser-mini`, the application orchestrates its ecosystem:
+Everything begins in `src/main.js`. When you run `paser-mini`, the application orchestrates its ecosystem:
 
 1. **The UI is born**: `TerminalUI` is initialized to handle colors, spacing, and input.
 2. **The Brain is wired**: `ChatManager` is created, acting as the conductor of the entire orchestra.
-3. **The Connection is established**: Inside `ChatManager`, the `GeminiAdapter` (in `src_js/infrastructure/gemini/adapter.js`) is initialized, bridging the local machine and Google's servers.
+3. **The Connection is established**: Inside `ChatManager`, the `GeminiAdapter` (in `src/infrastructure/gemini/adapter.js`) is initialized, bridging the local machine and Google's servers.
 4. **The Memory is loaded**: The system prepares the `system_instruction` (the agent's persona).
 
 Now, the system enters a loop, waiting for you. The cursor blinks. You are in control.
@@ -27,7 +27,7 @@ At this point, the system reaches a **Bifurcation**: _"Is this a command or a co
 
 If your input starts with a `/`, it's a command handled locally for maximum speed.
 
-1. **The Gatekeeper**: `ChatManager` sends the input to `CommandHandler` (`src_js/core/commandHandler.js`).
+1. **The Gatekeeper**: `ChatManager` sends the input to `CommandHandler` (`src/core/commandHandler.js`).
 2. **The Specialist**: The `CommandHandler` routes the request to the specific handler (e.g., `config.js`).
 3. **The Action**: The handler modifies a setting in `ConfigManager` or retrieves a value.
 4. **The Delivery**: The result is sent directly to `TerminalUI` to be printed.
@@ -46,7 +46,7 @@ If you type natural language, you've started a journey to the cloud.
 
 #### 2. The Bridge (`GeminiAdapter.sendMessage`)
 
-Your text travels to `src_js/infrastructure/gemini/adapter.js`. The adapter:
+Your text travels to `src/infrastructure/gemini/adapter.js`. The adapter:
 
 - **History Check**: Attaches previous messages for continuity.
 - **Payload Construction**: Wraps text in the format required by the Gemini API.
@@ -66,9 +66,9 @@ The API sends back a JSON response. The `GeminiAdapter` extracts the text and up
 
 What if you asked: _"What files are in this folder?"_ The AI uses a **Tool**.
 
-1. **The Detection**: `ChatManager` passes the AI's text through the `SmartToolParser` (`src_js/core/smartParser.js`).
+1. **The Detection**: `ChatManager` passes the AI's text through the `SmartToolParser` (`src/core/smartParser.js`).
 2. **The Discovery**: The parser finds a `<TOOL_CALL>` tag. The AI is requesting a tool like `listDir`.
-3. **The Execution**: `ChatManager` hands the call to the `ExecutionEngine` (`src_js/core/executionEngine.js`), which executes the logic in `src_js/tools/fileTools.js`.
+3. **The Execution**: `ChatManager` hands the call to the `ExecutionEngine` (`src/core/executionEngine.js`), which executes the logic in `src/tools/`. 
 4. **The Feedback**: The tool returns the result, which is wrapped in a `<TOOL_RESPONSE>` and sent **back to the AI**.
 5. **The Final Answer**: The AI reads the output and finally provides the answer to the user.
 
@@ -90,13 +90,13 @@ Once the AI has finished reasoning:
 
 | Step           | File                                      | Role                               |
 | :------------- | :----------------------------------------- | :--------------------------------- |
-| **Start**      | `src_js/main.js`                           | Entry point & Orchestration |
-| **Input**      | `src_js/core/chatManager.js`               | The Conductor               |
-| **Commands**   | `src_js/core/commandHandler.js`            | Local logic handler               |
-| **API Bridge** | `src_js/infrastructure/gemini/adapter.js`  | Cloud communicator               |
-| **Parsing**    | `src_js/core/smartParser.js`               | Tool call detector               |
-| **Execution**  | `src_js/core/executionEngine.js`           | Tool runner               |
-| **Output**     | `src_js/core/terminalUI.js`                | Visual delivery               |
+| **Start**      | `src/main.js`                              | Entry point & Orchestration |
+| **Input**      | `src/core/chatManager.js`                  | The Conductor               |
+| **Commands**   | `src/core/commandHandler.js`               | Local logic handler               |
+| **API Bridge** | `src/infrastructure/gemini/adapter.js`     | Cloud communicator               |
+| **Parsing**    | `src/core/smartParser.js`                  | Tool call detector               |
+| **Execution**  | `src/core/executionEngine.js`              | Tool runner               |
+| **Output**     | `src/core/terminalUI.js`                   | Visual delivery               |
 
 ---
 
@@ -104,6 +104,6 @@ Once the AI has finished reasoning:
 
 There came a moment when the technical brilliance of Paser Mini began to create its own kind of noise. The tools were surgical, but the architecture was becoming a monolith. The 'Brain' was doing too much, and the 'Interface' was a tangle of responsibilities.
 
-Under the guidance of Elena Vance, the project underwent a strategic distillation. We didn't add features; we removed friction. We broke the monoliths. The `TerminalUI` was shattered into specialized organs of sight, touch, and memory. The `TurnProcessor` was stripped of its infrastructure burdens, leaving only the pure essence of the ReAct loop.
+Under the guidance of Elena Vance, the project underwent a strategic distillation. We didn't add features; we removed friction. We broke the monoliths. The `TerminalUI` was shattered into specialized organs of sight, touch, and memory. The ReAct loop was distilled, moving the core logic into the `ChatManager` and `ExecutionEngine` to eliminate unnecessary layers.
 
 We discovered that true minimalism isn't just about fewer lines of code, but about the absolute clarity of purpose for every single file. The map now matches the terrain, and the path from intent to execution is shorter than ever.

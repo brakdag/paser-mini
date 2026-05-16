@@ -1,16 +1,17 @@
-# Tool Installation Guide: The Complete Workflow
+# Tool Installation & Removal Guide
 
-Adding a new tool to Paser Mini is a multi-step process. Because the agent relies on a strict pipeline (Prompt $\rightarrow$ Parser $\rightarrow$ Registry $\rightarrow$ Execution $\rightarrow$ Log), missing any of these steps will result in the tool being invisible or malfunctioning.
+Adding or removing a tool in Paser Mini requires a surgical approach. To ensure the agent can discover, validate, and execute a tool without friction, follow this precise pipeline.
 
-## 🛠 The 5-Step Installation Pipeline
+---
+
+## 🛠 The Installation Pipeline (Adding a Tool)
 
 ### 1. Implementation (The Logic)
+Create the tool logic in a JavaScript file within the tools directory.
 
-Create the tool logic in a JavaScript file within `src_js/tools/`.
-
-- **File Location**: `src_js/tools/<tool_name>Tools.js`
+- **File Location**: `src/tools/<tool_name>Tools.js`
 - **Standard**: Use `async` functions. Return a string or a JSON-stringified object.
-- **Error Handling**: Throw standard `Error` objects. The `ExecutionEngine` captures these and wraps them in `<TOOL_RESPONSE>ERR: ...</TOOL_RESPONSE>` for the AI.
+- **Error Handling**: Throw standard `Error` objects. The `ExecutionEngine` will capture these and return them as `<TOOL_RESPONSE>ERR: ...</TOOL_RESPONSE>`.
 - **Example**:
   ```javascript
   export async function myTool({ param }) {
@@ -20,35 +21,30 @@ Create the tool logic in a JavaScript file within `src_js/tools/`.
   ```
 
 ### 2. Registry Mapping (The Bridge)
-
 Map the JavaScript function to a name the LLM can call.
 
-- **File**: `src_js/tools/registry.js`
-- **Action A**: Import the function: `import { myTool } from './myToolTools.js';`
-- **Action B**: Add to `AVAILABLE_TOOLS`: `"my_tool": myTool,`
+- **File**: `src/tools/registry.js`
+- **Action**: Import the function and add it to the `AVAILABLE_TOOLS` object.
+  ```javascript
+  import { myTool } from './myToolTools.js';
+  export const AVAILABLE_TOOLS = {
+    "my_tool": myTool,
+    // ...
+  };
+  ```
 
 ### 3. LLM Catalog Update (The Discovery)
-
-Define the tool's signature so it's injected into the System Prompt.
+Define the tool's signature so it is injected into the System Prompt.
 
 - **File**: `src/tools/registry_positional.json`
 - **Format**: `[ "tool_name", "Clear description of utility", { "arg_name": "type" } ]`
-- **Crucial**: The `tool_name` here must match the key in `registry.js` exactly.
-
-### 3b. Alias Mapping (The Optimization)
-
-To reduce token bloat, assign a Unix-like alias to your tool.
-
-- **Files**: `src/core/executionEngine.js` and `src/tools/registry.js`
-- **Action**: Add your mapping to the `TOOL_ALIASES` object (e.g., `'my_tool': 'mt'`). This allows the AI to use a dense identifier while the system executes the full function.
+- **Crucial**: The `tool_name` must match the key in `registry.js` exactly.
 
 ### 4. SmartParser Schema (The Guardrail)
+Define the validation schema to prevent invalid tool calls.
 
-Prevent the agent from calling tools with invalid arguments.
-
-- **File Location**: `src_js/core/schemas/<tool_name>Schema.js`
-- **Standard**: JSON Schema Draft 07.
-- **Requirement**: Define `type: "object"`, `properties`, and `required` fields.
+- **File Location**: `src/core/schemas/<tool_name>Schema.js`
+- **Auto-Discovery**: You do **not** need to register this manually. The `SchemaRegistry` automatically scans this folder and loads any `.js` file that exports a schema.
 - **Example**:
   ```javascript
   export const myToolSchema = {
@@ -59,27 +55,43 @@ Prevent the agent from calling tools with invalid arguments.
   };
   ```
 
-### 5. Response Capture & Logging (The UX)
+### 5. UX Refinement (The Monitoring)
+To prevent the UI from showing "no details" during execution, add a mapper to the `ExecutionEngine`.
 
-Ensure the tool's output is translated from raw JSON to a human-readable format in the chat log.
+- **File**: `src/core/executionEngine.js`
+- **Action**: Add a mapping function to the `_detailMappers` object in the constructor.
+  ```javascript
+  this._detailMappers = {
+    my_tool: (args) => args.param || "no param",
+    // ...
+  };
+  ```
 
-- **Location**: `src_js/core/turnProcessor.js`
-- **Logic**: The `TurnProcessor` intercepts the `result` from the `ExecutionEngine` and uses `ui.displaySystemMessage` to log a clean summary before sending the raw `<TOOL_RESPONSE>` to the AI.
-- **Verification**: Check `session.log` to ensure you see `*** Tool <name> returned: <message>` instead of raw JSON.
+---
+
+## 🗑 The Removal Pipeline (Uninstalling a Tool)
+
+To remove a tool without leaving technical debt or "ghost" schemas, follow these steps in reverse:
+
+1. **Clean Registry**: Remove the tool from `src/tools/registry.js` (`AVAILABLE_TOOLS`).
+2. **Clean Catalog**: Delete the tool's entry from `src/tools/registry_positional.json`.
+3. **Delete Schema**: Remove the corresponding file from `src/core/schemas/`.
+4. **Clean UX**: Remove the mapper from `_detailMappers` in `src/core/executionEngine.js`.
+5. **Delete Logic**: Delete the tool file from `src/tools/`.
 
 ---
 
 ## ⚠️ Deployment Checklist
 
-- [ ] **Logic**: File created in `src_js/tools/`?
-- [ ] **Registry**: Imported and mapped in `registry.js`?
+- [ ] **Logic**: File created in `src/tools/`?
+- [ ] **Registry**: Mapped in `registry.js`?
 - [ ] **Catalog**: Entry added to `registry_positional.json`?
-- [ ] **Schema**: Validation file created in `src_js/core/schemas/`?
-- [ ] **UX**: Response is appearing cleanly in the chat log?
+- [ ] **Schema**: Validation file created in `src/core/schemas/`?
+- [ ] **UX**: Detail mapper added to `executionEngine.js`?
 - [ ] **End-to-End**: Tested a full call cycle (Prompt $\rightarrow$ Response)?
 
 ## 🔍 Troubleshooting
 
-- **Tool not called?** Check `registry_positional.json` for typos in the name.
-- **Validation Error?** Check the schema in `src_js/core/schemas/` against the LLM's output.
-- **Raw JSON in log?** Verify the `TurnProcessor` is correctly calling `displaySystemMessage`.
+- **Tool not called?** Check `registry_positional.json` for typos.
+- **Validation Error?** Verify the schema in `src/core/schemas/` matches the LLM's expected output.
+- **"no details" in UI?** Check if you added the mapper to `_detailMappers` in `executionEngine.js`.

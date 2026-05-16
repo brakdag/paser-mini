@@ -122,8 +122,8 @@ export const renamePath = async ({ origin, destination }) => {
 
 export const replaceString = async ({
   path: filePath,
-  searchText,
-  replaceText,
+  search_text: searchText,
+  replace_text: replaceText,
 }) => {
   try {
     if (!searchText) return "ERR: Search text cannot be empty";
