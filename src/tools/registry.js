@@ -1,25 +1,33 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import * as fileTools from "./fileTools.js";
-import * as systemTools from "./systemTools.js";
-import * as utilTools from "./utilTools.js";
-import * as searchTools from "./searchTools.js";
-import * as memoryTools from "./memoryTools.js";
-import * as jsonTools from "./jsonTools.js";
-import * as githubTools from "./githubTools.js";
-import * as gitTools from "./gitTools.js";
-import * as notificationTools from "./notificationTools.js";
-import * as fountainTools from "./fountainTools.js";
-import * as zipTools from "./zipTools.js";
-import * as binaryTools from "./binaryTools.js";
-import * as dockerTools from "./dockerTools.js";
+import * as fileTools from "./fileTools";
+import * as systemTools from "./systemTools";
+import * as utilTools from "./utilTools";
+import * as searchTools from "./searchTools";
+import * as memoryTools from "./memoryTools";
+import * as jsonTools from "./jsonTools";
+import * as githubTools from "./githubTools";
+import * as gitTools from "./gitTools";
+import * as notificationTools from "./notificationTools";
+import * as fountainTools from "./fountainTools";
+import * as zipTools from "./zipTools";
+import * as binaryTools from "./binaryTools";
+import * as dockerTools from "./dockerTools";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const GITHUB_SYSTEM_INSTRUCTION =
-  "## GitHub Mode Protocol\nYou are operating in GitHub Mode. Your primary interface is GitHub Issues.\n1. Communication: You are not in a live chat. All communication must be done via GitHub issue comments.\n2.Planning: Before executing any engineering changes, you MUST post a comment with a detailed Work Plan.\n3. Progress Tracking: Use a Markdown checklist in your plan. As you complete each task, post a progress update comment marking the task as completed.\n4. Transparency: Be explicit about what you are doing and why. Since the user is not watching your internal process, your comments are the only way they know the agent is still active and making progress.";
+  "## GitHub Mode Protocol\n" +
+  "You are operating in GitHub Mode. Your primary interface is GitHub Issues.\n" +
+  "1. Communication: You are not in a live chat. All communication must be done via GitHub issue comments.\n" +
+  "2.Planning: Before executing any engineering changes, you MUST post a comment with a detailed Work Plan.\n" +
+  "3. Progress Tracking: Use a Markdown checklist in your plan.\n" +
+  "   As you complete each task, post a progress update comment marking the task as completed.\n" +
+  "4. Transparency: Be explicit about what you are doing and why.\n" +
+  "   Since the user is not watching your internal process, your comments are the only way\n" +
+  "   they know the agent is still active and making progress.";
 
 export const AVAILABLE_TOOLS = {
   readFile: fileTools.readFile,

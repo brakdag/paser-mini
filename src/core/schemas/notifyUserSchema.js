@@ -1,7 +1,10 @@
 import { z } from "zod";
 
-export const notifyUserSchema = z
+const notifyUserSchema = z
   .object({
     message: z.string(),
   })
   .strict();
+
+
+export default notifyUserSchema;

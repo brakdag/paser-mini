@@ -1,6 +1,6 @@
 import fs from "fs/promises";
 
-export class SessionCommands {
+class SessionCommands {
   static async handleRewrite(chatManager, ui, newMessage) {
     const history = chatManager.assistant.getHistory();
     if (history.length >= 2) {
@@ -39,3 +39,6 @@ export class SessionCommands {
     return true;
   }
 }
+
+
+export default SessionCommands;

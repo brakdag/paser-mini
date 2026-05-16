@@ -1,7 +1,10 @@
 import { z } from "zod";
 
-export const gitDiffSchema = z
+const gitDiffSchema = z
   .object({
     path: z.string(),
   })
   .strict();
+
+
+export default gitDiffSchema;

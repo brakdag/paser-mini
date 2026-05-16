@@ -1,5 +1,8 @@
 import { z } from "zod";
 
-export const executeBashSchema = z.object({
+const executeBashSchema = z.object({
   command: z.string(),
 });
+
+
+export default executeBashSchema;

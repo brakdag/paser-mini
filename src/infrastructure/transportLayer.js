@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export class TransportLayer {
+class TransportLayer {
   /**
    * Generic HTTP GET request
    */
@@ -40,3 +40,6 @@ export class TransportLayer {
     return run(0);
   }
 }
+
+
+export default TransportLayer;

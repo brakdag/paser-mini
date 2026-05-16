@@ -1,4 +1,4 @@
-export class FavoriteCommands {
+class FavoriteCommands {
   static async handleFav(chatManager, ui, parts) {
     const favorites = chatManager.configManager.get("favorites", []);
 
@@ -73,6 +73,7 @@ export class FavoriteCommands {
 
         chatManager.configManager.save("model_name", fav.model);
         chatManager.configManager.save("default_temperature", fav.temp);
+        // eslint-disable-next-line no-param-reassign
         chatManager.temperature = fav.temp;
         chatManager.assistant.startChat(
           fav.model,
@@ -92,3 +93,6 @@ export class FavoriteCommands {
     return true;
   }
 }
+
+
+export default FavoriteCommands;

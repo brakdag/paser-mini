@@ -1,4 +1,4 @@
-export class AICommands {
+class AICommands {
   static async handlePaim(chatManager, ui, message) {
     const content =
       ui.renderingMode === "FOUNTAIN"
@@ -33,3 +33,6 @@ export class AICommands {
     return true;
   }
 }
+
+
+export default AICommands;

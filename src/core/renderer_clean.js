@@ -1,6 +1,6 @@
-import { BaseRenderer } from "./renderer_base.js";
+import BaseRenderer from "./renderer_base";
 
-export class CleanRenderer extends BaseRenderer {
+class CleanRenderer extends BaseRenderer {
   render(message) {
     const { text } = message;
     const trimmedText = text.trim();
@@ -18,3 +18,6 @@ export class CleanRenderer extends BaseRenderer {
     return `${formattedText}\n`;
   }
 }
+
+
+export default CleanRenderer;

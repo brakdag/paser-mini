@@ -1,8 +1,8 @@
 import axios from "axios";
-import { logger } from "../../core/logger.js";
-import { NvidiaRetryHandler } from "./retryHandler.js";
+import logger from "./logger";
+import NvidiaRetryHandler from "./retryHandler";
 
-export class NvidiaRestClient {
+class NvidiaRestClient {
   constructor(configManager) {
     this.apiKey = process.env.NVIDIA_API_KEY;
     this.baseUrl = "https://integrate.api.nvidia.com/v1";
@@ -53,10 +53,10 @@ export class NvidiaRestClient {
 
   async chatCompletions(payload, stream = false) {
     const url = "/chat/completions";
-    payload.stream = stream;
+    const requestPayload = { ...payload, stream };
 
     const tokenEstimate =
-      payload.messages?.reduce(
+      requestPayload.messages?.reduce(
         (acc, msg) => acc + Math.floor((msg.content?.length || 0) / 4),
         0,
       ) || 1000;
@@ -67,7 +67,7 @@ export class NvidiaRestClient {
       throw new Error("Streaming not yet implemented in JS RestClient");
     }
 
-    const request = () => this.client.post(url, payload);
+    const request = () => this.client.post(url, requestPayload);
     const response = await this.retryHandler.execute(request);
     return response.data;
   }
@@ -82,3 +82,6 @@ export class NvidiaRestClient {
   // eslint-disable-next-line no-empty-function
   async close() {}
 }
+
+
+export default NvidiaRestClient;

@@ -1,4 +1,4 @@
-export class AutoCorrector {
+class AutoCorrector {
   static KEY_FIX_PATTERN = /([{\\s,])\\s*([a-zA-Z_][a-zA-Z0-9_]*)\\s*:/g;
 
   static TRAILING_COMMA_PATTERN = /,\\s*([}\]])/g;
@@ -44,3 +44,5 @@ export class AutoCorrector {
     return fixed;
   }
 }
+
+export default AutoCorrector;

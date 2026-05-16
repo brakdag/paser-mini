@@ -1,4 +1,4 @@
-export const listZipFilesSchema = {
+const listZipFilesSchema = {
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
   properties: {
@@ -7,3 +7,6 @@ export const listZipFilesSchema = {
   required: ["zipId"],
   additionalProperties: "false",
 };
+
+
+export default listZipFilesSchema;

@@ -5,7 +5,7 @@ import { z } from "zod";
  * This schema defines the structure for every interaction: user input, agent responses,
  * system notifications, internal thoughts, and technical tool executions.
  */
-export const messageSchema = z.object({
+const messageSchema = z.object({
   /** Unique identifier for the message */
   id: z.string(),
   /** ISO 8601 timestamp */
@@ -50,3 +50,6 @@ export const messageSchema = z.object({
     })
     .optional(),
 });
+
+
+export default messageSchema;

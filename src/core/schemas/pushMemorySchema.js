@@ -1,3 +1,6 @@
 import { z } from "zod";
 
-export const pushMemorySchema = z.string();
+const pushMemorySchema = z.string();
+
+
+export default pushMemorySchema;

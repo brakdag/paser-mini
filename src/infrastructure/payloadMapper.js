@@ -1,4 +1,4 @@
-export const PayloadMapper = {
+const PayloadMapper = {
   /**
    * Maps neutral history to Gemini API format
    * Gemini expects: { contents: [ { role: 'user'|'model', parts: [ { text: '...' } ] } ] }
@@ -49,3 +49,6 @@ export const PayloadMapper = {
     };
   },
 };
+
+
+export default PayloadMapper;

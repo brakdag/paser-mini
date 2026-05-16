@@ -1,4 +1,4 @@
-export const saveZipSchema = {
+const saveZipSchema = {
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
   properties: {
@@ -8,3 +8,6 @@ export const saveZipSchema = {
   required: ["zipId", "outputPath"],
   additionalProperties: false,
 };
+
+
+export default saveZipSchema;

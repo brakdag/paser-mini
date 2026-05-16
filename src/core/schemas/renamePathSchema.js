@@ -1,8 +1,11 @@
 import { z } from "zod";
 
-export const renamePathSchema = z
+const renamePathSchema = z
   .object({
     origin: z.string(),
     destination: z.string(),
   })
   .strict();
+
+
+export default renamePathSchema;

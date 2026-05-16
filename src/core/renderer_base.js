@@ -1,4 +1,4 @@
-export class BaseRenderer {
+class BaseRenderer {
   constructor(ui) {
     this.ui = ui;
   }
@@ -15,3 +15,6 @@ export class BaseRenderer {
     throw new Error("render() must be implemented by subclass");
   }
 }
+
+
+export default BaseRenderer;

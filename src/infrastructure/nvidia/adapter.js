@@ -1,10 +1,10 @@
 // import axios from 'axios';
-import { ConversationState } from "../conversationState.js";
-import { PayloadMapper } from "../payloadMapper.js";
-import { NvidiaRestClient } from "./restClient.js";
-import { logger } from "../../core/logger.js";
+import ConversationState from "./conversationState";
+import PayloadMapper from "./payloadMapper";
+import NvidiaRestClient from "./restClient";
+import logger from "./logger";
 
-export class NvidiaAdapter {
+class NvidiaAdapter {
   constructor(
     configManager,
     userNickname = "user",
@@ -150,5 +150,10 @@ export class NvidiaAdapter {
     return Math.floor(totalChars / 4);
   }
 
-  async close() {}
+  async close() {
+    // No resources to clean up for NvidiaAdapter
+  }
 }
+
+
+export default NvidiaAdapter;

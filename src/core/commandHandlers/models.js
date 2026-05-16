@@ -1,4 +1,4 @@
-export class ModelCommands {
+class ModelCommands {
   static async handleModels(chatManager, ui, parts) {
     const models = await chatManager.assistant.getAvailableModels();
     const unavailable = chatManager.configManager.get("unavailable_models", []);
@@ -35,6 +35,7 @@ export class ModelCommands {
 
       chatManager.configManager.save("model_name", modelName);
       chatManager.configManager.save("default_temperature", newTemp);
+      // eslint-disable-next-line no-param-reassign
       chatManager.temperature = newTemp;
       chatManager.assistant.startChat(
         modelName,
@@ -91,3 +92,6 @@ export class ModelCommands {
     return true;
   }
 }
+
+
+export default ModelCommands;

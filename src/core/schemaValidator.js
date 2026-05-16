@@ -1,6 +1,6 @@
-import { ValidationResult } from "./validationResult.js";
+import ValidationResult from "./validationResult";
 
-export class SchemaValidator {
+class SchemaValidator {
   constructor() {
     this.schemas = new Map();
   }
@@ -48,3 +48,6 @@ export class SchemaValidator {
     return new ValidationResult(true, [], result.data);
   }
 }
+
+
+export default SchemaValidator;

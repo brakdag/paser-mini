@@ -135,7 +135,7 @@ function convertBinary(hexString, type, endianness) {
   }
 }
 
-export async function handleHexCommand(args) {
+async function handleHexCommand(args) {
   const {
     action,
     filePath,
@@ -168,3 +168,7 @@ export async function handleHexCommand(args) {
     return { success: false, error: error.message };
   }
 }
+
+export default {
+  handleHexCommand,
+};

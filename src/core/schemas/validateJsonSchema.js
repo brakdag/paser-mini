@@ -1,7 +1,10 @@
 import { z } from "zod";
 
-export const validateJsonSchema = z
+const validateJsonSchema = z
   .object({
     json_string: z.string(),
   })
   .strict();
+
+
+export default validateJsonSchema;

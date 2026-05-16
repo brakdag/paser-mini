@@ -1,4 +1,4 @@
-export class ToolAttemptTracker {
+class ToolAttemptTracker {
   constructor() {
     this.attempts = new Map();
     this.maxAttempts = 10; // Límite por defecto para evitar bucles
@@ -40,3 +40,6 @@ export class ToolAttemptTracker {
     this.attempts.clear();
   }
 }
+
+
+export default ToolAttemptTracker;

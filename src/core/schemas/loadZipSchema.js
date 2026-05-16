@@ -1,4 +1,4 @@
-export const loadZipSchema = {
+const loadZipSchema = {
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
   properties: {
@@ -7,3 +7,6 @@ export const loadZipSchema = {
   required: ["filePath"],
   additionalProperties: false,
 };
+
+
+export default loadZipSchema;

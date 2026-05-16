@@ -1,4 +1,4 @@
-export class ConversationState {
+class ConversationState {
   constructor(userNickname = "user", agentNickname = "assistant") {
     this.userNickname = userNickname;
     this.agentNickname = agentNickname;
@@ -57,3 +57,6 @@ export class ConversationState {
     return this.history;
   }
 }
+
+
+export default ConversationState;

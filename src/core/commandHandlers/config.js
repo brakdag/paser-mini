@@ -1,6 +1,6 @@
-import * as memoryTools from "../../tools/memoryTools.js";
+import * as memoryTools from "../../tools/memoryTools";
 
-export class ConfigCommands {
+class ConfigCommands {
   static async handleConfig(chatManager, ui) {
     const tokenUsage = await memoryTools.getTokenCount();
 
@@ -21,3 +21,6 @@ export class ConfigCommands {
     return true;
   }
 }
+
+
+export default ConfigCommands;

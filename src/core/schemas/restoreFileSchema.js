@@ -1,7 +1,10 @@
 import { z } from "zod";
 
-export const restoreFileSchema = z
+const restoreFileSchema = z
   .object({
     path: z.string(),
   })
   .strict();
+
+
+export default restoreFileSchema;

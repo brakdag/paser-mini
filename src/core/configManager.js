@@ -4,7 +4,7 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export class ConfigManager {
+class ConfigManager {
   constructor() {
     this.configPath = path.join(__dirname, "..", "..", "config", "config.json");
     this.config = this._loadConfig();
@@ -37,3 +37,6 @@ export class ConfigManager {
     );
   }
 }
+
+
+export default ConfigManager;

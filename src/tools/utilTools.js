@@ -1,4 +1,4 @@
-import { ConfigManager } from "../core/configManager.js";
+import ConfigManager from "./configManager";
 
 export const validateJson = async ({ jsonString }) => {
   try {

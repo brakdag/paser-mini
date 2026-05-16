@@ -4,7 +4,7 @@ import path from "path";
 
 const execPromise = promisify(exec);
 
-export const notifyUser = async ({ message }) => {
+const notifyUser = async ({ message }) => {
   try {
     const rootPath = process.cwd();
     const soundPath = path.join(rootPath, "src_js/assets/type.wav");
@@ -24,3 +24,6 @@ export const notifyUser = async ({ message }) => {
     return "OK";
   }
 };
+
+
+export default notifyUser;

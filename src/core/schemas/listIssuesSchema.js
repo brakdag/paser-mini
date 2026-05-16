@@ -1,7 +1,10 @@
 import { z } from "zod";
 
-export const listIssuesSchema = z
+const listIssuesSchema = z
   .object({
     repo: z.string().optional(),
   })
   .strict();
+
+
+export default listIssuesSchema;

@@ -3,7 +3,7 @@ import ora from "ora";
 import fs from "fs";
 import readline from "readline";
 
-export class TerminalUI {
+class TerminalUI {
   // eslint-disable-next-line no-unused-vars
   constructor(options = {}) {
     this.noSpinner = true; // Forced to true to prevent TTY crashes during tool execution
@@ -406,9 +406,7 @@ export class TerminalUI {
   }
 
   stopAllMonitoring() {
-    for (const [, spinner] of this.activeSpinners) {
-      spinner.stop();
-    }
+    this.activeSpinners.forEach((spinner) => spinner.stop());
     this.activeSpinners.clear();
   }
 
@@ -457,3 +455,6 @@ export class TerminalUI {
     return answer.toLowerCase() === "y";
   }
 }
+
+
+export default TerminalUI;

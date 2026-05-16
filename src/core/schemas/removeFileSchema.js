@@ -1,7 +1,10 @@
 import { z } from "zod";
 
-export const removeFileSchema = z
+const removeFileSchema = z
   .object({
     path: z.string(),
   })
   .strict();
+
+
+export default removeFileSchema;

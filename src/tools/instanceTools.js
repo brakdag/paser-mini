@@ -1,11 +1,11 @@
 import { exec } from "child_process";
 import { promisify } from "util";
-import { ConfigManager } from "../core/configManager.js";
+import ConfigManager from "./configManager";
 
 const execPromise = promisify(exec);
 const config = new ConfigManager();
 
-export const newAgent = async ({ message = null, args = [] }) => {
+const newAgent = async ({ message = null, args = [] }) => {
   try {
     const timeout = config.get("instance_timeout", 300);
     let cmd = "node src_js/main.js --instance-mode";
@@ -21,3 +21,6 @@ export const newAgent = async ({ message = null, args = [] }) => {
     return `ERR: Error al lanzar la nueva instancia: ${e.message}`;
   }
 };
+
+
+export default newAgent;

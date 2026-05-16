@@ -1,7 +1,10 @@
 import { z } from "zod";
 
-export const searchFilesPatternSchema = z
+const searchFilesPatternSchema = z
   .object({
     pattern: z.string(),
   })
   .strict();
+
+
+export default searchFilesPatternSchema;

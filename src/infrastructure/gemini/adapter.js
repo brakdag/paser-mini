@@ -1,8 +1,8 @@
 import axios from "axios";
 import axiosRetry from "axios-retry";
-import { logger } from "../../core/logger.js";
+import logger from "./logger";
 
-export class GeminiAdapter {
+class GeminiAdapter {
   constructor(ui, userNickname = "user", agentNickname = "assistant") {
     this.ui = ui;
     this.apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
@@ -58,7 +58,9 @@ export class GeminiAdapter {
       logger.debug(
         `[GeminiAdapter] Rate Limit: Waiting ${waitTime / 1000}s to maintain ${this.rpmLimit} RPM`,
       );
-      await new Promise((resolve) => setTimeout(resolve, waitTime));
+      await new Promise((resolve) => {
+        setTimeout(resolve, waitTime);
+      });
     }
     this.lastRequestTime = Date.now();
   }
@@ -243,3 +245,6 @@ export class GeminiAdapter {
     }
   }
 }
+
+
+export default GeminiAdapter;

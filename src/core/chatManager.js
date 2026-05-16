@@ -1,14 +1,14 @@
 // Navigation: See /robots.txt for the Cognitive Navigation Map
-import { SmartToolParser } from "./smartParser.js";
-import { ExecutionEngine } from "./executionEngine.js";
-import { CommandHandler } from "./commandHandler.js";
-import { RepetitionDetector } from "./repetitionDetector.js";
-import { logger } from "./logger.js";
-import { ConfigManager } from "./configManager.js";
-import { TurnProcessor } from "./turnProcessor.js";
-import { HistoryManager } from "./historyManager.js";
+import SmartToolParser from "./smartParser";
+import ExecutionEngine from "./executionEngine";
+import CommandHandler from "./commandHandler";
+import RepetitionDetector from "./repetitionDetector";
+import logger from "./logger";
+import ConfigManager from "./configManager";
+import TurnProcessor from "./turnProcessor";
+import HistoryManager from "./historyManager";
 
-export class ChatManager {
+class ChatManager {
   constructor(assistant, tools, systemInstruction, ui, instanceMode = false) {
     this.assistant = assistant;
     this.tools = tools;
@@ -90,7 +90,7 @@ export class ChatManager {
 
     if (provider === "NVIDIA") {
       const { NvidiaAdapter } =
-        await import("../infrastructure/nvidia/adapter.js");
+        await import("../infrastructure/nvidia/adapter");
       newAssistant = new NvidiaAdapter(
         this.configManager,
         this.ui.userNickname,
@@ -98,7 +98,7 @@ export class ChatManager {
       );
     } else if (provider === "OPENROUTER") {
       const { OpenRouterAdapter } =
-        await import("../infrastructure/openrouter/adapter.js");
+        await import("../infrastructure/openrouter/adapter");
       newAssistant = new OpenRouterAdapter(
         this.ui,
         this.ui.userNickname,
@@ -106,7 +106,7 @@ export class ChatManager {
       );
     } else {
       const { GeminiAdapter } =
-        await import("../infrastructure/gemini/adapter.js");
+        await import("../infrastructure/gemini/adapter");
       newAssistant = new GeminiAdapter(
         this.ui,
         this.ui.userNickname,
@@ -216,3 +216,6 @@ export class ChatManager {
     this.stopRequested = true;
   }
 }
+
+
+export default ChatManager;

@@ -1,12 +1,13 @@
-import { MementoManager } from "../../infrastructure/memento/manager.js";
+import MementoManager from "./manager";
 
-export class SystemCommands {
+class SystemCommands {
   static handleClear() {
     process.stdout.write("\x1Bc");
     return true;
   }
 
   static handleExit(chatManager) {
+    // eslint-disable-next-line no-param-reassign
     chatManager.shouldExit = true;
     process.exit(0);
   }
@@ -36,6 +37,7 @@ export class SystemCommands {
   }
 
   static handleEnableBash(chatManager, ui) {
+    // eslint-disable-next-line no-param-reassign
     ui.bashEnabled = true;
     ui.displayInfo("Bash access enabled. You can now use executeBash.");
     const bashInstruction =
@@ -48,3 +50,6 @@ export class SystemCommands {
     return true;
   }
 }
+
+
+export default SystemCommands;

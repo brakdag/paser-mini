@@ -1,4 +1,4 @@
-export class InterfaceCommands {
+class InterfaceCommands {
   static handleFountain(chatManager, ui) {
     chatManager.setRenderingMode("FOUNTAIN");
     ui.displayInfo("Rendering mode set to Fountain (Screenplay)");
@@ -27,6 +27,7 @@ export class InterfaceCommands {
   static async handleNick(chatManager, ui, newNick) {
     const oldNick = ui.userNickname;
     chatManager.configManager.save("user_nickname", newNick);
+    // eslint-disable-next-line no-param-reassign
     ui.userNickname = newNick;
     chatManager.assistant.updateNicknames(newNick, ui.agentNickname);
     ui.displaySystemMessage(`${oldNick} changes his alias to ${newNick}`);
@@ -72,6 +73,7 @@ export class InterfaceCommands {
       ui.displayError("Channel name must start with # (e.g., /join #work)");
       return true;
     }
+    // eslint-disable-next-line no-param-reassign
     chatManager.currentChannel = channel;
     if (ui.renderingMode === "FOUNTAIN") {
       ui.displaySystemMessage(`Scene changed to: ${channel}`);
@@ -123,3 +125,6 @@ export class InterfaceCommands {
     return true;
   }
 }
+
+
+export default InterfaceCommands;

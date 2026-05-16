@@ -1,7 +1,7 @@
 import chalk from "chalk";
-import { BaseRenderer } from "./renderer_base.js";
+import BaseRenderer from "./renderer_base";
 
-export class IRCRenderer extends BaseRenderer {
+class IRCRenderer extends BaseRenderer {
   render(message) {
     const { nickname, text, time, type } = message;
     const trimmedText = text.trim();
@@ -41,3 +41,6 @@ export class IRCRenderer extends BaseRenderer {
     return `${prefix} ${formattedText}\n`;
   }
 }
+
+
+export default IRCRenderer;

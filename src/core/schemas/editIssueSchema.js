@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const editIssueSchema = z
+const editIssueSchema = z
   .object({
     issue_number: z.number().int(),
     repo: z.string().optional(),
@@ -8,3 +8,6 @@ export const editIssueSchema = z
     body: z.string().optional(),
   })
   .strict();
+
+
+export default editIssueSchema;

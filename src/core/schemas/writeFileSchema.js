@@ -1,8 +1,11 @@
 import { z } from "zod";
 
-export const writeFileSchema = z
+const writeFileSchema = z
   .object({
     path: z.string(),
     content: z.string(),
   })
   .strict();
+
+
+export default writeFileSchema;

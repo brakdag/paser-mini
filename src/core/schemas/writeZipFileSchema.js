@@ -1,4 +1,4 @@
-export const writeZipFileSchema = {
+const writeZipFileSchema = {
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
   properties: {
@@ -9,3 +9,6 @@ export const writeZipFileSchema = {
   required: ["zipId", "internalPath", "content"],
   additionalProperties: false,
 };
+
+
+export default writeZipFileSchema;

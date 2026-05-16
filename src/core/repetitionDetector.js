@@ -1,4 +1,4 @@
-export class RepetitionDetector {
+class RepetitionDetector {
   constructor(n = 20, maxRepeats = 5) {
     this.n = n;
     this.maxRepeats = maxRepeats;
@@ -53,3 +53,6 @@ export class RepetitionDetector {
     this.buffer = [];
   }
 }
+
+
+export default RepetitionDetector;

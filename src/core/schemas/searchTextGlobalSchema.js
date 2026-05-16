@@ -1,7 +1,10 @@
 import { z } from "zod";
 
-export const searchTextGlobalSchema = z
+const searchTextGlobalSchema = z
   .object({
     query: z.string(),
   })
   .strict();
+
+
+export default searchTextGlobalSchema;

@@ -1,6 +1,6 @@
-import { logger } from "./logger.js";
+import logger from "./logger";
 
-export class HistoryManager {
+class HistoryManager {
   constructor(assistant, ui, configManager) {
     this.assistant = assistant;
     this.ui = ui;
@@ -44,3 +44,6 @@ export class HistoryManager {
     }
   }
 }
+
+
+export default HistoryManager;

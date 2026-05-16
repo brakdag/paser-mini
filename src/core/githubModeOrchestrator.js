@@ -1,9 +1,9 @@
-import * as githubTools from "../tools/githubTools.js";
-import { GitHubUI } from "./githubUI.js";
-import { ChatManager } from "./chatManager.js";
-import { GeminiAdapter } from "../infrastructure/gemini/adapter.js";
+import * as githubTools from "../tools/githubTools";
+import GitHubUI from "./githubUI";
+import ChatManager from "./chatManager";
+import { GeminiAdapter } from "../infrastructure/gemini/adapter";
 
-export class GitHubModeOrchestrator {
+class GitHubModeOrchestrator {
   constructor(systemInstruction, tools) {
     this.systemInstruction = systemInstruction;
     this.tools = tools;
@@ -56,3 +56,6 @@ export class GitHubModeOrchestrator {
     }
   }
 }
+
+
+export default GitHubModeOrchestrator;

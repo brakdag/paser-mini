@@ -1,6 +1,6 @@
-import { BaseRenderer } from "./renderer_base.js";
+import BaseRenderer from "./renderer_base";
 
-export class FountainRenderer extends BaseRenderer {
+class FountainRenderer extends BaseRenderer {
   _wrapText(text, start, end) {
     const width = end - start;
     const words = text.split(/\s+/);
@@ -68,3 +68,6 @@ export class FountainRenderer extends BaseRenderer {
     return `${output}\n`;
   }
 }
+
+
+export default FountainRenderer;

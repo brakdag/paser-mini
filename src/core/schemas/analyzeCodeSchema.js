@@ -1,7 +1,10 @@
 import { z } from "zod";
 
-export const analyzeCodeSchema = z
+const analyzeCodeSchema = z
   .object({
     path: z.string(),
   })
   .strict();
+
+
+export default analyzeCodeSchema;

@@ -1,3 +1,6 @@
 import { z } from "zod";
 
-export const getTokenCountSchema = z.object({}).strict();
+const getTokenCountSchema = z.object({}).strict();
+
+
+export default getTokenCountSchema;

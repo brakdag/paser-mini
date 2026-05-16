@@ -1,10 +1,10 @@
-import { SystemCommands } from "./commandHandlers/system.js";
-import { ModelCommands } from "./commandHandlers/models.js";
-import { ConfigCommands } from "./commandHandlers/config.js";
-import { FavoriteCommands } from "./commandHandlers/favorites.js";
-import { SessionCommands } from "./commandHandlers/session.js";
-import { InterfaceCommands } from "./commandHandlers/interface.js";
-import { AICommands } from "./commandHandlers/ai.js";
+import SystemCommands from "./system";
+import ModelCommands from "./models";
+import ConfigCommands from "./config";
+import FavoriteCommands from "./favorites";
+import SessionCommands from "./session";
+import InterfaceCommands from "./interface";
+import AICommands from "./ai";
 
 const COMMAND_MAP = {
   "/q": (cm) => SystemCommands.handleExit(cm),
@@ -52,7 +52,7 @@ const PREFIX_COMMANDS = {
     FavoriteCommands.handleFav(cm, ui, input.split(/\s+/)),
 };
 
-export class CommandHandler {
+class CommandHandler {
   constructor(chatManager, ui) {
     this.chatManager = chatManager;
     this.ui = ui;
@@ -98,3 +98,6 @@ export class CommandHandler {
     return false;
   }
 }
+
+
+export default CommandHandler;

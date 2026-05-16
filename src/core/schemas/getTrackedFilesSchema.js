@@ -1,3 +1,6 @@
 import { z } from "zod";
 
-export const getTrackedFilesSchema = z.object({}).strict();
+const getTrackedFilesSchema = z.object({}).strict();
+
+
+export default getTrackedFilesSchema;

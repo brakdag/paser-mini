@@ -1,7 +1,10 @@
 import { z } from "zod";
 
-export const listDirSchema = z
+const listDirSchema = z
   .object({
     path: z.string(),
   })
   .strict();
+
+
+export default listDirSchema;

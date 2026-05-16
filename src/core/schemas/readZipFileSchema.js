@@ -1,4 +1,4 @@
-export const readZipFileSchema = {
+const readZipFileSchema = {
   $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
   properties: {
@@ -8,3 +8,6 @@ export const readZipFileSchema = {
   required: ["zipId", "internalPath"],
   additionalProperties: false,
 };
+
+
+export default readZipFileSchema;

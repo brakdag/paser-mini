@@ -1,5 +1,8 @@
 import { z } from "zod";
 
-export const lintCodeSchema = z.object({
+const lintCodeSchema = z.object({
   path: z.string().optional().default("."),
 });
+
+
+export default lintCodeSchema;

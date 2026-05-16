@@ -5,7 +5,7 @@ import path from "path";
 
 const execAsync = promisify(exec);
 
-export class DockerCommands {
+class DockerCommands {
   static async handle(chatManager, ui, input) {
     const args = input.split(/\s+/).slice(1);
     const subCommand = args[0];
@@ -84,3 +84,6 @@ export class DockerCommands {
     return true;
   }
 }
+
+
+export default DockerCommands;

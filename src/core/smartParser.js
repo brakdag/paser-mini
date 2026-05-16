@@ -1,9 +1,9 @@
-import { AutoCorrector } from "./autoCorrector.js";
-import validator from "./schemaRegistry.js";
+import AutoCorrector from "./autoCorrector";
+import validator from "./schemaRegistry";
 
-import { TOOL_ALIASES } from "../tools/registry.js";
+import { TOOL_ALIASES } from "../tools/registry";
 
-export class SmartToolParser {
+class SmartToolParser {
   // Optimized regex: limits capture to 10k characters to avoid blocking the main thread
   static TOOL_PATTERN =
     /<(?:TOOL_CALL|tool_call)\s*>([\s\S]{1,10000}?)(?:<\/(?:TOOL_CALL|tool_call)>|$)/gis;
@@ -78,3 +78,6 @@ export class SmartToolParser {
     return text.replace(/<[^>]+>.*?<\/[^>]+>/gs, "");
   }
 }
+
+
+export default SmartToolParser;

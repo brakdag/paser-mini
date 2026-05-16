@@ -1,4 +1,4 @@
-export const insertSceneFountain = async ({ scene, action }) => {
+const insertSceneFountain = async ({ scene, action }) => {
   // Ensure scene is uppercase as per requirements
   const formattedScene = scene.toUpperCase();
   const content = `* SCENE: ${formattedScene}\n${action}`;
@@ -9,3 +9,6 @@ export const insertSceneFountain = async ({ scene, action }) => {
     content,
   };
 };
+
+
+export default insertSceneFountain;

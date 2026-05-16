@@ -1,6 +1,6 @@
-import * as githubTools from "../tools/githubTools.js";
+import * as githubTools from "../tools/githubTools";
 
-export class GitHubUI {
+class GitHubUI {
   constructor(issueNumber, repo = null) {
     this.issueNumber = issueNumber;
     this.repo = repo;
@@ -62,3 +62,6 @@ export class GitHubUI {
 
   updateQueueCount() {}
 }
+
+
+export default GitHubUI;

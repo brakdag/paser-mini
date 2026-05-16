@@ -1,13 +1,13 @@
 import "dotenv/config";
 import fs from "fs";
 import { Command } from "commander";
-import { GeminiAdapter } from "./infrastructure/gemini/adapter.js";
-import { NvidiaAdapter } from "./infrastructure/nvidia/adapter.js";
-import { TerminalUI } from "./core/terminalUI.js";
-import { ChatManager } from "./core/chatManager.js";
-import { ConfigManager } from "./core/configManager.js";
-import { SYSTEM_INSTRUCTION, AVAILABLE_TOOLS } from "./tools/registry.js";
-import * as memoryTools from "./tools/memoryTools.js";
+import { GeminiAdapter } from "./infrastructure/gemini/adapter";
+import NvidiaAdapter from "./adapter";
+import TerminalUI from "./terminalUI";
+import ChatManager from "./chatManager";
+import ConfigManager from "./configManager";
+import { SYSTEM_INSTRUCTION, AVAILABLE_TOOLS } from "./tools/registry";
+import * as memoryTools from "./tools/memoryTools";
 
 async function main() {
   const program = new Command();
@@ -40,7 +40,7 @@ async function main() {
 
   if (options.githubMode) {
     const { GitHubModeOrchestrator } =
-      await import("./core/githubModeOrchestrator.js");
+      await import("./core/githubModeOrchestrator");
     const tools = options.noSystemInstruction ? {} : AVAILABLE_TOOLS;
     const orchestrator = new GitHubModeOrchestrator(
       options.noSystemInstruction

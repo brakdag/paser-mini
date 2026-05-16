@@ -1,4 +1,4 @@
-export const hexToolSchema = {
+const hexToolSchema = {
   type: "object",
   properties: {
     action: {
@@ -65,3 +65,6 @@ export const hexToolSchema = {
     convert: ["hexString", "type"],
   },
 };
+
+
+export default hexToolSchema;

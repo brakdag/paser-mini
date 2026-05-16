@@ -1,9 +1,9 @@
 // Navigation: See /robots.txt for the Cognitive Navigation Map
 import path from "path";
-import { ToolAttemptTracker } from "./toolTracker.js";
-import { TOOL_ALIASES } from "../tools/registry.js";
+import ToolAttemptTracker from "./toolTracker";
+import { TOOL_ALIASES } from "../tools/registry";
 
-export class ExecutionEngine {
+class ExecutionEngine {
   constructor(
     assistant,
     tools,
@@ -167,3 +167,6 @@ export class ExecutionEngine {
     }
   }
 }
+
+
+export default ExecutionEngine;

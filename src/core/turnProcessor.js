@@ -1,11 +1,5 @@
-import { logger } from "./logger.js";
-
-class UserInterruptException extends Error {
-  constructor(message = "User interrupted the agent") {
-    super(message);
-    this.name = "UserInterruptException";
-  }
-}
+import logger from "./logger";
+import UserInterruptException from "./exceptions";
 
 const DESTRUCTIVE_TOOLS = [
   "removeFile",
@@ -14,7 +8,7 @@ const DESTRUCTIVE_TOOLS = [
   "executeBash",
 ];
 
-export class TurnProcessor {
+class TurnProcessor {
   async #sendMessageWithRetry(message, role = "user", attempt = 1) {
     const maxRetries = 5000;
     const baseDelay = 1000;
@@ -94,6 +88,7 @@ export class TurnProcessor {
       this.ui.displayError(
         `API Communication Error (Attempt ${apiRecoveryAttempts}/${maxApiRecoveries}): ${currentResponse}`,
       );
+      // eslint-disable-next-line no-await-in-loop
       currentResponse = await this.#sendMessageWithRetry(
         `System Error: ${currentResponse}. Please attempt to recover or rephrase your last action.`,
       );
@@ -150,7 +145,8 @@ export class TurnProcessor {
         turnComplete = true;
       } else {
         const toolResults = [];
-        for (const call of toolCalls) {
+        for (let i = 0; i < toolCalls.length; i += 1) {
+          const call = toolCalls[i];
           if (call.data) {
             // Zero-Friction Intervention Check
             const isDestructive = DESTRUCTIVE_TOOLS.includes(call.data.name);
@@ -165,6 +161,7 @@ export class TurnProcessor {
             }
 
             consecutiveErrors = 0;
+            // eslint-disable-next-line no-await-in-loop
             const { response, result } = await this.engine.executeToolCall(
               call.data.name,
               call.data.args,
@@ -190,14 +187,14 @@ export class TurnProcessor {
               typeof result === "string" &&
               result.startsWith("*** ")
             ) {
-              const match = result.match(/is now known as\s+(.+)$/);
-              if (match) {
-                this.ui.agentNickname = match[1];
+              const [, name] = result.match(/is now known as\s+(.+)$/);
+              if (name) {
+                this.ui.agentNickname = name;
               }
             }
             toolResults.push(response);
           } else if (call.error) {
-            consecutiveErrors++;
+            consecutiveErrors += 1;
             toolResults.push(
               `<TOOL_RESPONSE>ERR: ${call.error}</TOOL_RESPONSE>`,
             );
@@ -210,6 +207,7 @@ export class TurnProcessor {
             "CRITICAL ERROR: Too many consecutive JSON validation failures. Stop using tools and explain your intent in plain text.";
           break;
         }
+        // eslint-disable-next-line no-await-in-loop
         currentResponse = await this.#sendMessageWithRetry(
           this.ui.renderingMode === "FOUNTAIN"
             ? this.ui._renderFountain("system", toolResults.join("\n"))
@@ -222,7 +220,9 @@ export class TurnProcessor {
             this.ui.agentNickname,
             currentResponse,
           );
+          // eslint-disable-next-line no-await-in-loop
           await this.assistant.popLastMessage();
+          // eslint-disable-next-line no-await-in-loop
           await this.assistant.injectMessage("model", formatted);
         }
 
@@ -245,6 +245,9 @@ export class TurnProcessor {
             this.ui.displayError(
               `API Communication Error during tool processing (Attempt ${apiRecoveryAttempts}/${maxApiRecoveries}): ${currentResponse}`,
             );
+            // eslint-disable-next-line no-await-in-loop
+            // eslint-disable-next-line no-await-in-loop
+            // eslint-disable-next-line no-await-in-loop
             currentResponse = await this.#sendMessageWithRetry(
               `System Error: ${currentResponse}. Please attempt to recover or rephrase your last action.`,
             );
@@ -268,3 +271,6 @@ export class TurnProcessor {
     }
   }
 }
+
+
+export default TurnProcessor;

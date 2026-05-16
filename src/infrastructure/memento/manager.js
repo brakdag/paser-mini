@@ -3,7 +3,7 @@ import path from "path";
 
 const LOG_FILE = path.join(process.cwd(), "log", "memento.log");
 
-export class MementoManager {
+class MementoManager {
   async pushMemory(role, scope, value, key = null) {
     // 1. Handle Rank Increments for references
     this._incrementReferencedRanks(value);
@@ -79,3 +79,6 @@ export class MementoManager {
     return fs.readFileSync(LOG_FILE, "utf8").trim().split("\n").filter(Boolean);
   }
 }
+
+
+export default MementoManager;

@@ -1,3 +1,6 @@
 import { z } from "zod";
 
-export const getCurrentRepoSchema = z.object({}).strict();
+const getCurrentRepoSchema = z.object({}).strict();
+
+
+export default getCurrentRepoSchema;

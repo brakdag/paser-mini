@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const binaryAnalysisSchema = z.object({
+const binaryAnalysisSchema = z.object({
   action: z.enum(["inspect", "extract", "search", "detect", "convert"]),
   filePath: z.string().optional(),
   offset: z.number().optional(),
@@ -23,3 +23,6 @@ export const binaryAnalysisSchema = z.object({
     .optional(),
   endianness: z.enum(["LE", "BE"]).optional(),
 });
+
+
+export default binaryAnalysisSchema;
