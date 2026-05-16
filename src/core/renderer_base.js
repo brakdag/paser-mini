@@ -11,7 +11,7 @@ export class BaseRenderer {
    * @param {string} [message.type] - 'chat', 'system', 'error', 'info', 'thought'
    * @returns {string} The formatted string for terminal output
    */
-  render(message) {
-    throw new Error("render() must be implemented by subclass");
+  render(_message) {
+    throw new Error('render() must be implemented by subclass');
   }
 }

@@ -37,7 +37,7 @@ export class NvidiaRestClient {
     if (elapsed < minInterval) {
       const waitTime = minInterval - elapsed;
       logger.debug(`Nvidia Rate Limit: Waiting ${waitTime / 1000}s to maintain ${rpmLimit} RPM`);
-      await new Promise((resolve) => setTimeout(resolve, waitTime));
+      await new Promise((resolve) => { setTimeout(resolve, waitTime); });
     }
     this.lastRequestTime = Date.now();
   }
@@ -57,17 +57,18 @@ export class NvidiaRestClient {
       throw new Error('Streaming not yet implemented in JS RestClient');
     }
 
-    const request = async () => await this.client.post(url, payload);
+    const request = () => this.client.post(url, payload);
     const response = await this.retryHandler.execute(request);
     return response.data;
   }
 
   async get(endpoint) {
     await this._applyRateLimit();
-    const request = async () => await this.client.get(`/${endpoint}`);
+    const request = () => this.client.get(`/${endpoint}`);
     const response = await this.retryHandler.execute(request);
     return response.data;
   }
 
+  // eslint-disable-next-line no-empty-function
   async close() {}
 }

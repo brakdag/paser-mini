@@ -6,14 +6,14 @@ export class ToolAttemptTracker {
 
   /**
    * Registra un intento de llamada a una herramienta
-   * @param {string} name 
-   * @param {any} args 
+   * @param {string} name
+   * @param {any} args
    * @returns {boolean} true if the attempt is allowed, false if a loop is detected
    */
   recordAttempt(name, args) {
     const argKey = JSON.stringify(args);
     const key = `${name}:${argKey}`;
-    
+
     const count = (this.attempts.get(key) || 0) + 1;
     this.attempts.set(key, count);
 
@@ -22,17 +22,17 @@ export class ToolAttemptTracker {
 
   /**
    * Registra que una herramienta se ejecutó con éxito
-   * @param {string} name 
+   * @param {string} name
    */
-  recordSuccess(name) {
+  recordSuccess(_name) {
     // Podríamos limpiar intentos fallidos aquí si fuera necesario
   }
 
   /**
    * Registra que una herramienta falló
-   * @param {string} name 
+   * @param {string} _name
    */
-  recordFailure(name) {
+  recordFailure(_name) {
     // Registro de fallos para análisis
   }
 

@@ -28,8 +28,8 @@ export class GeminiAdapter {
         const status = error.response?.status;
         const recoverableStatuses = [429, 500, 502, 503, 504];
         return (
-          axiosRetry.isNetworkOrIdempotentRequestError(error) ||
-          recoverableStatuses.includes(status)
+          axiosRetry.isNetworkOrIdempotentRequestError(error)
+          || recoverableStatuses.includes(status)
         );
       },
       onRetry: (retryCount, error) => {
@@ -109,10 +109,10 @@ export class GeminiAdapter {
     if (this.renderingMode === 'FOUNTAIN') return text;
 
     if (
-      role === 'server' ||
-      text.startsWith('---') ||
-      text.startsWith('***') ||
-      text.startsWith('<TOOL_RESPONSE>')
+      role === 'server'
+      || text.startsWith('---')
+      || text.startsWith('***')
+      || text.startsWith('<TOOL_RESPONSE>')
     ) {
       return `[${timestamp}] ${text}`;
     }
@@ -145,7 +145,7 @@ export class GeminiAdapter {
       const response = await this.client.post(url, payload);
       const { data } = response;
 
-      const candidates = data.candidates;
+      const { candidates } = data;
       if (!candidates || candidates.length === 0) {
         return 'Error: No response candidates returned (possible safety block).';
       }
@@ -155,7 +155,7 @@ export class GeminiAdapter {
         return 'Error: Response blocked by safety filters.';
       }
 
-      const content = candidate.content;
+      const { content } = candidate;
       if (!content || !content.parts || content.parts.length === 0) {
         return 'Error: No content parts returned.';
       }
@@ -193,9 +193,8 @@ export class GeminiAdapter {
   }
 
   injectMessage(role, content, timestamp = null) {
-    const ts =
-      timestamp ||
-      new Date().toLocaleTimeString('en-GB', {
+    const ts = timestamp
+      || new Date().toLocaleTimeString('en-GB', {
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',

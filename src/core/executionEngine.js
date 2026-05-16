@@ -3,9 +3,16 @@ import path from 'path';
 import { ToolAttemptTracker } from './toolTracker.js';
 import { TOOL_ALIASES } from '../tools/registry.js';
 
-
 export class ExecutionEngine {
-  constructor(assistant, tools, toolParser, ui, instanceMode = false, tracker = null, pureMode = false) {
+  constructor(
+    assistant,
+    tools,
+    toolParser,
+    ui,
+    instanceMode = false,
+    tracker = null,
+    pureMode = false,
+  ) {
     this.assistant = assistant;
     this.tools = tools;
     this.toolParser = toolParser;
@@ -17,25 +24,25 @@ export class ExecutionEngine {
     this.maxTurns = 10000;
     this.stopRequested = false;
     this._detailMappers = {
-      'readFile': (a) => path.basename(a.path || ''),
-      'writeFile': (a) => path.basename(a.path || ''),
-      'removeFile': (a) => path.basename(a.path || ''),
-      'replaceString': (a) => path.basename(a.path || ''),
-      'listDir': (a) => a.path || '',
-      'createDir': (a) => a.path || '',
-      'renamePath': (a) => `${path.basename(a.origin || '')} -> ${path.basename(a.destination || '')}`,
-      'pushMemory': (a) => a.key || 'unknown',
-      'pullMemory': (a) => a.key || 'unknown',
-      'runInstance': (a) => a.target || 'unknown',
-      'searchTextGlobal': (a) => `${a.query || ''}`,
-      'searchFilesPattern': (a) => `pattern: ${a.pattern || ''}`,
-      'analyzeCode': (a) => path.basename(a.path || ''),
-      'lintCode': (a) => path.basename(a.path || ''),
-      'generateDocs': (a) => `Docs for ${path.basename(a.path || '.')} -> ${a.outputDir || 'docs/api'}`,
-      'executeBash': (a) => a.command.substring(0, 50) + (a.command.length > 50 ? '...' : ''),
-      'runPython': (a) => path.basename(a.scriptPath || ''),
-      'binaryAnalysis': (a) => `${a.action || 'analysis'} on ${path.basename(a.filePath || 'unknown')}`,
-      'sh': (a) => `sh: ${a.command.substring(0, 50)}${a.command.length > 50 ? '...' : ''}`,
+      readFile: (a) => path.basename(a.path || ''),
+      writeFile: (a) => path.basename(a.path || ''),
+      removeFile: (a) => path.basename(a.path || ''),
+      replaceString: (a) => path.basename(a.path || ''),
+      listDir: (a) => a.path || '',
+      createDir: (a) => a.path || '',
+      renamePath: (a) => `${path.basename(a.origin || '')} -> ${path.basename(a.destination || '')}`,
+      pushMemory: (a) => a.key || 'unknown',
+      pullMemory: (a) => a.key || 'unknown',
+      runInstance: (a) => a.target || 'unknown',
+      searchTextGlobal: (a) => `${a.query || ''}`,
+      searchFilesPattern: (a) => `pattern: ${a.pattern || ''}`,
+      analyzeCode: (a) => path.basename(a.path || ''),
+      lintCode: (a) => path.basename(a.path || ''),
+      generateDocs: (a) => `Docs for ${path.basename(a.path || '.')} -> ${a.outputDir || 'docs/api'}`,
+      executeBash: (a) => a.command.substring(0, 50) + (a.command.length > 50 ? '...' : ''),
+      runPython: (a) => path.basename(a.scriptPath || ''),
+      binaryAnalysis: (a) => `${a.action || 'analysis'} on ${path.basename(a.filePath || 'unknown')}`,
+      sh: (a) => `sh: ${a.command.substring(0, 50)}${a.command.length > 50 ? '...' : ''}`,
     };
   }
 
@@ -48,7 +55,7 @@ export class ExecutionEngine {
         response: this.toolParser.formatToolResponse(
           'ERR: Pure Mode active. Tool execution is strictly disabled.',
           callData.id,
-          false
+          false,
         ),
         success: false,
       };
@@ -56,9 +63,9 @@ export class ExecutionEngine {
     if (!this.toolTracker.recordAttempt(toolName, args)) {
       return {
         response: this.toolParser.formatToolResponse(
-          'Tool loop detected: ' + toolName + ' called too many times.',
+          `Tool loop detected: ${toolName} called too many times.`,
           callData.id,
-          false
+          false,
         ),
         success: false,
       };
@@ -69,7 +76,7 @@ export class ExecutionEngine {
         response: this.toolParser.formatToolResponse(
           'ERR: Bash access is disabled for security. Please use /enableBash to activate it.',
           callData.id,
-          false
+          false,
         ),
         success: false,
       };
@@ -78,9 +85,9 @@ export class ExecutionEngine {
     if (!(toolName in this.tools)) {
       return {
         response: this.toolParser.formatToolResponse(
-          'Unknown tool: ' + toolName,
+          `Unknown tool: ${toolName}`,
           callData.id,
-          false
+          false,
         ),
         success: false,
       };
@@ -91,7 +98,7 @@ export class ExecutionEngine {
         response: this.toolParser.formatToolResponse(
           'ERR: Recursion disabled.',
           callData.id,
-          false
+          false,
         ),
         success: false,
       };
@@ -101,7 +108,7 @@ export class ExecutionEngine {
       const result = await this.tools[toolName](args);
       return {
         response: this.toolParser.formatToolResponse(result, callData.id, true),
-        result: result,
+        result,
         success: true,
       };
     }
@@ -122,7 +129,7 @@ export class ExecutionEngine {
       const result = await toolFunc(args);
 
       if (toolName === 'pullMemory') {
-        this.ui.displayPanel('Memento Pull', 'Accessing node #' + args.key, 'info');
+        this.ui.displayPanel('Memento Pull', `Accessing node #${args.key}`, 'info');
       } else if (toolName === 'pushMemory') {
         this.ui.displayPanel('Memento Push', result, 'info');
       } else if (toolName === 'runInstance') {
@@ -136,9 +143,9 @@ export class ExecutionEngine {
         response: this.toolParser.formatToolResponse(
           result,
           callData.id,
-          true
+          true,
         ),
-        result: result,
+        result,
         success: true,
       };
     } catch (e) {

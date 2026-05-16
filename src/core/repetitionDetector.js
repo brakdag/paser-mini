@@ -8,7 +8,7 @@ export class RepetitionDetector {
 
   /**
    * Analyzes text for cyclic repetitions
-   * @param {string} text 
+   * @param {string} text
    * @returns {string|boolean} Returns the repeated sequence if detected, or true if valid
    */
   addText(text) {
@@ -17,30 +17,31 @@ export class RepetitionDetector {
     // Simple tokenization based on words
     const tokens = text.match(/\w+/g) || [];
 
-    for (const token of tokens) {
+    for (let i = 0; i < tokens.length; i += 1) {
+      const token = tokens[i];
       this.buffer.push(token);
       if (this.buffer.length > this.maxBufferSize) {
         this.buffer.shift();
       }
 
-      if (this.buffer.length < this.n * 2) continue;
+      if (this.buffer.length >= this.n * 2) {
+        // Extract current and previous n-grams
+        const currentNgram = this.buffer.slice(-this.n).join(' ');
+        const previousNgram = this.buffer.slice(-this.n * 2, -this.n).join(' ');
 
-      // Extract current and previous n-grams
-      const currentNgram = this.buffer.slice(-this.n).join(' ');
-      const previousNgram = this.buffer.slice(-this.n * 2, -this.n).join(' ');
-
-      if (currentNgram === previousNgram) {
-        // Count how many times this n-gram appears in the current buffer
-        let count = 0;
-        for (let i = 0; i <= this.buffer.length - this.n; i += this.n) {
-          const segment = this.buffer.slice(i, i + this.n).join(' ');
-          if (segment === currentNgram) {
-            count++;
+        if (currentNgram === previousNgram) {
+          // Count how many times this n-gram appears in the current buffer
+          let count = 0;
+          for (let j = 0; j <= this.buffer.length - this.n; j += this.n) {
+            const segment = this.buffer.slice(j, j + this.n).join(' ');
+            if (segment === currentNgram) {
+              count += 1;
+            }
           }
-        }
 
-        if (count >= this.maxRepeats) {
-          return currentNgram;
+          if (count >= this.maxRepeats) {
+            return currentNgram;
+          }
         }
       }
     }

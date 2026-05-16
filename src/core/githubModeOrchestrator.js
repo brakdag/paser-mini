@@ -18,8 +18,11 @@ export class GitHubModeOrchestrator {
       this.botLogin = userData.login;
     }
     const issues = await githubTools.listIssues();
-    for (const issue of issues.filter(i => (i.body || '').includes(this.triggerHashtag) && !(i.labels || []).map(l => l.name).includes(this.processingLabel))) {
-      await this.processIssue(issue);
+    const filtered = issues.filter((i) => (i.body || '').includes(this.triggerHashtag) && !(i.labels || []).map((l) => l.name).includes(this.processingLabel));
+
+    for (let i = 0; i < filtered.length; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await this.processIssue(filtered[i]);
     }
   }
 
@@ -28,7 +31,13 @@ export class GitHubModeOrchestrator {
     await githubTools.add_label({ issue_number: issueNumber, label: this.processingLabel });
     try {
       const ui = new GitHubUI(issueNumber);
-      const chatManager = new ChatManager(new GeminiAdapter(), this.tools, this.systemInstruction, ui, true);
+      const chatManager = new ChatManager(
+        new GeminiAdapter(),
+        this.tools,
+        this.systemInstruction,
+        ui,
+        true,
+      );
       await chatManager.run(`SYSTEM: GitHub Issue #${issueNumber}.\n${issueBody}`);
     } finally {
       await githubTools.remove_label({ issue_number: issueNumber, label: this.processingLabel });

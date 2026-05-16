@@ -15,13 +15,13 @@ export class SessionCommands {
     return true;
   }
 
-  static async handleCompact(chatManager) {
+  static async handleCompact(chatManager, ui) {
     ui.displayInfo('Compacting history into IRC log...');
-    return await chatManager.compactHistory();
+    return chatManager.compactHistory();
   }
 
   static async handleSavePayload(chatManager, ui, filename) {
-    const lastPayload = chatManager.assistant.lastPayload;
+    const { lastPayload } = chatManager.assistant;
     if (!lastPayload) {
       ui.displayError('No request payload available to save.');
       return true;

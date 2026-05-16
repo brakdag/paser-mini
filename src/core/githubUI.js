@@ -6,7 +6,8 @@ export class GitHubUI {
     this.repo = repo;
   }
 
-  async requestInput(prompt, history = null) {
+  // eslint-disable-next-line no-unused-vars
+  async requestInput(_prompt) {
     // In GitHub mode, input is managed by the orchestrator via message queue
     return '';
   }
@@ -18,8 +19,8 @@ export class GitHubUI {
       githubTools.postComment({
         issue_number: this.issueNumber,
         body: text,
-        repo: this.repo
-      }).catch(e => console.error(`Failed to post comment: ${e.message}`));
+        repo: this.repo,
+      }).catch((e) => console.error(`Failed to post comment: ${e.message}`));
     } catch (e) {
       console.error(`Error in displayMessage: ${e.message}`);
     }
@@ -47,9 +48,15 @@ export class GitHubUI {
     return true;
   }
 
-  startToolMonitoring(toolName, detail = '') {}
-  endToolMonitoring(toolName, success, detail = '') {}
+  // eslint-disable-next-line no-unused-vars
+  startToolMonitoring(_toolName, _detail = '') {}
+
+  // eslint-disable-next-line no-unused-vars
+  endToolMonitoring(_toolName, _success) {}
+
   stopAllMonitoring() {}
+
   addSpacing() {}
-  updateQueueCount(count) {}
+
+  updateQueueCount() {}
 }

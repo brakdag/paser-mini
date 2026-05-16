@@ -12,20 +12,22 @@ const validator = new SchemaValidator();
 async function registerSchemas() {
   try {
     const files = fs.readdirSync(SCHEMAS_DIR);
-    
-    for (const file of files) {
+
+    for (let i = 0; i < files.length; i += 1) {
+      const file = files[i];
       if (file.endsWith('.js')) {
         const schemaName = file.replace('.js', '').replace('Schema', '');
         const toolName = schemaName;
-        
+
         try {
+          // eslint-disable-next-line no-await-in-loop
           const module = await import(`./schemas/${file}?update=${Date.now()}`);
-          const schema = module[schemaName + 'Schema'];
-          
+          const schema = module[`${schemaName}Schema`];
+
           if (schema) {
             validator.registerSchema(toolName, schema);
           } else {
-            console.error(`[SchemaRegistry] Warning: No export named ${schemaName + 'Schema'} found in ${file}`);
+            console.error(`[SchemaRegistry] Warning: No export named ${schemaName}Schema found in ${file}`);
           }
         } catch (e) {
           console.error(`[SchemaRegistry] Error loading schema ${file}: ${e.message}`);

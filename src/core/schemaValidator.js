@@ -1,10 +1,4 @@
-export class ValidationResult {
-  constructor(isValid, errors = [], correctedArgs = null) {
-    this.isValid = isValid;
-    this.errors = errors;
-    this.correctedArgs = correctedArgs;
-  }
-}
+import { ValidationResult } from './validationResult.js';
 
 export class SchemaValidator {
   constructor() {
@@ -13,8 +7,8 @@ export class SchemaValidator {
 
   /**
    * Registers a Zod schema for a specific tool
-   * @param {string} toolName 
-   * @param {import('zod').ZodSchema} schema 
+   * @param {string} toolName
+   * @param {import('zod').ZodSchema} schema
    */
   registerSchema(toolName, schema) {
     this.schemas.set(toolName, schema);
@@ -22,8 +16,8 @@ export class SchemaValidator {
 
   /**
    * Validates tool arguments
-   * @param {string} toolName 
-   * @param {any} args 
+   * @param {string} toolName
+   * @param {any} args
    * @returns {ValidationResult}
    */
   validate(toolName, args) {
@@ -40,7 +34,7 @@ export class SchemaValidator {
     const result = schema.safeParse(args);
 
     if (!result.success) {
-      const errors = result.error.issues.map(issue => {
+      const errors = result.error.issues.map((issue) => {
         const path = issue.path.join('.');
         return `${path}: ${issue.message}`;
       });

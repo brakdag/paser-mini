@@ -1,7 +1,7 @@
 import { MementoManager } from '../../infrastructure/memento/manager.js';
 
 export class SystemCommands {
-  static handleClear(ui) {
+  static handleClear() {
     process.stdout.write('\x1Bc');
     return true;
   }
@@ -15,7 +15,7 @@ export class SystemCommands {
     ui.displayInfo('Performing Hard Reset (The Leap)...');
     const manager = new MementoManager();
     const bridge = await manager.pullMemory('bridge', null, 'next');
-    let newHistory = [];
+    const newHistory = [];
     if (bridge) {
       const bridgeMsg = `[MEMENTO LEAP: RESTORED SESSION STATE]\nNode #${bridge.id} | ${bridge.content}`;
       newHistory.push({ role: 'user', parts: [{ text: bridgeMsg }] });
@@ -38,11 +38,9 @@ export class SystemCommands {
   static handleEnableBash(chatManager, ui) {
     ui.bashEnabled = true;
     ui.displayInfo('Bash access enabled. You can now use executeBash.');
-    const bashInstruction = 'SYSTEM UPDATE: Bash access has been enabled. ' +
-      'You now have access to the tool `executeBash(command: string)`, ' +
-      'which allows you to execute shell commands in the project root.';
-    const content = ui.renderingMode === 'FOUNTAIN' 
-      ? ui._renderFountain('system', bashInstruction) 
+    const bashInstruction = 'SYSTEM UPDATE: Bash access has been enabled. You now have access to the tool `executeBash(command: string)`, which allows you to execute shell commands in the project root.';
+    const content = ui.renderingMode === 'FOUNTAIN'
+      ? ui._renderFountain('system', bashInstruction)
       : bashInstruction;
     chatManager.assistant.injectMessage('server', content);
     return true;

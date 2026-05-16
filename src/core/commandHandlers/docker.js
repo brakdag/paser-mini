@@ -33,13 +33,13 @@ export class DockerCommands {
     const envPath = path.join(process.cwd(), '.env');
     let content = await fs.readFile(envPath, 'utf-8');
     const regex = new RegExp(`^${key}=.*`, 'm');
-    
+
     if (regex.test(content)) {
       content = content.replace(regex, `${key}=${value}`);
     } else {
       content += `\n${key}=${value}`;
     }
-    await fs.writeFile(envPath, content.trim() + '\n');
+    await fs.writeFile(envPath, `${content.trim()}\n`);
   }
 
   static async apply() {

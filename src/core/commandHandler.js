@@ -7,22 +7,22 @@ import { InterfaceCommands } from './commandHandlers/interface.js';
 import { AICommands } from './commandHandlers/ai.js';
 
 const COMMAND_MAP = {
-  '/q': (cm, ui) => SystemCommands.handleExit(cm),
-  '/quit': (cm, ui) => SystemCommands.handleExit(cm),
-  '/exit': (cm, ui) => SystemCommands.handleExit(cm),
-  ':q': (cm, ui) => SystemCommands.handleExit(cm),
+  '/q': (cm) => SystemCommands.handleExit(cm),
+  '/quit': (cm) => SystemCommands.handleExit(cm),
+  '/exit': (cm) => SystemCommands.handleExit(cm),
+  ':q': (cm) => SystemCommands.handleExit(cm),
   '/reset': SystemCommands.handleReset,
-  '/clear': (cm, ui) => SystemCommands.handleClear(ui),
+  '/clear': (_, ui) => SystemCommands.handleClear(ui),
   '/kick': SystemCommands.handleKick,
   '/enablebash': SystemCommands.handleEnableBash,
   '/compact': SessionCommands.handleCompact,
   '/fountain': InterfaceCommands.handleFountain,
   '/irc': InterfaceCommands.handleIRC,
   '/clean': InterfaceCommands.handleClean,
-  '/help': (cm, ui) => InterfaceCommands.handleHelp(ui),
+  '/help': (_, ui) => InterfaceCommands.handleHelp(ui),
   '/connect': AICommands.handleConnect,
   '/config': ConfigCommands.handleConfig,
-  '/models_check': (cm, ui) => ModelCommands.handleModelsCheck(cm, ui)
+  '/models_check': (cm, ui) => ModelCommands.handleModelsCheck(cm, ui),
 };
 
 const PREFIX_COMMANDS = {
@@ -35,7 +35,7 @@ const PREFIX_COMMANDS = {
   '/join ': (cm, ui, input) => InterfaceCommands.handleJoin(cm, ui, input.slice(6).trim()),
   '/paim ': (cm, ui, input) => AICommands.handlePaim(cm, ui, input.slice(6).trim()),
   '/models': (cm, ui, input) => ModelCommands.handleModels(cm, ui, input.split(/\s+/)),
-  '/fav': (cm, ui, input) => FavoriteCommands.handleFav(cm, ui, input.split(/\s+/))
+  '/fav': (cm, ui, input) => FavoriteCommands.handleFav(cm, ui, input.split(/\s+/)),
 };
 
 export class CommandHandler {
@@ -50,7 +50,7 @@ export class CommandHandler {
       this.ui.displayError('Usage: /w <tokens> <rpm_limit> <tpm_limit>');
       return true;
     }
-    const [, tokens, rpm, tpm] = parts.map(p => parseInt(p, 10));
+    const [, tokens, rpm, tpm] = parts.map((p) => parseInt(p, 10));
     this.chatManager.configManager.save('context_window_limit', tokens);
     this.chatManager.configManager.save('rpm_limit', rpm);
     this.chatManager.configManager.save('tpm_limit', tpm);
@@ -64,7 +64,7 @@ export class CommandHandler {
 
     if (COMMAND_MAP[lowerInput]) return COMMAND_MAP[lowerInput](this.chatManager, this.ui);
 
-    const prefixKey = Object.keys(PREFIX_COMMANDS).find(key => lowerInput.startsWith(key));
+    const prefixKey = Object.keys(PREFIX_COMMANDS).find((key) => lowerInput.startsWith(key));
     if (prefixKey) return PREFIX_COMMANDS[prefixKey](this.chatManager, this.ui, input);
 
     if (input.startsWith('/w ')) return this._handleWindowConfig(input);

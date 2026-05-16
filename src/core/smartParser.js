@@ -2,6 +2,7 @@ import { AutoCorrector } from './autoCorrector.js';
 import validator from './schemaRegistry.js';
 
 import { TOOL_ALIASES } from '../tools/registry.js';
+
 export class SmartToolParser {
   // Optimized regex: limits capture to 10k characters to avoid blocking the main thread
   static TOOL_PATTERN = /<(?:TOOL_CALL|tool_call)\s*>([\s\S]{1,10000}?)(?:<\/(?:TOOL_CALL|tool_call)>|$)/gis;
@@ -40,7 +41,7 @@ export class SmartToolParser {
 
     const validation = this.validator.validate(data.name, data.args);
     if (!validation.isValid) {
-      return { data: null, error: 'Validation error: ' + validation.errors.join('; ') };
+      return { data: null, error: `Validation error: ${validation.errors.join('; ')}` };
     }
 
     return { data, error: null };
@@ -64,7 +65,7 @@ export class SmartToolParser {
     return `<TOOL_RESPONSE>${JSON.stringify({
       id: callId,
       status: success ? 'success' : 'error',
-      data: data
+      data,
     })}</TOOL_RESPONSE>`;
   }
 

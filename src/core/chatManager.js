@@ -17,8 +17,8 @@ export class ChatManager {
     this.instanceMode = instanceMode;
     this.configManager = new ConfigManager();
     this.temperature = parseFloat(this.configManager.get('default_temperature', 0.7));
-    this.contextWindowLimit = parseInt(this.configManager.get('context_window_limit', 250000));
-    this.tpmLimit = parseInt(this.configManager.get('tpm_limit', 15000));
+    this.contextWindowLimit = parseInt(this.configManager.get('context_window_limit', 250000), 10);
+    this.tpmLimit = parseInt(this.configManager.get('tpm_limit', 15000), 10);
     this.ui.bashEnabled = false;
     this.currentChannel = '#main';
     this.timestampsEnabled = this.configManager.get('timestamps_enabled', false);
@@ -62,7 +62,7 @@ export class ChatManager {
     const oldAssistant = this.assistant;
     let newAssistant;
 
-        if (provider === 'NVIDIA') {
+    if (provider === 'NVIDIA') {
       const { NvidiaAdapter } = await import('../infrastructure/nvidia/adapter.js');
       newAssistant = new NvidiaAdapter(this.configManager, this.ui.userNickname, this.ui.agentNickname);
     } else if (provider === 'OPENROUTER') {
@@ -77,7 +77,7 @@ export class ChatManager {
     if (oldAssistant && oldAssistant.getHistory) {
       const history = oldAssistant.getHistory();
       if (history?.length > 0) {
-        history.forEach(msg => {
+        history.forEach((msg) => {
           const text = msg.text ?? msg.parts?.[0]?.text ?? '';
           newAssistant.injectMessage(msg.role, text);
         });
@@ -124,34 +124,31 @@ export class ChatManager {
 
     while (!this.stopRequested) {
       try {
-        let input = await this.ui.requestInput();
-        if (!input) {
-          continue;
-        }
-
-        if (!this.logOpened && this.systemInstruction) {
-          const logMsg = this.ui.getLogOpenedString();
-          this.ui.displayChatMessage('system', logMsg);
-          this.ui.displayChatMessage(
-            'system',
-            '*** Session resumed from ./log/history.log'
-          );
-          this.logOpened = true;
-          const formattedLog = this.ui.renderingMode === 'FOUNTAIN' 
-          ? this.ui._renderFountain('system', logMsg) 
-          : logMsg;
-        this.assistant.injectMessage('server', formattedLog);
-        }
-
-        if (await this.commandHandler.handle(input)) {
-          if (this.stopRequested) {
-            break;
+        // eslint-disable-next-line no-await-in-loop
+        const input = await this.ui.requestInput();
+        if (input) {
+          if (!this.logOpened && this.systemInstruction) {
+            const logMsg = this.ui.getLogOpenedString();
+            this.ui.displayChatMessage('system', logMsg);
+            this.ui.displayChatMessage(
+              'system',
+              '*** Session resumed from ./log/history.log',
+            );
+            this.logOpened = true;
+            const formattedLog = this.ui.renderingMode === 'FOUNTAIN'
+              ? this.ui._renderFountain('system', logMsg)
+              : logMsg;
+            this.assistant.injectMessage('server', formattedLog);
           }
-          continue;
-        }
 
-        this.ui.displayChatMessage(this.ui.userNickname, input);
-        await this.processTurn(input);
+          // eslint-disable-next-line no-await-in-loop
+          const handled = await this.commandHandler.handle(input);
+          if (!handled) {
+            this.ui.displayChatMessage(this.ui.userNickname, input);
+            // eslint-disable-next-line no-await-in-loop
+            await this.processTurn(input);
+          }
+        }
       } catch (e) {
         if (e.name === 'UserInterruptException') {
           logger.info('Turn interrupted by user input');
@@ -168,7 +165,7 @@ export class ChatManager {
   }
 
   async processTurn(userInput) {
-    return await this.turnProcessor.process(userInput);
+    return this.turnProcessor.process(userInput);
   }
 
   stopExecution() {

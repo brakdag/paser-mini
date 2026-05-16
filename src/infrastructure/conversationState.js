@@ -16,7 +16,7 @@ export class ConversationState {
 
   _formatMessage(role, text, timestamp = this.getTimestamp()) {
     if (this.renderingMode === 'FOUNTAIN') return text;
-    
+
     if (text.startsWith('---') || text.startsWith('***') || text.startsWith('<TOOL_RESPONSE>')) {
       return `[${timestamp}] ${text}`;
     }
@@ -26,13 +26,13 @@ export class ConversationState {
 
   addMessage(role, text, timestamp = null) {
     const normalizedRole = role === 'model' || role === 'assistant' ? 'model' : 'user';
-    
+
     const ts = timestamp || this.getTimestamp();
     const formattedText = this._formatMessage(normalizedRole, text, ts);
     this.history.push({
       role: normalizedRole,
       text: formattedText,
-      timestamp: ts
+      timestamp: ts,
     });
     return formattedText;
   }

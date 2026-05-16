@@ -5,7 +5,6 @@ import * as fileTools from './fileTools.js';
 import * as systemTools from './systemTools.js';
 import * as utilTools from './utilTools.js';
 import * as searchTools from './searchTools.js';
-import * as instanceTools from './instanceTools.js';
 import * as memoryTools from './memoryTools.js';
 import * as jsonTools from './jsonTools.js';
 import * as githubTools from './githubTools.js';
@@ -19,8 +18,7 @@ import * as dockerTools from './dockerTools.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export const GITHUB_SYSTEM_INSTRUCTION =
-  '## GitHub Mode Protocol\nYou are operating in GitHub Mode. Your primary interface is GitHub Issues.\n1. Communication: You are not in a live chat. All communication must be done via GitHub issue comments.\n2.Planning: Before executing any engineering changes, you MUST post a comment with a detailed Work Plan.\n3. Progress Tracking: Use a Markdown checklist in your plan. As you complete each task, post a progress update comment marking the task as completed.\n4. Transparency: Be explicit about what you are doing and why. Since the user is not watching your internal process, your comments are the only way they know the agent is still active and making progress.';
+export const GITHUB_SYSTEM_INSTRUCTION = '## GitHub Mode Protocol\nYou are operating in GitHub Mode. Your primary interface is GitHub Issues.\n1. Communication: You are not in a live chat. All communication must be done via GitHub issue comments.\n2.Planning: Before executing any engineering changes, you MUST post a comment with a detailed Work Plan.\n3. Progress Tracking: Use a Markdown checklist in your plan. As you complete each task, post a progress update comment marking the task as completed.\n4. Transparency: Be explicit about what you are doing and why. Since the user is not watching your internal process, your comments are the only way they know the agent is still active and making progress.';
 
 export const AVAILABLE_TOOLS = {
   readFile: fileTools.readFile,
@@ -120,16 +118,16 @@ const TOOL_CATALOG = fullCatalog
   .filter((t) => t[0] !== 'executeBash')
   .map((t) => {
     const canonicalName = t[0];
-    const alias = Object.keys(TOOL_ALIASES).find((key) => TOOL_ALIASES[key] === canonicalName) || canonicalName;
+    const alias = Object.keys(TOOL_ALIASES)
+      .find((key) => TOOL_ALIASES[key] === canonicalName) || canonicalName;
     const args = t[2] && typeof t[2] === 'object' ? Object.keys(t[2]).join(', ') : 'data';
     const returns = t[1].split('. ')[0] || 'status';
     return `${alias}(${args}): returns ${returns}`;
   })
   .join('\n');
 
-const _S = String.fromCharCode(60) + 'TOOL' + '_CALL' + String.fromCharCode(62);
-const _E =
-  String.fromCharCode(60) + '/' + 'TOOL' + '_CALL' + String.fromCharCode(62);
+const _S = `${String.fromCharCode(60)}TOOL_CALL${String.fromCharCode(62)}`;
+const _E = `${String.fromCharCode(60)}/TOOL_CALL${String.fromCharCode(62)}`;
 
 const systemInstrData = JSON.parse(
   fs.readFileSync(path.join(__dirname, 'system_instruction.json'), 'utf8'),

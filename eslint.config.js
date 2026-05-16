@@ -1,6 +1,6 @@
-import { FlatCompat } from "@eslint/eslintrc";
-import path from "path";
-import { fileURLToPath } from "url";
+import { FlatCompat } from '@eslint/eslintrc';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,7 +10,7 @@ const compat = new FlatCompat({
 });
 
 export default [
-  ...compat.extends("airbnb-base"),
+  ...compat.extends('airbnb-base'),
   {
     languageOptions: {
       ecmaVersion: 'latest',
@@ -25,26 +25,24 @@ export default [
       },
     },
     rules: {
-      // Downgrade noisy stylistic rules to warnings to allow incremental adoption
-      'indent': 'warn',
-      'quotes': 'warn',
-      'semi': 'warn',
-      'comma-dangle': 'warn',
-      'object-curly-spacing': 'warn',
-      'no-unused-vars': 'warn',
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      'no-plusplus': 'off',
+      'no-await-in-loop': 'off',
+      'max-len': ['warn', { code: 200, ignoreComments: true }],
+      'max-classes-per-file': 'off',
+      'no-promise-executor-return': 'off',
+      'no-empty-function': 'off',
+      'no-shadow': 'warn',
+      'prefer-destructuring': 'off',
+      'import/no-unresolved': 'warn',
+      'no-restricted-syntax': 'off',
+      'import/extensions': 'off',
       'import/prefer-default-export': 'off',
       'no-underscore-dangle': 'off',
-      'no-param-reassign': 'off',
       'class-methods-use-this': 'off',
       'no-console': 'off',
-      'import/extensions': 'off',
-      'prefer-template': 'warn',
-      'operator-linebreak': 'warn',
-      'arrow-parens': 'warn',
-      'brace-style': 'warn',
-      'eol-last': 'warn',
-      'no-trailing-spaces': 'warn',
-      'no-multiple-empty-lines': 'warn',
+      'no-param-reassign': 'off',
+      'no-cond-assign': 'off',
     },
   },
 ];

@@ -10,5 +10,5 @@ export const binaryAnalysisSchema = z.object({
   pattern: z.string().optional(),
   hexString: z.string().optional(),
   type: z.enum(['Int8', 'UInt8', 'Int16', 'UInt16', 'Int32', 'UInt32', 'Float32', 'Float64']).optional(),
-  endianness: z.enum(['LE', 'BE']).optional()
+  endianness: z.enum(['LE', 'BE']).optional(),
 });

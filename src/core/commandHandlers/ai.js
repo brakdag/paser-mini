@@ -1,7 +1,7 @@
 export class AICommands {
   static async handlePaim(chatManager, ui, message) {
-    const content = ui.renderingMode === 'FOUNTAIN' 
-      ? ui._renderFountain(ui.agentNickname, message) 
+    const content = ui.renderingMode === 'FOUNTAIN'
+      ? ui._renderFountain(ui.agentNickname, message)
       : message;
     chatManager.assistant.injectMessage('model', content);
     ui.displayChatMessage(ui.agentNickname, message);
@@ -11,8 +11,9 @@ export class AICommands {
   static async handleConnect(chatManager, ui) {
     ui.displayMessage('Select Provider:\n0: Gemini\n1: NVIDIA');
     const choice = await ui.requestInput('Provider: ');
-    
-    let provider, model;
+
+    let provider;
+    let model;
     if (choice === '0') {
       provider = 'Gemini';
       model = 'gemini-2.0-flash';
@@ -22,7 +23,7 @@ export class AICommands {
     } else {
       ui.displayError('Invalid provider.');
       return true;
-    } 
+    }
 
     await chatManager.switchProvider(provider, model, chatManager.temperature);
     chatManager.configManager.save('provider', provider);

@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 /**
  * @description The single source of truth for all communication within Paser Mini.
- * This schema defines the structure for every interaction: user input, agent responses, 
+ * This schema defines the structure for every interaction: user input, agent responses,
  * system notifications, internal thoughts, and technical tool executions.
  */
 export const messageSchema = z.object({
@@ -10,8 +10,8 @@ export const messageSchema = z.object({
   id: z.string(),
   /** ISO 8601 timestamp */
   timestamp: z.string(),
-  /** 
-   * The role of the sender. 
+  /**
+   * The role of the sender.
    * 'user': Human input.
    * 'agent': AI response.
    * 'system': System notifications or instructions.
@@ -23,8 +23,8 @@ export const messageSchema = z.object({
   nickname: z.string(),
   /** The primary text content of the message */
   content: z.string(),
-  /** 
-   * Metadata for technical payloads. 
+  /**
+   * Metadata for technical payloads.
    * Used by the engine and parser to avoid string-parsing overhead.
    */
   metadata: z.object({
@@ -44,5 +44,3 @@ export const messageSchema = z.object({
     is_noise: z.boolean().optional(),
   }).optional(),
 });
-
-

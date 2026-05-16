@@ -1,8 +1,6 @@
-import { GeminiAdapter } from '../../infrastructure/gemini/adapter.js';
-
 export class FavoriteCommands {
   static async handleFav(chatManager, ui, parts) {
-    let favorites = chatManager.configManager.get('favorites', []);
+    const favorites = chatManager.configManager.get('favorites', []);
 
     if (parts.length === 1) {
       if (favorites.length === 0) {
@@ -10,15 +8,15 @@ export class FavoriteCommands {
         return true;
       }
 
-      let header = '| ID | Model (Provider) | Temp |\n|---|---|---|\n';
-      let rows = [];
-      for (let i = 0; i < favorites.length; i++) {
+      const header = '| ID | Model (Provider) | Temp |\n|---|---|---|\n';
+      const rows = [];
+      for (let i = 0; i < favorites.length; i += 1) {
         const f = favorites[i];
         const m = `${f.model} (${f.provider})`;
         const t = f.temp;
         rows.push(`| ${i} | ${m} | ${t} |`);
       }
-      ui.displayMessage('--- Favorite Models ---\n' + header + rows.join('\n'));
+      ui.displayMessage(`--- Favorite Models ---\n${header}${rows.join('\n')}`);
       return true;
     }
 
@@ -28,7 +26,7 @@ export class FavoriteCommands {
       const temp = chatManager.temperature;
       const newFav = { provider, model, temp };
 
-      if (!favorites.some(f => f.model === model && f.provider === provider)) {
+      if (!favorites.some((f) => f.model === model && f.provider === provider)) {
         favorites.push(newFav);
         chatManager.configManager.save('favorites', favorites);
         ui.displayInfo(`Added to favorites: ${provider} | ${model}`);
