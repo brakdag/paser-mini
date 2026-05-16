@@ -149,7 +149,6 @@ class ChatManager {
 
     if (initialInput) {
       const logMsg = this.ui.getLogOpenedString();
-      const welcomeMsg = "-!- Session resumed from ./log/history.log";
       const combinedMsg = `${logMsg}\n${welcomeMsg}`;
 
       this.ui.displayChatMessage("system", combinedMsg);
