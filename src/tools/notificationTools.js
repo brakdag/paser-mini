@@ -26,4 +26,4 @@ const notifyUser = async ({ message }) => {
 };
 
 
-export default notifyUser;
+export { notifyUser };

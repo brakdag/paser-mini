@@ -23,6 +23,7 @@ class TurnProcessor {
   }
 
   async process(userInput) {
+    this.engine.toolTracker.reset();
     if (!userInput) return;
 
     logger.info("Starting processTurn", { userInput });

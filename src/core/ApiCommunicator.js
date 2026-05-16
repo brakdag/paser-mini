@@ -2,7 +2,7 @@ class ApiCommunicator {
   constructor(assistant, ui) {
     this.assistant = assistant;
     this.ui = ui;
-    this.maxRetries = 5000;
+    this.maxRetries = 5;
     this.baseDelay = 1000;
   }
 

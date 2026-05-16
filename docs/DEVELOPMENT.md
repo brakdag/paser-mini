@@ -4,6 +4,12 @@ Development of Paser Mini focuses on extreme efficiency and zero-overhead execut
 
 ### Verification Workflow
 
+**CRITICAL: Execution State & Module Caching**
+
+This project is loaded into a memory-resident instance upon startup. Consequently, any modifications made to the source code on disk will **not** be reflected in the currently active session due to Node.js module caching. To apply and verify changes, you must terminate the current process and launch a fresh instance.
+
+To verify changes in the core engine or toolset:
+
 To verify changes in the core engine or toolset:
 
 1. **Fresh Instance**: Launch a new instance of `paser-mini` to ensure no stale state is affecting the behavior.

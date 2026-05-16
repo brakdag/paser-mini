@@ -1,12 +1,12 @@
 import chalk from "chalk";
 import ora from "ora";
-import logger from "./logger.js";
+
 import renderer from "./TerminalRenderer.js";
 import input from "./TerminalInput.js";
 import sessionLogger from "./SessionLogger.js";
 
 class TerminalUI {
-  constructor(options = {}) {
+  constructor() {
     this.noSpinner = true;
     this.activeSpinners = new Map();
     this.agentNickname = "paser_mini";

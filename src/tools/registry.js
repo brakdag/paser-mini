@@ -9,7 +9,7 @@ import * as memoryTools from "./memoryTools.js";
 import * as jsonTools from "./jsonTools.js";
 import * as githubTools from "./githubTools.js";
 import * as gitTools from "./gitTools.js";
-import * as notificationTools from "./notificationTools.js";
+import { notifyUser as notifyUserFunc } from "./notificationTools.js";
 import * as fountainTools from "./fountainTools.js";
 import * as zipTools from "./zipTools.js";
 import * as binaryTools from "./binaryTools.js";
@@ -64,7 +64,7 @@ export const AVAILABLE_TOOLS = {
   postComment: githubTools.postComment,
   getCurrentRepo: gitTools.getCurrentRepo,
   gitDiffAll: gitTools.gitDiffAll,
-  notifyUser: notificationTools.notifyUser,
+  notifyUser: notifyUserFunc,
   insertSceneFountain: fountainTools.insertSceneFountain,
   loadZip: zipTools.loadZip,
   readZipFile: zipTools.readZipFile,

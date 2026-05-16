@@ -78,7 +78,8 @@ class GeminiAdapter {
 
   _buildPayload() {
     const contents = JSON.parse(JSON.stringify(this.history)).map((c) => {
-      const { timestamp: _, ...rest } = c;
+      const rest = { ...c };
+      delete rest.timestamp;
       if (rest.role === "server") {
         rest.role = "user";
       }
