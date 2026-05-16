@@ -130,8 +130,9 @@ class GeminiAdapter {
       second: "2-digit",
       hour12: false,
     });
-    const formattedMessage = this._formatMessage(role, message, timestamp);
-    const parts = [{ text: formattedMessage }];
+    
+    // Store RAW text in history to avoid token noise in AI requests
+    const parts = [{ text: message }];
     this.history.push({
       role,
       parts,
@@ -172,14 +173,11 @@ class GeminiAdapter {
           second: "2-digit",
           hour12: false,
         });
-        const msgFormatted = this._formatMessage(
-          "model",
-          textContent,
-          msgTimestamp,
-        );
+        
+        // Store RAW text in history
         this.history.push({
           role: "model",
-          parts: [{ text: msgFormatted }],
+          parts: [{ text: textContent }],
           timestamp: msgTimestamp,
         });
         return textContent;
@@ -203,10 +201,11 @@ class GeminiAdapter {
         second: "2-digit",
         hour12: false,
       });
-    const formattedMessage = this._formatMessage(role, content, ts);
+    
+    // Store RAW text in history
     this.history.push({
       role,
-      parts: [{ text: formattedMessage }],
+      parts: [{ text: content }],
       timestamp: ts,
     });
   }

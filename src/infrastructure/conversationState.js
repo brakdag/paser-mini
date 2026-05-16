@@ -36,13 +36,15 @@ class ConversationState {
       role === "model" || role === "assistant" ? "model" : "user";
 
     const ts = timestamp || this.getTimestamp();
-    const formattedText = this._formatMessage(normalizedRole, text, ts);
+    
+    // Store RAW text in history to avoid token noise in AI requests
     this.history.push({
       role: normalizedRole,
-      text: formattedText,
+      text: text,
       timestamp: ts,
     });
-    return formattedText;
+    
+    return this._formatMessage(normalizedRole, text, ts);
   }
 
   hardReset(historyOverride = null) {
