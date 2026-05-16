@@ -1,5 +1,3 @@
-import logger from "./logger.js";
-
 class ApiCommunicator {
   constructor(assistant, ui) {
     this.assistant = assistant;
@@ -25,7 +23,9 @@ class ApiCommunicator {
         `API Error: ${error.message}. Retrying in ${delay}ms... (Attempt ${attempt}/${this.maxRetries})`,
       );
 
-      await new Promise((resolve) => setTimeout(resolve, delay));
+      await new Promise((resolve) => {
+        setTimeout(resolve, delay);
+      });
       return this.send(message, role, attempt + 1);
     }
   }
