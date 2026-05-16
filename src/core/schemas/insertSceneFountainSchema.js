@@ -1,6 +1,8 @@
-import { z } from 'zod';
+import { z } from "zod";
 
-export const insertSceneFountainSchema = z.object({
-  scene: z.string(),
-  action: z.string(),
-}).strict();
+export const insertSceneFountainSchema = z
+  .object({
+    scene: z.string(),
+    action: z.string(),
+  })
+  .strict();

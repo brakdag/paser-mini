@@ -1,5 +1,3 @@
-import { z } from 'zod';
+import { z } from "zod";
 
-export const getIssueCommentsSchema = z.object({
-
-}).strict();
+export const getIssueCommentsSchema = z.object({}).strict();

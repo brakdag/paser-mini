@@ -1,4 +1,4 @@
-import { ValidationResult } from './validationResult.js';
+import { ValidationResult } from "./validationResult.js";
 
 export class SchemaValidator {
   constructor() {
@@ -24,18 +24,22 @@ export class SchemaValidator {
     const schema = this.schemas.get(toolName);
 
     if (!schema) {
-      return new ValidationResult(false, [`Tool '${toolName}' not found in schema registry.`]);
+      return new ValidationResult(false, [
+        `Tool '${toolName}' not found in schema registry.`,
+      ]);
     }
 
-    if (typeof args !== 'object' || args === null || Array.isArray(args)) {
-      return new ValidationResult(false, [`Arguments for '${toolName}' must be a JSON object, got ${typeof args}.`]);
+    if (typeof args !== "object" || args === null || Array.isArray(args)) {
+      return new ValidationResult(false, [
+        `Arguments for '${toolName}' must be a JSON object, got ${typeof args}.`,
+      ]);
     }
 
     const result = schema.safeParse(args);
 
     if (!result.success) {
       const errors = result.error.issues.map((issue) => {
-        const path = issue.path.join('.');
+        const path = issue.path.join(".");
         return `${path}: ${issue.message}`;
       });
       return new ValidationResult(false, errors);

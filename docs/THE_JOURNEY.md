@@ -21,7 +21,7 @@ Now, the system enters a loop, waiting for you. The cursor blinks. You are in co
 
 You type something and press **Enter**. This text is captured by `ui.requestInput()` and handed over to `ChatManager.run()`.
 
-At this point, the system reaches a **Bifurcation**: *"Is this a command or a conversation?"*
+At this point, the system reaches a **Bifurcation**: _"Is this a command or a conversation?"_
 
 ### 🛠️ Path A: The Command Shortcut (e.g., `/config`)
 
@@ -41,25 +41,30 @@ If your input starts with a `/`, it's a command handled locally for maximum spee
 If you type natural language, you've started a journey to the cloud.
 
 #### 1. The Dispatcher (`ChatManager.processTurn`)
+
 `ChatManager` receives your input and prepares the package for the AI.
 
 #### 2. The Bridge (`GeminiAdapter.sendMessage`)
+
 Your text travels to `src_js/infrastructure/gemini/adapter.js`. The adapter:
+
 - **History Check**: Attaches previous messages for continuity.
 - **Payload Construction**: Wraps text in the format required by the Gemini API.
 - **The Leap**: Sends the payload via HTTPS request to the API.
 
 #### 3. The Oracle (Google Gemini)
+
 Across the internet, the model processes tokens, reasons, and generates a response.
 
 #### 4. The Return Trip
+
 The API sends back a JSON response. The `GeminiAdapter` extracts the text and updates the session history.
 
 ---
 
 ## 🔄 Phase 3: The Loop of Action (The ReAct Pattern)
 
-What if you asked: *"What files are in this folder?"* The AI uses a **Tool**.
+What if you asked: _"What files are in this folder?"_ The AI uses a **Tool**.
 
 1. **The Detection**: `ChatManager` passes the AI's text through the `SmartToolParser` (`src_js/core/smartParser.js`).
 2. **The Discovery**: The parser finds a `<TOOL_CALL>` tag. The AI is requesting a tool like `listDir`.
@@ -83,12 +88,12 @@ Once the AI has finished reasoning:
 
 ### 🗺️ Quick Map for Developers
 
-| Step | File | Role |
-| :--- | :--- | :--- |
-| **Start** | `src_js/main.js` | Entry point & Orchestration |
-| **Input** | `src_js/core/chatManager.js` | The Conductor |
-| **Commands** | `src_js/core/commandHandler.js` | Local logic handler |
-| **API Bridge** | `src_js/infrastructure/gemini/adapter.js` | Cloud communicator |
-| **Parsing** | `src_js/core/smartParser.js` | Tool call detector |
-| **Execution** | `src_js/core/executionEngine.js` | Tool runner |
-| **Output** | `src_js/core/terminalUI.js` | Visual delivery |
+| Step           | File                                      | Role                        |
+| :------------- | :---------------------------------------- | :-------------------------- |
+| **Start**      | `src_js/main.js`                          | Entry point & Orchestration |
+| **Input**      | `src_js/core/chatManager.js`              | The Conductor               |
+| **Commands**   | `src_js/core/commandHandler.js`           | Local logic handler         |
+| **API Bridge** | `src_js/infrastructure/gemini/adapter.js` | Cloud communicator          |
+| **Parsing**    | `src_js/core/smartParser.js`              | Tool call detector          |
+| **Execution**  | `src_js/core/executionEngine.js`          | Tool runner                 |
+| **Output**     | `src_js/core/terminalUI.js`               | Visual delivery             |

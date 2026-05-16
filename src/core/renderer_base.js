@@ -12,6 +12,6 @@ export class BaseRenderer {
    * @returns {string} The formatted string for terminal output
    */
   render(_message) {
-    throw new Error('render() must be implemented by subclass');
+    throw new Error("render() must be implemented by subclass");
   }
 }

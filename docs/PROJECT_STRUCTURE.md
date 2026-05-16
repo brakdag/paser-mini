@@ -1,4 +1,5 @@
 <!-- Navigation: See /robots.txt for the Cognitive Navigation Map -->
+
 # Project Structure
 
 This document provides the definitive map of the Paser Mini codebase. The project follows a strict separation between core orchestration, infrastructure wrappers, and the toolset.

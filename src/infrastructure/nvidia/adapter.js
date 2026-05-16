@@ -1,15 +1,19 @@
 // import axios from 'axios';
-import { ConversationState } from '../conversationState.js';
-import { PayloadMapper } from '../payloadMapper.js';
-import { NvidiaRestClient } from './restClient.js';
-import { logger } from '../../core/logger.js';
+import { ConversationState } from "../conversationState.js";
+import { PayloadMapper } from "../payloadMapper.js";
+import { NvidiaRestClient } from "./restClient.js";
+import { logger } from "../../core/logger.js";
 
 export class NvidiaAdapter {
-  constructor(configManager, userNickname = 'user', agentNickname = 'assistant') {
+  constructor(
+    configManager,
+    userNickname = "user",
+    agentNickname = "assistant",
+  ) {
     this.state = new ConversationState(userNickname, agentNickname);
     this.restClient = new NvidiaRestClient(configManager);
-    this.currentModel = 'meta/llama-3.1-405b-instruct';
-    this.systemInstruction = '';
+    this.currentModel = "meta/llama-3.1-405b-instruct";
+    this.systemInstruction = "";
     this.temperature = 0.7;
     this.lastPayload = null;
   }
@@ -19,23 +23,32 @@ export class NvidiaAdapter {
     this.systemInstruction = systemInstruction;
     this.temperature = temperature;
     this.state.hardReset();
-    logger.info('NvidiaAdapter: Chat started', { model: this.currentModel, temperature });
+    logger.info("NvidiaAdapter: Chat started", {
+      model: this.currentModel,
+      temperature,
+    });
   }
 
   _filterThoughts(text) {
-    if (!text) return '';
-    let cleaned = text.replace(/<(thought|reasoning)>[\s\S]*?<\/\1>/gi, '');
-    cleaned = cleaned.replace(/^(\[\d{2}:\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, '');
+    if (!text) return "";
+    let cleaned = text.replace(/<(thought|reasoning)>[\s\S]*?<\/\1>/gi, "");
+    cleaned = cleaned.replace(/^(\[\d{2}:\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, "");
     return cleaned.trim();
   }
 
-  async sendMessage(message, role = 'user', maxTokens = 512) {
+  async sendMessage(message, role = "user", maxTokens = 512) {
     this.state.addMessage(role, message);
 
     const history = this.state.getRawHistory();
-    const processedHistory = this.state.renderingMode === 'CLEAN'
-      ? history.map((m) => ({ ...m, text: m.text.replace(/^(\[\d{2}:\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, '').trim() }))
-      : history;
+    const processedHistory =
+      this.state.renderingMode === "CLEAN"
+        ? history.map((m) => ({
+            ...m,
+            text: m.text
+              .replace(/^(\[\d{2}:\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, "")
+              .trim(),
+          }))
+        : history;
 
     const payload = PayloadMapper.toNvidia(
       processedHistory,
@@ -47,21 +60,26 @@ export class NvidiaAdapter {
     this.lastPayload = payload;
 
     try {
-      logger.debug('NvidiaAdapter: Sending request', { model: this.currentModel, payload });
+      logger.debug("NvidiaAdapter: Sending request", {
+        model: this.currentModel,
+        payload,
+      });
       const data = await this.restClient.chatCompletions(payload);
-      const rawContent = data.choices?.[0]?.message?.content || '';
+      const rawContent = data.choices?.[0]?.message?.content || "";
       const content = this._filterThoughts(rawContent);
 
       if (content) {
-        logger.info('NvidiaAdapter: Response received', { length: content.length });
-        this.state.addMessage('model', content);
+        logger.info("NvidiaAdapter: Response received", {
+          length: content.length,
+        });
+        this.state.addMessage("model", content);
         return content;
       }
-      logger.warn('NvidiaAdapter: Empty response received');
-      return 'Error: Empty response from NVIDIA';
+      logger.warn("NvidiaAdapter: Empty response received");
+      return "Error: Empty response from NVIDIA";
     } catch (e) {
       const errorMsg = e.response?.data?.error?.message || e.message;
-      logger.error('NvidiaAdapter: Request failed', { error: errorMsg });
+      logger.error("NvidiaAdapter: Request failed", { error: errorMsg });
       return `Error: ${errorMsg}`;
     }
   }
@@ -76,7 +94,7 @@ export class NvidiaAdapter {
 
   hardReset(historyOverride = null) {
     this.state.hardReset(historyOverride);
-    logger.info('NvidiaAdapter: State hard reset');
+    logger.info("NvidiaAdapter: State hard reset");
   }
 
   getHistory() {
@@ -94,13 +112,15 @@ export class NvidiaAdapter {
 
   async getAvailableModels() {
     try {
-      const data = await this.restClient.get('models');
+      const data = await this.restClient.get("models");
       const models = data.data?.map((m) => m.id) || [];
-      logger.info('NvidiaAdapter: Models fetched', { count: models.length });
+      logger.info("NvidiaAdapter: Models fetched", { count: models.length });
       return models;
     } catch (e) {
-      logger.error('NvidiaAdapter: Error fetching models', { error: e.message });
-      return ['models/gemini-2.0-flash', 'models/gemini-1.5-flash'];
+      logger.error("NvidiaAdapter: Error fetching models", {
+        error: e.message,
+      });
+      return ["models/gemini-2.0-flash", "models/gemini-1.5-flash"];
     }
   }
 
@@ -108,7 +128,7 @@ export class NvidiaAdapter {
     try {
       const payload = {
         model: modelName,
-        messages: [{ role: 'user', content: 'hi' }],
+        messages: [{ role: "user", content: "hi" }],
         max_tokens: 1,
       };
 
@@ -123,7 +143,10 @@ export class NvidiaAdapter {
   }
 
   countTokens(contents) {
-    const totalChars = contents.reduce((acc, msg) => acc + (msg.text?.length || 0), 0);
+    const totalChars = contents.reduce(
+      (acc, msg) => acc + (msg.text?.length || 0),
+      0,
+    );
     return Math.floor(totalChars / 4);
   }
 

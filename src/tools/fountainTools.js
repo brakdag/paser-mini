@@ -5,7 +5,7 @@ export const insertSceneFountain = async ({ scene, action }) => {
 
   // Return a signal object instead of a string to trigger special handling in TurnProcessor
   return {
-    type: 'FOUNTAIN_INJECTION',
+    type: "FOUNTAIN_INJECTION",
     content,
   };
 };

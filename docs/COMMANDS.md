@@ -3,6 +3,7 @@
 These commands are handled locally by the `CommandHandler` and do not consume tokens.
 
 ### ⚙️ System & Session Control
+
 - `/help`: Display the full list of available commands.
 - `/q`, `/quit`, `/exit`: Gracefully terminate the application.
 - `/clear`: Clear the terminal screen.
@@ -11,20 +12,24 @@ These commands are handled locally by the `CommandHandler` and do not consume to
 - `/connect`: Manually switch between LLM providers (Gemini / NVIDIA).
 
 ### 💠 Configuration & Tuning
+
 - `/config`: View and modify the current system configuration.
 - `/models`: Change the active AI model and adjust the temperature.
 - `/fav`: Manage favorite models (shortcuts for quick switching).
 - `/w <tokens> <rpm> <tpm>`: Set limits for the context window, Requests Per Minute, and Tokens Per Minute.
 
 ### 📋 Debugging & Data
+
 - `/s [filename]`: Save the **raw** last request payload (the exact JSON object sent to the server) to a JSON file (defaults to `last_request.json`). Essential for forensic analysis and verifying the integrity of the communication layer.
 - `/t`: Display the current context window token usage.
 
 ### 👍 Interaction & Roleplay
+
 - `/r <message>`: **Rewrite**. Removes the last interaction and re-prompts the agent with a new message.
 - `/nick <name>`: Change your nickname in the session.
 - `/topic <text>`: Change the current channel topic.
 - `/me <action>`: Perform an action in asterisks (e.g., `/me sighs deeply`), sending it as a roleplay event to the AI.
 
 ---
+
 **Note**: All commands start with `/`. If a command is not recognized, the system will notify you via the `/help` menu.

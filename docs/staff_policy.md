@@ -75,4 +75,3 @@ In the event of a disagreement between a Core team and a Staff team (e.g., rejec
 ## 7. Policy Review
 
 This document will be reviewed annually to align roles with the evolution of our software infrastructure and the company's scaling needs.
-

@@ -1,14 +1,14 @@
-import * as githubTools from '../tools/githubTools.js';
-import { GitHubUI } from './githubUI.js';
-import { ChatManager } from './chatManager.js';
-import { GeminiAdapter } from '../infrastructure/gemini/adapter.js';
+import * as githubTools from "../tools/githubTools.js";
+import { GitHubUI } from "./githubUI.js";
+import { ChatManager } from "./chatManager.js";
+import { GeminiAdapter } from "../infrastructure/gemini/adapter.js";
 
 export class GitHubModeOrchestrator {
   constructor(systemInstruction, tools) {
     this.systemInstruction = systemInstruction;
     this.tools = tools;
-    this.processingLabel = 'paser-processing';
-    this.triggerHashtag = '#ai-assistance';
+    this.processingLabel = "paser-processing";
+    this.triggerHashtag = "#ai-assistance";
     this.botLogin = null;
   }
 
@@ -18,7 +18,11 @@ export class GitHubModeOrchestrator {
       this.botLogin = userData.login;
     }
     const issues = await githubTools.listIssues();
-    const filtered = issues.filter((i) => (i.body || '').includes(this.triggerHashtag) && !(i.labels || []).map((l) => l.name).includes(this.processingLabel));
+    const filtered = issues.filter(
+      (i) =>
+        (i.body || "").includes(this.triggerHashtag) &&
+        !(i.labels || []).map((l) => l.name).includes(this.processingLabel),
+    );
 
     for (let i = 0; i < filtered.length; i += 1) {
       // eslint-disable-next-line no-await-in-loop
@@ -27,8 +31,11 @@ export class GitHubModeOrchestrator {
   }
 
   async processIssue(issue) {
-    const { number: issueNumber, body: issueBody = '' } = issue;
-    await githubTools.add_label({ issue_number: issueNumber, label: this.processingLabel });
+    const { number: issueNumber, body: issueBody = "" } = issue;
+    await githubTools.add_label({
+      issue_number: issueNumber,
+      label: this.processingLabel,
+    });
     try {
       const ui = new GitHubUI(issueNumber);
       const chatManager = new ChatManager(
@@ -38,9 +45,14 @@ export class GitHubModeOrchestrator {
         ui,
         true,
       );
-      await chatManager.run(`SYSTEM: GitHub Issue #${issueNumber}.\n${issueBody}`);
+      await chatManager.run(
+        `SYSTEM: GitHub Issue #${issueNumber}.\n${issueBody}`,
+      );
     } finally {
-      await githubTools.remove_label({ issue_number: issueNumber, label: this.processingLabel });
+      await githubTools.remove_label({
+        issue_number: issueNumber,
+        label: this.processingLabel,
+      });
     }
   }
 }

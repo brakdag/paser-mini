@@ -1,9 +1,9 @@
-import { ConfigManager } from '../core/configManager.js';
+import { ConfigManager } from "../core/configManager.js";
 
 export const validateJson = async ({ jsonString }) => {
   try {
     JSON.parse(jsonString);
-    return 'El JSON es valido.';
+    return "El JSON es valido.";
   } catch (e) {
     return `ERR: JSON invalido: ${e.message}`;
   }
@@ -12,8 +12,8 @@ export const validateJson = async ({ jsonString }) => {
 export const setNickname = async ({ newNickname }) => {
   try {
     const config = new ConfigManager();
-    const oldNickname = config.get('agent_nickname', 'paser_mini');
-    config.save('agent_nickname', newNickname);
+    const oldNickname = config.get("agent_nickname", "paser_mini");
+    config.save("agent_nickname", newNickname);
     return `*** ${oldNickname} is now known as ${newNickname}`;
   } catch (e) {
     return `ERR: Failed to update nickname: ${e.message}`;

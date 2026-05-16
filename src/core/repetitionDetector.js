@@ -26,14 +26,14 @@ export class RepetitionDetector {
 
       if (this.buffer.length >= this.n * 2) {
         // Extract current and previous n-grams
-        const currentNgram = this.buffer.slice(-this.n).join(' ');
-        const previousNgram = this.buffer.slice(-this.n * 2, -this.n).join(' ');
+        const currentNgram = this.buffer.slice(-this.n).join(" ");
+        const previousNgram = this.buffer.slice(-this.n * 2, -this.n).join(" ");
 
         if (currentNgram === previousNgram) {
           // Count how many times this n-gram appears in the current buffer
           let count = 0;
           for (let j = 0; j <= this.buffer.length - this.n; j += this.n) {
-            const segment = this.buffer.slice(j, j + this.n).join(' ');
+            const segment = this.buffer.slice(j, j + this.n).join(" ");
             if (segment === currentNgram) {
               count += 1;
             }

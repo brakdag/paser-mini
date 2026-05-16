@@ -1,9 +1,9 @@
 export const loadZipSchema = {
-  $schema: 'http://json-schema.org/draft-07/schema#',
-  type: 'object',
+  $schema: "http://json-schema.org/draft-07/schema#",
+  type: "object",
   properties: {
-    filePath: { type: 'string' },
+    filePath: { type: "string" },
   },
-  required: ['filePath'],
+  required: ["filePath"],
   additionalProperties: false,
 };

@@ -1,7 +1,7 @@
 // Navigation: See /robots.txt for the Cognitive Navigation Map
-import path from 'path';
-import { ToolAttemptTracker } from './toolTracker.js';
-import { TOOL_ALIASES } from '../tools/registry.js';
+import path from "path";
+import { ToolAttemptTracker } from "./toolTracker.js";
+import { TOOL_ALIASES } from "../tools/registry.js";
 
 export class ExecutionEngine {
   constructor(
@@ -24,25 +24,30 @@ export class ExecutionEngine {
     this.maxTurns = 10000;
     this.stopRequested = false;
     this._detailMappers = {
-      readFile: (a) => path.basename(a.path || ''),
-      writeFile: (a) => path.basename(a.path || ''),
-      removeFile: (a) => path.basename(a.path || ''),
-      replaceString: (a) => path.basename(a.path || ''),
-      listDir: (a) => a.path || '',
-      createDir: (a) => a.path || '',
-      renamePath: (a) => `${path.basename(a.origin || '')} -> ${path.basename(a.destination || '')}`,
-      pushMemory: (a) => a.key || 'unknown',
-      pullMemory: (a) => a.key || 'unknown',
-      runInstance: (a) => a.target || 'unknown',
-      searchTextGlobal: (a) => `${a.query || ''}`,
-      searchFilesPattern: (a) => `pattern: ${a.pattern || ''}`,
-      analyzeCode: (a) => path.basename(a.path || ''),
-      lintCode: (a) => path.basename(a.path || ''),
-      generateDocs: (a) => `Docs for ${path.basename(a.path || '.')} -> ${a.outputDir || 'docs/api'}`,
-      executeBash: (a) => a.command.substring(0, 50) + (a.command.length > 50 ? '...' : ''),
-      runPython: (a) => path.basename(a.scriptPath || ''),
-      binaryAnalysis: (a) => `${a.action || 'analysis'} on ${path.basename(a.filePath || 'unknown')}`,
-      sh: (a) => `sh: ${a.command.substring(0, 50)}${a.command.length > 50 ? '...' : ''}`,
+      readFile: (a) => path.basename(a.path || ""),
+      writeFile: (a) => path.basename(a.path || ""),
+      removeFile: (a) => path.basename(a.path || ""),
+      replaceString: (a) => path.basename(a.path || ""),
+      listDir: (a) => a.path || "",
+      createDir: (a) => a.path || "",
+      renamePath: (a) =>
+        `${path.basename(a.origin || "")} -> ${path.basename(a.destination || "")}`,
+      pushMemory: (a) => a.key || "unknown",
+      pullMemory: (a) => a.key || "unknown",
+      runInstance: (a) => a.target || "unknown",
+      searchTextGlobal: (a) => `${a.query || ""}`,
+      searchFilesPattern: (a) => `pattern: ${a.pattern || ""}`,
+      analyzeCode: (a) => path.basename(a.path || ""),
+      lintCode: (a) => path.basename(a.path || ""),
+      generateDocs: (a) =>
+        `Docs for ${path.basename(a.path || ".")} -> ${a.outputDir || "docs/api"}`,
+      executeBash: (a) =>
+        a.command.substring(0, 50) + (a.command.length > 50 ? "..." : ""),
+      runPython: (a) => path.basename(a.scriptPath || ""),
+      binaryAnalysis: (a) =>
+        `${a.action || "analysis"} on ${path.basename(a.filePath || "unknown")}`,
+      sh: (a) =>
+        `sh: ${a.command.substring(0, 50)}${a.command.length > 50 ? "..." : ""}`,
     };
   }
 
@@ -53,7 +58,7 @@ export class ExecutionEngine {
     if (this.strictPureMode) {
       return {
         response: this.toolParser.formatToolResponse(
-          'ERR: Pure Mode active. Tool execution is strictly disabled.',
+          "ERR: Pure Mode active. Tool execution is strictly disabled.",
           callData.id,
           false,
         ),
@@ -71,10 +76,10 @@ export class ExecutionEngine {
       };
     }
 
-    if (toolName === 'executeBash' && !this.ui.bashEnabled) {
+    if (toolName === "executeBash" && !this.ui.bashEnabled) {
       return {
         response: this.toolParser.formatToolResponse(
-          'ERR: Bash access is disabled for security. Please use /enableBash to activate it.',
+          "ERR: Bash access is disabled for security. Please use /enableBash to activate it.",
           callData.id,
           false,
         ),
@@ -93,10 +98,10 @@ export class ExecutionEngine {
       };
     }
 
-    if (toolName === 'runInstance' && this.instanceMode === true) {
+    if (toolName === "runInstance" && this.instanceMode === true) {
       return {
         response: this.toolParser.formatToolResponse(
-          'ERR: Recursion disabled.',
+          "ERR: Recursion disabled.",
           callData.id,
           false,
         ),
@@ -104,7 +109,7 @@ export class ExecutionEngine {
       };
     }
 
-    if (toolName === 'sh') {
+    if (toolName === "sh") {
       const result = await this.tools[toolName](args);
       return {
         response: this.toolParser.formatToolResponse(result, callData.id, true),
@@ -114,12 +119,12 @@ export class ExecutionEngine {
     }
 
     // Safe detail mapping
-    let detail = 'no details';
+    let detail = "no details";
     try {
-      const mapper = this._detailMappers[toolName] ?? (() => 'no details');
+      const mapper = this._detailMappers[toolName] ?? (() => "no details");
       detail = mapper(args);
     } catch (e) {
-      detail = 'error mapping details';
+      detail = "error mapping details";
     }
 
     this.ui.startToolMonitoring(displayName, detail);
@@ -128,23 +133,23 @@ export class ExecutionEngine {
       const toolFunc = this.tools[toolName];
       const result = await toolFunc(args);
 
-      if (toolName === 'pullMemory') {
-        this.ui.displayPanel('Memento Pull', `Accessing node #${args.key}`, 'info');
-      } else if (toolName === 'pushMemory') {
-        this.ui.displayPanel('Memento Push', result, 'info');
-      } else if (toolName === 'runInstance') {
-        this.ui.displayPanel('Instance Test Output', result, 'info');
+      if (toolName === "pullMemory") {
+        this.ui.displayPanel(
+          "Memento Pull",
+          `Accessing node #${args.key}`,
+          "info",
+        );
+      } else if (toolName === "pushMemory") {
+        this.ui.displayPanel("Memento Push", result, "info");
+      } else if (toolName === "runInstance") {
+        this.ui.displayPanel("Instance Test Output", result, "info");
       }
 
       this.toolTracker.recordSuccess(toolName);
       this.ui.endToolMonitoring(displayName, true, detail);
 
       return {
-        response: this.toolParser.formatToolResponse(
-          result,
-          callData.id,
-          true,
-        ),
+        response: this.toolParser.formatToolResponse(result, callData.id, true),
         result,
         success: true,
       };
@@ -152,7 +157,11 @@ export class ExecutionEngine {
       this.toolTracker.recordFailure(toolName);
       this.ui.endToolMonitoring(displayName, false, detail);
       return {
-        response: this.toolParser.formatToolResponse(`ERR: ${e.message}`, callData.id, false),
+        response: this.toolParser.formatToolResponse(
+          `ERR: ${e.message}`,
+          callData.id,
+          false,
+        ),
         success: false,
       };
     }

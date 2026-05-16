@@ -1,18 +1,18 @@
 export class ModelCommands {
   static async handleModels(chatManager, ui, parts) {
     const models = await chatManager.assistant.getAvailableModels();
-    const unavailable = chatManager.configManager.get('unavailable_models', []);
+    const unavailable = chatManager.configManager.get("unavailable_models", []);
 
     if (parts.length === 1) {
-      const header = '| ID | Model | ID | Model |\n|---|---|---|---|\n';
+      const header = "| ID | Model | ID | Model |\n|---|---|---|---|\n";
       const rows = [];
       for (let i = 0; i < models.length; i += 2) {
         let m1 = models[i];
         if (unavailable.includes(m1)) {
           m1 = `~~${m1}~~`;
         }
-        let m2 = '';
-        let idx2 = '';
+        let m2 = "";
+        let idx2 = "";
         if (i + 1 < models.length) {
           m2 = models[i + 1];
           if (unavailable.includes(m2)) {
@@ -22,7 +22,9 @@ export class ModelCommands {
         }
         rows.push(`| ${i} | ${m1} | ${idx2} | ${m2} |`);
       }
-      ui.displayMessage(`Available models (~~ = unavailable):\n\n${header}${rows.join('\n')}`);
+      ui.displayMessage(
+        `Available models (~~ = unavailable):\n\n${header}${rows.join("\n")}`,
+      );
       return true;
     }
 
@@ -31,36 +33,43 @@ export class ModelCommands {
       const modelName = models[idx];
       const newTemp = parts[2] ? parseFloat(parts[2]) : chatManager.temperature;
 
-      chatManager.configManager.save('model_name', modelName);
-      chatManager.configManager.save('default_temperature', newTemp);
+      chatManager.configManager.save("model_name", modelName);
+      chatManager.configManager.save("default_temperature", newTemp);
       chatManager.temperature = newTemp;
-      chatManager.assistant.startChat(modelName, chatManager.systemInstruction, newTemp);
+      chatManager.assistant.startChat(
+        modelName,
+        chatManager.systemInstruction,
+        newTemp,
+      );
 
       ui.displayInfo(`Model changed to ${modelName} | Temperature: ${newTemp}`);
     } catch (e) {
-      ui.displayError('Invalid model index or temperature.');
+      ui.displayError("Invalid model index or temperature.");
     }
     return true;
   }
 
   static async handleModelsCheck(chatManager, ui) {
-    if (typeof chatManager.assistant.checkAvailability !== 'function') {
-      ui.displayError('Model check is only available for NVIDIA provider.');
+    if (typeof chatManager.assistant.checkAvailability !== "function") {
+      ui.displayError("Model check is only available for NVIDIA provider.");
       return true;
     }
 
     const models = await chatManager.assistant.getAvailableModels();
     if (models.length === 0) {
-      ui.displayError('No models found to check.');
+      ui.displayError("No models found to check.");
       return true;
     }
 
     const unavailable = [];
-    ui.startToolMonitoring('Model Scan', 'Initializing...');
+    ui.startToolMonitoring("Model Scan", "Initializing...");
 
     for (let i = 0; i < models.length; i += 1) {
       const model = models[i];
-      ui.updateMonitoring('Model Scan', `Checking ${i + 1}/${models.length}: ${model}`);
+      ui.updateMonitoring(
+        "Model Scan",
+        `Checking ${i + 1}/${models.length}: ${model}`,
+      );
 
       // eslint-disable-next-line no-await-in-loop
       const isAvailable = await chatManager.assistant.checkAvailability(model);
@@ -69,9 +78,15 @@ export class ModelCommands {
       }
     }
 
-    chatManager.configManager.save('unavailable_models', unavailable);
-    ui.endToolMonitoring('Model Scan', true, `Scan complete. ${unavailable.length} models unavailable.`);
-    ui.displayInfo(`Diagnostic finished. Updated unavailable_models list (${unavailable.length} entries).`);
+    chatManager.configManager.save("unavailable_models", unavailable);
+    ui.endToolMonitoring(
+      "Model Scan",
+      true,
+      `Scan complete. ${unavailable.length} models unavailable.`,
+    );
+    ui.displayInfo(
+      `Diagnostic finished. Updated unavailable_models list (${unavailable.length} entries).`,
+    );
 
     return true;
   }

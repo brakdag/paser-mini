@@ -1,5 +1,5 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { exec } from "child_process";
+import { promisify } from "util";
 
 const execAsync = promisify(exec);
 
@@ -15,7 +15,7 @@ export async function sh({ command }) {
       return stderr;
     }
 
-    return stdout || 'Command executed successfully (no output).';
+    return stdout || "Command executed successfully (no output).";
   } catch (error) {
     // Capturamos el error de ejecución de Docker (ej. comando no encontrado o error de shell)
     return `ERR: ${error.message}`;

@@ -114,7 +114,7 @@
     }
   ],
 
-    [
+  [
     "pushMemory",
     "Stores in memento.log. To reference MUST use the #ID format (e.g., #1).",
     "string"

@@ -1,5 +1,3 @@
-import { z } from 'zod';
+import { z } from "zod";
 
-export const getCurrentRepoSchema = z.object({
-
-}).strict();
+export const getCurrentRepoSchema = z.object({}).strict();

@@ -1,5 +1,7 @@
-import { z } from 'zod';
+import { z } from "zod";
 
-export const gitDiffSchema = z.object({
-  path: z.string(),
-}).strict();
+export const gitDiffSchema = z
+  .object({
+    path: z.string(),
+  })
+  .strict();

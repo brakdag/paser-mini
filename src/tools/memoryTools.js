@@ -1,4 +1,4 @@
-import { MementoManager } from '../infrastructure/memento/manager.js';
+import { MementoManager } from "../infrastructure/memento/manager.js";
 
 const memento = new MementoManager();
 
@@ -13,10 +13,10 @@ export const setMemoryContext = (assistant, chatManager) => {
 export const pushMemory = async (value) => {
   try {
     if (!value) {
-      return 'ERR: No value provided for memory.';
+      return "ERR: No value provided for memory.";
     }
 
-    return await memento.pushMemory('agent', 'general', String(value), null);
+    return await memento.pushMemory("agent", "general", String(value), null);
   } catch (e) {
     return `ERR: ${e.message}`;
   }
@@ -33,14 +33,15 @@ export const pullMemory = async ({ scope, key, direction }) => {
 export const getTokenCount = async () => {
   try {
     if (!currentAssistant || !currentChatManager) {
-      return 'ERR: Memory context not initialized.';
+      return "ERR: Memory context not initialized.";
     }
 
     // Local fast estimation: character count / 4 (matches RPD-saving strategy)
-    const systemInstruction = currentChatManager.systemInstruction || '';
-    const historyData = typeof currentAssistant.history === 'string'
-      ? currentAssistant.history
-      : JSON.stringify(currentAssistant.history || []);
+    const systemInstruction = currentChatManager.systemInstruction || "";
+    const historyData =
+      typeof currentAssistant.history === "string"
+        ? currentAssistant.history
+        : JSON.stringify(currentAssistant.history || []);
 
     const totalLength = systemInstruction.length + historyData.length;
     const count = Math.ceil(totalLength / 4);

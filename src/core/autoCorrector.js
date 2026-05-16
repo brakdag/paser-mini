@@ -7,19 +7,19 @@ export class AutoCorrector {
     let fixed = content.trim();
 
     // Fix invalid backslashes
-    fixed = fixed.replace(/\\(?!(?:["\\/bfnrt]|u[0-9a-fA-F]{4}))/g, '\\\\');
+    fixed = fixed.replace(/\\(?!(?:["\\/bfnrt]|u[0-9a-fA-F]{4}))/g, "\\\\");
 
     // Only replace single quotes if they are acting as delimiters
     fixed = fixed.replace(/^'|'$|'\\\\s*:\\\\s*|:\\\\s*'/g, '"');
 
     fixed = fixed.replace(this.KEY_FIX_PATTERN, '$1 "$2":');
-    fixed = fixed.replace(this.TRAILING_COMMA_PATTERN, '$1');
+    fixed = fixed.replace(this.TRAILING_COMMA_PATTERN, "$1");
 
     // Balance braces/brackets
-    const counts = { '{': 0, '[': 0 };
-    const mapping = { '}': '{', ']': '[' };
+    const counts = { "{": 0, "[": 0 };
+    const mapping = { "}": "{", "]": "[" };
 
-    fixed.split('').forEach((char) => {
+    fixed.split("").forEach((char) => {
       if (char in counts) {
         counts[char] += 1;
       } else if (char in mapping) {
@@ -30,14 +30,14 @@ export class AutoCorrector {
     // Append missing closing tags
     Object.entries(counts).forEach(([openC, count]) => {
       if (count > 0) {
-        fixed += (openC === '{' ? '}' : ']').repeat(count);
+        fixed += (openC === "{" ? "}" : "]").repeat(count);
       }
     });
 
     // Prepend missing opening tags
     Object.entries(counts).forEach(([openC, count]) => {
       if (count < 0) {
-        fixed = (openC === '{' ? '{' : '[').repeat(Math.abs(count)) + fixed;
+        fixed = (openC === "{" ? "{" : "[").repeat(Math.abs(count)) + fixed;
       }
     });
 

@@ -1,4 +1,4 @@
-import { logger } from '../../core/logger.js';
+import { logger } from "../../core/logger.js";
 
 export class NvidiaRetryHandler {
   constructor(maxRetries = 5000, callback = null) {
@@ -19,10 +19,10 @@ export class NvidiaRetryHandler {
         if (retries >= this.maxRetries) throw e;
 
         let delay = 2 ** retries * 1000;
-        let msg = '';
+        let msg = "";
 
         if (status === 429) {
-          const retryAfter = e.response.headers['retry-after'];
+          const retryAfter = e.response.headers["retry-after"];
           if (retryAfter && !Number.isNaN(Number(retryAfter))) {
             delay = parseInt(retryAfter, 10) * 1000;
           }
@@ -30,7 +30,7 @@ export class NvidiaRetryHandler {
         } else if ([500, 502, 503, 504].includes(status)) {
           msg = `Server error (${status}). Retrying in ${delay / 1000}s...`;
         } else if (status === 404) {
-          logger.error('Model not found (404). Stopping execution.');
+          logger.error("Model not found (404). Stopping execution.");
           throw e;
         } else {
           msg = `Unexpected error ${e.message}. Retrying in ${delay / 1000}s...`;

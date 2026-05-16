@@ -1,12 +1,12 @@
 // Navigation: See /robots.txt for the Cognitive Navigation Map
-import { SmartToolParser } from './smartParser.js';
-import { ExecutionEngine } from './executionEngine.js';
-import { CommandHandler } from './commandHandler.js';
-import { RepetitionDetector } from './repetitionDetector.js';
-import { logger } from './logger.js';
-import { ConfigManager } from './configManager.js';
-import { TurnProcessor } from './turnProcessor.js';
-import { HistoryManager } from './historyManager.js';
+import { SmartToolParser } from "./smartParser.js";
+import { ExecutionEngine } from "./executionEngine.js";
+import { CommandHandler } from "./commandHandler.js";
+import { RepetitionDetector } from "./repetitionDetector.js";
+import { logger } from "./logger.js";
+import { ConfigManager } from "./configManager.js";
+import { TurnProcessor } from "./turnProcessor.js";
+import { HistoryManager } from "./historyManager.js";
 
 export class ChatManager {
   constructor(assistant, tools, systemInstruction, ui, instanceMode = false) {
@@ -16,24 +16,50 @@ export class ChatManager {
     this.ui = ui;
     this.instanceMode = instanceMode;
     this.configManager = new ConfigManager();
-    this.temperature = parseFloat(this.configManager.get('default_temperature', 0.7));
-    this.contextWindowLimit = parseInt(this.configManager.get('context_window_limit', 250000), 10);
-    this.tpmLimit = parseInt(this.configManager.get('tpm_limit', 15000), 10);
+    this.temperature = parseFloat(
+      this.configManager.get("default_temperature", 0.7),
+    );
+    this.contextWindowLimit = parseInt(
+      this.configManager.get("context_window_limit", 250000),
+      10,
+    );
+    this.tpmLimit = parseInt(this.configManager.get("tpm_limit", 15000), 10);
     this.ui.bashEnabled = false;
-    this.currentChannel = '#main';
-    this.timestampsEnabled = this.configManager.get('timestamps_enabled', false);
-    this.safemode = this.configManager.get('safemode', false);
+    this.currentChannel = "#main";
+    this.timestampsEnabled = this.configManager.get(
+      "timestamps_enabled",
+      false,
+    );
+    this.safemode = this.configManager.get("safemode", false);
     this.parser = new SmartToolParser();
-    this.engine = new ExecutionEngine(assistant, tools, this.parser, ui, instanceMode, null, this.systemInstruction === '');
+    this.engine = new ExecutionEngine(
+      assistant,
+      tools,
+      this.parser,
+      ui,
+      instanceMode,
+      null,
+      this.systemInstruction === "",
+    );
     this.commandHandler = new CommandHandler(this, ui);
     this.repetitionDetector = new RepetitionDetector();
-    this.turnProcessor = new TurnProcessor(assistant, tools, this.parser, this.engine, ui, this.repetitionDetector);
+    this.turnProcessor = new TurnProcessor(
+      assistant,
+      tools,
+      this.parser,
+      this.engine,
+      ui,
+      this.repetitionDetector,
+    );
     this.historyManager = new HistoryManager(assistant, ui, this.configManager);
     this.assistant.ui = ui; // Inyectamos la UI en el adaptador para los reintentos
-    this.ui.agentNickname = this.configManager.get('agent_nickname', 'paser_mini');
+    this.ui.agentNickname = this.configManager.get(
+      "agent_nickname",
+      "paser_mini",
+    );
     logger.setAgentNickname(this.ui.agentNickname);
-    this.ui.userNickname = this.configManager.get('user_nickname', 'user');
-    this.setRenderingMode(this.configManager.get('rendering_mode', 'IRC'));
+    this.ui.userNickname = this.configManager.get("user_nickname", "user");
+    this.setRenderingMode(this.configManager.get("rendering_mode", "IRC"));
     this.stopRequested = false;
     this.logOpened = false;
   }
@@ -47,7 +73,7 @@ export class ChatManager {
   }
 
   setRenderingMode(mode) {
-    this.saveConfig('rendering_mode', mode);
+    this.saveConfig("rendering_mode", mode);
     this.ui.setRenderingMode(mode);
     if (this.assistant) {
       if (this.assistant.setRenderingMode) {
@@ -62,15 +88,30 @@ export class ChatManager {
     const oldAssistant = this.assistant;
     let newAssistant;
 
-    if (provider === 'NVIDIA') {
-      const { NvidiaAdapter } = await import('../infrastructure/nvidia/adapter.js');
-      newAssistant = new NvidiaAdapter(this.configManager, this.ui.userNickname, this.ui.agentNickname);
-    } else if (provider === 'OPENROUTER') {
-      const { OpenRouterAdapter } = await import('../infrastructure/openrouter/adapter.js');
-      newAssistant = new OpenRouterAdapter(this.ui, this.ui.userNickname, this.ui.agentNickname);
+    if (provider === "NVIDIA") {
+      const { NvidiaAdapter } =
+        await import("../infrastructure/nvidia/adapter.js");
+      newAssistant = new NvidiaAdapter(
+        this.configManager,
+        this.ui.userNickname,
+        this.ui.agentNickname,
+      );
+    } else if (provider === "OPENROUTER") {
+      const { OpenRouterAdapter } =
+        await import("../infrastructure/openrouter/adapter.js");
+      newAssistant = new OpenRouterAdapter(
+        this.ui,
+        this.ui.userNickname,
+        this.ui.agentNickname,
+      );
     } else {
-      const { GeminiAdapter } = await import('../infrastructure/gemini/adapter.js');
-      newAssistant = new GeminiAdapter(this.ui, this.ui.userNickname, this.ui.agentNickname);
+      const { GeminiAdapter } =
+        await import("../infrastructure/gemini/adapter.js");
+      newAssistant = new GeminiAdapter(
+        this.ui,
+        this.ui.userNickname,
+        this.ui.agentNickname,
+      );
     }
 
     // Migrate history
@@ -78,7 +119,7 @@ export class ChatManager {
       const history = oldAssistant.getHistory();
       if (history?.length > 0) {
         history.forEach((msg) => {
-          const text = msg.text ?? msg.parts?.[0]?.text ?? '';
+          const text = msg.text ?? msg.parts?.[0]?.text ?? "";
           newAssistant.injectMessage(msg.role, text);
         });
       }
@@ -99,20 +140,20 @@ export class ChatManager {
   }
 
   async run(initialInput = null) {
-    logger.info('Initializing ChatManager.run');
+    logger.info("Initializing ChatManager.run");
 
-    const model = this.configManager.get('model_name', 'gemini-2.0-flash');
+    const model = this.configManager.get("model_name", "gemini-2.0-flash");
     this.assistant.startChat(model, this.systemInstruction, this.temperature);
 
     this.ui.clearLog();
 
     if (initialInput) {
       const logMsg = this.ui.getLogOpenedString();
-      const welcomeMsg = '-!- Session resumed from ./log/history.log';
+      const welcomeMsg = "-!- Session resumed from ./log/history.log";
       const combinedMsg = `${logMsg}\n${welcomeMsg}`;
 
-      this.ui.displayChatMessage('system', combinedMsg);
-      this.assistant.injectMessage('server', combinedMsg);
+      this.ui.displayChatMessage("system", combinedMsg);
+      this.assistant.injectMessage("server", combinedMsg);
 
       this.logOpened = true;
       await this.processTurn(initialInput);
@@ -129,16 +170,17 @@ export class ChatManager {
         if (input) {
           if (!this.logOpened && this.systemInstruction) {
             const logMsg = this.ui.getLogOpenedString();
-            this.ui.displayChatMessage('system', logMsg);
+            this.ui.displayChatMessage("system", logMsg);
             this.ui.displayChatMessage(
-              'system',
-              '*** Session resumed from ./log/history.log',
+              "system",
+              "*** Session resumed from ./log/history.log",
             );
             this.logOpened = true;
-            const formattedLog = this.ui.renderingMode === 'FOUNTAIN'
-              ? this.ui._renderFountain('system', logMsg)
-              : logMsg;
-            this.assistant.injectMessage('server', formattedLog);
+            const formattedLog =
+              this.ui.renderingMode === "FOUNTAIN"
+                ? this.ui._renderFountain("system", logMsg)
+                : logMsg;
+            this.assistant.injectMessage("server", formattedLog);
           }
 
           // eslint-disable-next-line no-await-in-loop
@@ -150,11 +192,13 @@ export class ChatManager {
           }
         }
       } catch (e) {
-        if (e.name === 'UserInterruptException') {
-          logger.info('Turn interrupted by user input');
-          this.ui.displayInfo('Agent interrupted. Processing new request...');
-        } else if (e.name === 'APIError') {
-          this.ui.displayError(`Error de conexión con la IA: ${e.message}. La sesión sigue activa, intenta de nuevo en un momento.`);
+        if (e.name === "UserInterruptException") {
+          logger.info("Turn interrupted by user input");
+          this.ui.displayInfo("Agent interrupted. Processing new request...");
+        } else if (e.name === "APIError") {
+          this.ui.displayError(
+            `Error de conexión con la IA: ${e.message}. La sesión sigue activa, intenta de nuevo en un momento.`,
+          );
           console.error(e);
         } else {
           this.ui.displayError(`Critical error in processTurn: ${e.message}`);

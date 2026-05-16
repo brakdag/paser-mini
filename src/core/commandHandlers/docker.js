@@ -1,7 +1,7 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import fs from 'fs/promises';
-import path from 'path';
+import { exec } from "child_process";
+import { promisify } from "util";
+import fs from "fs/promises";
+import path from "path";
 
 const execAsync = promisify(exec);
 
@@ -13,14 +13,16 @@ export class DockerCommands {
 
     try {
       switch (subCommand) {
-        case 'net':
+        case "net":
           return await this.handleNet(chatManager, ui, val);
-        case 'ram':
+        case "ram":
           return await this.handleRam(chatManager, ui, val);
-        case 'cpu':
+        case "cpu":
           return await this.handleCpu(chatManager, ui, val);
         default:
-          ui.displayError('Usage: /docker [net on|off | ram <val> | cpu <val>]');
+          ui.displayError(
+            "Usage: /docker [net on|off | ram <val> | cpu <val>]",
+          );
           return true;
       }
     } catch (error) {
@@ -30,9 +32,9 @@ export class DockerCommands {
   }
 
   static async updateEnv(key, value) {
-    const envPath = path.join(process.cwd(), '.env');
-    let content = await fs.readFile(envPath, 'utf-8');
-    const regex = new RegExp(`^${key}=.*`, 'm');
+    const envPath = path.join(process.cwd(), ".env");
+    let content = await fs.readFile(envPath, "utf-8");
+    const regex = new RegExp(`^${key}=.*`, "m");
 
     if (regex.test(content)) {
       content = content.replace(regex, `${key}=${value}`);
@@ -43,29 +45,29 @@ export class DockerCommands {
   }
 
   static async apply() {
-    await execAsync('docker compose up -d');
+    await execAsync("docker compose up -d");
   }
 
   static async handleNet(chatManager, ui, mode) {
-    if (mode === 'on') {
-      await this.updateEnv('NETWORK_MODE', 'bridge');
-    } else if (mode === 'off') {
-      await this.updateEnv('NETWORK_MODE', 'none');
+    if (mode === "on") {
+      await this.updateEnv("NETWORK_MODE", "bridge");
+    } else if (mode === "off") {
+      await this.updateEnv("NETWORK_MODE", "none");
     } else {
-      ui.displayError('Usage: /docker net on|off');
+      ui.displayError("Usage: /docker net on|off");
       return true;
     }
     await this.apply();
-    ui.displayInfo(`Docker Network: ${mode === 'on' ? 'ON' : 'OFF'}`);
+    ui.displayInfo(`Docker Network: ${mode === "on" ? "ON" : "OFF"}`);
     return true;
   }
 
   static async handleRam(chatManager, ui, val) {
     if (!val || !/^[0-9]+[m|g|k]?$/.test(val)) {
-      ui.displayError('Usage: /docker ram <val> (e.g., 512m, 1g)');
+      ui.displayError("Usage: /docker ram <val> (e.g., 512m, 1g)");
       return true;
     }
-    await this.updateEnv('MEM_LIMIT', val);
+    await this.updateEnv("MEM_LIMIT", val);
     await this.apply();
     ui.displayInfo(`Docker RAM Limit: ${val}`);
     return true;
@@ -73,10 +75,10 @@ export class DockerCommands {
 
   static async handleCpu(chatManager, ui, val) {
     if (!val || !/^[0-9]+(\.[0-9]+)?$/.test(val)) {
-      ui.displayError('Usage: /docker cpu <val> (e.g., 0.5, 1.0)');
+      ui.displayError("Usage: /docker cpu <val> (e.g., 0.5, 1.0)");
       return true;
     }
-    await this.updateEnv('CPU_LIMIT', val);
+    await this.updateEnv("CPU_LIMIT", val);
     await this.apply();
     ui.displayInfo(`Docker CPU Limit: ${val}`);
     return true;

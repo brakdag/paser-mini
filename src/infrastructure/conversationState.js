@@ -1,9 +1,9 @@
 export class ConversationState {
-  constructor(userNickname = 'user', agentNickname = 'assistant') {
+  constructor(userNickname = "user", agentNickname = "assistant") {
     this.userNickname = userNickname;
     this.agentNickname = agentNickname;
     this.history = [];
-    this.renderingMode = 'IRC';
+    this.renderingMode = "IRC";
   }
 
   setRenderingMode(mode) {
@@ -11,21 +11,29 @@ export class ConversationState {
   }
 
   getTimestamp() {
-    return new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    return new Date().toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   }
 
   _formatMessage(role, text, timestamp = this.getTimestamp()) {
-    if (this.renderingMode === 'FOUNTAIN') return text;
+    if (this.renderingMode === "FOUNTAIN") return text;
 
-    if (text.startsWith('---') || text.startsWith('***') || text.startsWith('<TOOL_RESPONSE>')) {
+    if (
+      text.startsWith("---") ||
+      text.startsWith("***") ||
+      text.startsWith("<TOOL_RESPONSE>")
+    ) {
       return `[${timestamp}] ${text}`;
     }
-    const nickname = role === 'user' ? this.userNickname : this.agentNickname;
+    const nickname = role === "user" ? this.userNickname : this.agentNickname;
     return `[${timestamp}] <${nickname}> ${text}`;
   }
 
   addMessage(role, text, timestamp = null) {
-    const normalizedRole = role === 'model' || role === 'assistant' ? 'model' : 'user';
+    const normalizedRole =
+      role === "model" || role === "assistant" ? "model" : "user";
 
     const ts = timestamp || this.getTimestamp();
     const formattedText = this._formatMessage(normalizedRole, text, ts);

@@ -1,11 +1,11 @@
-import axios from 'axios';
-import { logger } from '../../core/logger.js';
-import { NvidiaRetryHandler } from './retryHandler.js';
+import axios from "axios";
+import { logger } from "../../core/logger.js";
+import { NvidiaRetryHandler } from "./retryHandler.js";
 
 export class NvidiaRestClient {
   constructor(configManager) {
     this.apiKey = process.env.NVIDIA_API_KEY;
-    this.baseUrl = 'https://integrate.api.nvidia.com/v1';
+    this.baseUrl = "https://integrate.api.nvidia.com/v1";
     this.configManager = configManager;
     this.lastRequestTime = 0;
     this.retryHandler = new NvidiaRetryHandler();
@@ -13,21 +13,26 @@ export class NvidiaRestClient {
       baseURL: this.baseUrl,
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
+        "Content-Type": "application/json",
+        Accept: "application/json",
       },
       timeout: 60000,
     });
   }
 
   async _applyRateLimit(currentTokens = 1000) {
-    let rpmLimit = parseInt(this.configManager.get('rpm_limit', 15), 10);
-    const tpmLimit = parseInt(this.configManager.get('tpm_limit', 15000), 10);
-    const autoRpmEnabled = this.configManager.get('auto_rpm_enabled', false);
+    let rpmLimit = parseInt(this.configManager.get("rpm_limit", 15), 10);
+    const tpmLimit = parseInt(this.configManager.get("tpm_limit", 15000), 10);
+    const autoRpmEnabled = this.configManager.get("auto_rpm_enabled", false);
 
     if (autoRpmEnabled) {
-      rpmLimit = Math.max(1, Math.floor(tpmLimit / Math.max(currentTokens, 1000)));
-      logger.debug(`Nvidia Auto-RPM: Adjusted limit to ${rpmLimit} based on tokens`);
+      rpmLimit = Math.max(
+        1,
+        Math.floor(tpmLimit / Math.max(currentTokens, 1000)),
+      );
+      logger.debug(
+        `Nvidia Auto-RPM: Adjusted limit to ${rpmLimit} based on tokens`,
+      );
     }
 
     const minInterval = 60000 / rpmLimit;
@@ -36,25 +41,30 @@ export class NvidiaRestClient {
 
     if (elapsed < minInterval) {
       const waitTime = minInterval - elapsed;
-      logger.debug(`Nvidia Rate Limit: Waiting ${waitTime / 1000}s to maintain ${rpmLimit} RPM`);
-      await new Promise((resolve) => { setTimeout(resolve, waitTime); });
+      logger.debug(
+        `Nvidia Rate Limit: Waiting ${waitTime / 1000}s to maintain ${rpmLimit} RPM`,
+      );
+      await new Promise((resolve) => {
+        setTimeout(resolve, waitTime);
+      });
     }
     this.lastRequestTime = Date.now();
   }
 
   async chatCompletions(payload, stream = false) {
-    const url = '/chat/completions';
+    const url = "/chat/completions";
     payload.stream = stream;
 
-    const tokenEstimate = payload.messages?.reduce(
-      (acc, msg) => acc + Math.floor((msg.content?.length || 0) / 4),
-      0,
-    ) || 1000;
+    const tokenEstimate =
+      payload.messages?.reduce(
+        (acc, msg) => acc + Math.floor((msg.content?.length || 0) / 4),
+        0,
+      ) || 1000;
 
     await this._applyRateLimit(tokenEstimate);
 
     if (stream) {
-      throw new Error('Streaming not yet implemented in JS RestClient');
+      throw new Error("Streaming not yet implemented in JS RestClient");
     }
 
     const request = () => this.client.post(url, payload);

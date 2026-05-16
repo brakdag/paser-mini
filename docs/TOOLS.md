@@ -32,4 +32,5 @@ This document serves as the definitive reference for the tools available to the 
 - **Surgical Access**: `json-get` (`getJsonNode`), `json-set` (`updateJsonNode`).
 
 ---
+
 **Constraint**: Always prioritize the most surgical tool. If you can use `replaceString`, never use `writeFile`. Every token saved is reasoning capacity gained.

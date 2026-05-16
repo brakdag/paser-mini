@@ -1,14 +1,16 @@
 export class FavoriteCommands {
   static async handleFav(chatManager, ui, parts) {
-    const favorites = chatManager.configManager.get('favorites', []);
+    const favorites = chatManager.configManager.get("favorites", []);
 
     if (parts.length === 1) {
       if (favorites.length === 0) {
-        ui.displayInfo('No favorite models saved. Use /fav+ to add the current one.');
+        ui.displayInfo(
+          "No favorite models saved. Use /fav+ to add the current one.",
+        );
         return true;
       }
 
-      const header = '| ID | Model (Provider) | Temp |\n|---|---|---|\n';
+      const header = "| ID | Model (Provider) | Temp |\n|---|---|---|\n";
       const rows = [];
       for (let i = 0; i < favorites.length; i += 1) {
         const f = favorites[i];
@@ -16,38 +18,40 @@ export class FavoriteCommands {
         const t = f.temp;
         rows.push(`| ${i} | ${m} | ${t} |`);
       }
-      ui.displayMessage(`--- Favorite Models ---\n${header}${rows.join('\n')}`);
+      ui.displayMessage(`--- Favorite Models ---\n${header}${rows.join("\n")}`);
       return true;
     }
 
-    if (parts[1] === '+') {
-      const provider = chatManager.configManager.get('provider', 'Gemini');
+    if (parts[1] === "+") {
+      const provider = chatManager.configManager.get("provider", "Gemini");
       const model = chatManager.assistant.currentModel;
       const temp = chatManager.temperature;
       const newFav = { provider, model, temp };
 
-      if (!favorites.some((f) => f.model === model && f.provider === provider)) {
+      if (
+        !favorites.some((f) => f.model === model && f.provider === provider)
+      ) {
         favorites.push(newFav);
-        chatManager.configManager.save('favorites', favorites);
+        chatManager.configManager.save("favorites", favorites);
         ui.displayInfo(`Added to favorites: ${provider} | ${model}`);
       } else {
-        ui.displayInfo('Model already in favorites.');
+        ui.displayInfo("Model already in favorites.");
       }
       return true;
     }
 
-    if (parts[1].startsWith('-')) {
+    if (parts[1].startsWith("-")) {
       try {
         const idx = parseInt(parts[1].slice(1), 10);
         if (idx >= 0 && idx < favorites.length) {
           const removed = favorites.splice(idx, 1)[0];
-          chatManager.configManager.save('favorites', favorites);
+          chatManager.configManager.save("favorites", favorites);
           ui.displayInfo(`Removed from favorites: ${removed.model}`);
         } else {
-          ui.displayError('Invalid index.');
+          ui.displayError("Invalid index.");
         }
       } catch (e) {
-        ui.displayError('Usage: /fav -<index>');
+        ui.displayError("Usage: /fav -<index>");
       }
       return true;
     }
@@ -57,24 +61,33 @@ export class FavoriteCommands {
       if (idx >= 0 && idx < favorites.length) {
         const fav = favorites[idx];
         const providerName = fav.provider;
-        const currentProvider = chatManager.configManager.get('provider', 'Gemini');
+        const currentProvider = chatManager.configManager.get(
+          "provider",
+          "Gemini",
+        );
 
         if (providerName !== currentProvider) {
           await chatManager.switchProvider(providerName, fav.model, fav.temp);
-          chatManager.configManager.save('provider', providerName);
+          chatManager.configManager.save("provider", providerName);
         }
 
-        chatManager.configManager.save('model_name', fav.model);
-        chatManager.configManager.save('default_temperature', fav.temp);
+        chatManager.configManager.save("model_name", fav.model);
+        chatManager.configManager.save("default_temperature", fav.temp);
         chatManager.temperature = fav.temp;
-        chatManager.assistant.startChat(fav.model, chatManager.systemInstruction, fav.temp);
+        chatManager.assistant.startChat(
+          fav.model,
+          chatManager.systemInstruction,
+          fav.temp,
+        );
 
-        ui.displayInfo(`Loaded favorite ${idx}: ${providerName} | ${fav.model} | Temp: ${fav.temp}`);
+        ui.displayInfo(
+          `Loaded favorite ${idx}: ${providerName} | ${fav.model} | Temp: ${fav.temp}`,
+        );
       } else {
-        ui.displayError('Favorite index not found.');
+        ui.displayError("Favorite index not found.");
       }
     } catch (e) {
-      ui.displayError('Usage: /fav <index> or /fav+ or /fav -<index>');
+      ui.displayError("Usage: /fav <index> or /fav+ or /fav -<index>");
     }
     return true;
   }

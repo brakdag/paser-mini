@@ -1,5 +1,3 @@
-import { z } from 'zod';
+import { z } from "zod";
 
-export const getTokenCountSchema = z.object({
-
-}).strict();
+export const getTokenCountSchema = z.object({}).strict();

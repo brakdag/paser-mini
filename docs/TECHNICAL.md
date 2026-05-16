@@ -35,17 +35,17 @@ paser-mini
 
 ### Command Line Arguments
 
-| Argument                      | Short  | Description                                         |
-| :---------------------------- | :----- | :-------------------------------------------------- |
-| `--version`                   | `-v`   | Show version information                            |
-| `--unit_tests`                | `-ut`  | Run the internal unit test suite                    |
-| `--system_instruction`        | `-si`  | Provide custom system instructions to the agent     |
-| `--inject_system_instruction` | `-isi` | Inject instruction at the start of system prompt    |
-| `--file_system_instruction`   | `-fsi` | Path to file for system instruction injection       |
-| `--message`                   | `-m`   | Send an initial message in one-shot mode            |
-| `--input`                     | `-i`   | Input text to process in one-shot mode              |
-| `--instance-mode`             | `-im`  | Run in instance mode (read-only config, no recursion)|
-| `--debug`                     | `-d`   | Enable debug logging                                 |
+| Argument                      | Short  | Description                                           |
+| :---------------------------- | :----- | :---------------------------------------------------- |
+| `--version`                   | `-v`   | Show version information                              |
+| `--unit_tests`                | `-ut`  | Run the internal unit test suite                      |
+| `--system_instruction`        | `-si`  | Provide custom system instructions to the agent       |
+| `--inject_system_instruction` | `-isi` | Inject instruction at the start of system prompt      |
+| `--file_system_instruction`   | `-fsi` | Path to file for system instruction injection         |
+| `--message`                   | `-m`   | Send an initial message in one-shot mode              |
+| `--input`                     | `-i`   | Input text to process in one-shot mode                |
+| `--instance-mode`             | `-im`  | Run in instance mode (read-only config, no recursion) |
+| `--debug`                     | `-d`   | Enable debug logging                                  |
 
 **Example (One-shot mode):**
 
@@ -54,6 +54,7 @@ paser-mini "Analyze the current directory and summarize the project"
 ```
 
 ## Workspace Hygiene
+
 To keep the project root clean, please use the `/tmp` directory for temporary files or experimental tests. Avoid creating test files directly in the project root to ensure the repository remains uncluttered.
 
 ## Documentation

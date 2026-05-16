@@ -1,6 +1,8 @@
-import { z } from 'zod';
+import { z } from "zod";
 
-export const concatFileSchema = z.object({
-  destination: z.string(),
-  source: z.string(),
-}).strict();
+export const concatFileSchema = z
+  .object({
+    destination: z.string(),
+    source: z.string(),
+  })
+  .strict();

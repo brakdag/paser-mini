@@ -5,7 +5,7 @@ export const PayloadMapper = {
    */
   toGemini(history, systemInstruction, temperature) {
     const contents = history.map((m) => ({
-      role: m.role === 'model' ? 'model' : 'user',
+      role: m.role === "model" ? "model" : "user",
       parts: [{ text: m.text }],
     }));
 
@@ -33,12 +33,12 @@ export const PayloadMapper = {
     const messages = [];
 
     if (systemInstruction) {
-      messages.push({ role: 'system', content: systemInstruction });
+      messages.push({ role: "system", content: systemInstruction });
     }
 
     history.forEach((m) => {
       messages.push({
-        role: m.role === 'model' ? 'assistant' : 'user',
+        role: m.role === "model" ? "assistant" : "user",
         content: m.text,
       });
     });
