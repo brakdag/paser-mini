@@ -13,7 +13,7 @@ import { notifyUser as notifyUserFunc } from "./notificationTools.js";
 import * as fountainTools from "./fountainTools.js";
 import * as zipTools from "./zipTools.js";
 import * as binaryTools from "./binaryTools.js";
-import * as dockerTools from "./dockerTools.js";
+import * as webTools from "./webTools.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -72,7 +72,8 @@ export const AVAILABLE_TOOLS = {
   saveZip: zipTools.saveZip,
   listZipFiles: zipTools.listZipFiles,
   binaryAnalysis: binaryTools.handleHexCommand,
-  sh: dockerTools.sh,
+  searchWeb: webTools.searchWeb,
+  renderWeb: webTools.renderWeb,
 };
 
 const registryPath = path.join(__dirname, "registry_positional.json");
@@ -120,6 +121,8 @@ export const TOOL_ALIASES = {
   "zip-save": "saveZip",
   "zip-ls": "listZipFiles",
   "bin-analyze": "binaryAnalysis",
+  "search-web": "searchWeb",
+  "render-web": "renderWeb",
   sh: "sh",
 };
 

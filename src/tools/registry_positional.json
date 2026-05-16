@@ -299,5 +299,19 @@
       "type": "string",
       "endianness": "string"
     }
+  ],
+  [
+    "searchWeb",
+    "Search the web using DuckDuckGo Lite.",
+    {
+      "query": "string"
+    }
+  ],
+  [
+    "renderWeb",
+    "Render a webpage to text using elinks.",
+    {
+      "url": "string"
+    }
   ]
 ]
