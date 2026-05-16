@@ -10,8 +10,7 @@ export const searchFilesPatternFixed = async ({ pattern }) => {
     const results = [];
     const walk = async (dir) => {
       const files = await fs.readdir(dir, { withFileTypes: true });
-      for (let i = 0; i < files.length; i += 1) {
-        const file = files[i];
+      await Promise.all(files.map(async (file) => {
         if (file.name !== '.git' && file.name !== 'node_modules') {
           const res = path.join(dir, file.name);
           if (file.isDirectory()) {
@@ -20,7 +19,7 @@ export const searchFilesPatternFixed = async ({ pattern }) => {
             results.push(res.replace(/^\.\//, ''));
           }
         }
-      }
+      }));
     };
     await walk('.');
     return JSON.stringify(results.slice(0, 10));

@@ -27,10 +27,15 @@ export class FountainRenderer extends BaseRenderer {
   render(message) {
     const { nickname, text, type } = message;
     const trimmedText = text.trim();
+    
+    // Filter out tool calls and tool responses from visual output
+    if (trimmedText.includes("<TOOL_CALL>") || trimmedText.includes("<TOOL_RESPONSE>")) {
+      return "";
+    }
+
     let output = "";
 
     if (type === 'system') {
-      // Scene Heading or Action
       if (trimmedText.startsWith("* SCENE:")) {
         const sceneText = trimmedText
           .replace(/^\* SCENE:\s*|\s*\*$/g, "")
@@ -44,7 +49,6 @@ export class FountainRenderer extends BaseRenderer {
         output = this._wrapText(cleanText, 0, 75);
       }
     } else if (nickname === "dialogue") {
-      // Dialogue without nickname
       if (trimmedText.startsWith("*")) {
         const cleanText = trimmedText.replace(/^\*\s*|\s*\*$/g, "");
         output += this._wrapText(`(${cleanText})`, 31, 60);
@@ -52,15 +56,12 @@ export class FountainRenderer extends BaseRenderer {
         output += this._wrapText(trimmedText, 25, 60);
       }
     } else {
-      // Character and Dialogue/Parenthetical
       output += " ".repeat(37) + nickname.toUpperCase() + "\n";
 
       if (trimmedText.startsWith("*")) {
-        // Parenthetical
         const cleanText = trimmedText.replace(/^\*\s*|\s*\*$/g, "");
         output += this._wrapText(`(${cleanText})`, 31, 60);
       } else {
-        // Dialogue
         output += this._wrapText(this.ui.formatMarkdown(trimmedText), 25, 60);
       }
     }

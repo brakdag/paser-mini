@@ -12,7 +12,7 @@ export class NvidiaAdapter {
     this.systemInstruction = '';
     this.temperature = 0.7;
     this.lastPayload = null;
-    this.apiKey = process.env.NVIDIA_API_KEY;
+    this.apiKey = process.env.NVIDIA_API_KEY || '';
   }
 
   startChat(modelName, systemInstruction, temperature = 0.7) {
@@ -31,10 +31,8 @@ export class NvidiaAdapter {
   }
 
   async sendMessage(message, role = 'user', maxTokens = 512) {
-    // 1. Add message to state (IRC formatted)
     this.state.addMessage(role, message);
 
-    // 2. Map to NVIDIA JSON
     const history = this.state.getRawHistory();
     const processedHistory = this.state.renderingMode === 'CLEAN'
       ? history.map((m) => ({ ...m, text: m.text.replace(/^(\[\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, '').trim() }))
@@ -50,11 +48,9 @@ export class NvidiaAdapter {
     this.lastPayload = payload;
 
     const url = 'https://integrate.api.nvidia.com/v1/chat/completions';
-    const headers = { Authorization: `Bearer ${this.apiKey}` };
 
     try {
       logger.debug('NvidiaAdapter: Sending request', { model: this.currentModel, payload });
-      // Using restClient which has retry logic
       const data = await this.restClient.chatCompletions(payload);
       const rawContent = data.choices?.[0]?.message?.content || '';
       const content = this._filterThoughts(rawContent);
@@ -123,7 +119,6 @@ export class NvidiaAdapter {
         max_tokens: 1,
       };
 
-      // We use axios directly here to respect the 1s timeout requirement for availability checks
       await axios.post('https://integrate.api.nvidia.com/v1/chat/completions', payload, {
         headers: { Authorization: `Bearer ${this.apiKey}` },
         timeout: 1000,
@@ -133,7 +128,6 @@ export class NvidiaAdapter {
       if (e.response && e.response.status === 404) {
         return false;
       }
-      // Si es timeout o cualquier otro error, asumimos que está disponible
       return true;
     }
   }
@@ -143,7 +137,5 @@ export class NvidiaAdapter {
     return Math.floor(totalChars / 4);
   }
 
-  async close() {
-    // No-op
-  }
+  async close() {}
 }

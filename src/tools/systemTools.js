@@ -56,7 +56,7 @@ export const executeBash = async ({ command }) => {
   try {
     const { stdout, stderr } = await execPromise(command, {
       cwd: process.cwd(),
-      timeout: 60000
+      timeout: 60000,
     });
     return stdout || stderr || 'Command executed successfully (no output).';
   } catch (e) {

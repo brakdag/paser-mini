@@ -5,6 +5,12 @@ export class IRCRenderer extends BaseRenderer {
   render(message) {
     const { nickname, text, time, type } = message;
     const trimmedText = text.trim();
+    
+    // Filter out tool calls and tool responses from visual output
+    if (trimmedText.includes("<TOOL_CALL>") || trimmedText.includes("<TOOL_RESPONSE>")) {
+      return "";
+    }
+
     const formattedText = this.ui.formatMarkdown(trimmedText);
     const timestamp = time || new Date().toLocaleTimeString("en-GB", {
       hour: "2-digit",

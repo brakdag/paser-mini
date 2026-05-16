@@ -13,23 +13,26 @@ export class TransportLayer {
    * Generic HTTP POST request with basic retry logic
    */
   async post(url, payload, headers = {}, retries = 3) {
-    let lastError;
-    for (let i = 0; i < retries; i += 1) {
+    const run = async (attempt) => {
       try {
         const response = await axios.post(url, payload, { headers, timeout: 60000 });
         return response.data;
       } catch (e) {
-        lastError = e;
-        // Retry on 429 (Rate Limit) or 5xx (Server Error)
         const status = e.response?.status;
         const isTimeout = e.code === 'ECONNABORTED';
-        if (!isTimeout && status !== 429 && (status < 500 || status > 599)) {
-          break;
+        const isRetryable = !isTimeout && (status === 429 || (status >= 500 && status <= 599));
+
+        if (attempt >= retries - 1 || !isRetryable) {
+          throw e;
         }
+
         // Exponential backoff
-        await new Promise((resolve) => setTimeout(resolve, 2 ** i * 1000));
+        await new Promise((resolve) => {
+          setTimeout(resolve, 2 ** attempt * 1000);
+        });
+        return run(attempt + 1);
       }
-    }
-    throw lastError;
+    };
+    return run(0);
   }
 }

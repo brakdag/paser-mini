@@ -11,8 +11,7 @@ export class NvidiaRetryHandler {
   }
 
   async execute(func, ...args) {
-    let retries = 0;
-    while (true) {
+    const run = async (retries) => {
       try {
         return await func(...args);
       } catch (e) {
@@ -40,9 +39,12 @@ export class NvidiaRetryHandler {
         logger.warn(msg);
         if (this.callback) this.callback(msg);
 
-        await new Promise((resolve) => setTimeout(resolve, delay));
-        retries += 1;
+        await new Promise((resolve) => {
+          setTimeout(resolve, delay);
+        });
+        return run(retries + 1);
       }
-    }
+    };
+    return run(0);
   }
 }

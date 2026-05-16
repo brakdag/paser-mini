@@ -57,19 +57,17 @@ export class NvidiaRestClient {
       throw new Error('Streaming not yet implemented in JS RestClient');
     }
 
-    const request = () => this.client.post(url, payload);
+    const request = async () => await this.client.post(url, payload);
     const response = await this.retryHandler.execute(request);
     return response.data;
   }
 
   async get(endpoint) {
     await this._applyRateLimit();
-    const request = () => this.client.get(`/${endpoint}`);
+    const request = async () => await this.client.get(`/${endpoint}`);
     const response = await this.retryHandler.execute(request);
     return response.data;
   }
 
-  async close() {
-    // Axios client doesn't require explicit closing like httpx
-  }
+  async close() {}
 }

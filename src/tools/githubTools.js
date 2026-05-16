@@ -16,8 +16,8 @@ axiosRetry(client, {
   retries: 3,
   retryDelay: axiosRetry.exponentialDelay,
   retryCondition: (error) => (
-    axiosRetry.isNetworkOrIdempotentRequestError(error) ||
-    error.response?.status === 429
+    axiosRetry.isNetworkOrIdempotentRequestError(error)
+    || error.response?.status === 429
   ),
 });
 

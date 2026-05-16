@@ -17,7 +17,6 @@ export class ConversationState {
   _formatMessage(role, text, timestamp = this.getTimestamp()) {
     if (this.renderingMode === 'FOUNTAIN') return text;
     
-    // Preserve IRC aesthetics: system events (starting with ---, *** or <TOOL_RESPONSE>) do not have nicknames
     if (text.startsWith('---') || text.startsWith('***') || text.startsWith('<TOOL_RESPONSE>')) {
       return `[${timestamp}] ${text}`;
     }
@@ -26,9 +25,7 @@ export class ConversationState {
   }
 
   addMessage(role, text, timestamp = null) {
-    // Strict role mapping for maximum compatibility
-    // Only 'user' and 'model' are allowed in the state
-    const normalizedRole = (role === 'model' || role === 'assistant') ? 'model' : 'user';
+    const normalizedRole = role === 'model' || role === 'assistant' ? 'model' : 'user';
     
     const ts = timestamp || this.getTimestamp();
     const formattedText = this._formatMessage(normalizedRole, text, ts);

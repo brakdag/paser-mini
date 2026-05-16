@@ -1,14 +1,13 @@
 import { ConfigManager } from '../core/configManager.js';
 
-export const validateJson = async ({ json_string }) => {
+export const validateJson = async ({ jsonString }) => {
   try {
-    JSON.parse(json_string);
+    JSON.parse(jsonString);
     return 'El JSON es valido.';
   } catch (e) {
     return `ERR: JSON invalido: ${e.message}`;
   }
 };
-
 
 export const setNickname = async ({ newNickname }) => {
   try {
@@ -20,4 +19,3 @@ export const setNickname = async ({ newNickname }) => {
     return `ERR: Failed to update nickname: ${e.message}`;
   }
 };
-
