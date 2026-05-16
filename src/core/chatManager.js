@@ -171,10 +171,6 @@ class ChatManager {
           if (!this.logOpened && this.systemInstruction) {
             const logMsg = this.ui.getLogOpenedString();
             this.ui.displayChatMessage("system", logMsg);
-            this.ui.displayChatMessage(
-              "system",
-              "*** Session resumed from ./log/history.log",
-            );
             this.logOpened = true;
             const formattedLog =
               this.ui.renderingMode === "FOUNTAIN"
