@@ -1,14 +1,12 @@
-const writeZipFileSchema = {
-  $schema: "http://json-schema.org/draft-07/schema#",
-  type: "object",
-  properties: {
-    zipId: { type: "string" },
-    internalPath: { type: "string" },
-    content: "string",
-  },
-  required: ["zipId", "internalPath", "content"],
-  additionalProperties: false,
-};
+import { z } from "zod";
+
+const writeZipFileSchema = z.object({
+  zipId: z.string().describe("The ID of the loaded ZIP container"),
+  internalPath: z
+    .string()
+    .describe("The path of the file inside the ZIP to update or create"),
+  content: z.string().describe("The new content for the file"),
+});
 
 
 export default writeZipFileSchema;

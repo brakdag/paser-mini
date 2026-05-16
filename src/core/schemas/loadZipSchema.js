@@ -1,12 +1,8 @@
-const loadZipSchema = {
-  $schema: "http://json-schema.org/draft-07/schema#",
-  type: "object",
-  properties: {
-    filePath: { type: "string" },
-  },
-  required: ["filePath"],
-  additionalProperties: false,
-};
+import { z } from "zod";
+
+const loadZipSchema = z.object({
+  filePath: z.string().describe("The path to the ZIP file to load into RAM"),
+});
 
 
 export default loadZipSchema;

@@ -88,12 +88,22 @@ Once the AI has finished reasoning:
 
 ### 🗺️ Quick Map for Developers
 
-| Step           | File                                      | Role                        |
-| :------------- | :---------------------------------------- | :-------------------------- |
-| **Start**      | `src_js/main.js`                          | Entry point & Orchestration |
-| **Input**      | `src_js/core/chatManager.js`              | The Conductor               |
-| **Commands**   | `src_js/core/commandHandler.js`           | Local logic handler         |
-| **API Bridge** | `src_js/infrastructure/gemini/adapter.js` | Cloud communicator          |
-| **Parsing**    | `src_js/core/smartParser.js`              | Tool call detector          |
-| **Execution**  | `src_js/core/executionEngine.js`          | Tool runner                 |
-| **Output**     | `src_js/core/terminalUI.js`               | Visual delivery             |
+| Step           | File                                      | Role                               |
+| :------------- | :----------------------------------------- | :--------------------------------- |
+| **Start**      | `src_js/main.js`                           | Entry point & Orchestration |
+| **Input**      | `src_js/core/chatManager.js`               | The Conductor               |
+| **Commands**   | `src_js/core/commandHandler.js`            | Local logic handler               |
+| **API Bridge** | `src_js/infrastructure/gemini/adapter.js`  | Cloud communicator               |
+| **Parsing**    | `src_js/core/smartParser.js`               | Tool call detector               |
+| **Execution**  | `src_js/core/executionEngine.js`           | Tool runner               |
+| **Output**     | `src_js/core/terminalUI.js`                | Visual delivery               |
+
+---
+
+## 💠 The Refinement: From Monolith to Module
+
+There came a moment when the technical brilliance of Paser Mini began to create its own kind of noise. The tools were surgical, but the architecture was becoming a monolith. The 'Brain' was doing too much, and the 'Interface' was a tangle of responsibilities.
+
+Under the guidance of Elena Vance, the project underwent a strategic distillation. We didn't add features; we removed friction. We broke the monoliths. The `TerminalUI` was shattered into specialized organs of sight, touch, and memory. The `TurnProcessor` was stripped of its infrastructure burdens, leaving only the pure essence of the ReAct loop.
+
+We discovered that true minimalism isn't just about fewer lines of code, but about the absolute clarity of purpose for every single file. The map now matches the terrain, and the path from intent to execution is shorter than ever.

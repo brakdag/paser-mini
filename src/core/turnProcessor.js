@@ -1,5 +1,7 @@
 import logger from "./logger.js";
 import UserInterruptException from "./exceptions.js";
+import ApiCommunicator from "./ApiCommunicator.js";
+import FountainAdapter from "./FountainAdapter.js";
 
 const DESTRUCTIVE_TOOLS = [
   "removeFile",
@@ -9,28 +11,6 @@ const DESTRUCTIVE_TOOLS = [
 ];
 
 class TurnProcessor {
-  async #sendMessageWithRetry(message, role = "user", attempt = 1) {
-    const maxRetries = 5000;
-    const baseDelay = 1000;
-    try {
-      return await this.assistant.sendMessage(message, role);
-    } catch (error) {
-      if (attempt >= maxRetries) throw error;
-      const isRetryable =
-        !error.response ||
-        [429, 500, 502, 503, 504].includes(error.response.status);
-      if (!isRetryable) throw error;
-      const delay = baseDelay * 2 ** (attempt - 1);
-      this.ui.displayError(
-        `API Error: ${error.message}. Retrying in ${delay}ms... (Attempt ${attempt}/${maxRetries})`,
-      );
-      await new Promise((resolve) => {
-        setTimeout(resolve, delay);
-      });
-      return this.#sendMessageWithRetry(message, role, attempt + 1);
-    }
-  }
-
   constructor(assistant, tools, parser, engine, ui, repetitionDetector) {
     this.assistant = assistant;
     this.tools = tools;
@@ -38,6 +18,8 @@ class TurnProcessor {
     this.engine = engine;
     this.ui = ui;
     this.repetitionDetector = repetitionDetector;
+    this.api = new ApiCommunicator(assistant, ui);
+    this.fountain = new FountainAdapter(assistant, ui);
   }
 
   async process(userInput) {
@@ -47,33 +29,21 @@ class TurnProcessor {
 
     let processedInput = userInput;
     if (this.ui.renderingMode === "FOUNTAIN") {
-      const nick =
-        userInput.startsWith("* SCENE:") || userInput.startsWith("* ACTION:")
-          ? "system"
-          : this.ui.userNickname;
-      processedInput = this.ui._renderFountain(nick, userInput);
+      processedInput = this.fountain.processInput(userInput);
     }
 
-    let currentResponse = await this.#sendMessageWithRetry(processedInput);
+    let currentResponse = await this.api.send(processedInput);
 
     if (this.ui.renderingMode === "FOUNTAIN") {
-      const formatted = this.ui._renderFountain(
-        this.ui.agentNickname,
-        currentResponse,
-      );
-      await this.assistant.popLastMessage();
-      await this.assistant.injectMessage("model", formatted);
+      await this.fountain.processResponse(currentResponse);
     }
 
-    // Guard against null/filtered responses (NVIDIA/Gemini safety filters)
-    const isSafetyBlock =
-      currentResponse === null || currentResponse === "null";
-
+    const isSafetyBlock = currentResponse === null || currentResponse === "null";
     if (isSafetyBlock) {
       this.ui.displayError(
         "The model response was filtered by safety guards. Your last message has been removed from history to prevent blocking the conversation. Please rephrase your request.",
       );
-      this.assistant.popLastMessage(); // Remove the triggering message to prevent history poisoning
+      this.assistant.popLastMessage();
       return;
     }
 
@@ -85,13 +55,7 @@ class TurnProcessor {
       apiRecoveryAttempts < maxApiRecoveries
     ) {
       apiRecoveryAttempts += 1;
-      this.ui.displayError(
-        `API Communication Error (Attempt ${apiRecoveryAttempts}/${maxApiRecoveries}): ${currentResponse}`,
-      );
-      // eslint-disable-next-line no-await-in-loop
-      currentResponse = await this.#sendMessageWithRetry(
-        `System Error: ${currentResponse}. Please attempt to recover or rephrase your last action.`,
-      );
+      currentResponse = await this.api.recover(currentResponse, apiRecoveryAttempts, maxApiRecoveries);
     }
 
     let turnComplete = false;
@@ -109,28 +73,19 @@ class TurnProcessor {
           `-!- [RepetitionDetector] Repetition detected: ${repetitionCheck}`,
         );
         this.ui.displayError(`Repetition detected: ${repetitionCheck}`);
-        currentResponse =
-          "ERR: Repetition detected. Please rephrase your response.";
+        currentResponse = "ERR: Repetition detected. Please rephrase your response.";
       }
 
       const toolCalls = this.parser.extractToolCalls(currentResponse);
 
-      // UX: Separate reasoning (thought) from action
-      // UX: Extract reasoning (thought) regardless of tool calls
-      const thoughtMatch = currentResponse.match(
-        /<thought>([\s\S]*?)<\/thought>/i,
-      );
+      const thoughtMatch = currentResponse.match(/<thought>([\s\S]*?)<\/thought>/i);
       if (thoughtMatch && thoughtMatch[1]) {
         const thought = thoughtMatch[1].trim();
         this.ui.displayThought(thought);
         logger.sessionLog(thought);
-        // Remove the thought block from the response to avoid double-displaying it as text
         currentResponse = currentResponse.replace(thoughtMatch[0], "").trim();
       } else {
-        // Fallback: If no explicit <thought> tags, check if there's text before the first tool call
-        const firstCallIndex = currentResponse.search(
-          /<(?:TOOL_CALL|tool_call)\s*>/i,
-        );
+        const firstCallIndex = currentResponse.search(/<(?:TOOL_CALL|tool_call)\s*>/i);
         if (firstCallIndex > 0) {
           const thought = currentResponse.substring(0, firstCallIndex).trim();
           if (thought) {
@@ -148,20 +103,16 @@ class TurnProcessor {
         for (let i = 0; i < toolCalls.length; i += 1) {
           const call = toolCalls[i];
           if (call.data) {
-            // Zero-Friction Intervention Check
             const isDestructive = DESTRUCTIVE_TOOLS.includes(call.data.name);
             if (this.ui.inputQueue && this.ui.inputQueue.length > 0) {
               if (isDestructive) {
                 logger.info("Destructive tool interrupted by user input");
                 throw new UserInterruptException();
               }
-              // For non-destructive tools, we can choose to interrupt or continue.
-              // To be truly responsive, we interrupt any turn if the user speaks.
               throw new UserInterruptException();
             }
 
             consecutiveErrors = 0;
-            // eslint-disable-next-line no-await-in-loop
             const { response, result } = await this.engine.executeToolCall(
               call.data.name,
               call.data.args,
@@ -171,14 +122,8 @@ class TurnProcessor {
             if (result && result.type === "FOUNTAIN_INJECTION") {
               this.ui.displayChatMessage("system", result.content);
               this.assistant.injectMessage("user", result.content);
-
-              const okResponse = this.parser.formatToolResponse(
-                "OK",
-                call.data.id,
-                true,
-              );
+              const okResponse = this.parser.formatToolResponse("OK", call.data.id, true);
               this.assistant.injectMessage("user", okResponse);
-
               return;
             }
 
@@ -188,53 +133,35 @@ class TurnProcessor {
               result.startsWith("*** ")
             ) {
               const [, name] = result.match(/is now known as\s+(.+)$/);
-              if (name) {
-                this.ui.agentNickname = name;
-              }
+              if (name) this.ui.agentNickname = name;
             }
             toolResults.push(response);
           } else if (call.error) {
             consecutiveErrors += 1;
-            toolResults.push(
-              `<TOOL_RESPONSE>ERR: ${call.error}</TOOL_RESPONSE>`,
-            );
+            toolResults.push(`<TOOL_RESPONSE>ERR: ${call.error}</TOOL_RESPONSE>`);
           }
         }
 
         if (consecutiveErrors >= 3) {
           turnComplete = true;
-          currentResponse =
-            "CRITICAL ERROR: Too many consecutive JSON validation failures. Stop using tools and explain your intent in plain text.";
+          currentResponse = "CRITICAL ERROR: Too many consecutive JSON validation failures. Stop using tools and explain your intent in plain text.";
           break;
         }
-        // eslint-disable-next-line no-await-in-loop
-        currentResponse = await this.#sendMessageWithRetry(
-          this.ui.renderingMode === "FOUNTAIN"
-            ? this.ui._renderFountain("system", toolResults.join("\n"))
-            : toolResults.join("\n"),
-          "user",
-        );
+
+        const resultsPayload = this.ui.renderingMode === "FOUNTAIN"
+          ? this.fountain.formatToolResults(toolResults)
+          : toolResults.join("\n");
+
+        currentResponse = await this.api.send(resultsPayload, "user");
 
         if (this.ui.renderingMode === "FOUNTAIN") {
-          const formatted = this.ui._renderFountain(
-            this.ui.agentNickname,
-            currentResponse,
-          );
-          // eslint-disable-next-line no-await-in-loop
-          await this.assistant.popLastMessage();
-          // eslint-disable-next-line no-await-in-loop
-          await this.assistant.injectMessage("model", formatted);
+          await this.fountain.processResponse(currentResponse);
         }
 
-        // Guard against null/filtered responses during tool iterations
-        const isSafetyBlockTool =
-          currentResponse === null || currentResponse === "null";
-
+        const isSafetyBlockTool = currentResponse === null || currentResponse === "null";
         if (isSafetyBlockTool) {
-          this.ui.displayError(
-            "The model response was filtered by safety guards during tool execution. Your last message has been removed from history. Please rephrase your request.",
-          );
-          this.assistant.popLastMessage(); // Remove the triggering message to prevent history poisoning
+          this.ui.displayError("The model response was filtered by safety guards during tool execution. Your last message has been removed from history. Please rephrase your request.");
+          this.assistant.popLastMessage();
           turnComplete = true;
           break;
         }
@@ -242,35 +169,23 @@ class TurnProcessor {
         if (currentResponse?.startsWith("Error:")) {
           apiRecoveryAttempts += 1;
           if (apiRecoveryAttempts < maxApiRecoveries) {
-            this.ui.displayError(
-              `API Communication Error during tool processing (Attempt ${apiRecoveryAttempts}/${maxApiRecoveries}): ${currentResponse}`,
-            );
-            // eslint-disable-next-line no-await-in-loop
-            // eslint-disable-next-line no-await-in-loop
-            // eslint-disable-next-line no-await-in-loop
-            currentResponse = await this.#sendMessageWithRetry(
-              `System Error: ${currentResponse}. Please attempt to recover or rephrase your last action.`,
-            );
+            this.ui.displayError(`API Communication Error during tool processing (Attempt ${apiRecoveryAttempts}/${maxApiRecoveries}): ${currentResponse}`);
+            currentResponse = await this.api.recover(currentResponse, apiRecoveryAttempts, maxApiRecoveries);
           } else {
-            this.ui.displayError(
-              "Critical API failure during tool processing. Halting.",
-            );
+            this.ui.displayError("Critical API failure during tool processing. Halting.");
             return;
           }
         }
       }
     }
 
-    if (iterations >= maxIterations)
-      this.ui.displayError("Maximum tool iterations reached.");
+    if (iterations >= maxIterations) this.ui.displayError("Maximum tool iterations reached.");
 
-    const cleanedResponse = this.parser.cleanResponse(currentResponse);
-    const finalResponse = cleanedResponse;
+    const finalResponse = this.parser.cleanResponse(currentResponse);
     if (finalResponse.trim()) {
       this.ui.displayChatMessage(this.ui.agentNickname, finalResponse);
     }
   }
 }
-
 
 export default TurnProcessor;

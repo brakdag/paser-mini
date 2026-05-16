@@ -10,9 +10,13 @@ This document provides the definitive map of the Paser Mini codebase. The projec
 │   ├── main.js                # Application entry point
 │   ├── core/                  # The "Brain": ReAct engine & state management
 │   │   ├── chatManager.js    # Message queue & session orchestration
-│   │   ├── executionEngine.js # Tool execution & loop logic
-│   │   ├── smartParser.js    # Token-efficient response parsing
-│   │   ├── terminalUI.js     # Decoupled CLI interface
+│   │   ├── turnProcessor.js   # Main ReAct loop & turn logic
+│   │   ├── ApiCommunicator.js # Resilient API communication layer
+│   │   ├── FountainAdapter.js # Screenplay mode orchestration
+│   │   ├── terminalUI.js     # UI Orchestrator (Delegates to Renderer/Input)
+│   │   ├── TerminalRenderer.js# Visual output & Markdown formatting
+│   │   ├── TerminalInput.js   # User input & readline management
+│   │   ├── SessionLogger.js   # Session persistence & logging
 │   │   ├── configManager.js  # Application settings
 │   │   ├── commandHandler.js  # Internal system command logic
 │   │   └── schemas/           # JSON Tool definitions (The Source of Truth)
@@ -36,6 +40,7 @@ This document provides the definitive map of the Paser Mini codebase. The projec
 
 ### Key Architectural Principles
 
-1. **Decoupling**: The `TerminalUI` is decoupled from the `ExecutionEngine` to allow for non-blocking input/output.
+1. **Decoupling**: The `TerminalUI` is now a thin orchestrator, delegating rendering, input, and logging to specialized classes to reduce cognitive load.
 2. **Surgicality**: Tools are designed to perform the smallest possible change to minimize token consumption.
 3. **Persistence**: The `memento` infrastructure ensures that distilled insights survive across sessions via the Cognitive Graph.
+4. **Resilience**: API communication is abstracted into a dedicated communicator to handle retries and recovery without polluting the reasoning loop.

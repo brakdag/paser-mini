@@ -14,3 +14,15 @@ To verify changes in the core engine or toolset:
 ### Testing Environment
 
 All tests should be run in a clean Debian/Linux environment. Avoid using multi-platform wrappers that could introduce latency or behavioral discrepancies.
+
+## 🛠️ Strategic Optimization Log
+
+### Phase: Zero-Friction Refactoring
+
+**Objective:** Reduce cognitive load and eliminate structural noise to maximize developer and agent efficiency.
+
+- **UI Modularization**: Decomposed `TerminalUI` into `TerminalRenderer`, `TerminalInput`, and `SessionLogger`. This separates visual output, input stream management, and persistence, preventing the 'God Object' anti-pattern.
+- **Turn Processing Decoupling**: Extracted `ApiCommunicator` and `FountainAdapter` from `TurnProcessor`. The reasoning loop is now agnostic to API retry logic and specific rendering modes (Fountain), increasing system resilience.
+- **Schema Unification**: Centralized all tool validation schemas in `src/core/schemas/`. Eliminated fragmented definitions in `src/tools/` to establish a single Source of Truth.
+- **Visibility Expansion**: Removed the arbitrary `head -n 100` limit in `getTrackedFiles`. The agent now possesses full, scalable visibility of the project index.
+- **Temporal Precision**: Updated system timestamps to `[HH:mm:ss]` across the UI and logs, enabling precise performance auditing of the ReAct cycle.
