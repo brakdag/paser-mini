@@ -149,6 +149,7 @@ class ChatManager {
 
     if (initialInput) {
       const logMsg = this.ui.getLogOpenedString();
+      const welcomeMsg = "System initialized. Ready for input.";
       const combinedMsg = `${logMsg}\n${welcomeMsg}`;
 
       this.ui.displayChatMessage("system", combinedMsg);

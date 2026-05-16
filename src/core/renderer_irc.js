@@ -1,5 +1,5 @@
-import BaseRenderer from "./renderer_base.js";
 import chalk from "chalk";
+import BaseRenderer from "./renderer_base.js";
 
 class IRCRenderer extends BaseRenderer {
   render(message, ui) {
@@ -18,10 +18,10 @@ class IRCRenderer extends BaseRenderer {
 
     // Handle System Messages
     if (
-      type === "system" ||
-      trimmedText.startsWith("---") ||
-      trimmedText.startsWith("***") ||
-      trimmedText.startsWith("-!-")
+      type === "system"
+      || trimmedText.startsWith("---")
+      || trimmedText.startsWith("***")
+      || trimmedText.startsWith("-!-")
     ) {
       return `[${timestamp}] ${formattedText}\n`;
     }

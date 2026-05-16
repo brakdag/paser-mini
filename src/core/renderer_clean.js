@@ -13,7 +13,7 @@ class CleanRenderer extends BaseRenderer {
       return "";
     }
 
-    return ui.formatMarkdown(trimmedText) + "\n";
+    return `${ui.formatMarkdown(trimmedText)}\n`;
   }
 }
 

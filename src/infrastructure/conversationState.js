@@ -40,7 +40,7 @@ class ConversationState {
     // Store RAW text in history to avoid token noise in AI requests
     this.history.push({
       role: normalizedRole,
-      text: text,
+      text,
       timestamp: ts,
     });
     

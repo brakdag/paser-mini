@@ -56,7 +56,10 @@ class SmartToolParser {
     let match;
     SmartToolParser.TOOL_PATTERN.lastIndex = 0;
 
-    while ((match = SmartToolParser.TOOL_PATTERN.exec(text)) !== null) {
+    while (true) {
+      match = SmartToolParser.TOOL_PATTERN.exec(text);
+      if (match === null) break;
+
       const content = match[1].trim();
       const { data, error } = this.parseCall(content);
       results.push({ data, content, error });
