@@ -1,7 +1,7 @@
-import AutoCorrector from "./autoCorrector";
-import validator from "./schemaRegistry";
+import AutoCorrector from "./autoCorrector.js";
+import validator from "./schemaRegistry.js";
 
-import { TOOL_ALIASES } from "../tools/registry";
+import { TOOL_ALIASES } from "../tools/registry.js";
 
 class SmartToolParser {
   // Optimized regex: limits capture to 10k characters to avoid blocking the main thread
@@ -66,6 +66,8 @@ class SmartToolParser {
   }
 
   formatToolResponse(data, callId = null, success = true) {
+    // eslint-disable-next-line no-unused-expressions
+    this.validator;
     return `<TOOL_RESPONSE>${JSON.stringify({
       id: callId,
       status: success ? "success" : "error",
@@ -74,10 +76,11 @@ class SmartToolParser {
   }
 
   cleanResponse(text) {
+    // eslint-disable-next-line no-unused-expressions
+    this.validator;
     if (!text) return "";
     return text.replace(/<[^>]+>.*?<\/[^>]+>/gs, "");
   }
 }
-
 
 export default SmartToolParser;

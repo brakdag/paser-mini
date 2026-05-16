@@ -1,7 +1,7 @@
-import BaseRenderer from "./renderer_base";
+import BaseRenderer from "./renderer_base.js";
 
 class FountainRenderer extends BaseRenderer {
-  _wrapText(text, start, end) {
+  static wrapText(text, start, end) {
     const width = end - start;
     const words = text.split(/\s+/);
     const lines = [];
@@ -45,29 +45,32 @@ class FountainRenderer extends BaseRenderer {
           /^(\* ACTION:\s*|\*\*\*|---|-!-)\s*|\s*\*$/g,
           "",
         );
-        output = this._wrapText(cleanText, 0, 75);
+        output = FountainRenderer.wrapText(cleanText, 0, 75);
       }
     } else if (nickname === "dialogue") {
       if (trimmedText.startsWith("*")) {
         const cleanText = trimmedText.replace(/^\*\s*|\s*\*$/g, "");
-        output += this._wrapText(`(${cleanText})`, 31, 60);
+        output += FountainRenderer.wrapText(`(${cleanText})`, 31, 60);
       } else {
-        output += this._wrapText(trimmedText, 25, 60);
+        output += FountainRenderer.wrapText(trimmedText, 25, 60);
       }
     } else {
       output += `${" ".repeat(37)}${nickname.toUpperCase()}\n`;
 
       if (trimmedText.startsWith("*")) {
         const cleanText = trimmedText.replace(/^\*\s*|\s*\*$/g, "");
-        output += this._wrapText(`(${cleanText})`, 31, 60);
+        output += FountainRenderer.wrapText(`(${cleanText})`, 31, 60);
       } else {
-        output += this._wrapText(this.ui.formatMarkdown(trimmedText), 25, 60);
+        output += FountainRenderer.wrapText(
+          this.ui.formatMarkdown(trimmedText),
+          25,
+          60,
+        );
       }
     }
 
     return `${output}\n`;
   }
 }
-
 
 export default FountainRenderer;

@@ -1,4 +1,4 @@
-import logger from "./logger";
+import logger from "../../core/logger.js";
 
 class NvidiaRetryHandler {
   constructor(maxRetries = 5000, callback = null) {
@@ -48,6 +48,5 @@ class NvidiaRetryHandler {
     return run(0);
   }
 }
-
 
 export default NvidiaRetryHandler;

@@ -1,7 +1,7 @@
 import { exec } from "child_process";
 import { promisify } from "util";
 import fs from "fs";
-import { registerSchemas } from "../core/schemaRegistry";
+import { registerSchemas } from "../core/schemaRegistry.js";
 
 const execPromise = promisify(exec);
 

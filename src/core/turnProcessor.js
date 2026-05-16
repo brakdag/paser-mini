@@ -1,5 +1,5 @@
-import logger from "./logger";
-import UserInterruptException from "./exceptions";
+import logger from "./logger.js";
+import UserInterruptException from "./exceptions.js";
 
 const DESTRUCTIVE_TOOLS = [
   "removeFile",

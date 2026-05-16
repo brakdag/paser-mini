@@ -1,6 +1,6 @@
 import axios from "axios";
 import axiosRetry from "axios-retry";
-import logger from "./logger";
+import logger from "../../core/logger.js";
 
 class GeminiAdapter {
   constructor(ui, userNickname = "user", agentNickname = "assistant") {
@@ -245,6 +245,5 @@ class GeminiAdapter {
     }
   }
 }
-
 
 export default GeminiAdapter;

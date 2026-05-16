@@ -1,6 +1,6 @@
 import axios from "axios";
-import logger from "./logger";
-import NvidiaRetryHandler from "./retryHandler";
+import logger from "../../core/logger.js";
+import NvidiaRetryHandler from "./retryHandler.js";
 
 class NvidiaRestClient {
   constructor(configManager) {
@@ -82,6 +82,5 @@ class NvidiaRestClient {
   // eslint-disable-next-line no-empty-function
   async close() {}
 }
-
 
 export default NvidiaRestClient;

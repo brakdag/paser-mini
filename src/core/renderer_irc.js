@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import BaseRenderer from "./renderer_base";
+import BaseRenderer from "./renderer_base.js";
 
 class IRCRenderer extends BaseRenderer {
   render(message) {

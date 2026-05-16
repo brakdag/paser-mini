@@ -1,4 +1,4 @@
-import BaseRenderer from "./renderer_base";
+import BaseRenderer from "./renderer_base.js";
 
 class CleanRenderer extends BaseRenderer {
   render(message) {

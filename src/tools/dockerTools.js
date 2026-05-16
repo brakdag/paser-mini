@@ -3,7 +3,7 @@ import { promisify } from "util";
 
 const execAsync = promisify(exec);
 
-export async function sh({ command }) {
+async function sh({ command }) {
   // El comando se ejecuta dentro del contenedor de Docker
   // Usamos -t para asegurar un TTY y que la salida sea limpia
   const dockerCmd = `docker exec -t paser_mini_runtime sh -c "${command}"`;
@@ -21,3 +21,7 @@ export async function sh({ command }) {
     return `ERR: ${error.message}`;
   }
 }
+
+export default {
+  sh,
+};

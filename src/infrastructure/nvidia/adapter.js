@@ -1,8 +1,8 @@
 // import axios from 'axios';
-import ConversationState from "./conversationState";
-import PayloadMapper from "./payloadMapper";
-import NvidiaRestClient from "./restClient";
-import logger from "./logger";
+import ConversationState from "../conversationState.js";
+import PayloadMapper from "../payloadMapper.js";
+import NvidiaRestClient from "./restClient.js";
+import logger from "../../core/logger.js";
 
 class NvidiaAdapter {
   constructor(
@@ -154,6 +154,5 @@ class NvidiaAdapter {
     // No resources to clean up for NvidiaAdapter
   }
 }
-
 
 export default NvidiaAdapter;

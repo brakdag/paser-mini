@@ -1,6 +1,6 @@
 import { exec } from "child_process";
 import { promisify } from "util";
-import ConfigManager from "./configManager";
+import ConfigManager from "./configManager.js";
 
 const execPromise = promisify(exec);
 const config = new ConfigManager();

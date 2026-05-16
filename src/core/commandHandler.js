@@ -1,10 +1,10 @@
-import SystemCommands from "./system";
-import ModelCommands from "./models";
-import ConfigCommands from "./config";
-import FavoriteCommands from "./favorites";
-import SessionCommands from "./session";
-import InterfaceCommands from "./interface";
-import AICommands from "./ai";
+import SystemCommands from "./commandHandlers/system.js";
+import ModelCommands from "./commandHandlers/models.js";
+import ConfigCommands from "./commandHandlers/config.js";
+import FavoriteCommands from "./commandHandlers/favorites.js";
+import SessionCommands from "./commandHandlers/session.js";
+import InterfaceCommands from "./commandHandlers/interface.js";
+import AICommands from "./commandHandlers/ai.js";
 
 const COMMAND_MAP = {
   "/q": (cm) => SystemCommands.handleExit(cm),
@@ -98,6 +98,5 @@ class CommandHandler {
     return false;
   }
 }
-
 
 export default CommandHandler;

@@ -1,12 +1,12 @@
 // Navigation: See /robots.txt for the Cognitive Navigation Map
-import SmartToolParser from "./smartParser";
-import ExecutionEngine from "./executionEngine";
-import CommandHandler from "./commandHandler";
-import RepetitionDetector from "./repetitionDetector";
-import logger from "./logger";
-import ConfigManager from "./configManager";
-import TurnProcessor from "./turnProcessor";
-import HistoryManager from "./historyManager";
+import SmartToolParser from "./smartParser.js";
+import ExecutionEngine from "./executionEngine.js";
+import CommandHandler from "./commandHandler.js";
+import RepetitionDetector from "./repetitionDetector.js";
+import logger from "./logger.js";
+import ConfigManager from "./configManager.js";
+import TurnProcessor from "./turnProcessor.js";
+import HistoryManager from "./historyManager.js";
 
 class ChatManager {
   constructor(assistant, tools, systemInstruction, ui, instanceMode = false) {
@@ -199,10 +199,10 @@ class ChatManager {
           this.ui.displayError(
             `Error de conexión con la IA: ${e.message}. La sesión sigue activa, intenta de nuevo en un momento.`,
           );
-          console.error(e);
+          logger.error(`API Error: ${e.message}`, e);
         } else {
           this.ui.displayError(`Critical error in processTurn: ${e.message}`);
-          console.error(e);
+          logger.error(`Critical error: ${e.message}`, e);
         }
       }
     }
@@ -216,6 +216,5 @@ class ChatManager {
     this.stopRequested = true;
   }
 }
-
 
 export default ChatManager;

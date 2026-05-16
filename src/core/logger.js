@@ -28,7 +28,7 @@ class Logger {
     );
   }
 
-  _log(level, message, data = null) {
+  log(level, message, data = null) {
     const timestamp = new Date().toISOString();
     let targetFile = this.logFile;
     if (level === "THOUGHT") {
@@ -59,31 +59,30 @@ class Logger {
   }
 
   info(msg, data) {
-    this._log("INFO", msg, data);
+    this.log("INFO", msg, data);
   }
 
   warn(msg, data) {
-    this._log("WARN", msg, data);
+    this.log("WARN", msg, data);
   }
 
   error(msg, data) {
-    this._log("ERROR", msg, data);
+    this.log("ERROR", msg, data);
   }
 
   sessionLog(msg) {
-    this._log("THOUGHT", msg);
+    this.log("THOUGHT", msg);
   }
 
   historyLog(msg) {
-    this._log("HISTORY", msg);
+    this.log("HISTORY", msg);
   }
 
   debug(msg, data) {
-    this._log("DEBUG", msg, data);
+    this.log("DEBUG", msg, data);
   }
 }
 
 const logger = new Logger();
-
 
 export default logger;

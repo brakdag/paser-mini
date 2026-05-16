@@ -1,6 +1,6 @@
 import axios from "axios";
 import axiosRetry from "axios-retry";
-import { getCurrentRepo } from "./gitTools";
+import { getCurrentRepo } from "./gitTools.js";
 
 const GITHUB_API_URL = "https://api.github.com";
 

@@ -1,4 +1,4 @@
-import * as githubTools from "../tools/githubTools";
+import * as githubTools from "../tools/githubTools.js";
 
 class GitHubUI {
   constructor(issueNumber, repo = null) {
@@ -6,7 +6,6 @@ class GitHubUI {
     this.repo = repo;
   }
 
-  // eslint-disable-next-line no-unused-vars
   async requestInput(_prompt) {
     // In GitHub mode, input is managed by the orchestrator via message queue
     return "";
@@ -29,39 +28,55 @@ class GitHubUI {
   }
 
   displayThought(text) {
-    console.log(`[THOUGHT] ${text}`);
+    console.log(`[THOUGHT] [Issue ${this.issueNumber}] ${text}`);
   }
 
   displayInfo(message) {
-    console.log(`[INFO] ${message}`);
+    console.log(`[INFO] [Issue ${this.issueNumber}] ${message}`);
   }
 
   displayError(message) {
-    console.error(`[ERROR] ${message}`);
+    console.error(`[ERROR] [Issue ${this.issueNumber}] ${message}`);
   }
 
   displayToolStatus(toolName, success, detail = "") {
     const status = success ? "OK" : "FAIL";
-    console.log(`[TOOL] ${toolName} -> ${status} ${detail}`);
+    console.log(
+      `[TOOL] [Issue ${this.issueNumber}] ${toolName} -> ${status} ${detail}`,
+    );
   }
 
   async getConfirmation(message) {
-    console.log(`[CONFIRMATION REQUEST] ${message} -> Defaulting to True`);
+    console.log(
+      `[CONFIRMATION REQUEST] [Issue ${this.issueNumber}] ${message} -> Defaulting to True`,
+    );
     return true;
   }
 
-  // eslint-disable-next-line no-unused-vars
-  startToolMonitoring(_toolName, _detail = "") {}
+  startToolMonitoring(toolName, detail = "") {
+    console.log(
+      `[MONITORING START] [Issue ${this.issueNumber}] ${toolName} -> ${detail}`,
+    );
+  }
 
-  // eslint-disable-next-line no-unused-vars
-  endToolMonitoring(_toolName, _success) {}
+  endToolMonitoring(toolName, success) {
+    const status = success ? "OK" : "FAIL";
+    console.log(
+      `[MONITORING END] [Issue ${this.issueNumber}] ${toolName} -> ${status}`,
+    );
+  }
 
-  stopAllMonitoring() {}
+  stopAllMonitoring() {
+    console.log(`[MONITORING STOPPED] [Issue ${this.issueNumber}]`);
+  }
 
-  addSpacing() {}
+  addSpacing() {
+    console.log(`[SPACING] [Issue ${this.issueNumber}]`);
+  }
 
-  updateQueueCount() {}
+  updateQueueCount() {
+    console.log(`[QUEUE UPDATE] [Issue ${this.issueNumber}]`);
+  }
 }
-
 
 export default GitHubUI;

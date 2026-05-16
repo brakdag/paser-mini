@@ -11,10 +11,11 @@ class BaseRenderer {
    * @param {string} [message.type] - 'chat', 'system', 'error', 'info', 'thought'
    * @returns {string} The formatted string for terminal output
    */
-  render(_message) {
-    throw new Error("render() must be implemented by subclass");
+  render(message) {
+    throw new Error(
+      `Renderer ${this.constructor.name} must implement render() for message: ${JSON.stringify(message)}`,
+    );
   }
 }
-
 
 export default BaseRenderer;

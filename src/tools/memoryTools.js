@@ -1,4 +1,4 @@
-import MementoManager from "./manager";
+import MementoManager from "../infrastructure/memento/manager.js";
 
 const memento = new MementoManager();
 

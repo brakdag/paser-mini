@@ -1,4 +1,4 @@
-import MementoManager from "./manager";
+import MementoManager from "../../infrastructure/memento/manager.js";
 
 class SystemCommands {
   static handleClear() {
@@ -50,6 +50,5 @@ class SystemCommands {
     return true;
   }
 }
-
 
 export default SystemCommands;
