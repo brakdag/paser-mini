@@ -84,11 +84,11 @@ class TerminalUI {
 
   writeToLog(text) {
     try {
-      fs.appendFileSync("session.log", `${text}\n`, "utf8");
+      fs.appendFileSync("log/session.log", `${text}\n`, "utf8");
 
       // Immediate persistence for system events (-!-)
       if (text.includes("-!-")) {
-        fs.appendFileSync("session_history.log", `${text}\n`, "utf8");
+        fs.appendFileSync("log/history.log", `${text}\n`, "utf8");
       }
     } catch (e) {
       console.error(`[Log Error] ${e.message}`);
@@ -97,13 +97,13 @@ class TerminalUI {
 
   clearLog() {
     try {
-      if (fs.existsSync("session.log")) {
-        const content = fs.readFileSync("session.log", "utf8");
+      if (fs.existsSync("log/session.log")) {
+        const content = fs.readFileSync("log/session.log", "utf8");
         if (content) {
-          fs.appendFileSync("session_history.log", `${content}\n`, "utf8");
+          fs.appendFileSync("log/history.log", `${content}\n`, "utf8");
         }
       }
-      fs.writeFileSync("session.log", "", "utf8");
+      fs.writeFileSync("log/session.log", "", "utf8");
     } catch (e) {
       console.error(`[Log Error] ${e.message}`);
     }
@@ -455,6 +455,5 @@ class TerminalUI {
     return answer.toLowerCase() === "y";
   }
 }
-
 
 export default TerminalUI;
