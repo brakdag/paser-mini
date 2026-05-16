@@ -76,6 +76,7 @@ export class GeminiAdapter {
 
   _buildPayload() {
     const contents = JSON.parse(JSON.stringify(this.history)).map((c) => {
+      // eslint-disable-next-line no-unused-vars
       const { timestamp, ...rest } = c;
       if (rest.role === 'server') {
         rest.role = 'user';
