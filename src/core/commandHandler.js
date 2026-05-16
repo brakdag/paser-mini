@@ -21,7 +21,8 @@ const COMMAND_MAP = {
   '/clean': InterfaceCommands.handleClean,
   '/help': (cm, ui) => InterfaceCommands.handleHelp(ui),
   '/connect': AICommands.handleConnect,
-  '/config': ConfigCommands.handleConfig
+  '/config': ConfigCommands.handleConfig,
+  '/models_check': (cm, ui) => ModelCommands.handleModelsCheck(cm, ui)
 };
 
 const PREFIX_COMMANDS = {

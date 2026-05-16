@@ -12,7 +12,6 @@ export class NvidiaAdapter {
     this.systemInstruction = '';
     this.temperature = 0.7;
     this.lastPayload = null;
-    this.apiKey = process.env.NVIDIA_API_KEY || '';
   }
 
   startChat(modelName, systemInstruction, temperature = 0.7) {
@@ -26,7 +25,7 @@ export class NvidiaAdapter {
   _filterThoughts(text) {
     if (!text) return '';
     let cleaned = text.replace(/<(thought|reasoning)>[\s\S]*?<\/\1>/gi, '');
-    cleaned = cleaned.replace(/^(\[\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, '');
+    cleaned = cleaned.replace(/^(\[\d{2}:\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, '');
     return cleaned.trim();
   }
 
@@ -35,7 +34,7 @@ export class NvidiaAdapter {
 
     const history = this.state.getRawHistory();
     const processedHistory = this.state.renderingMode === 'CLEAN'
-      ? history.map((m) => ({ ...m, text: m.text.replace(/^(\[\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, '').trim() }))
+      ? history.map((m) => ({ ...m, text: m.text.replace(/^(\[\d{2}:\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, '').trim() }))
       : history;
 
     const payload = PayloadMapper.toNvidia(
@@ -46,8 +45,6 @@ export class NvidiaAdapter {
     payload.model = this.currentModel;
     payload.max_tokens = maxTokens;
     this.lastPayload = payload;
-
-    const url = 'https://integrate.api.nvidia.com/v1/chat/completions';
 
     try {
       logger.debug('NvidiaAdapter: Sending request', { model: this.currentModel, payload });
@@ -96,10 +93,6 @@ export class NvidiaAdapter {
   }
 
   async getAvailableModels() {
-    if (!this.apiKey) {
-      console.error('NVIDIA_API_KEY is not defined in environment variables.');
-      return [];
-    }
     try {
       const data = await this.restClient.get('models');
       const models = data.data?.map((m) => m.id) || [];
@@ -119,10 +112,7 @@ export class NvidiaAdapter {
         max_tokens: 1,
       };
 
-      await axios.post('https://integrate.api.nvidia.com/v1/chat/completions', payload, {
-        headers: { Authorization: `Bearer ${this.apiKey}` },
-        timeout: 1000,
-      });
+      await this.restClient.chatCompletions(payload);
       return true;
     } catch (e) {
       if (e.response && e.response.status === 404) {

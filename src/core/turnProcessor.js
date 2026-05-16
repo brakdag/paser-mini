@@ -234,11 +234,7 @@ export class TurnProcessor {
 
         // Guard against null/filtered responses during tool iterations
         const isSafetyBlock =
-          currentResponse === null ||
-          currentResponse === "null" ||
-          (typeof currentResponse === "string" &&
-            (currentResponse.includes("safety block") ||
-              currentResponse.includes("blocked by safety filters")));
+          currentResponse === null || currentResponse === "null";
 
         if (isSafetyBlock) {
           this.ui.displayError(

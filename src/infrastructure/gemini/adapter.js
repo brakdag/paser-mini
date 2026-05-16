@@ -17,7 +17,10 @@ export class GeminiAdapter {
     this.lastRequestTime = 0;
     this.rpmLimit = 15;
 
-    this.client = axios.create();
+    this.client = axios.create({
+      timeout: 600000,
+    });
+
     axiosRetry(this.client, {
       retries: 5,
       retryDelay: axiosRetry.exponentialDelay,
@@ -33,6 +36,8 @@ export class GeminiAdapter {
         const time = new Date().toLocaleTimeString('en-GB', {
           hour: '2-digit',
           minute: '2-digit',
+          second: '2-digit',
+          hour12: false,
         });
         const msg = `[${time}] -!- [GeminiAdapter] API Retry ${retryCount}/5 due to: ${error.response?.status || error.message}`;
         logger.warn(msg);
@@ -96,7 +101,7 @@ export class GeminiAdapter {
   _filterThoughts(text) {
     if (!text) return '';
     let cleaned = text.replace(/<(thought|reasoning)>[\s\S]*?<\/\1>/gi, '');
-    cleaned = cleaned.replace(/^(\[\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, '');
+    cleaned = cleaned.replace(/^(\[\d{2}:\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, '');
     return cleaned.trim();
   }
 
@@ -120,6 +125,8 @@ export class GeminiAdapter {
     const timestamp = new Date().toLocaleTimeString('en-GB', {
       hour: '2-digit',
       minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
     });
     const formattedMessage = this._formatMessage(role, message, timestamp);
     const parts = [{ text: formattedMessage }];
@@ -135,7 +142,7 @@ export class GeminiAdapter {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${this.apiKey}`;
 
     try {
-      const response = await axios.post(url, payload, { timeout: 600000 });
+      const response = await this.client.post(url, payload);
       const { data } = response;
 
       const candidates = data.candidates;
@@ -160,6 +167,8 @@ export class GeminiAdapter {
         const msgTimestamp = new Date().toLocaleTimeString('en-GB', {
           hour: '2-digit',
           minute: '2-digit',
+          second: '2-digit',
+          hour12: false,
         });
         const msgFormatted = this._formatMessage(
           'model',
@@ -189,6 +198,8 @@ export class GeminiAdapter {
       new Date().toLocaleTimeString('en-GB', {
         hour: '2-digit',
         minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
       });
     const formattedMessage = this._formatMessage(role, content, ts);
     this.history.push({
@@ -220,7 +231,7 @@ export class GeminiAdapter {
   async getAvailableModels() {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${this.apiKey}`;
-      const response = await axios.get(url, { timeout: 60000 });
+      const response = await this.client.get(url);
       const models = response.data.models || [];
       return models
         .filter((m) => m.name.includes('gemini') || m.name.includes('gemma'))

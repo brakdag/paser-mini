@@ -1,0 +1,200 @@
+   9:30  warning  Strings must use singlequote                   quotes
+   9:69  warning  Strings must use singlequote                   quotes
+  10:14  warning  Strings must use singlequote                   quotes
+  14:1   warning  Trailing spaces not allowed                    no-trailing-spaces
+  15:12  warning  Unexpected string concatenation                prefer-template
+  15:28  warning  Strings must use singlequote                   quotes
+  17:2   warning  Newline required at end of file but not found  eol-last
+
+/mnt/DataSD/sandbox/paser-mini/src/core/renderer_fountain.js
+   1:30  warning  Strings must use singlequote                      quotes
+   4:3   error    Useless constructor                               no-useless-constructor
+  11:9   error    'lines' is never reassigned. Use 'const' instead  prefer-const
+  12:23  warning  Strings must use singlequote                      quotes
+  15:41  warning  Strings must use singlequote                      quotes
+  15:47  warning  Strings must use singlequote                      quotes
+  16:39  warning  Strings must use singlequote                      quotes
+  16:45  warning  Strings must use singlequote                      quotes
+  24:32  warning  Strings must use singlequote                      quotes
+  24:63  warning  Strings must use singlequote                      quotes
+  30:1   warning  Trailing spaces not allowed                       no-trailing-spaces
+  32:30  warning  Strings must use singlequote                      quotes
+  32:69  warning  Strings must use singlequote                      quotes
+  33:14  warning  Strings must use singlequote                      quotes
+  36:18  warning  Strings must use singlequote                      quotes
+  39:34  warning  Strings must use singlequote                      quotes
+  41:45  warning  Strings must use singlequote                      quotes
+  43:18  warning  Strings must use singlequote                      quotes
+  43:18  warning  Unexpected string concatenation                   prefer-template
+  43:37  warning  Strings must use singlequote                      quotes
+  47:11  warning  Strings must use singlequote                      quotes
+  51:29  warning  Strings must use singlequote                      quotes
+  52:34  warning  Strings must use singlequote                      quotes
+  53:65  warning  Strings must use singlequote                      quotes
+  59:17  warning  Strings must use singlequote                      quotes
+  59:17  warning  Unexpected string concatenation                   prefer-template
+  59:59  warning  Strings must use singlequote                      quotes
+  61:34  warning  Strings must use singlequote                      quotes
+  62:65  warning  Strings must use singlequote                      quotes
+  69:12  warning  Unexpected string concatenation                   prefer-template
+  69:21  warning  Strings must use singlequote                      quotes
+  71:2   warning  Newline required at end of file but not found     eol-last
+
+/mnt/DataSD/sandbox/paser-mini/src/core/renderer_irc.js
+   1:19   warning  Strings must use singlequote                     quotes
+   2:30   warning  Strings must use singlequote                     quotes
+   6:11   error    Expected a line break after this opening brace   object-curly-newline
+   6:40   error    Expected a line break before this closing brace  object-curly-newline
+   8:1    warning  Trailing spaces not allowed                      no-trailing-spaces
+  10:30   warning  Strings must use singlequote                     quotes
+  10:69   warning  Strings must use singlequote                     quotes
+  11:14   warning  Strings must use singlequote                     quotes
+  15:61   warning  Strings must use singlequote                     quotes
+  16:13   warning  Strings must use singlequote                     quotes
+  17:15   warning  Strings must use singlequote                     quotes
+  21:53   warning  Strings must use singlequote                     quotes
+  21:86   warning  Strings must use singlequote                     quotes
+  21:119  warning  Strings must use singlequote                     quotes
+  29:1    warning  Trailing spaces not allowed                      no-trailing-spaces
+  32:2    warning  Newline required at end of file but not found    eol-last
+
+/mnt/DataSD/sandbox/paser-mini/src/core/repetitionDetector.js
+  11:26  warning  Trailing spaces not allowed                                                                                                                                                no-trailing-spaces
+  20:5   error    iterators/generators require regenerator-runtime, which is too heavyweight for this guide to allow them. Separately, loops should be avoided in favor of array iterations  no-restricted-syntax
+  26:44  error    Unexpected use of continue statement                                                                                                                                       no-continue
+  38:13  error    Unary operator '++' used                                                                                                                                                   no-plusplus
+  54:2   warning  Newline required at end of file but not found                                                                                                                              eol-last
+
+/mnt/DataSD/sandbox/paser-mini/src/core/schemaRegistry.js
+  15:1   warning  Trailing spaces not allowed                                                                                                                                                no-trailing-spaces
+  16:5   error    iterators/generators require regenerator-runtime, which is too heavyweight for this guide to allow them. Separately, loops should be avoided in favor of array iterations  no-restricted-syntax
+  20:1   warning  Trailing spaces not allowed                                                                                                                                                no-trailing-spaces
+  22:26  error    Unexpected `await` inside a loop                                                                                                                                           no-await-in-loop
+  23:33  warning  Unexpected string concatenation                                                                                                                                            prefer-template
+  24:1   warning  Trailing spaces not allowed                                                                                                                                                no-trailing-spaces
+  28:72  warning  Unexpected string concatenation                                                                                                                                            prefer-template
+  44:26  warning  Newline required at end of file but not found                                                                                                                              eol-last
+
+/mnt/DataSD/sandbox/paser-mini/src/core/schemaValidator.js
+   1:1   error    File has too many classes (2). Maximum allowed is 1  max-classes-per-file
+  16:30  warning  Trailing spaces not allowed                          no-trailing-spaces
+  17:45  warning  Trailing spaces not allowed                          no-trailing-spaces
+  25:30  warning  Trailing spaces not allowed                          no-trailing-spaces
+  26:23  warning  Trailing spaces not allowed                          no-trailing-spaces
+  43:46  warning  Expected parentheses around arrow function argument  arrow-parens
+  52:2   warning  Newline required at end of file but not found        eol-last
+
+/mnt/DataSD/sandbox/paser-mini/src/core/schemas/binaryAnalysisSchema.js
+  13:46  warning  Missing trailing comma                         comma-dangle
+  14:4   warning  Newline required at end of file but not found  eol-last
+
+/mnt/DataSD/sandbox/paser-mini/src/core/schemas/executeBashSchema.js
+  5:4  warning  Newline required at end of file but not found  eol-last
+
+/mnt/DataSD/sandbox/paser-mini/src/core/schemas/generateDocsSchema.js
+  6:4  warning  Newline required at end of file but not found  eol-last
+
+/mnt/DataSD/sandbox/paser-mini/src/core/schemas/hexToolSchema.js
+   7:64  warning  Missing trailing comma                         comma-dangle
+  11:45  warning  Missing trailing comma                         comma-dangle
+  15:70  warning  Missing trailing comma                         comma-dangle
+  19:60  warning  Missing trailing comma                         comma-dangle
+  23:51  warning  Missing trailing comma                         comma-dangle
+  27:63  warning  Missing trailing comma                         comma-dangle
+  31:73  warning  Missing trailing comma                         comma-dangle
+  35:62  warning  Missing trailing comma                         comma-dangle
+  40:50  warning  Missing trailing comma                         comma-dangle
+  46:96  warning  Missing trailing comma                         comma-dangle
+  47:6   warning  Missing trailing comma                         comma-dangle
+  55:35  warning  Missing trailing comma                         comma-dangle
+  56:4   warning  Missing trailing comma                         comma-dangle
+  57:3   warning  Newline required at end of file but not found  eol-last
+
+/mnt/DataSD/sandbox/paser-mini/src/core/schemas/lintCodeSchema.js
+  5:4  warning  Newline required at end of file but not found  eol-last
+
+/mnt/DataSD/sandbox/paser-mini/src/core/schemas/listZipFilesSchema.js
+  2:3   error    Unnecessarily quoted property '$schema' found               quote-props
+  2:3   warning  Strings must use singlequote                                quotes
+  2:14  warning  Strings must use singlequote                                quotes
+  3:3   error    Unnecessarily quoted property 'type' found                  quote-props
+  3:3   warning  Strings must use singlequote                                quotes
+  3:11  warning  Strings must use singlequote                                quotes
+  4:3   error    Unnecessarily quoted property 'properties' found            quote-props
+  4:3   warning  Strings must use singlequote                                quotes
+  5:5   error    Unnecessarily quoted property 'zipId' found                 quote-props
+  5:5   warning  Strings must use singlequote                                quotes
+  5:16  error    Unnecessarily quoted property 'type' found                  quote-props
+  5:16  warning  Strings must use singlequote                                quotes
+  5:24  warning  Strings must use singlequote                                quotes
+  5:34  warning  Missing trailing comma                                      comma-dangle
+  7:3   error    Unnecessarily quoted property 'required' found              quote-props
+  7:3   warning  Strings must use singlequote                                quotes
+  7:16  warning  Strings must use singlequote                                quotes
+  8:3   error    Unnecessarily quoted property 'additionalProperties' found  quote-props
+  8:3   warning  Strings must use singlequote                                quotes
+  8:27  warning  Strings must use singlequote                                quotes
+  8:34  warning  Missing trailing comma                                      comma-dangle
+  9:3   warning  Newline required at end of file but not found               eol-last
+
+/mnt/DataSD/sandbox/paser-mini/src/core/schemas/loadZipSchema.js
+  2:3   error    Unnecessarily quoted property '$schema' found               quote-props
+  2:3   warning  Strings must use singlequote                                quotes
+  2:14  warning  Strings must use singlequote                                quotes
+  3:3   error    Unnecessarily quoted property 'type' found                  quote-props
+  3:3   warning  Strings must use singlequote                                quotes
+  3:11  warning  Strings must use singlequote                                quotes
+  4:3   error    Unnecessarily quoted property 'properties' found            quote-props
+  4:3   warning  Strings must use singlequote                                quotes
+  5:5   error    Unnecessarily quoted property 'filePath' found              quote-props
+  5:5   warning  Strings must use singlequote                                quotes
+  5:19  error    Unnecessarily quoted property 'type' found                  quote-props
+  5:19  warning  Strings must use singlequote                                quotes
+  5:27  warning  Strings must use singlequote                                quotes
+  5:37  warning  Missing trailing comma                                      comma-dangle
+  7:3   error    Unnecessarily quoted property 'required' found              quote-props
+  7:3   warning  Strings must use singlequote                                quotes
+  7:16  warning  Strings must use singlequote                                quotes
+  8:3   error    Unnecessarily quoted property 'additionalProperties' found  quote-props
+  8:3   warning  Strings must use singlequote                                quotes
+  8:32  warning  Missing trailing comma                                      comma-dangle
+  9:3   warning  Newline required at end of file but not found               eol-last
+
+/mnt/DataSD/sandbox/paser-mini/src/core/schemas/messageSchema.js
+   5:89  warning  Trailing spaces not allowed                                no-trailing-spaces
+  13:6   warning  Trailing spaces not allowed                                no-trailing-spaces
+  14:29  warning  Trailing spaces not allowed                                no-trailing-spaces
+  26:6   warning  Trailing spaces not allowed                                no-trailing-spaces
+  27:38  warning  Trailing spaces not allowed                                no-trailing-spaces
+  47:1   warning  Too many blank lines at the end of file. Max of 0 allowed  no-multiple-empty-lines
+
+/mnt/DataSD/sandbox/paser-mini/src/core/schemas/readZipFileSchema.js
+   2:3   error    Unnecessarily quoted property '$schema' found               quote-props
+   2:3   warning  Strings must use singlequote                                quotes
+   2:14  warning  Strings must use singlequote                                quotes
+   3:3   error    Unnecessarily quoted property 'type' found                  quote-props
+   3:3   warning  Strings must use singlequote                                quotes
+   3:11  warning  Strings must use singlequote                                quotes
+   4:3   error    Unnecessarily quoted property 'properties' found            quote-props
+   4:3   warning  Strings must use singlequote                                quotes
+   5:5   error    Unnecessarily quoted property 'zipId' found                 quote-props
+   5:5   warning  Strings must use singlequote                                quotes
+   5:16  error    Unnecessarily quoted property 'type' found                  quote-props
+   5:16  warning  Strings must use singlequote                                quotes
+   5:24  warning  Strings must use singlequote                                quotes
+   6:5   error    Unnecessarily quoted property 'internalPath' found          quote-props
+   6:5   warning  Strings must use singlequote                                quotes
+   6:23  error    Unnecessarily quoted property 'type' found                  quote-props
+   6:23  warning  Strings must use singlequote                                quotes
+   6:31  warning  Strings must use singlequote                                quotes
+   6:41  warning  Missing trailing comma                                      comma-dangle
+   8:3   error    Unnecessarily quoted property 'required' found              quote-props
+   8:3   warning  Strings must use singlequote                                quotes
+   8:16  warning  Strings must use singlequote                                quotes
+   8:25  warning  Strings must use singlequote                                quotes
+   9:3   error    Unnecessarily quoted property 'additionalProperties' found  quote-props
+   9:3   warning  Strings must use singlequote                                quotes
+   9:32  warning  Missing trailing comma                                      comma-dangle
+  10:3   warning  Newline required at end of file but not found               eol-last
+
+/mnt/DataSD/sandbox/paser-mini/src/core/schemas/saveZipSchema.js

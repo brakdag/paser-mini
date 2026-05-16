@@ -1,0 +1,200 @@
+  23:303  warning  Strings must use singlequote                                                                                   quotes
+  23:309  error    Missing whitespace after semicolon                                                                             semi-spacing
+  23:314  warning  A space is required after '{'                                                                                  object-curly-spacing
+  23:324  error    Missing space before value for key 'keywords'                                                                  key-spacing
+  23:325  error    A space is required after ','                                                                                  comma-spacing
+  23:341  error    Missing space before value for key 'cStyleComments'                                                            key-spacing
+  23:343  warning  A space is required before '}'                                                                                 object-curly-spacing
+  23:345  error    A space is required after ','                                                                                  comma-spacing
+  23:347  warning  Strings must use singlequote                                                                                   quotes
+  23:355  error    Missing whitespace after semicolon                                                                             semi-spacing
+  23:360  warning  A space is required after '{'                                                                                  object-curly-spacing
+  23:370  error    Missing space before value for key 'keywords'                                                                  key-spacing
+  23:371  error    A space is required after ','                                                                                  comma-spacing
+  23:385  error    Missing space before value for key 'hashComments'                                                              key-spacing
+  23:387  error    A space is required after ','                                                                                  comma-spacing
+  23:405  error    Missing space before value for key 'multiLineStrings'                                                          key-spacing
+  23:407  warning  A space is required before '}'                                                                                 object-curly-spacing
+  23:409  error    A space is required after ','                                                                                  comma-spacing
+  23:411  warning  Strings must use singlequote                                                                                   quotes
+  23:416  error    A space is required after ','                                                                                  comma-spacing
+  23:417  warning  Strings must use singlequote                                                                                   quotes
+  23:422  error    A space is required after ','                                                                                  comma-spacing
+  23:423  warning  Strings must use singlequote                                                                                   quotes
+  23:429  error    Missing whitespace after semicolon                                                                             semi-spacing
+  23:431  error    Expected newline after '('                                                                                     function-paren-newline
+  23:434  warning  A space is required after '{'                                                                                  object-curly-spacing
+  23:434  error    Expected a line break after this opening brace                                                                 object-curly-newline
+  23:444  error    Missing space before value for key 'keywords'                                                                  key-spacing
+  23:445  error    A space is required after ','                                                                                  comma-spacing
+  23:459  error    Missing space before value for key 'hashComments'                                                              key-spacing
+  23:461  error    A space is required after ','                                                                                  comma-spacing
+  23:479  error    Missing space before value for key 'multiLineStrings'                                                          key-spacing
+  23:481  error    A space is required after ','                                                                                  comma-spacing
+  23:502  error    Missing space before value for key 'tripleQuotedStrings'                                                       key-spacing
+  23:504  warning  A space is required before '}'                                                                                 object-curly-spacing
+  23:504  error    Expected a line break before this closing brace                                                                object-curly-newline
+  24:1    warning  Expected indentation of 2 spaces but found 0                                                                   indent
+  24:2    warning  Strings must use singlequote                                                                                   quotes
+  24:6    error    A space is required after ','                                                                                  comma-spacing
+  24:7    warning  Strings must use singlequote                                                                                   quotes
+  24:12   error    Expected newline before ')'                                                                                    function-paren-newline
+  24:13   error    Missing whitespace after semicolon                                                                             semi-spacing
+  24:18   warning  A space is required after '{'                                                                                  object-curly-spacing
+  24:18   error    Expected a line break after this opening brace                                                                 object-curly-newline
+  24:28   error    Missing space before value for key 'keywords'                                                                  key-spacing
+  24:28   warning  Strings must use singlequote                                                                                   quotes
+  24:204  error    A space is required after ','                                                                                  comma-spacing
+  24:218  error    Missing space before value for key 'hashComments'                                                              key-spacing
+  24:220  error    A space is required after ','                                                                                  comma-spacing
+  24:238  error    Missing space before value for key 'multiLineStrings'                                                          key-spacing
+  24:240  error    A space is required after ','                                                                                  comma-spacing
+  24:255  error    Missing space before value for key 'regexLiterals'                                                             key-spacing
+  24:257  warning  A space is required before '}'                                                                                 object-curly-spacing
+  24:257  error    Expected a line break before this closing brace                                                                object-curly-newline
+  24:259  error    A space is required after ','                                                                                  comma-spacing
+  24:261  warning  Strings must use singlequote                                                                                   quotes
+  24:267  error    A space is required after ','                                                                                  comma-spacing
+  24:268  warning  Strings must use singlequote                                                                                   quotes
+  24:272  error    A space is required after ','                                                                                  comma-spacing
+  24:273  warning  Strings must use singlequote                                                                                   quotes
+  24:279  error    Missing whitespace after semicolon                                                                             semi-spacing
+  24:284  warning  A space is required after '{'                                                                                  object-curly-spacing
+  24:284  error    Expected a line break after this opening brace                                                                 object-curly-newline
+  24:294  error    Missing space before value for key 'keywords'                                                                  key-spacing
+  24:295  error    A space is required after ','                                                                                  comma-spacing
+  24:309  error    Missing space before value for key 'hashComments'                                                              key-spacing
+  24:311  error    A space is required after ','                                                                                  comma-spacing
+  24:329  error    Missing space before value for key 'multiLineStrings'                                                          key-spacing
+  24:331  error    A space is required after ','                                                                                  comma-spacing
+  24:346  error    Missing space before value for key 'regexLiterals'                                                             key-spacing
+  24:348  warning  A space is required before '}'                                                                                 object-curly-spacing
+  24:348  error    Expected a line break before this closing brace                                                                object-curly-newline
+  24:350  error    A space is required after ','                                                                                  comma-spacing
+  24:352  warning  Strings must use singlequote                                                                                   quotes
+  24:358  error    Missing whitespace after semicolon                                                                             semi-spacing
+  24:363  warning  A space is required after '{'                                                                                  object-curly-spacing
+  24:373  error    Missing space before value for key 'keywords'                                                                  key-spacing
+  24:374  error    A space is required after ','                                                                                  comma-spacing
+  24:390  error    Missing space before value for key 'cStyleComments'                                                            key-spacing
+  24:392  error    A space is required after ','                                                                                  comma-spacing
+  24:407  error    Missing space before value for key 'regexLiterals'                                                             key-spacing
+  24:409  warning  A space is required before '}'                                                                                 object-curly-spacing
+  24:411  error    A space is required after ','                                                                                  comma-spacing
+  24:413  warning  Strings must use singlequote                                                                                   quotes
+  24:419  error    Missing whitespace after semicolon                                                                             semi-spacing
+  24:424  warning  A space is required after '{'                                                                                  object-curly-spacing
+  24:424  error    Expected a line break after this opening brace                                                                 object-curly-newline
+  24:434  error    Missing space before value for key 'keywords'                                                                  key-spacing
+  24:434  warning  Strings must use singlequote                                                                                   quotes
+  25:1    warning  Expected indentation of 2 spaces but found 0                                                                   indent
+  25:14   error    Missing space before value for key 'hashComments'                                                              key-spacing
+  25:15   error    A space is required after ','                                                                                  comma-spacing
+  25:16   error    Object properties must go on a new line if they aren't all on the same line                                    object-property-newline
+  25:31   error    Missing space before value for key 'cStyleComments'                                                            key-spacing
+  25:33   error    A space is required after ','                                                                                  comma-spacing
+  25:34   error    Object properties must go on a new line if they aren't all on the same line                                    object-property-newline
+  25:51   error    Missing space before value for key 'multilineStrings'                                                          key-spacing
+  25:53   error    A space is required after ','                                                                                  comma-spacing
+  25:54   error    Object properties must go on a new line if they aren't all on the same line                                    object-property-newline
+  25:74   error    Missing space before value for key 'tripleQuotedStrings'                                                       key-spacing
+  25:76   error    A space is required after ','                                                                                  comma-spacing
+  25:77   error    Object properties must go on a new line if they aren't all on the same line                                    object-property-newline
+  25:91   error    Missing space before value for key 'regexLiterals'                                                             key-spacing
+  25:93   warning  A space is required before '}'                                                                                 object-curly-spacing
+  25:93   error    Expected a line break before this closing brace                                                                object-curly-newline
+  25:95   error    A space is required after ','                                                                                  comma-spacing
+  25:97   warning  Strings must use singlequote                                                                                   quotes
+  25:107  error    Missing whitespace after semicolon                                                                             semi-spacing
+  25:114  error    A space is required after ','                                                                                  comma-spacing
+  25:117  warning  Strings must use singlequote                                                                                   quotes
+  25:122  error    A space is required after ','                                                                                  comma-spacing
+  25:136  error    A space is required after ','                                                                                  comma-spacing
+  25:138  warning  Strings must use singlequote                                                                                   quotes
+  25:147  error    Missing whitespace after semicolon                                                                             semi-spacing
+  25:148  error    'window' is not defined                                                                                        no-undef
+  25:169  error    Operator '=' must be spaced                                                                                    space-infix-ops
+  25:170  warning  Unexpected unnamed function                                                                                    func-names
+  25:178  error    Missing space before function parentheses                                                                      space-before-function-paren
+  25:180  error    A space is required after ','                                                                                  comma-spacing
+  25:182  error    A space is required after ','                                                                                  comma-spacing
+  25:185  error    Requires a space after '{'                                                                                     block-spacing
+  25:185  error    Missing space before opening brace                                                                             space-before-blocks
+  25:186  error    Unexpected var, use let or const instead                                                                       no-var
+  25:191  error    Operator '=' must be spaced                                                                                    space-infix-ops
+  25:192  error    'document' is not defined                                                                                      no-undef
+  25:215  warning  Strings must use singlequote                                                                                   quotes
+  25:221  error    Missing whitespace after semicolon                                                                             semi-spacing
+  25:233  error    Operator '=' must be spaced                                                                                    space-infix-ops
+  25:235  error    Missing whitespace after semicolon                                                                             semi-spacing
+  25:236  error    Expected an assignment or function call and instead saw an expression                                          no-unused-expressions
+  25:237  error    Operator '&&' must be spaced                                                                                   space-infix-ops
+  25:242  error    A space is required after ','                                                                                  comma-spacing
+  25:245  error    Missing whitespace after semicolon                                                                             semi-spacing
+  25:248  warning  A space is required after '{'                                                                                  object-curly-spacing
+  25:251  error    Missing space before value for key 'g'                                                                         key-spacing
+  25:252  error    A space is required after ','                                                                                  comma-spacing
+  25:255  error    Missing space before value for key 'i'                                                                         key-spacing
+  25:256  error    A space is required after ','                                                                                  comma-spacing
+  25:257  error    Expected property shorthand                                                                                    object-shorthand
+  25:259  error    Missing space before value for key 'h'                                                                         key-spacing
+  25:260  warning  A space is required before '}'                                                                                 object-curly-spacing
+  25:262  error    Missing whitespace after semicolon                                                                             semi-spacing
+  25:281  error    Requires a space before '}'                                                                                    block-spacing
+  25:281  warning  Missing semicolon                                                                                              semi
+  25:282  error    Missing whitespace after semicolon                                                                             semi-spacing
+  25:283  error    'window' is not defined                                                                                        no-undef
+  25:301  error    Operator '=' must be spaced                                                                                    space-infix-ops
+  25:302  warning  Unexpected unnamed function                                                                                    func-names
+  25:310  error    Missing space before function parentheses                                                                      space-before-function-paren
+  25:313  error    Requires a space after '{'                                                                                     block-spacing
+  25:313  warning  Statement inside of curly braces should be on next line                                                        brace-style
+  25:313  error    Missing space before opening brace                                                                             space-before-blocks
+  25:326  error    Requires a space after '{'                                                                                     block-spacing
+  25:326  warning  Statement inside of curly braces should be on next line                                                        brace-style
+  25:326  error    Missing space before opening brace                                                                             space-before-blocks
+  25:327  error    Expected space(s) after "for"                                                                                  keyword-spacing
+  25:331  error    All 'var' declarations must be at the top of the function scope                                                vars-on-top
+  25:331  error    Unexpected var, use let or const instead                                                                       no-var
+  25:336  error    Operator '=' must be spaced                                                                                    space-infix-ops
+  25:337  error    'window' is not defined                                                                                        no-undef
+  25:370  error    Operator '?' must be spaced                                                                                    space-infix-ops
+  25:371  error    'l' was used before it was defined                                                                             no-use-before-define
+  25:378  error    Operator '+' must be spaced                                                                                    space-infix-ops
+  25:382  error    Operator ':' must be spaced                                                                                    space-infix-ops
+  25:391  error    Missing whitespace after semicolon                                                                             semi-spacing
+  25:392  error    'p' was used before it was defined                                                                             no-use-before-define
+  25:393  error    Operator '<' must be spaced                                                                                    space-infix-ops
+  25:394  error    'h' was used before it was defined                                                                             no-use-before-define
+  25:394  error    'h' declared on line 27 column 137 is used outside of binding context                                          block-scoped-var
+  25:402  error    Operator '&&' must be spaced                                                                                   space-infix-ops
+  25:404  error    'l' was used before it was defined                                                                             no-use-before-define
+  25:411  error    Operator '<' must be spaced                                                                                    space-infix-ops
+  25:413  error    Missing whitespace after semicolon                                                                             semi-spacing
+  25:414  error    'p' was used before it was defined                                                                             no-use-before-define
+  25:414  error    Unary operator '++' used                                                                                       no-plusplus
+  25:418  error    Requires a space after '{'                                                                                     block-spacing
+  25:418  warning  Statement inside of curly braces should be on next line                                                        brace-style
+  25:418  error    Missing space before opening brace                                                                             space-before-blocks
+  25:419  error    Split 'var' declarations into multiple statements                                                              one-var
+  25:419  error    All 'var' declarations must be at the top of the function scope                                                vars-on-top
+  25:419  error    Unexpected var, use let or const instead                                                                       no-var
+  25:424  error    Operator '=' must be spaced                                                                                    space-infix-ops
+  25:425  error    'h' was used before it was defined                                                                             no-use-before-define
+  25:425  error    'h' declared on line 27 column 137 is used outside of binding context                                          block-scoped-var
+  25:427  error    'p' was used before it was defined                                                                             no-use-before-define
+  25:429  error    A space is required after ','                                                                                  comma-spacing
+  25:430  error    Expected variable declaration to be on a new line                                                              one-var-declaration-per-line
+  25:430  error    'k' declared on line 25 column 480 is used outside of binding context                                          block-scoped-var
+  25:431  error    Operator '=' must be spaced                                                                                    space-infix-ops
+  25:443  error    Missing whitespace after semicolon                                                                             semi-spacing
+  25:444  error    Expected space(s) after "if"                                                                                   keyword-spacing
+  25:447  error    'k' declared on line 25 column 480 is used outside of binding context                                          block-scoped-var
+  25:457  warning  Strings must use singlequote                                                                                   quotes
+  25:471  error    Operator '>=' must be spaced                                                                                   space-infix-ops
+  25:475  error    Requires a space after '{'                                                                                     block-spacing
+  25:475  warning  Statement inside of curly braces should be on next line                                                        brace-style
+  25:475  error    Missing space before opening brace                                                                             space-before-blocks
+  25:476  error    Split 'var' declarations into multiple statements                                                              one-var
+  25:476  error    All 'var' declarations must be at the top of the function scope                                                vars-on-top
+  25:476  error    Unexpected var, use let or const instead                                                                       no-var

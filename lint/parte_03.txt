@@ -1,0 +1,200 @@
+   5:172  warning  Strings must use singlequote                                                                                   quotes
+   5:175  error    Operator '?' must be spaced                                                                                    space-infix-ops
+   5:176  error    'f' declared on line 4 column 143 is used outside of binding context                                           block-scoped-var
+   5:178  error    'c' declared on line 4 column 282 is used outside of binding context                                           block-scoped-var
+   5:180  error    Operator '=' must be spaced                                                                                    space-infix-ops
+   5:183  error    'j' declared on line 4 column 303 is used outside of binding context                                           block-scoped-var
+   5:185  error    Operator ':' must be spaced                                                                                    space-infix-ops
+   5:187  error    Operator '!==' must be spaced                                                                                  space-infix-ops
+   5:190  warning  Strings must use singlequote                                                                                   quotes
+   5:194  error    Operator '&&' must be spaced                                                                                   space-infix-ops
+   5:197  error    'f' declared on line 4 column 143 is used outside of binding context                                           block-scoped-var
+   5:199  error    'c' declared on line 4 column 282 is used outside of binding context                                           block-scoped-var
+   5:201  error    Operator '=' must be spaced                                                                                    space-infix-ops
+   5:202  error    'j' declared on line 4 column 303 is used outside of binding context                                           block-scoped-var
+   5:223  error    A space is required after ','                                                                                  comma-spacing
+   5:224  warning  Unexpected unnamed function                                                                                    func-names
+   5:224  error    Unexpected function expression                                                                                 prefer-arrow-callback
+   5:232  error    Missing space before function parentheses                                                                      space-before-function-paren
+   5:233  error    'a' is already declared in the upper scope on line 4 column 132                                                no-shadow
+   5:235  error    Requires a space after '{'                                                                                     block-spacing
+   5:235  error    Missing space before opening brace                                                                             space-before-blocks
+   5:237  error    Operator '=' must be spaced                                                                                    space-infix-ops
+   5:253  error    Missing whitespace after semicolon                                                                             semi-spacing
+   5:254  error    Expected space(s) after "return"                                                                               keyword-spacing
+   5:260  warning  Strings must use singlequote                                                                                   quotes
+   5:260  warning  Unexpected string concatenation                                                                                prefer-template
+   5:263  error    Operator '+' must be spaced                                                                                    space-infix-ops
+   5:284  error    Unexpected use of '&'                                                                                          no-bitwise
+   5:285  error    Operator '&' must be spaced                                                                                    space-infix-ops
+   5:289  error    A space is required after ','                                                                                  comma-spacing
+   5:290  error    Unexpected use of '|'                                                                                          no-bitwise
+   5:291  error    Operator '|' must be spaced                                                                                    space-infix-ops
+   5:295  error    Operator '+' must be spaced                                                                                    space-infix-ops
+   5:296  warning  Strings must use singlequote                                                                                   quotes
+   5:299  error    Requires a space before '}'                                                                                    block-spacing
+   5:299  warning  Missing semicolon                                                                                              semi
+   5:302  error    Missing whitespace after semicolon                                                                             semi-spacing
+   5:310  error    'f' declared on line 4 column 143 is used outside of binding context                                           block-scoped-var
+   5:317  warning  Strings must use singlequote                                                                                   quotes
+   5:320  error    Requires a space before '}'                                                                                    block-spacing
+   5:320  warning  Closing curly brace should be on the same line as opening curly brace or on the line after the previous block  brace-style
+   5:320  warning  Missing semicolon                                                                                              semi
+   5:321  error    Expected space(s) before "for"                                                                                 keyword-spacing
+   5:321  error    Expected space(s) after "for"                                                                                  keyword-spacing
+   5:325  error    All 'var' declarations must be at the top of the function scope                                                vars-on-top
+   5:325  error    Unexpected var, use let or const instead                                                                       no-var
+   5:330  error    Operator '=' must be spaced                                                                                    space-infix-ops
+   5:332  error    A space is required after ','                                                                                  comma-spacing
+   5:334  error    Operator '=' must be spaced                                                                                    space-infix-ops
+   5:337  error    A space is required after ','                                                                                  comma-spacing
+   5:339  error    Operator '=' must be spaced                                                                                    space-infix-ops
+   5:342  error    A space is required after ','                                                                                  comma-spacing
+   5:343  error    'p' declared on line 6 column 36 is used outside of binding context                                            block-scoped-var
+   5:344  error    Operator '=' must be spaced                                                                                    space-infix-ops
+   5:346  error    A space is required after ','                                                                                  comma-spacing
+   5:347  error    'd' declared on line 6 column 40 is used outside of binding context                                            block-scoped-var
+   5:348  error    Operator '=' must be spaced                                                                                    space-infix-ops
+   5:357  error    Missing whitespace after semicolon                                                                             semi-spacing
+   5:358  error    'p' declared on line 6 column 36 is used outside of binding context                                            block-scoped-var
+   5:359  error    Operator '<' must be spaced                                                                                    space-infix-ops
+   5:360  error    'd' declared on line 6 column 40 is used outside of binding context                                            block-scoped-var
+   5:361  error    Missing whitespace after semicolon                                                                             semi-spacing
+   5:362  error    Unary operator '++' used                                                                                       no-plusplus
+   5:364  error    'p' declared on line 6 column 36 is used outside of binding context                                            block-scoped-var
+   5:366  error    Requires a space after '{'                                                                                     block-spacing
+   5:366  error    Missing space before opening brace                                                                             space-before-blocks
+   5:367  error    All 'var' declarations must be at the top of the function scope                                                vars-on-top
+   5:367  error    Unexpected var, use let or const instead                                                                       no-var
+   5:372  error    Operator '=' must be spaced                                                                                    space-infix-ops
+   5:375  error    'p' declared on line 6 column 36 is used outside of binding context                                            block-scoped-var
+   5:377  error    Missing whitespace after semicolon                                                                             semi-spacing
+   5:378  error    Expected space(s) after "if"                                                                                   keyword-spacing
+   5:395  error    Operator '=' must be spaced                                                                                    space-infix-ops
+   5:398  error    Missing whitespace after semicolon                                                                             semi-spacing
+   5:404  error    Expected space(s) after "if"                                                                                   keyword-spacing
+   5:479  error    A space is required after ','                                                                                  comma-spacing
+   5:480  warning  Strings must use singlequote                                                                                   quotes
+   5:485  error    Requires a space after '{'                                                                                     block-spacing
+   5:485  error    Missing space before opening brace                                                                             space-before-blocks
+   5:487  error    Operator '=' must be spaced                                                                                    space-infix-ops
+   5:490  error    Missing whitespace after semicolon                                                                             semi-spacing
+   5:492  error    Operator '=' must be spaced                                                                                    space-infix-ops
+   5:495  error    Missing whitespace after semicolon                                                                             semi-spacing
+   5:501  error    Requires a space before '}'                                                                                    block-spacing
+   5:501  warning  Missing semicolon                                                                                              semi
+   5:502  error    Requires a space before '}'                                                                                    block-spacing
+   5:503  error    Expected space(s) before "for"                                                                                 keyword-spacing
+   5:503  error    Expected space(s) after "for"                                                                                  keyword-spacing
+   5:507  error    All 'var' declarations must be at the top of the function scope                                                vars-on-top
+   5:507  error    Unexpected var, use let or const instead                                                                       no-var
+   5:512  warning  There should be no line break before or after '='                                                              operator-linebreak
+   5:512  error    Operator '=' must be spaced                                                                                    space-infix-ops
+   6:1    warning  A space is required after '{'                                                                                  object-curly-spacing
+   6:1    error    Expected a line break after this opening brace                                                                 object-curly-newline
+   6:4    error    Missing space before value for key 'b'                                                                         key-spacing
+   6:5    error    A space is required after ','                                                                                  comma-spacing
+   6:8    error    Missing space before value for key 't'                                                                         key-spacing
+   6:9    error    A space is required after ','                                                                                  comma-spacing
+   6:12   error    Missing space before value for key 'n'                                                                         key-spacing
+   6:14   error    A space is required after ','                                                                                  comma-spacing
+   6:17   error    Missing space before value for key 'v'                                                                         key-spacing
+   6:19   error    A space is required after ','                                                                                  comma-spacing
+   6:22   error    Missing space before value for key 'f'                                                                         key-spacing
+   6:24   error    A space is required after ','                                                                                  comma-spacing
+   6:27   error    Missing space before value for key 'r'                                                                         key-spacing
+   6:29   warning  A space is required before '}'                                                                                 object-curly-spacing
+   6:29   error    Expected a line break before this closing brace                                                                object-curly-newline
+   6:30   error    A space is required after ','                                                                                  comma-spacing
+   6:32   error    Operator '=' must be spaced                                                                                    space-infix-ops
+   6:35   error    A space is required after ','                                                                                  comma-spacing
+   6:36   error    'p' is already defined                                                                                         no-redeclare
+   6:36   error    'p' declared on line 5 column 343 is used outside of binding context                                           block-scoped-var
+   6:37   error    Operator '=' must be spaced                                                                                    space-infix-ops
+   6:39   error    A space is required after ','                                                                                  comma-spacing
+   6:40   error    'd' is already defined                                                                                         no-redeclare
+   6:40   error    'd' declared on line 5 column 347 is used outside of binding context                                           block-scoped-var
+   6:41   error    Operator '=' must be spaced                                                                                    space-infix-ops
+   6:50   error    Missing whitespace after semicolon                                                                             semi-spacing
+   6:51   error    'p' declared on line 5 column 343 is used outside of binding context                                           block-scoped-var
+   6:52   error    Operator '<' must be spaced                                                                                    space-infix-ops
+   6:53   error    'd' declared on line 5 column 347 is used outside of binding context                                           block-scoped-var
+   6:54   error    Missing whitespace after semicolon                                                                             semi-spacing
+   6:55   error    Unary operator '++' used                                                                                       no-plusplus
+   6:57   error    'p' declared on line 5 column 343 is used outside of binding context                                           block-scoped-var
+   6:59   error    Requires a space after '{'                                                                                     block-spacing
+   6:59   error    Missing space before opening brace                                                                             space-before-blocks
+   6:60   error    'g' declared on line 5 column 371 is used outside of binding context                                           block-scoped-var
+   6:61   error    Operator '=' must be spaced                                                                                    space-infix-ops
+   6:64   error    'p' declared on line 5 column 343 is used outside of binding context                                           block-scoped-var
+   6:66   error    Missing whitespace after semicolon                                                                             semi-spacing
+   6:67   error    Expected space(s) after "if"                                                                                   keyword-spacing
+   6:70   error    'g' declared on line 5 column 371 is used outside of binding context                                           block-scoped-var
+   6:78   error    Operator '||' must be spaced                                                                                   space-infix-ops
+   6:80   error    'g' declared on line 5 column 371 is used outside of binding context                                           block-scoped-var
+   6:92   error    Expected space(s) before "throw"                                                                               keyword-spacing
+   6:104  warning  Strings must use singlequote                                                                                   quotes
+   6:104  warning  Unexpected string concatenation                                                                                prefer-template
+   6:106  error    Operator '+' must be spaced                                                                                    space-infix-ops
+   6:107  error    'g' declared on line 5 column 371 is used outside of binding context                                           block-scoped-var
+   6:109  error    Missing whitespace after semicolon                                                                             semi-spacing
+   6:117  warning  Strings must use singlequote                                                                                   quotes
+   6:117  warning  Unexpected string concatenation                                                                                prefer-template
+   6:122  error    Operator '+' must be spaced                                                                                    space-infix-ops
+   6:125  error    'g' declared on line 5 column 371 is used outside of binding context                                           block-scoped-var
+   6:127  error    Operator '+' must be spaced                                                                                    space-infix-ops
+   6:128  warning  Strings must use singlequote                                                                                   quotes
+   6:132  error    Requires a space before '}'                                                                                    block-spacing
+   6:132  warning  Missing semicolon                                                                                              semi
+   6:133  error    Expected space(s) before "return"                                                                              keyword-spacing
+   6:147  error    'n' declared on line 6 column 31 is used outside of binding context                                            block-scoped-var
+   6:154  warning  Strings must use singlequote                                                                                   quotes
+   6:158  error    A space is required after ','                                                                                  comma-spacing
+   6:159  error    'l' declared on line 5 column 338 is used outside of binding context                                           block-scoped-var
+   6:160  error    Operator '?' must be spaced                                                                                    space-infix-ops
+   6:161  warning  Strings must use singlequote                                                                                   quotes
+   6:165  error    Operator ':' must be spaced                                                                                    space-infix-ops
+   6:166  warning  Strings must use singlequote                                                                                   quotes
+   6:170  error    Requires a space before '}'                                                                                    block-spacing
+   6:170  warning  Closing curly brace should be on the same line as opening curly brace or on the line after the previous block  brace-style
+   6:170  warning  Missing semicolon                                                                                              semi
+   6:171  error    Expected space(s) before "function"                                                                            keyword-spacing
+   6:184  error    Requires a space after '{'                                                                                     block-spacing
+   6:184  warning  Statement inside of curly braces should be on next line                                                        brace-style
+   6:184  error    Missing space before opening brace                                                                             space-before-blocks
+   6:196  error    'a' is already declared in the upper scope on line 6 column 182                                                no-shadow
+   6:198  error    Requires a space after '{'                                                                                     block-spacing
+   6:198  warning  Statement inside of curly braces should be on next line                                                        brace-style
+   6:198  error    Missing space before opening brace                                                                             space-before-blocks
+   6:199  error    Expected a default case                                                                                        default-case
+   6:199  error    Expected space(s) after "switch"                                                                               keyword-spacing
+   6:217  error    Requires a space after '{'                                                                                     block-spacing
+   6:217  warning  Statement inside of curly braces should be on next line                                                        brace-style
+   6:217  error    Missing space before opening brace                                                                             space-before-blocks
+   6:224  error    Expected space(s) after this colon                                                                             switch-colon-spacing
+   6:225  error    Expected space(s) after "if"                                                                                   keyword-spacing
+   6:228  error    'e' was used before it was defined                                                                             no-use-before-define
+   6:248  error    Expected space(s) before "break"                                                                               keyword-spacing
+   6:253  error    Missing whitespace after semicolon                                                                             semi-spacing
+   6:254  error    Expected space(s) after "for"                                                                                  keyword-spacing
+   6:258  error    All 'var' declarations must be at the top of the function scope                                                vars-on-top
+   6:258  error    Unexpected var, use let or const instead                                                                       no-var
+   6:263  error    Operator '=' must be spaced                                                                                    space-infix-ops
+   6:276  error    Missing whitespace after semicolon                                                                             semi-spacing
+   6:278  error    Missing whitespace after semicolon                                                                             semi-spacing
+   6:280  error    Operator '=' must be spaced                                                                                    space-infix-ops
+   6:299  error    Missing whitespace after semicolon                                                                             semi-spacing
+   6:300  error    'g' declared on line 6 column 262 is used outside of binding context                                           block-scoped-var
+   6:301  error    Operator '=' must be spaced                                                                                    space-infix-ops
+   6:312  error    Missing whitespace after semicolon                                                                             semi-spacing
+   6:313  error    Expected space(s) after "if"                                                                                   keyword-spacing
+   6:316  error    Expected literal to be on the right side of ===                                                                yoda
+   6:316  warning  Strings must use singlequote                                                                                   quotes
+   6:320  error    Operator '===' must be spaced                                                                                  space-infix-ops
+   6:323  error    'g' declared on line 6 column 262 is used outside of binding context                                           block-scoped-var
+   6:324  error    Operator '||' must be spaced                                                                                   space-infix-ops
+   6:326  error    Expected literal to be on the right side of ===                                                                yoda
+   6:326  warning  Strings must use singlequote                                                                                   quotes
+   6:330  error    Operator '===' must be spaced                                                                                  space-infix-ops
+   6:333  error    'g' declared on line 6 column 262 is used outside of binding context                                           block-scoped-var
+   6:335  error    'h' was used before it was defined                                                                             no-use-before-define

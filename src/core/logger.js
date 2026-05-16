@@ -24,7 +24,7 @@ class Logger {
     const targetFile = level === 'THOUGHT' ? this.sessionFile : (level === 'HISTORY' ? this.historyFile : this.logFile);
     
     if (level === 'THOUGHT') {
-      const time = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+      const time = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
       const nick = this.agentNickname || 'agent';
       const logEntry = `[${time}] <${nick}> * thought: ${message}\n`;
       fs.appendFileSync(targetFile, logEntry, 'utf8');
