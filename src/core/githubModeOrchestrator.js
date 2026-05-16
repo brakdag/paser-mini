@@ -1,7 +1,7 @@
 import * as githubTools from "../tools/githubTools.js";
 import GitHubUI from "./githubUI.js";
 import ChatManager from "./chatManager.js";
-import { GeminiAdapter } from "../infrastructure/gemini/adapter.js";
+import GeminiAdapter from "../infrastructure/gemini/adapter.js";
 
 class GitHubModeOrchestrator {
   constructor(systemInstruction, tools) {

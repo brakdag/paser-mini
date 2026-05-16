@@ -1,20 +1,16 @@
+/**
+ * Base class for all rendering plugins.
+ * Ensures a consistent interface for transforming message objects into formatted strings.
+ */
 class BaseRenderer {
-  constructor(ui) {
-    this.ui = ui;
-  }
-
   /**
-   * @param {Object} message - The raw message object
-   * @param {string} message.nickname - The sender's nickname
-   * @param {string} message.text - The raw text content
-   * @param {string} [message.time] - Formatted timestamp
-   * @param {string} [message.type] - 'chat', 'system', 'error', 'info', 'thought'
-   * @returns {string} The formatted string for terminal output
+   * Renders a message into a formatted string.
+   * @param {Object} message - The message object { nickname, text, time, type }
+   * @param {Object} ui - Reference to the TerminalUI for shared utilities (like formatMarkdown)
+   * @returns {string} The formatted string to be printed to the terminal.
    */
-  render(message) {
-    throw new Error(
-      `Renderer ${this.constructor.name} must implement render() for message: ${JSON.stringify(message)}`,
-    );
+  render(message, ui) {
+    throw new Error("Method 'render()' must be implemented.");
   }
 }
 

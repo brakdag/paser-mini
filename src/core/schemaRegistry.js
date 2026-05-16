@@ -22,7 +22,7 @@ async function registerSchemas() {
         try {
           // eslint-disable-next-line no-await-in-loop
           const module = await import(`./schemas/${file}?update=${Date.now()}`);
-          let schema = module.default || module[`${schemaName}Schema`];
+          const schema = module.default || module[`${schemaName}Schema`];
 
           if (schema) {
             validator.registerSchema(toolName, schema);

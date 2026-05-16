@@ -66,8 +66,6 @@ class SmartToolParser {
   }
 
   formatToolResponse(data, callId = null, success = true) {
-    // eslint-disable-next-line no-unused-expressions
-    this.validator;
     return `<TOOL_RESPONSE>${JSON.stringify({
       id: callId,
       status: success ? "success" : "error",
@@ -76,8 +74,6 @@ class SmartToolParser {
   }
 
   cleanResponse(text) {
-    // eslint-disable-next-line no-unused-expressions
-    this.validator;
     if (!text) return "";
     return text.replace(/<[^>]+>.*?<\/[^>]+>/gs, "");
   }

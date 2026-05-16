@@ -1,11 +1,11 @@
 import BaseRenderer from "./renderer_base.js";
 
 class CleanRenderer extends BaseRenderer {
-  render(message) {
+  render(message, ui) {
     const { text } = message;
     const trimmedText = text.trim();
 
-    // Filter out tool calls and tool responses from visual output
+    // Filter out technical noise
     if (
       trimmedText.includes("<TOOL_CALL>") ||
       trimmedText.includes("<TOOL_RESPONSE>")
@@ -13,11 +13,8 @@ class CleanRenderer extends BaseRenderer {
       return "";
     }
 
-    const formattedText = this.ui.formatMarkdown(trimmedText);
-
-    return `${formattedText}\n`;
+    return ui.formatMarkdown(trimmedText) + "\n";
   }
 }
-
 
 export default CleanRenderer;
