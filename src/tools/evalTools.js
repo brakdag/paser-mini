@@ -54,7 +54,8 @@ class EvalCore {
     }
 
     _log(type, args) {
-        const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ');
+        const argsArray = Array.isArray(args) ? args : [args];
+        const msg = argsArray.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ');
         const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
         const entry = `[${timestamp}] [${type}] ${msg}`;
         this.trace.push(entry);

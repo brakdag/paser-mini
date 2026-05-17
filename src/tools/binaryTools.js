@@ -169,6 +169,4 @@ async function handleHexCommand(args) {
   }
 }
 
-export default {
-  handleHexCommand,
-};
+export { handleHexCommand };

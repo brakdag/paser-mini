@@ -5,7 +5,6 @@ class Logger {
   constructor() {
     this.logFile = path.join(process.cwd(), "log", "paser_mini.log");
     this.sessionFile = path.join(process.cwd(), "log", "session.log");
-    this.historyFile = path.join(process.cwd(), "log", "history.log");
     this.agentNickname = null;
 
     // Asegurar que el directorio log existe
@@ -13,18 +12,14 @@ class Logger {
       fs.mkdirSync(path.join(process.cwd(), "log"));
     }
 
-    // Clear the logs when starting the application
-    fs.writeFileSync(
+    // Append session start markers instead of clearing files
+    fs.appendFileSync(
       this.logFile,
-      `--- Session Started: ${new Date().toISOString()} ---\n`,
+      `\n--- Session Started: ${new Date().toISOString()} ---\n`,
     );
-    fs.writeFileSync(
+    fs.appendFileSync(
       this.sessionFile,
-      `--- Session Started: ${new Date().toISOString()} ---\n`,
-    );
-    fs.writeFileSync(
-      this.historyFile,
-      `--- Session Started: ${new Date().toISOString()} ---\n`,
+      `\n--- Session Started: ${new Date().toISOString()} ---\n`,
     );
   }
 
@@ -33,8 +28,6 @@ class Logger {
     let targetFile = this.logFile;
     if (level === "THOUGHT") {
       targetFile = this.sessionFile;
-    } else if (level === "HISTORY") {
-      targetFile = this.historyFile;
     }
 
     if (level === "THOUGHT") {
@@ -72,10 +65,6 @@ class Logger {
 
   sessionLog(msg) {
     this.log("THOUGHT", msg);
-  }
-
-  historyLog(msg) {
-    this.log("HISTORY", msg);
   }
 
   debug(msg, data) {

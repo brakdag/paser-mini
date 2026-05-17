@@ -11,4 +11,4 @@ const insertSceneFountain = async ({ scene, action }) => {
 };
 
 
-export default insertSceneFountain;
+export { insertSceneFountain };

@@ -50,9 +50,9 @@ function setByPath(data, pathParts, value) {
   }
 }
 
-export const getJsonStructure = async ({ filePath, path: pathStr }) => {
+export const getJsonStructure = async ({ file_path, path: pathStr }) => {
   try {
-    const safePath = getSafePath(filePath);
+    const safePath = getSafePath(file_path);
     const content = await fs.readFile(safePath, "utf8");
     const data = JSON.parse(content);
     const parts = parsePath(pathStr);
@@ -80,9 +80,9 @@ export const getJsonStructure = async ({ filePath, path: pathStr }) => {
   }
 };
 
-export const getJsonNode = async ({ filePath, path: pathStr }) => {
+export const getJsonNode = async ({ file_path, path: pathStr }) => {
   try {
-    const safePath = getSafePath(filePath);
+    const safePath = getSafePath(file_path);
     const content = await fs.readFile(safePath, "utf8");
     const data = JSON.parse(content);
     const parts = parsePath(pathStr);
@@ -93,9 +93,9 @@ export const getJsonNode = async ({ filePath, path: pathStr }) => {
   }
 };
 
-export const getJsonArrayInfo = async ({ filePath, path: pathStr }) => {
+export const getJsonArrayInfo = async ({ file_path, path: pathStr }) => {
   try {
-    const safePath = getSafePath(filePath);
+    const safePath = getSafePath(file_path);
     const content = await fs.readFile(safePath, "utf8");
     const data = JSON.parse(content);
     const parts = parsePath(pathStr);
@@ -114,9 +114,9 @@ export const getJsonArrayInfo = async ({ filePath, path: pathStr }) => {
   }
 };
 
-export const updateJsonNode = async ({ filePath, path: pathStr, value }) => {
+export const updateJsonNode = async ({ file_path, path: pathStr, value }) => {
   try {
-    const safePath = getSafePath(filePath);
+    const safePath = getSafePath(file_path);
     const content = await fs.readFile(safePath, "utf8");
     const data = JSON.parse(content);
     const parts = parsePath(pathStr);

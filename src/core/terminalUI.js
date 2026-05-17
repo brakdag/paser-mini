@@ -22,10 +22,6 @@ class TerminalUI {
     sessionLogger.writeToLog(text);
   }
 
-  clearLog() {
-    sessionLogger.clearLog();
-  }
-
   formatMarkdown(text) {
     return renderer.formatMarkdown(text);
   }
@@ -169,7 +165,7 @@ class TerminalUI {
     const datePart = now.toDateString();
     const timePart = now.toTimeString().split(" ")[0];
     const [dayName, month, day, year] = datePart.split(" ");
-    return `--- Log opened ${dayName} ${month} ${day} ${timePart} ${year} resumed from ./log/history.log`;
+    return `--- Log opened ${dayName} ${month} ${day} ${timePart} ${year} resumed from ./log/session.log`;
   }
 
   displayLogOpened() {

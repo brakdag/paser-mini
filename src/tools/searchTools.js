@@ -16,7 +16,7 @@ export const searchFilesPatternFixed = async ({ pattern }) => {
             const res = path.join(dir, file.name);
             if (file.isDirectory()) {
               await walk(res);
-            } else if (file.name.includes(pattern) || res.includes(pattern)) {
+            } else if (new RegExp(pattern).test(file.name) || new RegExp(pattern).test(res)) {
               results.push(res.replace(/^\.\//, ""));
             }
           }

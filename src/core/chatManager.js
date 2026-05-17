@@ -145,8 +145,6 @@ class ChatManager {
     const model = this.configManager.get("model_name", "gemini-2.0-flash");
     this.assistant.startChat(model, this.systemInstruction, this.temperature);
 
-    this.ui.clearLog();
-
     if (initialInput) {
       const logMsg = this.ui.getLogOpenedString();
       const welcomeMsg = "System initialized. Ready for input.";

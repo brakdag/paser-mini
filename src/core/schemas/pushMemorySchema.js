@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-const pushMemorySchema = z.string();
+const pushMemorySchema = z
+  .object({
+    data: z.any(),
+  })
+  .strict();
 
 
 export default pushMemorySchema;

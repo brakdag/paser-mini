@@ -1,23 +1,41 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import * as fileTools from "./fileTools.js";
-import * as systemTools from "./systemTools.js";
-import * as utilTools from "./utilTools.js";
-import * as searchTools from "./searchTools.js";
-import * as memoryTools from "./memoryTools.js";
-import * as jsonTools from "./jsonTools.js";
-import * as githubTools from "./githubTools.js";
-import * as gitTools from "./gitTools.js";
-import { notifyUser as notifyUserFunc } from "./notificationTools.js";
-import * as fountainTools from "./fountainTools.js";
-import * as zipTools from "./zipTools.js";
-import * as binaryTools from "./binaryTools.js";
-import * as webTools from "./webTools.js";
-import * as evalTools from "./evalTools.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const MODULE_MAP = {
+  fileTools: "./fileTools.js",
+  systemTools: "./systemTools.js",
+  utilTools: "./utilTools.js",
+  searchTools: "./searchTools.js",
+  memoryTools: "./memoryTools.js",
+  jsonTools: "./jsonTools.js",
+  githubTools: "./githubTools.js",
+  gitTools: "./gitTools.js",
+  notificationTools: "./notificationTools.js",
+  fountainTools: "./fountainTools.js",
+  zipTools: "./zipTools.js",
+  binaryTools: "./binaryTools.js",
+  webTools: "./webTools.js",
+  evalTools: "./evalTools.js",
+};
+
+let toolCache = {};
+
+async function getTool(moduleKey, funcName) {
+  if (!toolCache[moduleKey]) {
+    const modulePath = MODULE_MAP[moduleKey];
+    if (!modulePath) throw new Error(`Module ${moduleKey} not mapped.`);
+    // Cache busting using timestamp
+    const module = await import(`${modulePath}?update=${Date.now()}`);
+    toolCache[moduleKey] = module;
+  }
+  const func = toolCache[moduleKey][funcName];
+  if (!func) throw new Error(`Function ${funcName} not found in ${moduleKey}.`);
+  return func;
+}
 
 export const GITHUB_SYSTEM_INSTRUCTION =
   "## GitHub Mode Protocol\n" +
@@ -31,51 +49,55 @@ export const GITHUB_SYSTEM_INSTRUCTION =
   "they know the agent is still active and making progress.";
 
 export const AVAILABLE_TOOLS = {
-  readFile: fileTools.readFile,
-  writeFile: fileTools.writeFile,
-  removeFile: fileTools.removeFile,
-  createDir: fileTools.createDir,
-  reloadSchemas: systemTools.reloadSchemas,
-  analyzeCode: systemTools.analyzeCode,
-  listDir: fileTools.listDir,
-  replaceString: fileTools.replaceString,
-  lintCode: systemTools.lintCode,
-  generateDocs: systemTools.generateDocs,
-  executeBash: systemTools.executeBash,
-  searchTextGlobal: searchTools.searchTextGlobal,
-  searchFilesPattern: searchTools.searchFilesPatternFixed,
-  renamePath: fileTools.renamePath,
-  copyFile: fileTools.copyFile,
-  getTrackedFiles: fileTools.getTrackedFiles,
-  validateJson: utilTools.validateJson,
-  setNickname: utilTools.setNickname,
-  pushMemory: memoryTools.pushMemory,
-  getTokenCount: memoryTools.getTokenCount,
-  gitDiff: fileTools.gitDiff,
-  restoreFile: fileTools.restoreFile,
-  concatFile: fileTools.concatFile,
-  getJsonStructure: jsonTools.getJsonStructure,
-  getJsonNode: jsonTools.getJsonNode,
-  getJsonArrayInfo: jsonTools.getJsonArrayInfo,
-  updateJsonNode: jsonTools.updateJsonNode,
-  listIssues: githubTools.listIssues,
-  createIssue: githubTools.createIssue,
-  editIssue: githubTools.editIssue,
-  closeIssue: githubTools.closeIssue,
-  postComment: githubTools.postComment,
-  getCurrentRepo: gitTools.getCurrentRepo,
-  gitDiffAll: gitTools.gitDiffAll,
-  notifyUser: notifyUserFunc,
-  insertSceneFountain: fountainTools.insertSceneFountain,
-  loadZip: zipTools.loadZip,
-  readZipFile: zipTools.readZipFile,
-  writeZipFile: zipTools.writeZipFile,
-  saveZip: zipTools.saveZip,
-  listZipFiles: zipTools.listZipFiles,
-  binaryAnalysis: binaryTools.handleHexCommand,
-  searchWeb: webTools.searchWeb,
-  renderWeb: webTools.renderWeb,
-  executeJS: evalTools.executeJS,
+  readFile: async (args) => (await getTool('fileTools', 'readFile'))(args),
+  writeFile: async (args) => (await getTool('fileTools', 'writeFile'))(args),
+  removeFile: async (args) => (await getTool('fileTools', 'removeFile'))(args),
+  createDir: async (args) => (await getTool('fileTools', 'createDir'))(args),
+  reloadSchemas: async (args) => (await getTool('systemTools', 'reloadSchemas'))(args),
+  analyzeCode: async (args) => (await getTool('systemTools', 'analyzeCode'))(args),
+  listDir: async (args) => (await getTool('fileTools', 'listDir'))(args),
+  replaceString: async (args) => (await getTool('fileTools', 'replaceString'))(args),
+  lintCode: async (args) => (await getTool('systemTools', 'lintCode'))(args),
+  generateDocs: async (args) => (await getTool('systemTools', 'generateDocs'))(args),
+  executeBash: async (args) => (await getTool('systemTools', 'executeBash'))(args),
+  searchTextGlobal: async (args) => (await getTool('searchTools', 'searchTextGlobal'))(args),
+  searchFilesPattern: async (args) => (await getTool('searchTools', 'searchFilesPatternFixed'))(args),
+  renamePath: async (args) => (await getTool('fileTools', 'renamePath'))(args),
+  copyFile: async (args) => (await getTool('fileTools', 'copyFile'))(args),
+  getTrackedFiles: async (args) => (await getTool('fileTools', 'getTrackedFiles'))(args),
+  validateJson: async (args) => (await getTool('utilTools', 'validateJson'))(args),
+  setNickname: async (args) => (await getTool('utilTools', 'setNickname'))(args),
+  pushMemory: async (args) => (await getTool('memoryTools', 'pushMemory'))(args),
+  getTokenCount: async (args) => (await getTool('memoryTools', 'getTokenCount'))(args),
+  gitDiff: async (args) => (await getTool('fileTools', 'gitDiff'))(args),
+  restoreFile: async (args) => (await getTool('fileTools', 'restoreFile'))(args),
+  concatFile: async (args) => (await getTool('fileTools', 'concatFile'))(args),
+  getJsonStructure: async (args) => (await getTool('jsonTools', 'getJsonStructure'))(args),
+  getJsonNode: async (args) => (await getTool('jsonTools', 'getJsonNode'))(args),
+  getJsonArrayInfo: async (args) => (await getTool('jsonTools', 'getJsonArrayInfo'))(args),
+  updateJsonNode: async (args) => (await getTool('jsonTools', 'updateJsonNode'))(args),
+  listIssues: async (args) => (await getTool('githubTools', 'listIssues'))(args),
+  createIssue: async (args) => (await getTool('githubTools', 'createIssue'))(args),
+  editIssue: async (args) => (await getTool('githubTools', 'editIssue'))(args),
+  closeIssue: async (args) => (await getTool('githubTools', 'closeIssue'))(args),
+  postComment: async (args) => (await getTool('githubTools', 'postComment'))(args),
+  getCurrentRepo: async (args) => (await getTool('gitTools', 'getCurrentRepo'))(args),
+  gitDiffAll: async (args) => (await getTool('gitTools', 'gitDiffAll'))(args),
+  notifyUser: async (args) => (await getTool('notificationTools', 'notifyUser'))(args),
+  insertSceneFountain: async (args) => (await getTool('fountainTools', 'insertSceneFountain'))(args),
+  loadZip: async (args) => (await getTool('zipTools', 'loadZip'))(args),
+  readZipFile: async (args) => (await getTool('zipTools', 'readZipFile'))(args),
+  writeZipFile: async (args) => (await getTool('zipTools', 'writeZipFile'))(args),
+  saveZip: async (args) => (await getTool('zipTools', 'saveZip'))(args),
+  listZipFiles: async (args) => (await getTool('zipTools', 'listZipFiles'))(args),
+  binaryAnalysis: async (args) => (await getTool('binaryTools', 'handleHexCommand'))(args),
+  searchWeb: async (args) => (await getTool('webTools', 'searchWeb'))(args),
+  renderWeb: async (args) => (await getTool('webTools', 'renderWeb'))(args),
+  executeJS: async (args) => (await getTool('evalTools', 'executeJS'))(args),
+  reloadTools: async () => {
+    toolCache = {};
+    return "Tool cache purged. All modules will be reloaded on next call.";
+  },
 };
 
 const registryPath = path.join(__dirname, "registry_positional.json");

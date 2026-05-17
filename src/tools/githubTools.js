@@ -72,87 +72,87 @@ export const createIssue = async ({ title, body, repo = "" }) => {
   }
 };
 
-export const editIssue = async ({ issueNumber, repo = "", title, body }) => {
+export const editIssue = async ({ issue_number, repo = "", title, body }) => {
   try {
     const targetRepo = repo ? resolveRepo(repo) : await getCurrentRepo();
     const headers = await getHeaders();
     const data = {};
     if (title) data.title = title;
     if (body) data.body = body;
-    await client.patch(`/repos/${targetRepo}/issues/${issueNumber}`, data, {
+    await client.patch(`/repos/${targetRepo}/issues/${issue_number}`, data, {
       headers,
     });
-    return `Issue #${issueNumber} edited successfully.`;
+    return `Issue #${issue_number} edited successfully.`;
   } catch (e) {
     return `ERR: ${e.message}`;
   }
 };
 
-export const closeIssue = async ({ issueNumber, repo = "" }) => {
+export const closeIssue = async ({ issue_number, repo = "" }) => {
   try {
     const targetRepo = repo ? resolveRepo(repo) : await getCurrentRepo();
     const headers = await getHeaders();
     await client.patch(
-      `/repos/${targetRepo}/issues/${issueNumber}`,
+      `/repos/${targetRepo}/issues/${issue_number}`,
       { state: "closed" },
       { headers },
     );
-    return `Issue #${issueNumber} closed successfully.`;
+    return `Issue #${issue_number} closed successfully.`;
   } catch (e) {
     return `ERR: ${e.message}`;
   }
 };
 
-export const postComment = async ({ issueNumber, body, repo = "" }) => {
+export const postComment = async ({ issue_number, body, repo = "" }) => {
   try {
     const targetRepo = repo ? resolveRepo(repo) : await getCurrentRepo();
     const headers = await getHeaders();
     await client.post(
-      `/repos/${targetRepo}/issues/${issueNumber}/comments`,
+      `/repos/${targetRepo}/issues/${issue_number}/comments`,
       { body },
       { headers },
     );
-    return `Comment posted to issue #${issueNumber}.`;
+    return `Comment posted to issue #${issue_number}.`;
   } catch (e) {
     return `ERR: ${e.message}`;
   }
 };
 
-export const addLabel = async ({ issueNumber, label, repo = "" }) => {
+export const addLabel = async ({ issue_number, label, repo = "" }) => {
   try {
     const targetRepo = repo ? resolveRepo(repo) : await getCurrentRepo();
     const headers = await getHeaders();
     await client.post(
-      `/repos/${targetRepo}/issues/${issueNumber}/labels`,
+      `/repos/${targetRepo}/issues/${issue_number}/labels`,
       { labels: [label] },
       { headers },
     );
-    return `Label '${label}' added to issue #${issueNumber}.`;
+    return `Label '${label}' added to issue #${issue_number}.`;
   } catch (e) {
     return `ERR: ${e.message}`;
   }
 };
 
-export const removeLabel = async ({ issueNumber, label, repo = "" }) => {
+export const removeLabel = async ({ issue_number, label, repo = "" }) => {
   try {
     const targetRepo = repo ? resolveRepo(repo) : await getCurrentRepo();
     const headers = await getHeaders();
     await client.delete(
-      `/repos/${targetRepo}/issues/${issueNumber}/labels/${label}`,
+      `/repos/${targetRepo}/issues/${issue_number}/labels/${label}`,
       { headers },
     );
-    return `Label '${label}' removed from issue #${issueNumber}.`;
+    return `Label '${label}' removed from issue #${issue_number}.`;
   } catch (e) {
     return `ERR: ${e.message}`;
   }
 };
 
-export const getIssueComments = async ({ issueNumber, repo = "" }) => {
+export const getIssueComments = async ({ issue_number, repo = "" }) => {
   try {
     const targetRepo = repo ? resolveRepo(repo) : await getCurrentRepo();
     const headers = await getHeaders();
     const response = await client.get(
-      `/repos/${targetRepo}/issues/${issueNumber}/comments`,
+      `/repos/${targetRepo}/issues/${issue_number}/comments`,
       { headers },
     );
     return response.data;

@@ -1,8 +1,8 @@
 import ConfigManager from "../core/configManager.js";
 
-export const validateJson = async ({ jsonString }) => {
+export const validateJson = async ({ json_string }) => {
   try {
-    JSON.parse(jsonString);
+    JSON.parse(json_string);
     return "El JSON es valido.";
   } catch (e) {
     return `ERR: JSON invalido: ${e.message}`;
