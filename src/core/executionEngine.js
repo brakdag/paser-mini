@@ -1,6 +1,5 @@
 import path from "path";
 import ToolAttemptTracker from "./toolTracker.js";
-import { TOOL_ALIASES } from "../tools/registry.js";
 
 class ExecutionEngine {
   constructor(
@@ -51,7 +50,7 @@ class ExecutionEngine {
 
   async executeToolCall(name, args, callData) {
     const displayName = name;
-    const toolName = TOOL_ALIASES[name] || name;
+    const toolName = name;
 
     if (this.strictPureMode) {
       return {

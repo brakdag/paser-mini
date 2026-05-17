@@ -1,8 +1,6 @@
 import AutoCorrector from "./autoCorrector.js";
 import validator from "./schemaRegistry.js";
 
-import { TOOL_ALIASES } from "../tools/registry.js";
-
 class SmartToolParser {
   // Optimized regex: limits capture to 10k characters to avoid blocking the main thread
   static TOOL_PATTERN =
@@ -31,11 +29,6 @@ class SmartToolParser {
 
     if (typeof data.name === "string" && data.name.endsWith("()")) {
       data.name = data.name.slice(0, -2);
-    }
-
-    // Resolve alias to canonical name for validation
-    if (typeof data.name === "string" && TOOL_ALIASES[data.name]) {
-      data.name = TOOL_ALIASES[data.name];
     }
 
     data.args = data.args || {};

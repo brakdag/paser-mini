@@ -191,7 +191,7 @@
   ],
   [
     "createIssue",
-    "Create a new issue in a GitHub repository",
+    "Create a new GitHub issue",
     {
       "title": "string",
       "body": "string",
@@ -293,10 +293,6 @@
       "offset": "number",
       "length": "number",
       "end": "number",
-      "outputFile": "string",
-      "pattern": "string",
-      "hexString": "string",
-      "type": "string",
       "endianness": "string"
     }
   ],
@@ -312,6 +308,13 @@
     "Render a webpage to text using elinks.",
     {
       "url": "string"
+    }
+  ],
+  [
+    "executeJS",
+    "Execute raw JavaScript in a secure, isolated V8 sandbox with BrowserFS access. Returns execution trace and result.",
+    {
+      "code": "string"
     }
   ]
 ]

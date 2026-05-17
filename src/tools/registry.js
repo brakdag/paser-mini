@@ -14,6 +14,7 @@ import * as fountainTools from "./fountainTools.js";
 import * as zipTools from "./zipTools.js";
 import * as binaryTools from "./binaryTools.js";
 import * as webTools from "./webTools.js";
+import * as evalTools from "./evalTools.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,7 +28,7 @@ export const GITHUB_SYSTEM_INSTRUCTION =
   "   As you complete each task, post a progress update comment marking the task as completed.\n" +
   "4. Transparency: Be explicit about what you are doing and why.\n" +
   "   Since the user is not watching your internal process, your comments are the only way\n" +
-  "   they know the agent is still active and making progress.";
+  "they know the agent is still active and making progress.";
 
 export const AVAILABLE_TOOLS = {
   readFile: fileTools.readFile,
@@ -74,70 +75,20 @@ export const AVAILABLE_TOOLS = {
   binaryAnalysis: binaryTools.handleHexCommand,
   searchWeb: webTools.searchWeb,
   renderWeb: webTools.renderWeb,
+  executeJS: evalTools.executeJS,
 };
 
 const registryPath = path.join(__dirname, "registry_positional.json");
 const fullCatalog = JSON.parse(fs.readFileSync(registryPath, "utf8"));
 
-export const TOOL_ALIASES = {
-  cat: "readFile",
-  write: "writeFile",
-  rm: "removeFile",
-  ls: "listDir",
-  sed: "replaceString",
-  replace: "replaceString",
-  edit: "replaceString",
-  analyze: "analyzeCode",
-  lint: "lintCode",
-  docs: "generateDocs",
-  grep: "searchTextGlobal",
-  find: "searchFilesPattern",
-  mv: "renamePath",
-  cp: "copyFile",
-  "json-val": "validateJson",
-  nick: "setNickname",
-  "mem-push": "pushMemory",
-  tokens: "getTokenCount",
-  tree: "getTrackedFiles",
-  diff: "gitDiff",
-  restore: "restoreFile",
-  append: "concatFile",
-  "json-struct": "getJsonStructure",
-  "json-get": "getJsonNode",
-  "json-arr": "getJsonArrayInfo",
-  "json-set": "updateJsonNode",
-  "issues-ls": "listIssues",
-  "issue-new": "createIssue",
-  "issue-edit": "editIssue",
-  "issue-close": "closeIssue",
-  "issue-com": "postComment",
-  repo: "getCurrentRepo",
-  "diff-all": "gitDiffAll",
-  notify: "notifyUser",
-  scene: "insertSceneFountain",
-  "zip-load": "loadZip",
-  "zip-cat": "readZipFile",
-  "zip-write": "writeZipFile",
-  "zip-save": "saveZip",
-  "zip-ls": "listZipFiles",
-  "bin-analyze": "binaryAnalysis",
-  "search-web": "searchWeb",
-  "render-web": "renderWeb",
-  sh: "sh",
-};
-
 const TOOL_CATALOG = fullCatalog
   .filter((t) => t[0] !== "executeBash")
   .map((t) => {
     const canonicalName = t[0];
-    const alias =
-      Object.keys(TOOL_ALIASES).find(
-        (key) => TOOL_ALIASES[key] === canonicalName,
-      ) || canonicalName;
     const args =
       t[2] && typeof t[2] === "object" ? Object.keys(t[2]).join(", ") : "data";
     const returns = t[1].split(". ")[0] || "status";
-    return `${alias}(${args}): returns ${returns}`;
+    return `${canonicalName}(${args}): returns ${returns}`;
   })
   .join("\n");
 
