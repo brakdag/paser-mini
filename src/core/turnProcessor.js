@@ -1,5 +1,5 @@
 import logger from "./logger.js";
-import UserInterruptException from "./exceptions.js";
+import { UserInterruptException, GeminiSafetyError, GeminiEmptyResponseError } from "./exceptions.js";
 import ApiCommunicator from "./ApiCommunicator.js";
 import FountainAdapter from "./FountainAdapter.js";
 
@@ -33,30 +33,20 @@ class TurnProcessor {
       processedInput = this.fountain.processInput(userInput);
     }
 
-    let currentResponse = await this.api.send(processedInput);
+    let currentResponse;
+    try {
+      currentResponse = await this.api.send(processedInput);
+    } catch (e) {
+      if (e instanceof GeminiSafetyError || e instanceof GeminiEmptyResponseError) {
+        this.ui.displayError(`Model Error: ${e.message}. Your last message has been removed from history to prevent blocking the conversation.`);
+        this.assistant.popLastMessage();
+        return;
+      }
+      throw e;
+    }
 
     if (this.ui.renderingMode === "FOUNTAIN") {
       await this.fountain.processResponse(currentResponse);
-    }
-
-    const isSafetyBlock = currentResponse === null || currentResponse === "null";
-    if (isSafetyBlock) {
-      this.ui.displayError(
-        "The model response was filtered by safety guards. Your last message has been removed from history to prevent blocking the conversation. Please rephrase your request.",
-      );
-      this.assistant.popLastMessage();
-      return;
-    }
-
-    let apiRecoveryAttempts = 0;
-    const maxApiRecoveries = 20;
-
-    while (
-      currentResponse?.startsWith("Error:") &&
-      apiRecoveryAttempts < maxApiRecoveries
-    ) {
-      apiRecoveryAttempts += 1;
-      currentResponse = await this.api.recover(currentResponse, apiRecoveryAttempts, maxApiRecoveries);
     }
 
     let turnComplete = false;
@@ -153,29 +143,20 @@ class TurnProcessor {
           ? this.fountain.formatToolResults(toolResults)
           : toolResults.join("\n");
 
-        currentResponse = await this.api.send(resultsPayload, "user");
+        try {
+          currentResponse = await this.api.send(resultsPayload, "user");
+        } catch (e) {
+          if (e instanceof GeminiSafetyError || e instanceof GeminiEmptyResponseError) {
+            this.ui.displayError(`Model Error during tool execution: ${e.message}. Your last message has been removed from history.`);
+            this.assistant.popLastMessage();
+            turnComplete = true;
+            break;
+          }
+          throw e;
+        }
 
         if (this.ui.renderingMode === "FOUNTAIN") {
           await this.fountain.processResponse(currentResponse);
-        }
-
-        const isSafetyBlockTool = currentResponse === null || currentResponse === "null";
-        if (isSafetyBlockTool) {
-          this.ui.displayError("The model response was filtered by safety guards during tool execution. Your last message has been removed from history. Please rephrase your request.");
-          this.assistant.popLastMessage();
-          turnComplete = true;
-          break;
-        }
-
-        if (currentResponse?.startsWith("Error:")) {
-          apiRecoveryAttempts += 1;
-          if (apiRecoveryAttempts < maxApiRecoveries) {
-            this.ui.displayError(`API Communication Error during tool processing (Attempt ${apiRecoveryAttempts}/${maxApiRecoveries}): ${currentResponse}`);
-            currentResponse = await this.api.recover(currentResponse, apiRecoveryAttempts, maxApiRecoveries);
-          } else {
-            this.ui.displayError("Critical API failure during tool processing. Halting.");
-            return;
-          }
         }
       }
     }

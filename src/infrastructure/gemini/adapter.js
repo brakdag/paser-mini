@@ -2,6 +2,7 @@ import axios from "axios";
 import axiosRetry from "axios-retry";
 import logger from "../../core/logger.js";
 import BaseAdapter from "../baseAdapter.js";
+import { GeminiSafetyError, GeminiEmptyResponseError } from "../../core/exceptions.js";
 
 class GeminiAdapter extends BaseAdapter {
   constructor(ui, configManager, userNickname = "user", agentNickname = "assistant") {
@@ -41,7 +42,8 @@ class GeminiAdapter extends BaseAdapter {
         const msg = `[${time}] -!- [GeminiAdapter] API Retry ${retryCount}/5 due to: ${error.response?.status || error.message}`;
         logger.warn(msg);
         if (this.ui && this.ui.displayInfo) {
-          this.ui.displayInfo(`Reintentando conexión... (${retryCount}/5)`);
+          const status = error.response?.status || error.message;
+          this.ui.displayInfo(`Reintentando conexión... (${retryCount}/5) | Error: ${status}`);
         }
       },
     });
@@ -134,17 +136,17 @@ class GeminiAdapter extends BaseAdapter {
 
       const { candidates } = data;
       if (!candidates || candidates.length === 0) {
-        return "Error: No response candidates returned (possible safety block).";
+        throw new GeminiEmptyResponseError("No response candidates returned (possible safety block).");
       }
 
       const candidate = candidates[0];
       if (candidate.finishReason === "SAFETY") {
-        return "Error: Response blocked by safety filters.";
+        throw new GeminiSafetyError("Response blocked by safety filters.");
       }
 
       const { content } = candidate;
       if (!content || !content.parts || content.parts.length === 0) {
-        return "Error: No content parts returned.";
+        throw new GeminiEmptyResponseError("No content parts returned.");
       }
 
       let textContent = content.parts.map((p) => p.text).join("");
@@ -166,7 +168,7 @@ class GeminiAdapter extends BaseAdapter {
         return textContent;
       }
 
-      return "Error: Empty response";
+      throw new GeminiEmptyResponseError("Empty response");
     } catch (e) {
       const errorMsg = e.response?.data?.error?.message || e.message;
       const error = new Error(errorMsg);
