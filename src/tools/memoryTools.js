@@ -1,55 +1,55 @@
 import MementoManager from "../infrastructure/memento/manager.js";
 
-const memento = new MementoManager();
+export class MemoryTools {
+  #memento = new MementoManager();
+  #currentAssistant = null;
+  #currentChatManager = null;
 
-let currentAssistant = null;
-let currentChatManager = null;
+  setMemoryContext(assistant, chatManager) {
+    this.#currentAssistant = assistant;
+    this.#currentChatManager = chatManager;
+  }
 
-export const setMemoryContext = (assistant, chatManager) => {
-  currentAssistant = assistant;
-  currentChatManager = chatManager;
-};
+  async pushMemory({ data }) {
+    try {
+      if (!data) {
+        return "ERR: No value provided for memory.";
+      }
 
-export const pushMemory = async ({ data }) => {
-  try {
-    if (!data) {
-      return "ERR: No value provided for memory.";
+      return await this.#memento.pushMemory("agent", "general", String(data), null);
+    } catch (e) {
+      return `ERR: ${e.message}`;
     }
-
-    return await memento.pushMemory("agent", "general", String(data), null);
-  } catch (e) {
-    return `ERR: ${e.message}`;
   }
-};
 
-export const pullMemory = async ({ scope, key, direction }) => {
-  try {
-    return await memento.pullMemory(scope, key, direction);
-  } catch (e) {
-    return `ERR: ${e.message}`;
-  }
-};
-
-export const getTokenCount = async () => {
-  try {
-    if (!currentAssistant || !currentChatManager) {
-      return "ERR: Memory context not initialized.";
+  async pullMemory({ scope, key, direction }) {
+    try {
+      return await this.#memento.pullMemory(scope, key, direction);
+    } catch (e) {
+      return `ERR: ${e.message}`;
     }
-
-    // Local fast estimation: character count / 4 (matches RPD-saving strategy)
-    const systemInstruction = currentChatManager.systemInstruction || "";
-    const historyData =
-      typeof currentAssistant.history === "string"
-        ? currentAssistant.history
-        : JSON.stringify(currentAssistant.history || []);
-
-    const totalLength = systemInstruction.length + historyData.length;
-    const count = Math.ceil(totalLength / 4);
-    const limit = currentChatManager.contextWindowLimit || 250000;
-
-    const percentage = (count / limit) * 100;
-    return `Current tokens (est.): ${count} / ${limit} (${percentage.toFixed(2)}%)`;
-  } catch (e) {
-    return `ERR: ${e.message}`;
   }
-};
+
+  async getTokenCount() {
+    try {
+      if (!this.#currentAssistant || !this.#currentChatManager) {
+        return "ERR: Memory context not initialized.";
+      }
+
+      const systemInstruction = this.#currentChatManager.systemInstruction || "";
+      const historyData =
+        typeof this.#currentAssistant.history === "string"
+          ? this.#currentAssistant.history
+          : JSON.stringify(this.#currentAssistant.history || []);
+
+      const totalLength = systemInstruction.length + historyData.length;
+      const count = Math.ceil(totalLength / 4);
+      const limit = this.#currentChatManager.contextWindowLimit || 250000;
+
+      const percentage = (count / limit) * 100;
+      return `Current tokens (est.): ${count} / ${limit} (${percentage.toFixed(2)}%)`;
+    } catch (e) {
+      return `ERR: ${e.message}`;
+    }
+  }
+}

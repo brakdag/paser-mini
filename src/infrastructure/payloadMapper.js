@@ -1,9 +1,12 @@
-const PayloadMapper = {
+/**
+ * Maps neutral history to Gemini/NVIDIA API formats
+ */
+export class PayloadMapper {
   /**
    * Maps neutral history to Gemini API format
    * Gemini expects: { contents: [ { role: 'user'|'model', parts: [ { text: '...' } ] } ] }
    */
-  toGemini(history, systemInstruction, temperature) {
+  static toGemini(history, systemInstruction, temperature) {
     const contents = history.map((m) => ({
       role: m.role === "model" ? "model" : "user",
       parts: [{ text: m.text }],
@@ -23,13 +26,13 @@ const PayloadMapper = {
     }
 
     return payload;
-  },
+  }
 
   /**
    * Maps neutral history to NVIDIA/OpenAI format
    * NVIDIA expects: { messages: [ { role: 'system'|'user'|'assistant', content: '...' } ] }
    */
-  toNvidia(history, systemInstruction, temperature) {
+  static toNvidia(history, systemInstruction, temperature) {
     const messages = [];
 
     if (systemInstruction) {
@@ -47,8 +50,5 @@ const PayloadMapper = {
       messages,
       temperature,
     };
-  },
-};
-
-
-export default PayloadMapper;
+  }
+}

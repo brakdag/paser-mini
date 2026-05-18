@@ -1,27 +1,22 @@
 import { exec } from "child_process";
 import { promisify } from "util";
 
-const execAsync = promisify(exec);
+export class DockerTools {
+  #execAsync = promisify(exec);
 
-async function sh({ command }) {
-  // El comando se ejecuta dentro del contenedor de Docker
-  // Usamos -t para asegurar un TTY y que la salida sea limpia
-  const dockerCmd = `docker exec -t paser_mini_runtime sh -c "${command}"`;
+  async sh({ command }) {
+    const dockerCmd = `docker exec -t paser_mini_runtime sh -c "${command}"`;
 
-  try {
-    const { stdout, stderr } = await execAsync(dockerCmd);
+    try {
+      const { stdout, stderr } = await this.#execAsync(dockerCmd);
 
-    if (stderr && !stdout) {
-      return stderr;
+      if (stderr && !stdout) {
+        return stderr;
+      }
+
+      return stdout || "Command executed successfully (no output).";
+    } catch (error) {
+      return `ERR: ${error.message}`;
     }
-
-    return stdout || "Command executed successfully (no output).";
-  } catch (error) {
-    // Capturamos el error de ejecución de Docker (ej. comando no encontrado o error de shell)
-    return `ERR: ${error.message}`;
   }
 }
-
-export default {
-  sh,
-};
