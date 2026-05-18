@@ -24,7 +24,7 @@ const MODULE_MAP = {
 
 let toolCache = {};
 
-async function getToolInstance(moduleKey) {
+export async function getToolInstance(moduleKey) {
   if (!toolCache[moduleKey]) {
     const modulePath = MODULE_MAP[moduleKey];
     if (!modulePath) throw new Error(`Module ${moduleKey} not mapped.`);

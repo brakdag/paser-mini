@@ -148,6 +148,14 @@ class ChatManager {
     const model = this.configManager.get("model_name", "gemini-2.0-flash");
     this.assistant.startChat(model, this.systemInstruction, this.temperature);
 
+    try {
+      const { getToolInstance } = await import("../tools/registry.js");
+      const memoryTools = await getToolInstance("memoryTools");
+      memoryTools.setMemoryContext(this.assistant, this);
+    } catch (e) {
+      logger.error("Failed to initialize memory context", e);
+    }
+
     if (initialInput) {
       const logMsg = this.ui.getLogOpenedString();
       const welcomeMsg = "System initialized. Ready for input.";
