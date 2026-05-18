@@ -89,8 +89,8 @@ class ChatManager {
     let newAssistant;
 
     if (provider === "NVIDIA") {
-      const { NvidiaAdapter } =
-        await import("../infrastructure/nvidia/adapter");
+      const { default: NvidiaAdapter } =
+        await import("../infrastructure/nvidia/adapter.js");
       newAssistant = new NvidiaAdapter(
         this.ui,
         this.configManager,
@@ -98,8 +98,8 @@ class ChatManager {
         this.ui.agentNickname,
       );
     } else if (provider === "OPENROUTER") {
-      const { OpenRouterAdapter } =
-        await import("../infrastructure/openrouter/adapter");
+      const { default: OpenRouterAdapter } =
+        await import("../infrastructure/openrouter/adapter.js");
       newAssistant = new OpenRouterAdapter(
         this.ui,
         this.configManager,
@@ -107,7 +107,7 @@ class ChatManager {
         this.ui.agentNickname,
       );
     } else {
-      const { GeminiAdapter } =
+      const { default: GeminiAdapter } =
         await import("../infrastructure/gemini/adapter.js");
       newAssistant = new GeminiAdapter(
         this.ui,
