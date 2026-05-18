@@ -22,28 +22,54 @@ class ExecutionEngine {
     this.maxTurns = 10000;
     this.stopRequested = false;
     this._detailMappers = {
-      readFile: (a) => path.basename(a.path || ""),
-      writeFile: (a) => path.basename(a.path || ""),
-      removeFile: (a) => path.basename(a.path || ""),
-      replaceString: (a) => path.basename(a.path || ""),
-      listDir: (a) => a.path || "",
-      createDir: (a) => a.path || "",
-      renamePath: (a) =>
+      "fs.readFile": (a) => path.basename(a.path || ""),
+      "fs.writeFile": (a) => path.basename(a.path || ""),
+      "fs.rm": (a) => path.basename(a.path || ""),
+      "fs.readdir": (a) => a.path || "",
+      "fs.replaceString": (a) => path.basename(a.path || ""),
+      "fs.rename": (a) =>
         `${path.basename(a.origin || "")} -> ${path.basename(a.destination || "")}`,
-      pushMemory: (a) => a.key || "unknown",
-      runInstance: (a) => a.target || "unknown",
-      searchTextGlobal: (a) => `${a.query || ""}`,
-      searchFilesPattern: (a) => `pattern: ${a.pattern || ""}`,
-      analyzeCode: (a) => path.basename(a.path || ""),
-      lintCode: (a) => path.basename(a.path || ""),
-      generateDocs: (a) =>
+      "fs.copyFile": (a) =>
+        `${path.basename(a.origin || "")} -> ${path.basename(a.destination || "")}`,
+      "fs.concatFile": (a) => path.basename(a.destination || ""),
+      "pyright.analyze": (a) => path.basename(a.path || ""),
+      "eslint.lint": (a) => path.basename(a.path || ""),
+      "jsdoc.generate": (a) =>
         `Docs for ${path.basename(a.path || ".")} -> ${a.outputDir || "docs/api"}`,
-      executeBash: (a) =>
+      "child_process.exec": (a) =>
         a.command.substring(0, 50) + (a.command.length > 50 ? "..." : ""),
-      binaryAnalysis: (a) =>
+      "grep.search": (a) => a.query || "",
+      "glob.search": (a) => `pattern: ${a.pattern || ""}`,
+      "JSON.parse": (a) => `len: ${a.json_string?.length || 0}`,
+      "config.setNickname": (a) => a.newNickname || "",
+      "memento.push": (a) => "insight",
+      "chatManager.getTokenCount": () => "tokens",
+      "git.lsFiles": () => "tree",
+      "git.diff": (a) => path.basename(a.path || ""),
+      "git.restore": (a) => path.basename(a.path || ""),
+      "git.diffAll": () => "all",
+      "git.remoteUrl": () => "url",
+      "json.getStructure": (a) => path.basename(a.file_path || ""),
+      "json.getNode": (a) => path.basename(a.file_path || ""),
+      "json.getArrayInfo": (a) => path.basename(a.file_path || ""),
+      "json.updateNode": (a) => path.basename(a.file_path || ""),
+      "github.listIssues": (a) => a.repo || "",
+      "github.createIssue": (a) => a.title || "",
+      "github.editIssue": (a) => `#${a.issue_number || ""}`,
+      "github.closeIssue": (a) => `#${a.issue_number || ""}`,
+      "github.postComment": (a) => `#${a.issue_number || ""}`,
+      "system.notify": (a) => a.message?.substring(0, 30) || "",
+      "fountain.insertScene": (a) => a.scene || "",
+      "jszip.load": (a) => path.basename(a.filePath || ""),
+      "jszip.read": (a) => a.internalPath || "",
+      "jszip.write": (a) => a.internalPath || "",
+      "jszip.save": (a) => path.basename(a.outputPath || ""),
+      "jszip.list": () => "list",
+      "binary.analyze": (a) =>
         `${a.action || "analysis"} on ${path.basename(a.filePath || "unknown")}`,
-      sh: (a) =>
-        `sh: ${a.command.substring(0, 50)}${a.command.length > 50 ? "..." : ""}`,
+      "duckduckgo.search": (a) => a.query || "",
+      "elinks.render": (a) => a.url || "",
+      "vm.runInContext": () => "sandbox",
     };
   }
 
@@ -129,10 +155,22 @@ class ExecutionEngine {
       const toolFunc = this.tools[toolName];
       const result = await toolFunc(args);
 
+      const isError = typeof result === 'string' && result.startsWith('ERR:');
+
       if (toolName === "pushMemory") {
         this.ui.displayPanel("Memento Push", result, "info");
       } else if (toolName === "runInstance") {
         this.ui.displayPanel("Instance Test Output", result, "info");
+      }
+
+      if (isError) {
+        this.toolTracker.recordFailure(toolName);
+        this.ui.endToolMonitoring(displayName, false, detail);
+        return {
+          response: this.toolParser.formatToolResponse(result, callData.id, false),
+          result,
+          success: false,
+        };
       }
 
       this.toolTracker.recordSuccess(toolName);

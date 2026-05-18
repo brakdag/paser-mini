@@ -101,7 +101,6 @@ class TerminalUI {
     const toolIcon = "\ud83d\udee0\ufe0f";
     const msg = `${toolIcon} ${name} (${detail})...`;
     if (this.noSpinner) {
-      process.stdout.write(`${chalk.yellow(msg)}\n`);
       return;
     }
     const spinner = ora({ text: chalk.yellow(msg), color: "yellow" }).start();
