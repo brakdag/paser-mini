@@ -1,6 +1,6 @@
 [
   [
-    "readFile",
+    "fs.readFile",
     "Read file content. Use 'tail' to read only the last N lines (bypasses size limit).",
     {
       "path": "string",
@@ -8,7 +8,7 @@
     }
   ],
   [
-    "writeFile",
+    "fs.writeFile",
     "Write content to file. Returns 'OK' on success.",
     {
       "path": "string",
@@ -16,21 +16,21 @@
     }
   ],
   [
-    "removeFile",
+    "fs.rm",
     "Delete file. Returns 'OK' on success. Throws ERR if not found.",
     {
       "path": "string"
     }
   ],
   [
-    "listDir",
+    "fs.readdir",
     "List directory contents",
     {
       "path": "string"
     }
   ],
   [
-    "replaceString",
+    "fs.replaceString",
     "Search and replace string. Returns 'OK' on success. If no exact match is found, it may suggest a similar line using fuzzy matching. Throws ERR if ambiguous or not found.",
     {
       "path": "string",
@@ -40,7 +40,7 @@
   ],
 
   [
-    "analyzeCode",
+    "pyright.analyze",
     "Run static analysis for JS/TS codebase to detect type and syntax errors",
     {
       "path": "string"
@@ -48,14 +48,14 @@
   ],
 
   [
-    "lintCode",
+    "eslint.lint",
     "Run ESLint analysis",
     {
       "path": "string"
     }
   ],
   [
-    "generateDocs",
+    "jsdoc.generate",
     "Generate HTML documentation using JSDoc",
     {
       "path": "string",
@@ -63,28 +63,28 @@
     }
   ],
   [
-    "executeBash",
+    "child_process.exec",
     "Execute a bash command in the project root",
     {
       "command": "string"
     }
   ],
   [
-    "searchTextGlobal",
+    "grep.search",
     "Search string in all files",
     {
       "query": "string"
     }
   ],
   [
-    "searchFilesPattern",
+    "glob.search",
     "Search files by pattern",
     {
       "pattern": "string"
     }
   ],
   [
-    "renamePath",
+    "fs.rename",
     "Move/Rename path. Returns 'OK' on success. Throws ERR if origin not found.",
     {
       "origin": "string",
@@ -92,7 +92,7 @@
     }
   ],
   [
-    "copyFile",
+    "fs.copyFile",
     "Copy file from origin to destination. Returns 'OK' on success.",
     {
       "origin": "string",
@@ -100,14 +100,14 @@
     }
   ],
   [
-    "validateJson",
+    "JSON.parse",
     "Validates if a string is a valid JSON",
     {
       "json_string": "string"
     }
   ],
   [
-    "setNickname",
+    "config.setNickname",
     "Changes the agent's display nickname in the chat log",
     {
       "newNickname": "string"
@@ -115,25 +115,25 @@
   ],
 
   [
-    "pushMemory",
+    "memento.push",
     "Stores in memento.log. To reference MUST use the #ID format (e.g., #1).",
     "string"
   ],
   [
-    "getTokenCount",
+    "chatManager.getTokenCount",
     "Returns the current token count of the conversation history and its percentage relative to the limit.",
     {}
   ],
-  ["getTrackedFiles", "Get the project file tree (very fast)", {}],
+  ["git.lsFiles", "Get the project file tree (very fast)", {}],
   [
-    "gitDiff",
+    "git.diff",
     "Show differences of a file using git diff",
     {
       "path": "string"
     }
   ],
   [
-    "restoreFile",
+    "git.restore",
     "Restore a file to its previous state using git restore",
     {
       "path": "string"
@@ -141,7 +141,7 @@
   ],
 
   [
-    "concatFile",
+    "fs.concatFile",
     "Concatenates the content of the source file to the end of the destination file.",
     {
       "destination": "string",
@@ -150,7 +150,7 @@
   ],
 
   [
-    "getJsonStructure",
+    "json.getStructure",
     "Returns the keys and structure of a JSON node at a given path.",
     {
       "file_path": "string",
@@ -158,7 +158,7 @@
     }
   ],
   [
-    "getJsonNode",
+    "json.getNode",
     "Retrieves the content of a specific JSON node using a path.",
     {
       "file_path": "string",
@@ -166,7 +166,7 @@
     }
   ],
   [
-    "getJsonArrayInfo",
+    "json.getArrayInfo",
     "Returns the length and item type of a JSON array at a given path.",
     {
       "file_path": "string",
@@ -174,7 +174,7 @@
     }
   ],
   [
-    "updateJsonNode",
+    "json.updateNode",
     "Updates a specific JSON node with a new value using a path.",
     {
       "file_path": "string",
@@ -183,14 +183,14 @@
     }
   ],
   [
-    "listIssues",
+    "github.listIssues",
     "List issues in a GitHub repository",
     {
       "repo": "string"
     }
   ],
   [
-    "createIssue",
+    "github.createIssue",
     "Create a new GitHub issue",
     {
       "title": "string",
@@ -199,7 +199,7 @@
     }
   ],
   [
-    "editIssue",
+    "github.editIssue",
     "Edit an existing issue in a GitHub repository",
     {
       "issue_number": "integer",
@@ -209,7 +209,7 @@
     }
   ],
   [
-    "closeIssue",
+    "github.closeIssue",
     "Close an issue in a GitHub repository",
     {
       "issue_number": "integer",
@@ -217,28 +217,28 @@
     }
   ],
   [
-    "postComment",
+    "github.postComment",
     "Post a comment to a specific GitHub issue.",
     {
       "issue_number": "integer",
       "body": "string"
     }
   ],
-  ["getCurrentRepo", "Get the current GitHub repository name", {}],
+  ["git.remoteUrl", "Get the current GitHub repository name", {}],
   [
-    "gitDiffAll",
+    "git.diffAll",
     "Show all changes in the current repository using git diff",
     {}
   ],
   [
-    "notifyUser",
+    "system.notify",
     "Sends a notification to the user and plays a sound.",
     {
       "message": "string"
     }
   ],
   [
-    "insertSceneFountain",
+    "fountain.insertScene",
     "Insert a Fountain scene into the chat as a user message.",
     {
       "scene": "string",
@@ -246,14 +246,14 @@
     }
   ],
   [
-    "loadZip",
+    "jszip.load",
     "Loads a ZIP/compressed file into memory for manipulation.",
     {
       "filePath": "string"
     }
   ],
   [
-    "readZipFile",
+    "jszip.read",
     "Reads the content of a specific file within a loaded ZIP container.",
     {
       "zipId": "string",
@@ -261,7 +261,7 @@
     }
   ],
   [
-    "writeZipFile",
+    "jszip.write",
     "Writes or updates a file within a loaded ZIP container in RAM.",
     {
       "zipId": "string",
@@ -270,7 +270,7 @@
     }
   ],
   [
-    "saveZip",
+    "jszip.save",
     "Saves the current state of a loaded ZIP container from RAM to disk.",
     {
       "zipId": "string",
@@ -278,14 +278,14 @@
     }
   ],
   [
-    "listZipFiles",
+    "jszip.list",
     "Lists all files contained within a loaded ZIP container.",
     {
       "zipId": "string"
     }
   ],
   [
-    "binaryAnalysis",
+    "binary.analyze",
     "Perform binary analysis on a file (inspect, extract, search, detect, convert)",
     {
       "action": "string",
@@ -297,21 +297,21 @@
     }
   ],
   [
-    "searchWeb",
+    "duckduckgo.search",
     "Search the web using DuckDuckGo Lite.",
     {
       "query": "string"
     }
   ],
   [
-    "renderWeb",
+    "elinks.render",
     "Render a webpage to text using elinks.",
     {
       "url": "string"
     }
   ],
   [
-    "executeJS",
+    "vm.runInContext",
     "Execute raw JavaScript in a secure, isolated V8 sandbox with BrowserFS access. Returns execution trace and result.",
     {
       "code": "string"
