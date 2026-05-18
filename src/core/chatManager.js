@@ -52,7 +52,7 @@ class ChatManager {
       this.repetitionDetector,
     );
     this.historyManager = new HistoryManager(assistant, ui, this.configManager);
-    this.assistant.ui = ui; // Inyectamos la UI en el adaptador para los reintentos
+    this.assistant.ui = ui; // Inject the UI into the adapter for retry handling
     this.ui.agentNickname = this.configManager.get(
       "agent_nickname",
       "paser_mini",
@@ -191,7 +191,7 @@ class ChatManager {
           this.ui.displayInfo("Agent interrupted. Processing new request...");
         } else if (e.name === "APIError") {
           this.ui.displayError(
-            `Error de conexión con la IA: ${e.message}. La sesión sigue activa, intenta de nuevo en un momento.`,
+            `AI connection error: ${e.message}. The session remains active; please try again in a moment.`,
           );
           logger.error(`API Error: ${e.message}`, e);
         } else {

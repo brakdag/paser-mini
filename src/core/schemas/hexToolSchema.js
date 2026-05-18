@@ -1,42 +1,17 @@
-const hexToolSchema = {
-  type: "object",
-  properties: {
-    action: {
-      type: "string",
-      enum: ["inspect", "extract", "search", "detect", "convert"],
-      description: "The action to perform with the binary tool",
-    },
-    filePath: {
-      type: "string",
-      description: "Path to the binary file",
-    },
-    offset: {
-      type: "number",
-      description: "The starting offset for inspection or extraction",
-    },
-    length: {
-      type: "number",
-      description: "The number of bytes to read or extract",
-    },
-    end: {
-      type: "number",
-      description: "The end offset for extraction",
-    },
-    outputFile: {
-      type: "string",
-      description: "The destination path for extracted chunks",
-    },
-    pattern: {
-      type: "string",
-      description: 'The hex pattern to search for (e.g., "50 4B 03 04")',
-    },
-    hexString: {
-      type: "string",
-      description: "The hex string to convert to a data type",
-    },
-    type: {
-      type: "string",
-      enum: [
+import { z } from "zod";
+
+const hexToolSchema = z
+  .object({
+    action: z.enum(["inspect", "extract", "search", "detect", "convert"]),
+    filePath: z.string().optional(),
+    offset: z.number().optional(),
+    length: z.number().optional(),
+    end: z.number().optional(),
+    outputFile: z.string().optional(),
+    pattern: z.string().optional(),
+    hexString: z.string().optional(),
+    type: z
+      .enum([
         "Int8",
         "UInt8",
         "Int16",
@@ -45,26 +20,27 @@ const hexToolSchema = {
         "UInt32",
         "Float32",
         "Float64",
-      ],
-      description: "The data type for conversion",
-    },
-    endianness: {
-      type: "string",
-      enum: ["LE", "BE"],
-      default: "LE",
-      description:
-        "Endianness for multi-byte conversion (LE = Little Endian, BE = Big Endian)",
-    },
-  },
-  required: ["action"],
-  dependencies: {
-    inspect: ["filePath"],
-    extract: ["filePath", "outputFile"],
-    search: ["filePath", "pattern"],
-    detect: ["filePath"],
-    convert: ["hexString", "type"],
-  },
-};
+      ])
+      .optional(),
+    endianness: z.enum(["LE", "BE"]).default("LE").optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.action === 'inspect' && !data.filePath) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "filePath is required for inspect action", path: ['filePath'] });
+    }
+    if (data.action === 'extract' && (!data.filePath || !data.outputFile)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "filePath and outputFile are required for extract action", path: ['filePath', 'outputFile'] });
+    }
+    if (data.action === 'search' && (!data.filePath || !data.pattern)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "filePath and pattern are required for search action", path: ['filePath', 'pattern'] });
+    }
+    if (data.action === 'detect' && !data.filePath) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "filePath is required for detect action", path: ['filePath'] });
+    }
+    if (data.action === 'convert' && (!data.hexString || !data.type)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "hexString and type are required for convert action", path: ['hexString', 'type'] });
+    }
+  });
 
 
 export default hexToolSchema;

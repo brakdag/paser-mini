@@ -1,8 +1,10 @@
-export const evalSchema = {
-  type: "object",
-  properties: {
-    code: { type: "string" }
-  },
-  required: ["code"],
-  additionalProperties: false,
-};
+import { z } from "zod";
+
+const evalSchema = z
+  .object({
+    code: z.string(),
+  })
+  .strict();
+
+
+export default evalSchema;

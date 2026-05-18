@@ -5,6 +5,24 @@ import fs from "fs/promises";
 
 const execPromise = promisify(exec);
 
+const globToRegex = (glob) => {
+  let result = "";
+  const specialChars = ".+^${}()|[]\\";
+  for (let i = 0; i < glob.length; i++) {
+    const char = glob[i];
+    if (char === '*') {
+      result += '.*';
+    } else if (char === '?') {
+      result += '.';
+    } else if (specialChars.includes(char)) {
+      result += '\\' + char;
+    } else {
+      result += char;
+    }
+  }
+  return new RegExp('^' + result + '$', 'i');
+};
+
 export const searchFilesPatternFixed = async ({ pattern }) => {
   try {
     const results = [];
@@ -16,8 +34,11 @@ export const searchFilesPatternFixed = async ({ pattern }) => {
             const res = path.join(dir, file.name);
             if (file.isDirectory()) {
               await walk(res);
-            } else if (new RegExp(pattern).test(file.name) || new RegExp(pattern).test(res)) {
-              results.push(res.replace(/^\.\//, ""));
+            } else {
+              const regex = globToRegex(pattern);
+              if (regex.test(file.name) || regex.test(res)) {
+                results.push(res.replace(/^\.\//, ""));
+              }
             }
           }
         }),
