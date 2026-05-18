@@ -62,79 +62,52 @@ export const GITHUB_SYSTEM_INSTRUCTION =
   "they know the agent is still active and making progress.";
 
 export const AVAILABLE_TOOLS = {
-  readFile: async (args) => (await getTool("fileTools", "readFile"))(args),
-  writeFile: async (args) => (await getTool("fileTools", "writeFile"))(args),
-  removeFile: async (args) => (await getTool("fileTools", "removeFile"))(args),
-  createDir: async (args) => (await getTool("fileTools", "createDir"))(args),
-  reloadSchemas: async (args) =>
-    (await getTool("systemTools", "reloadSchemas"))(args),
-  analyzeCode: async (args) =>
-    (await getTool("systemTools", "analyzeCode"))(args),
-  listDir: async (args) => (await getTool("fileTools", "listDir"))(args),
-  replaceString: async (args) =>
-    (await getTool("fileTools", "replaceString"))(args),
-  lintCode: async (args) => (await getTool("systemTools", "lintCode"))(args),
-  generateDocs: async (args) =>
-    (await getTool("systemTools", "generateDocs"))(args),
-  executeBash: async (args) =>
-    (await getTool("systemTools", "executeBash"))(args),
-  searchTextGlobal: async (args) =>
-    (await getTool("searchTools", "searchTextGlobal"))(args),
-  searchFilesPattern: async (args) =>
-    (await getTool("searchTools", "searchFilesPatternFixed"))(args),
-  renamePath: async (args) => (await getTool("fileTools", "renamePath"))(args),
-  copyFile: async (args) => (await getTool("fileTools", "copyFile"))(args),
-  getTrackedFiles: async (args) =>
-    (await getTool("fileTools", "getTrackedFiles"))(args),
-  validateJson: async (args) =>
-    (await getTool("utilTools", "validateJson"))(args),
-  setNickname: async (args) =>
-    (await getTool("utilTools", "setNickname"))(args),
-  pushMemory: async (args) =>
-    (await getTool("memoryTools", "pushMemory"))(args),
-  getTokenCount: async (args) =>
-    (await getTool("memoryTools", "getTokenCount"))(args),
-  gitDiff: async (args) => (await getTool("fileTools", "gitDiff"))(args),
-  restoreFile: async (args) =>
-    (await getTool("fileTools", "restoreFile"))(args),
-  concatFile: async (args) => (await getTool("fileTools", "concatFile"))(args),
-  getJsonStructure: async (args) =>
-    (await getTool("jsonTools", "getJsonStructure"))(args),
-  getJsonNode: async (args) =>
-    (await getTool("jsonTools", "getJsonNode"))(args),
-  getJsonArrayInfo: async (args) =>
-    (await getTool("jsonTools", "getJsonArrayInfo"))(args),
-  updateJsonNode: async (args) =>
-    (await getTool("jsonTools", "updateJsonNode"))(args),
-  listIssues: async (args) =>
-    (await getTool("githubTools", "listIssues"))(args),
-  createIssue: async (args) =>
-    (await getTool("githubTools", "createIssue"))(args),
-  editIssue: async (args) => (await getTool("githubTools", "editIssue"))(args),
-  closeIssue: async (args) =>
-    (await getTool("githubTools", "closeIssue"))(args),
-  postComment: async (args) =>
-    (await getTool("githubTools", "postComment"))(args),
-  getCurrentRepo: async (args) =>
-    (await getTool("gitTools", "getCurrentRepo"))(args),
-  gitDiffAll: async (args) => (await getTool("gitTools", "gitDiffAll"))(args),
-  notifyUser: async (args) =>
-    (await getTool("notificationTools", "notifyUser"))(args),
-  insertSceneFountain: async (args) =>
-    (await getTool("fountainTools", "insertSceneFountain"))(args),
-  loadZip: async (args) => (await getTool("zipTools", "loadZip"))(args),
-  readZipFile: async (args) => (await getTool("zipTools", "readZipFile"))(args),
-  writeZipFile: async (args) =>
-    (await getTool("zipTools", "writeZipFile"))(args),
-  saveZip: async (args) => (await getTool("zipTools", "saveZip"))(args),
-  listZipFiles: async (args) =>
-    (await getTool("zipTools", "listZipFiles"))(args),
-  binaryAnalysis: async (args) =>
-    (await getTool("binaryTools", "handleHexCommand"))(args),
-  searchWeb: async (args) => (await getTool("webTools", "searchWeb"))(args),
-  renderWeb: async (args) => (await getTool("webTools", "renderWeb"))(args),
-  executeJS: async (args) => (await getTool("evalTools", "executeJS"))(args),
-  reloadTools: async () => {
+  "fs.readFile": async (args) => (await getTool("fileTools", "readFile"))(args),
+  "fs.writeFile": async (args) => (await getTool("fileTools", "writeFile"))(args),
+  "fs.rm": async (args) => (await getTool("fileTools", "removeFile"))(args),
+  "fs.mkdir": async (args) => (await getTool("fileTools", "createDir"))(args),
+  "system.reloadSchemas": async (args) => (await getTool("systemTools", "reloadSchemas"))(args),
+  "pyright.analyze": async (args) => (await getTool("systemTools", "analyzeCode"))(args),
+  "fs.readdir": async (args) => (await getTool("fileTools", "listDir"))(args),
+  "fs.replaceString": async (args) => (await getTool("fileTools", "replaceString"))(args),
+  "eslint.lint": async (args) => (await getTool("systemTools", "lintCode"))(args),
+  "jsdoc.generate": async (args) => (await getTool("systemTools", "generateDocs"))(args),
+  "child_process.exec": async (args) => (await getTool("systemTools", "executeBash"))(args),
+  "grep.search": async (args) => (await getTool("searchTools", "searchTextGlobal"))(args),
+  "glob.search": async (args) => (await getTool("searchTools", "searchFilesPatternFixed"))(args),
+  "fs.rename": async (args) => (await getTool("fileTools", "renamePath"))(args),
+  "fs.copyFile": async (args) => (await getTool("fileTools", "copyFile"))(args),
+  "git.lsFiles": async (args) => (await getTool("fileTools", "getTrackedFiles"))(args),
+  "JSON.parse": async (args) => (await getTool("utilTools", "validateJson"))(args),
+  "config.setNickname": async (args) => (await getTool("utilTools", "setNickname"))(args),
+  "memento.push": async (args) => (await getTool("memoryTools", "pushMemory"))(args),
+  "chatManager.getTokenCount": async (args) => (await getTool("memoryTools", "getTokenCount"))(args),
+  "git.diff": async (args) => (await getTool("fileTools", "gitDiff"))(args),
+  "git.restore": async (args) => (await getTool("fileTools", "restoreFile"))(args),
+  "fs.concatFile": async (args) => (await getTool("fileTools", "concatFile"))(args),
+  "json.getStructure": async (args) => (await getTool("jsonTools", "getJsonStructure"))(args),
+  "json.getNode": async (args) => (await getTool("jsonTools", "getJsonNode"))(args),
+  "json.getArrayInfo": async (args) => (await getTool("jsonTools", "getJsonArrayInfo"))(args),
+  "json.updateNode": async (args) => (await getTool("jsonTools", "updateJsonNode"))(args),
+  "github.listIssues": async (args) => (await getTool("githubTools", "listIssues"))(args),
+  "github.createIssue": async (args) => (await getTool("githubTools", "createIssue"))(args),
+  "github.editIssue": async (args) => (await getTool("githubTools", "editIssue"))(args),
+  "github.closeIssue": async (args) => (await getTool("githubTools", "closeIssue"))(args),
+  "github.postComment": async (args) => (await getTool("githubTools", "postComment"))(args),
+  "git.remoteUrl": async (args) => (await getTool("gitTools", "getCurrentRepo"))(args),
+  "git.diffAll": async (args) => (await getTool("gitTools", "gitDiffAll"))(args),
+  "system.notify": async (args) => (await getTool("notificationTools", "notifyUser"))(args),
+  "fountain.insertScene": async (args) => (await getTool("fountainTools", "insertSceneFountain"))(args),
+  "jszip.load": async (args) => (await getTool("zipTools", "loadZip"))(args),
+  "jszip.read": async (args) => (await getTool("zipTools", "readZipFile"))(args),
+  "jszip.write": async (args) => (await getTool("zipTools", "writeZipFile"))(args),
+  "jszip.save": async (args) => (await getTool("zipTools", "saveZip"))(args),
+  "jszip.list": async (args) => (await getTool("zipTools", "listZipFiles"))(args),
+  "binary.analyze": async (args) => (await getTool("binaryTools", "handleHexCommand"))(args),
+  "duckduckgo.search": async (args) => (await getTool("webTools", "searchWeb"))(args),
+  "elinks.render": async (args) => (await getTool("webTools", "renderWeb"))(args),
+  "vm.runInContext": async (args) => (await getTool("evalTools", "executeJS"))(args),
+  "reloadTools": async () => {
     toolCache = {};
     return "Tool cache purged. All modules will be reloaded on next call.";
   },

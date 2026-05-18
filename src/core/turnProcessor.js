@@ -4,10 +4,10 @@ import ApiCommunicator from "./ApiCommunicator.js";
 import FountainAdapter from "./FountainAdapter.js";
 
 const DESTRUCTIVE_TOOLS = [
-  "removeFile",
-  "writeFile",
-  "replaceString",
-  "executeBash",
+  "fs.rm",
+  "fs.writeFile",
+  "fs.replaceString",
+  "child_process.exec",
 ];
 
 class TurnProcessor {
