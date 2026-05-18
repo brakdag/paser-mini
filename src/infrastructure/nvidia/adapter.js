@@ -1,15 +1,17 @@
-// import axios from 'axios';
 import ConversationState from "../conversationState.js";
 import { PayloadMapper } from "../payloadMapper.js";
 import NvidiaRestClient from "./restClient.js";
 import logger from "../../core/logger.js";
+import BaseAdapter from "../baseAdapter.js";
 
-class NvidiaAdapter {
+class NvidiaAdapter extends BaseAdapter {
   constructor(
-    configManager,
-    userNickname = "user",
-    agentNickname = "assistant",
+    ui, 
+    configManager, 
+    userNickname = "user", 
+    agentNickname = "assistant"
   ) {
+    super(ui, configManager, userNickname, agentNickname);
     this.state = new ConversationState(userNickname, agentNickname);
     this.restClient = new NvidiaRestClient(configManager);
     this.currentModel = "meta/llama-3.1-405b-instruct";
@@ -80,7 +82,10 @@ class NvidiaAdapter {
     } catch (e) {
       const errorMsg = e.response?.data?.error?.message || e.message;
       logger.error("NvidiaAdapter: Request failed", { error: errorMsg });
-      return `Error: ${errorMsg}`;
+      
+      const error = new Error(errorMsg);
+      error.name = "APIError";
+      throw error;
     }
   }
 

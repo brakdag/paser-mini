@@ -52,7 +52,7 @@ class ChatManager {
       this.repetitionDetector,
     );
     this.historyManager = new HistoryManager(assistant, ui, this.configManager);
-    this.assistant.ui = ui; // Inject the UI into the adapter for retry handling
+
     this.ui.agentNickname = this.configManager.get(
       "agent_nickname",
       "paser_mini",
@@ -92,6 +92,7 @@ class ChatManager {
       const { NvidiaAdapter } =
         await import("../infrastructure/nvidia/adapter");
       newAssistant = new NvidiaAdapter(
+        this.ui,
         this.configManager,
         this.ui.userNickname,
         this.ui.agentNickname,
@@ -101,6 +102,7 @@ class ChatManager {
         await import("../infrastructure/openrouter/adapter");
       newAssistant = new OpenRouterAdapter(
         this.ui,
+        this.configManager,
         this.ui.userNickname,
         this.ui.agentNickname,
       );
@@ -109,6 +111,7 @@ class ChatManager {
         await import("../infrastructure/gemini/adapter.js");
       newAssistant = new GeminiAdapter(
         this.ui,
+        this.configManager,
         this.ui.userNickname,
         this.ui.agentNickname,
       );

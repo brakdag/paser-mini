@@ -59,8 +59,8 @@ async function main() {
   const agentNick = configManager.get("agent_nickname", "assistant");
   const assistant =
     provider === "NVIDIA"
-      ? new NvidiaAdapter(configManager, userNick, agentNick)
-      : new GeminiAdapter(ui, userNick, agentNick);
+      ? new NvidiaAdapter(ui, configManager, userNick, agentNick)
+      : new GeminiAdapter(ui, configManager, userNick, agentNick);
 
   let sysInstr = "";
   if (!options.noSystemInstruction) {

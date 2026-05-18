@@ -1,18 +1,17 @@
 import axios from "axios";
 import axiosRetry from "axios-retry";
 import logger from "../../core/logger.js";
+import BaseAdapter from "../baseAdapter.js";
 
-class GeminiAdapter {
-  constructor(ui, userNickname = "user", agentNickname = "assistant") {
-    this.ui = ui;
+class GeminiAdapter extends BaseAdapter {
+  constructor(ui, configManager, userNickname = "user", agentNickname = "assistant") {
+    super(ui, configManager, userNickname, agentNickname);
     this.apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     this.history = [];
     this.currentModel = "gemini-2.0-flash";
     this.systemInstruction = null;
     this.temperature = 0.7;
     this.lastPayload = null;
-    this.userNickname = userNickname;
-    this.agentNickname = agentNickname;
     this.renderingMode = "IRC";
     this.lastRequestTime = 0;
     this.rpmLimit = 15;
@@ -108,21 +107,6 @@ class GeminiAdapter {
     return cleaned.trim();
   }
 
-  _formatMessage(role, text, timestamp) {
-    if (this.renderingMode === "FOUNTAIN") return text;
-
-    if (
-      role === "server" ||
-      text.startsWith("---") ||
-      text.startsWith("***") ||
-      text.startsWith("<TOOL_RESPONSE>")
-    ) {
-      return `[${timestamp}] ${text}`;
-    }
-    const nickname = role === "user" ? this.userNickname : this.agentNickname;
-    return `[${timestamp}] <${nickname}> ${text}`;
-  }
-
   async sendMessage(message, role = "user") {
     await this._applyRateLimit();
     const timestamp = new Date().toLocaleTimeString("en-GB", {
@@ -132,7 +116,6 @@ class GeminiAdapter {
       hour12: false,
     });
     
-    // Store RAW text in history to avoid token noise in AI requests
     const parts = [{ text: message }];
     this.history.push({
       role,
@@ -175,7 +158,6 @@ class GeminiAdapter {
           hour12: false,
         });
         
-        // Store RAW text in history
         this.history.push({
           role: "model",
           parts: [{ text: textContent }],
@@ -203,7 +185,6 @@ class GeminiAdapter {
         hour12: false,
       });
     
-    // Store RAW text in history
     this.history.push({
       role,
       parts: [{ text: content }],
