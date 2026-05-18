@@ -106,7 +106,7 @@ class ChatManager {
       );
     } else {
       const { GeminiAdapter } =
-        await import("../infrastructure/gemini/adapter");
+        await import("../infrastructure/gemini/adapter.js");
       newAssistant = new GeminiAdapter(
         this.ui,
         this.ui.userNickname,
