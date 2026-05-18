@@ -134,6 +134,7 @@ export class FileTools {
       if (count > 1) return `ERR: Ambiguous: ${count} matches`;
 
       const newContent = content.replace(searchText, replaceText);
+      if (newContent === content) return "OK";
       if (Buffer.byteLength(newContent, "utf8") > FILE_SIZE_LIMIT)
         return "ERR: Resulting content too large";
 
