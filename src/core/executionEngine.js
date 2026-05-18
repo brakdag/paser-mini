@@ -40,7 +40,7 @@ class ExecutionEngine {
         a.command.substring(0, 50) + (a.command.length > 50 ? "..." : ""),
       "grep.search": (a) => a.query || "",
       "glob.search": (a) => `pattern: ${a.pattern || ""}`,
-      "JSON.parse": (a) => `len: ${a.json_string?.length || 0}`,
+      "json.validate": (a) => `len: ${a.json_string?.length || 0}`,
       "config.setNickname": (a) => a.newNickname || "",
       "memento.push": (a) => "insight",
       "chatManager.getTokenCount": () => "tokens",

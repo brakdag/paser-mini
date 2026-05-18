@@ -7,28 +7,35 @@ Adding or removing a tool in Paser Mini requires a surgical approach. To ensure 
 ## 🛠 The Installation Pipeline (Adding a Tool)
 
 ### 1. Implementation (The Logic)
-Create the tool logic in a JavaScript file within the tools directory.
+Tools are implemented as classes to maintain state and organization. Create the tool class in the tools directory.
 
-- **File Location**: `src/tools/<tool_name>Tools.js`
-- **Standard**: Use `async` functions. Return a string or a JSON-stringified object.
-- **Error Handling**: Throw standard `Error` objects. The `ExecutionEngine` will capture these and return them as `<TOOL_RESPONSE>ERR: ...</TOOL_RESPONSE>`.
+- **File Location**: `src/tools/<name>Tools.js` (e.g., `myTools.js` for the `my` module)
+- **Standard**: Export a class named `<Name>Tools`. Methods must be `async` and return a string or a JSON-stringified object.
+- **Error Handling**: Throw standard `Error` objects. The `ExecutionEngine` will capture these and return them as `ERR: ...`.
 - **Example**:
   ```javascript
-  export async function myTool({ param }) {
-    if (!param) throw new Error("Parameter cannot be empty");
-    return JSON.stringify({ status: "success", message: "Action completed" });
+  export class MyTools {
+    async myMethod({ param }) {
+      if (!param) throw new Error("Parameter cannot be empty");
+      return JSON.stringify({ status: "success", message: "Action completed" });
+    }
   }
   ```
 
 ### 2. Registry Mapping (The Bridge)
-Map the JavaScript function to a name the LLM can call.
+Map the class method to a name the LLM can call. This is a two-step process in `src/tools/registry.js`.
 
-- **File**: `src/tools/registry.js`
-- **Action**: Import the function and add it to the `AVAILABLE_TOOLS` object.
+- **Step A: Module Mapping**: Add the file to the `MODULE_MAP` object.
   ```javascript
-  import { myTool } from './myToolTools.js';
+  const MODULE_MAP = {
+    myTools: "./myTools.js",
+    // ...
+  };
+  ```
+- **Step B: Tool Mapping**: Add the tool to the `AVAILABLE_TOOLS` object using the `getTool` helper.
+  ```javascript
   export const AVAILABLE_TOOLS = {
-    "my_tool": myTool,
+    "my.tool": async (args) => (await getTool("myTools", "myMethod"))(args),
     // ...
   };
   ```
@@ -38,13 +45,13 @@ Define the tool's signature so it is injected into the System Prompt.
 
 - **File**: `src/tools/registry_positional.json`
 - **Format**: `[ "tool_name", "Clear description of utility", { "arg_name": "type" } ]`
-- **Crucial**: The `tool_name` must match the key in `registry.js` exactly.
+- **Crucial**: The `tool_name` must match the key in `AVAILABLE_TOOLS` exactly.
 
 ### 4. SmartParser Schema (The Guardrail)
 Define the validation schema to prevent invalid tool calls.
 
 - **File Location**: `src/core/schemas/<tool_name>Schema.js`
-- **Auto-Discovery**: You do **not** need to register this manually. The `SchemaRegistry` automatically scans this folder and loads any `.js` file that exports a schema.
+- **Auto-Discovery**: The `SchemaRegistry` automatically scans this folder and loads any `.js` file that exports a schema.
 - **Example**:
   ```javascript
   export const myToolSchema = {
@@ -62,7 +69,7 @@ To prevent the UI from showing "no details" during execution, add a mapper to th
 - **Action**: Add a mapping function to the `_detailMappers` object in the constructor.
   ```javascript
   this._detailMappers = {
-    my_tool: (args) => args.param || "no param",
+    "my.tool": (args) => args.param || "no param",
     // ...
   };
   ```
@@ -73,7 +80,7 @@ To prevent the UI from showing "no details" during execution, add a mapper to th
 
 To remove a tool without leaving technical debt or "ghost" schemas, follow these steps in reverse:
 
-1. **Clean Registry**: Remove the tool from `src/tools/registry.js` (`AVAILABLE_TOOLS`).
+1. **Clean Registry**: Remove the tool from `AVAILABLE_TOOLS` and the module from `MODULE_MAP` in `src/tools/registry.js`.
 2. **Clean Catalog**: Delete the tool's entry from `src/tools/registry_positional.json`.
 3. **Delete Schema**: Remove the corresponding file from `src/core/schemas/`.
 4. **Clean UX**: Remove the mapper from `_detailMappers` in `src/core/executionEngine.js`.
@@ -83,8 +90,8 @@ To remove a tool without leaving technical debt or "ghost" schemas, follow these
 
 ## ⚠️ Deployment Checklist
 
-- [ ] **Logic**: File created in `src/tools/`?
-- [ ] **Registry**: Mapped in `registry.js`?
+- [ ] **Logic**: Class created in `src/tools/` with correct naming?
+- [ ] **Registry**: Module added to `MODULE_MAP` and tool to `AVAILABLE_TOOLS`?
 - [ ] **Catalog**: Entry added to `registry_positional.json`?
 - [ ] **Schema**: Validation file created in `src/core/schemas/`?
 - [ ] **UX**: Detail mapper added to `executionEngine.js`?
@@ -92,6 +99,6 @@ To remove a tool without leaving technical debt or "ghost" schemas, follow these
 
 ## 🔍 Troubleshooting
 
-- **Tool not called?** Check `registry_positional.json` for typos.
+- **Tool not called?** Check `registry_positional.json` for typos or mismatch with `AVAILABLE_TOOLS`.
 - **Validation Error?** Verify the schema in `src/core/schemas/` matches the LLM's expected output.
 - **"no details" in UI?** Check if you added the mapper to `_detailMappers` in `executionEngine.js`.

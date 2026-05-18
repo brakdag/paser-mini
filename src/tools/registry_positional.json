@@ -100,7 +100,7 @@
     }
   ],
   [
-    "JSON.parse",
+    "json.validate",
     "Validates if a string is a valid JSON",
     {
       "json_string": "string"
