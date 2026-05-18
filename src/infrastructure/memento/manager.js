@@ -24,25 +24,6 @@ class MementoManager {
     return `Memory stored in memento.log as entry #${nextId}. Referenced ranks updated.`;
   }
 
-  async pullMemory(scope, key, direction = "next") {
-    if (!fs.existsSync(LOG_FILE)) return "ERR: Memory log not found.";
-
-    const content = fs.readFileSync(LOG_FILE, "utf8");
-    const lines = content.split("\n").filter(Boolean);
-
-    // Filter by scope and key
-    const matches = lines.filter((line) => {
-      const scopeMatch = scope ? line.includes(`<${scope}>`) : true;
-      const keyMatch = key ? line.includes(`[Key: ${key}]`) : true;
-      return scopeMatch && keyMatch;
-    });
-
-    if (matches.length === 0) return "No matching memories found.";
-
-    // Simple direction logic: return the last match for 'next' (most recent)
-    return direction === "next" ? matches[matches.length - 1] : matches[0];
-  }
-
   _incrementReferencedRanks(text) {
     if (!fs.existsSync(LOG_FILE)) return;
 
@@ -79,6 +60,5 @@ class MementoManager {
     return fs.readFileSync(LOG_FILE, "utf8").trim().split("\n").filter(Boolean);
   }
 }
-
 
 export default MementoManager;

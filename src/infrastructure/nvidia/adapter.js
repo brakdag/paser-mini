@@ -1,6 +1,6 @@
 // import axios from 'axios';
 import ConversationState from "../conversationState.js";
-import PayloadMapper from "../payloadMapper.js";
+import { PayloadMapper } from "../payloadMapper.js";
 import NvidiaRestClient from "./restClient.js";
 import logger from "../../core/logger.js";
 

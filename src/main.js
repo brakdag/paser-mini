@@ -7,7 +7,7 @@ import TerminalUI from "./core/terminalUI.js";
 import ChatManager from "./core/chatManager.js";
 import ConfigManager from "./core/configManager.js";
 import { SYSTEM_INSTRUCTION, AVAILABLE_TOOLS } from "./tools/registry.js";
-import * as memoryTools from "./tools/memoryTools.js";
+import { MemoryTools } from "./tools/memoryTools.js";
 
 async function main() {
   const program = new Command();
@@ -92,7 +92,8 @@ async function main() {
 
   chatManager.configManager = configManager;
 
-  memoryTools.setMemoryContext(assistant, chatManager);
+  const memoryToolsInstance = new MemoryTools();
+  memoryToolsInstance.setMemoryContext(assistant, chatManager);
   await chatManager.run(options.message);
 }
 

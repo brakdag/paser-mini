@@ -31,7 +31,6 @@ class ExecutionEngine {
       renamePath: (a) =>
         `${path.basename(a.origin || "")} -> ${path.basename(a.destination || "")}`,
       pushMemory: (a) => a.key || "unknown",
-      pullMemory: (a) => a.key || "unknown",
       runInstance: (a) => a.target || "unknown",
       searchTextGlobal: (a) => `${a.query || ""}`,
       searchFilesPattern: (a) => `pattern: ${a.pattern || ""}`,
@@ -130,13 +129,7 @@ class ExecutionEngine {
       const toolFunc = this.tools[toolName];
       const result = await toolFunc(args);
 
-      if (toolName === "pullMemory") {
-        this.ui.displayPanel(
-          "Memento Pull",
-          `Accessing node #${args.key}`,
-          "info",
-        );
-      } else if (toolName === "pushMemory") {
+      if (toolName === "pushMemory") {
         this.ui.displayPanel("Memento Push", result, "info");
       } else if (toolName === "runInstance") {
         this.ui.displayPanel("Instance Test Output", result, "info");
@@ -164,6 +157,5 @@ class ExecutionEngine {
     }
   }
 }
-
 
 export default ExecutionEngine;

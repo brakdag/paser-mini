@@ -209,6 +209,21 @@ class ChatManager {
   stopExecution() {
     this.stopRequested = true;
   }
+
+  getTokenCount() {
+    const systemInstruction = this.systemInstruction || "";
+    const historyData =
+      typeof this.assistant.history === "string"
+        ? this.assistant.history
+        : JSON.stringify(this.assistant.history || []);
+
+    const totalLength = systemInstruction.length + historyData.length;
+    const count = Math.ceil(totalLength / 4);
+    const limit = this.contextWindowLimit || 250000;
+
+    const percentage = (count / limit) * 100;
+    return `Current tokens (est.): ${count} / ${limit} (${percentage.toFixed(2)}%)`;
+  }
 }
 
 export default ChatManager;

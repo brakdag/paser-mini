@@ -13,18 +13,9 @@ class SystemCommands {
   }
 
   static async handleReset(chatManager, ui) {
-    ui.displayInfo("Performing Hard Reset (The Leap)...");
-    const manager = new MementoManager();
-    const bridge = await manager.pullMemory("bridge", null, "next");
-    const newHistory = [];
-    if (bridge) {
-      const bridgeMsg = `[MEMENTO LEAP: RESTORED SESSION STATE]\nNode #${bridge.id} | ${bridge.content}`;
-      newHistory.push({ role: "user", parts: [{ text: bridgeMsg }] });
-      ui.displayInfo(`Bridge Block #${bridge.id} restored.`);
-    } else {
-      ui.displayInfo("No Bridge Block found. Starting fresh.");
-    }
-    chatManager.assistant.hardReset(newHistory);
+    ui.displayInfo("Performing Hard Reset...");
+    ui.displayInfo("Starting fresh.");
+    chatManager.assistant.hardReset();
     return true;
   }
 

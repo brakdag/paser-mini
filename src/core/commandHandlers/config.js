@@ -1,7 +1,9 @@
-import * as memoryTools from "../../tools/memoryTools.js";
+import { MemoryTools } from "../../tools/memoryTools.js";
 
 class ConfigCommands {
   static async handleConfig(chatManager, ui) {
+    const memoryTools = new MemoryTools();
+    memoryTools.setMemoryContext(chatManager.assistant, chatManager);
     const tokenUsage = await memoryTools.getTokenCount();
 
     const configInfo = `| Setting | Value |
@@ -21,6 +23,5 @@ class ConfigCommands {
     return true;
   }
 }
-
 
 export default ConfigCommands;
