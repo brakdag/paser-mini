@@ -1,0 +1,11 @@
+import { z } from "zod";
+
+const saveZipSchema = z.object({
+  zipId: z.string().describe("The ID of the loaded ZIP container"),
+  outputPath: z
+    .string()
+    .describe("The path where the ZIP should be saved on disk"),
+});
+
+
+export default saveZipSchema;
