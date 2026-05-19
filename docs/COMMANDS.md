@@ -20,6 +20,10 @@ These commands are handled locally by the `CommandHandler` and do not consume to
 
 ### 📋 Debugging & Data
 
+- `/insertFile [path]`: Insert the contents of a file directly into the chat context. Essential for providing the AI with specific code snippets or logs without manual copying.
+
+
+
 - `/s [filename]`: Save the **raw** last request payload (the exact JSON object sent to the server) to a JSON file (defaults to `last_request.json`). Essential for forensic analysis and verifying the integrity of the communication layer.
 - `/t`: Display the current context window token usage.
 

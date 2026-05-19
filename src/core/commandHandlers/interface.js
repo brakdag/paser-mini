@@ -1,4 +1,18 @@
+import fs from "fs/promises";
+
 class InterfaceCommands {
+  static async handleInsertFile(chatManager, ui, filename) {
+    try {
+      const content = await fs.readFile(filename, "utf8");
+      ui.displayChatMessage(ui.userNickname, content);
+      await chatManager.processTurn(content);
+      return true;
+    } catch (error) {
+      ui.displayError(`Could not read file ${filename}: ${error.message}`);
+      return true;
+    }
+  }
+
   static handleFountain(chatManager, ui) {
     chatManager.setRenderingMode("FOUNTAIN");
     ui.displayInfo("Rendering mode set to Fountain (Screenplay)");
@@ -119,6 +133,7 @@ class InterfaceCommands {
       "/kick       - Kick agent: Nuclear reset, wipes all session memory\n" +
       "/paim <msg>  - Simulate AI response (Pishin AI Message)\n" +
       "/join <#ch> - Change channel and mode (#charla, #work)\n" +
+      "/insertFile <file> - Insert file content as user input\n" +
       "/s [file]   - Save last request payload to JSON\n" +
       "/q, /quit, /exit - Exit application\n";
     ui.displayMessage(helpText);

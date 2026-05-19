@@ -44,6 +44,8 @@ const PREFIX_COMMANDS = {
     InterfaceCommands.handleAction(cm, ui, input.slice(8).trim()),
   "/join ": (cm, ui, input) =>
     InterfaceCommands.handleJoin(cm, ui, input.slice(6).trim()),
+  "/insertfile ": (cm, ui, input) =>
+    InterfaceCommands.handleInsertFile(cm, ui, input.slice(12).trim()),
   "/paim ": (cm, ui, input) =>
     AICommands.handlePaim(cm, ui, input.slice(6).trim()),
   "/models": (cm, ui, input) =>
