@@ -10,6 +10,12 @@ Paser Mini is a highly streamlined autonomous agent powered by Google's Gemini m
 
 **Minimalism is the maximum efficiency of token consumption.**
 
+### 🛠 Technical Manifesto
+- **Language Purity**: This is a pure JavaScript project running on Node.js. 
+- **No Hybridity**: The use of hybrid scripts (e.g., mixing Python with JS) is strictly forbidden. All logic must be implemented natively in Node.js.
+- **Dependencies**: Standard Node.js libraries are permitted and encouraged to maintain architectural consistency.
+- **Execution**: The use of `child_process` to execute external language runtimes (like Python) is prohibited. Logic provided in other languages (e.g., `vision.py`) serves only as a functional reference for implementation in JavaScript.
+
 Paser Mini is designed to strip away operational noise, ensuring that every token used contributes directly to the intelligence loop. By prioritizing a seamless, AI-native interface—utilizing the terminal, NerdFonts, and Markdown—the system reduces cognitive load and maximizes reasoning capacity.
 
 ## 🛠️ Key Capabilities

@@ -48,18 +48,17 @@ Define the tool's signature so it is injected into the System Prompt.
 - **Crucial**: The `tool_name` must match the key in `AVAILABLE_TOOLS` exactly.
 
 ### 4. SmartParser Schema (The Guardrail)
-Define the validation schema to prevent invalid tool calls.
+Define the validation schema using **Zod** to prevent invalid tool calls. The `SchemaValidator` requires a Zod schema to perform `.safeParse()`.
 
 - **File Location**: `src/core/schemas/<tool_name>Schema.js`
 - **Auto-Discovery**: The `SchemaRegistry` automatically scans this folder and loads any `.js` file that exports a schema.
 - **Example**:
   ```javascript
-  export const myToolSchema = {
-    type: "object",
-    properties: { param: { type: "string" } },
-    required: ["param"],
-    additionalProperties: false,
-  };
+  import { z } from 'zod';
+
+  export const myToolSchema = z.object({
+    param: z.string(),
+  }).strict();
   ```
 
 ### 5. UX Refinement (The Monitoring)

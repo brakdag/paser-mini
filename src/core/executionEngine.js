@@ -66,6 +66,7 @@ class ExecutionEngine {
       "duckduckgo.search": (a) => a.query || "",
       "elinks.render": (a) => a.url || "",
       "vm.runInContext": () => "sandbox",
+      "seeImage": (a) => path.basename(a.path || ""),
     };
   }
 

@@ -284,5 +284,13 @@
     {
       "code": "string"
     }
+  ],
+  [
+    "seeImage",
+    "Allows the agent to see an image. Returns base64 encoded JPEG. Supports optional cropping.",
+    {
+      "path": "string",
+      "crop": "number[]"
+    }
   ]
 ]
