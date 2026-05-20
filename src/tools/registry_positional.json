@@ -246,42 +246,10 @@
     }
   ],
   [
-    "jszip.load",
-    "Loads a ZIP/compressed file into memory for manipulation.",
+    "jszip.listContents",
+    "Lists all files contained within a ZIP archive without loading it into memory.",
     {
       "filePath": "string"
-    }
-  ],
-  [
-    "jszip.read",
-    "Reads the content of a specific file within a loaded ZIP container.",
-    {
-      "zipId": "string",
-      "internalPath": "string"
-    }
-  ],
-  [
-    "jszip.write",
-    "Writes or updates a file within a loaded ZIP container in RAM.",
-    {
-      "zipId": "string",
-      "internalPath": "string",
-      "content": "string"
-    }
-  ],
-  [
-    "jszip.save",
-    "Saves the current state of a loaded ZIP container from RAM to disk.",
-    {
-      "zipId": "string",
-      "outputPath": "string"
-    }
-  ],
-  [
-    "jszip.list",
-    "Lists all files contained within a loaded ZIP container.",
-    {
-      "zipId": "string"
     }
   ],
   [

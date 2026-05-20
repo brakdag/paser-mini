@@ -60,11 +60,7 @@ class ExecutionEngine {
       "github.postComment": (a) => `#${a.issue_number || ""}`,
       "system.notify": (a) => a.message?.substring(0, 30) || "",
       "fountain.insertScene": (a) => a.scene || "",
-      "jszip.load": (a) => path.basename(a.filePath || ""),
-      "jszip.read": (a) => a.internalPath || "",
-      "jszip.write": (a) => a.internalPath || "",
-      "jszip.save": (a) => path.basename(a.outputPath || ""),
-      "jszip.list": () => "list",
+      "jszip.listContents": (a) => path.basename(a.filePath || ""),
       "binary.analyze": (a) =>
         `${a.action || "analysis"} on ${path.basename(a.filePath || "unknown")}`,
       "duckduckgo.search": (a) => a.query || "",
