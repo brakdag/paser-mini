@@ -20,6 +20,7 @@ const MODULE_MAP = {
   binaryTools: "./binaryTools.js",
   webTools: "./webTools.js",
   evalTools: "./evalTools.js",
+  astTools: "./astTools.js",
   
 };
 
@@ -104,6 +105,7 @@ export const AVAILABLE_TOOLS = {
   "duckduckgo.search": async (args) => (await getTool("webTools", "searchWeb"))(args),
   "elinks.render": async (args) => (await getTool("webTools", "renderWeb"))(args),
   "vm.runInContext": async (args) => (await getTool("evalTools", "executeJS"))(args),
+  "ast.analyze": async (args) => (await getTool("astTools", "analyze"))(args),
   "seeImage": async (args) => (await getTool("utilTools", "seeImage"))(args),
   "reloadTools": async () => {
     toolCache = {};

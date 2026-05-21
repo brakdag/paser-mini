@@ -292,5 +292,13 @@
       "path": "string",
       "crop": "number[]"
     }
+  ],
+  [
+    "ast.analyze",
+    "Analyze JavaScript AST. Can filter by node type using 'query'.",
+    {
+      "path": "string",
+      "query": "string"
+    }
   ]
 ]
