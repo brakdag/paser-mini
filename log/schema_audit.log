@@ -1,1 +1,16 @@
 Tool: fs.rename, Type: object, hasSafeParse: true
+Tool: git.lsFiles, Type: object, hasSafeParse: true
+Tool: git.lsFiles, Type: object, hasSafeParse: true
+Tool: fs.readFile, Type: object, hasSafeParse: true
+Tool: fs.readFile, Type: object, hasSafeParse: true
+Tool: fs.readFile, Type: object, hasSafeParse: true
+Tool: fs.readFile, Type: object, hasSafeParse: true
+Tool: fs.readFile, Type: object, hasSafeParse: true
+Tool: fs.readFile, Type: object, hasSafeParse: true
+Tool: fs.readFile, Type: object, hasSafeParse: true
+Tool: fs.readFile, Type: object, hasSafeParse: true
+Tool: fs.readFile, Type: object, hasSafeParse: true
+Tool: fs.readFile, Type: object, hasSafeParse: true
+Tool: fs.readdir, Type: object, hasSafeParse: true
+Tool: fs.readFile, Type: object, hasSafeParse: true
+Tool: fs.readFile, Type: object, hasSafeParse: true

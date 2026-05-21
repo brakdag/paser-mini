@@ -6,6 +6,9 @@ import input from "./TerminalInput.js";
 import sessionLogger from "./SessionLogger.js";
 
 class TerminalUI {
+  get inputQueue() {
+    return input.inputQueue;
+  }
   constructor() {
     this.noSpinner = true;
     this.activeSpinners = new Map();
