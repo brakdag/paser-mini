@@ -1,5 +1,11 @@
-import Jimp from 'jimp';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import fs from 'fs/promises';
+import path from 'path';
+import os from 'os';
 import ConfigManager from "../core/configManager.js";
+
+const execPromise = promisify(exec);
 
 export class UtilTools {
   async validateJson({ json_string }) {
@@ -25,8 +31,10 @@ export class UtilTools {
   async seeImage({ path: imagePath, crop }) {
     if (!imagePath) throw new Error("The 'path' parameter is required.");
 
+    const tempFile = path.join(os.tmpdir(), `seeImage_${Date.now()}.jpg`);
+
     try {
-      const image = await Jimp.read(imagePath);
+      let command = `convert "${imagePath}" -background white -alpha remove`;
 
       if (crop) {
         if (!Array.isArray(crop) || crop.length !== 4) {
@@ -38,39 +46,32 @@ export class UtilTools {
         if (width <= 0 || height <= 0) {
           throw new Error("Invalid crop dimensions: right must be > left and bottom must be > top.");
         }
-        image.crop(left, top, width, height);
+        command += ` -crop ${width}x${height}+${left}+${top} +repage`;
       }
 
-      const width = image.bitmap.width;
-      const height = image.bitmap.height;
-      const aspectRatio = width / height;
-      
-      let newWidth, newHeight;
-      const MIN_VISUAL_RESOLUTION = 512;
+      command += ` -resize 512x512 -colorspace sRGB -quality 75 "${tempFile}"`;
 
-      if (width < height) {
-        newWidth = MIN_VISUAL_RESOLUTION;
-        newHeight = Math.round(MIN_VISUAL_RESOLUTION / aspectRatio);
-      } else {
-        newHeight = MIN_VISUAL_RESOLUTION;
-        newWidth = Math.round(MIN_VISUAL_RESOLUTION * aspectRatio);
-      }
+      await execPromise(command);
 
-      image.resize(newWidth, newHeight);
-
-      const buffer = await image
-        .quality(85)
-        .getBufferAsync(Jimp.MIME_JPEG);
-
+      const buffer = await fs.readFile(tempFile);
       const base64Data = buffer.toString('base64');
+      
+      const { stdout: resStdout } = await execPromise(`identify -format "%wx%h" "${tempFile}"`);
+      const resolution = resStdout.trim();
 
-      return JSON.stringify({
+      return {
         mime_type: "image/jpeg",
         data: base64Data,
-        resolution: `${newWidth}x${newHeight}`
-      });
+        resolution: resolution
+      };
     } catch (error) {
       throw new Error(`Vision Tool Error: ${error.message}`);
+    } finally {
+      try {
+        await fs.unlink(tempFile);
+      } catch (e) {
+        // Ignore unlink errors
+      }
     }
   }
 }

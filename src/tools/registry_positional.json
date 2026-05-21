@@ -287,7 +287,7 @@
   ],
   [
     "seeImage",
-    "Allows the agent to see an image. Returns base64 encoded JPEG. Supports optional cropping.",
+    "Visualizes an image. Supports optional cropping [left, top, right, bottom].",
     {
       "path": "string",
       "crop": "number[]"

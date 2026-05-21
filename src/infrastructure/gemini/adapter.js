@@ -118,7 +118,18 @@ class GeminiAdapter extends BaseAdapter {
       hour12: false,
     });
     
-    const parts = [{ text: message }];
+    let parts = [];
+    if (typeof message === 'string') {
+      parts = [{ text: message }];
+    } else if (message && typeof message === 'object' && message.mime_type && message.data) {
+      parts = [
+        { inline_data: { mime_type: message.mime_type, data: message.data } },
+        { text: `Image resolution: ${message.resolution || 'unknown'}` }
+      ];
+    } else {
+      parts = [{ text: JSON.stringify(message) }];
+    }
+
     this.history.push({
       role,
       parts,
@@ -187,9 +198,21 @@ class GeminiAdapter extends BaseAdapter {
         hour12: false,
       });
     
+    let parts = [];
+    if (typeof content === 'string') {
+      parts = [{ text: content }];
+    } else if (content && typeof content === 'object' && content.mime_type && content.data) {
+      parts = [
+        { inline_data: { mime_type: content.mime_type, data: content.data } },
+        { text: `Image resolution: ${content.resolution || 'unknown'}` }
+      ];
+    } else {
+      parts = [{ text: JSON.stringify(content) }];
+    }
+
     this.history.push({
       role,
-      parts: [{ text: content }],
+      parts,
       timestamp: ts,
     });
   }

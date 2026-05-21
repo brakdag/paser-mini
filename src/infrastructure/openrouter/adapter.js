@@ -93,9 +93,17 @@ class OpenRouterAdapter extends BaseAdapter {
     if (role === this.agentNickname) apiRole = "assistant";
     if (role === "server") apiRole = "user";
 
+    let finalContent = content;
+    if (content && typeof content === 'object' && content.mime_type && content.data) {
+      finalContent = [
+        { type: "text", text: `Image resolution: ${content.resolution || 'unknown'}` },
+        { type: "image_url", image_url: { url: `data:${content.mime_type};base64,${content.data}` } }
+      ];
+    }
+
     this.history.push({
       role: apiRole,
-      content,
+      content: finalContent,
       timestamp: timestamp || new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }),
     });
   }
