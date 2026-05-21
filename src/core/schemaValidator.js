@@ -30,7 +30,7 @@ class SchemaValidator {
       ]);
     }
 
-    fs.appendFileSync('schema_audit.log', `Tool: ${toolName}, Type: ${typeof schema}, hasSafeParse: ${typeof schema?.safeParse === 'function'}\n`);
+    fs.appendFileSync('./log/schema_audit.log', `Tool: ${toolName}, Type: ${typeof schema}, hasSafeParse: ${typeof schema?.safeParse === 'function'}\n`);
 
     if (typeof args !== "object" || args === null || Array.isArray(args)) {
       return new ValidationResult(false, [
@@ -40,7 +40,7 @@ class SchemaValidator {
 
     if (typeof schema.safeParse !== 'function') {
       const errorMsg = `CRITICAL: Schema for tool '${toolName}' is not a Zod schema. Type: ${typeof schema}. Value: ${JSON.stringify(schema)}`;
-      fs.appendFileSync('schema_audit.log', errorMsg + '\n');
+      fs.appendFileSync('./log/schema_audit.log', errorMsg + '\n');
       throw new TypeError(errorMsg);
     }
 
