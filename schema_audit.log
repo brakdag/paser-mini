@@ -16,3 +16,6 @@ Tool: fs.readFile, Type: object, hasSafeParse: true
 Tool: fs.readFile, Type: object, hasSafeParse: true
 Tool: fs.replaceString, Type: object, hasSafeParse: true
 Tool: fs.readFile, Type: object, hasSafeParse: true
+Tool: fs.readFile, Type: object, hasSafeParse: true
+Tool: git.remoteUrl, Type: object, hasSafeParse: true
+Tool: github.createIssue, Type: object, hasSafeParse: true

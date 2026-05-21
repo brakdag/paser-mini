@@ -10,6 +10,47 @@ const READ_CACHE = new Map();
 export class FileTools {
   constructor() {}
 
+  async #guardianValidate(filePath) {
+    if (!filePath.endsWith('.js')) return { valid: true };
+    try {
+      // Pyright check removed: Pyright is a Python checker and was incorrectly used for JS validation.
+      let pyrightValid = true;
+      let pyrightMsg = "";
+
+      // ESLint check
+      let eslintValid = true;
+      let eslintMsg = "";
+      try {
+        const { stdout } = await execPromise(`npx eslint ${filePath} --format json`, { timeout: 30000 });
+        const data = JSON.parse(stdout);
+        const errors = data.flatMap(f => f.messages.filter(m => m.severity === 2));
+        if (errors.length > 0) {
+          eslintValid = false;
+          eslintMsg = `ESLint found ${errors.length} errors.`;
+        }
+      } catch (e) {
+        if (e.stdout) {
+          const data = JSON.parse(e.stdout);
+          const errors = data.flatMap(f => f.messages.filter(m => m.severity === 2));
+          if (errors.length > 0) {
+            eslintValid = false;
+            eslintMsg = `ESLint found ${errors.length} errors.`;
+          }
+        } else {
+          eslintValid = false;
+          eslintMsg = `ESLint execution failed: ${e.message}`;
+        }
+      }
+
+      if (!pyrightValid || !eslintValid) {
+        return { valid: false, error: `Guardian Validation Failed: ${pyrightMsg} ${eslintMsg}` };
+      }
+      return { valid: true };
+    } catch (e) {
+      return { valid: false, error: `Guardian System Error: ${e.message}` };
+    }
+  }
+
   // Helper para validar rutas y evitar Path Traversal
   #getSafePath(inputPath) {
     const resolved = path.resolve(process.cwd(), inputPath);
@@ -69,8 +110,27 @@ export class FileTools {
       if (Buffer.byteLength(content, "utf8") > FILE_SIZE_LIMIT)
         return "ERR: Content too large";
       const safePath = this.#getSafePath(filePath);
+      
+      // Guardian: Backup original content if it exists
+      let originalContent = null;
+      try {
+        originalContent = await fs.readFile(safePath, "utf8");
+      } catch (e) {}
+
       await fs.mkdir(path.dirname(safePath), { recursive: true });
       await fs.writeFile(safePath, content, "utf8");
+
+      // Guardian: Validate .js files
+      const validation = await this.#guardianValidate(safePath);
+      if (!validation.valid) {
+        if (originalContent !== null) {
+          await fs.writeFile(safePath, originalContent, "utf8");
+        } else {
+          await fs.rm(safePath);
+        }
+        return validation.error;
+      }
+
       READ_CACHE.delete(safePath);
       return "OK";
     } catch (e) {
@@ -139,6 +199,14 @@ export class FileTools {
         return "ERR: Resulting content too large";
 
       await fs.writeFile(safePath, newContent, "utf8");
+
+      // Guardian: Validate .js files
+      const validation = await this.#guardianValidate(safePath);
+      if (!validation.valid) {
+        await fs.writeFile(safePath, content, "utf8");
+        return validation.error;
+      }
+
       READ_CACHE.delete(safePath);
       return "OK";
     } catch (e) {
