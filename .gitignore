@@ -34,4 +34,6 @@ paser_mini.log
 memento.log
 log/history.log
 lint.txt
-schema_audit.log
+schema_audit.logo
+heap_baseline.heapsnapshot
+heap_final.heapsnapshot
