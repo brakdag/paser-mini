@@ -38,7 +38,6 @@
       "replace_text": "string"
     }
   ],
-
   [
     "pyright.analyze",
     "Run static analysis for JS/TS codebase to detect type and syntax errors",
@@ -46,7 +45,6 @@
       "path": "string"
     }
   ],
-
   [
     "eslint.lint",
     "Run ESLint analysis",
@@ -113,7 +111,6 @@
       "newNickname": "string"
     }
   ],
-
   [
     "memento.push",
     "Stores in memento.log. To reference MUST use the #ID format (e.g., #1).",
@@ -124,7 +121,11 @@
     "Returns the current token count of the conversation history and its percentage relative to the limit.",
     {}
   ],
-  ["git.lsFiles", "Get the project file tree (very fast)", {}],
+  [
+    "git.lsFiles",
+    "Get the project file tree (very fast)",
+    {}
+  ],
   [
     "git.diff",
     "Show differences of a file using git diff",
@@ -139,7 +140,6 @@
       "path": "string"
     }
   ],
-
   [
     "fs.concatFile",
     "Concatenates the content of the source file to the end of the destination file.",
@@ -148,7 +148,6 @@
       "source": "string"
     }
   ],
-
   [
     "json.getStructure",
     "Returns the keys and structure of a JSON node at a given path.",
@@ -224,7 +223,11 @@
       "body": "string"
     }
   ],
-  ["git.remoteUrl", "Get the current GitHub repository name", {}],
+  [
+    "git.remoteUrl",
+    "Get the current GitHub repository name",
+    {}
+  ],
   [
     "git.diffAll",
     "Show all changes in the current repository using git diff",
@@ -299,6 +302,18 @@
     {
       "path": "string",
       "query": "string"
+    }
+  ],
+  [
+    "perf.metrics",
+    "Get current process memory and CPU usage metrics.",
+    {}
+  ],
+  [
+    "perf.snapshot",
+    "Create a V8 heap snapshot for memory analysis.",
+    {
+      "path": "string"
     }
   ]
 ]

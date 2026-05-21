@@ -21,38 +21,37 @@ class ExecutionEngine {
     this.turnCount = 0;
     this.maxTurns = 10000;
     this.stopRequested = false;
+
+    const bn = (a, k = 'path') => path.basename(a[k] || "");
+
     this._detailMappers = {
-      "fs.readFile": (a) => path.basename(a.path || ""),
-      "fs.writeFile": (a) => path.basename(a.path || ""),
-      "fs.rm": (a) => path.basename(a.path || ""),
+      "fs.readFile": (a) => bn(a),
+      "fs.writeFile": (a) => bn(a),
+      "fs.rm": (a) => bn(a),
       "fs.readdir": (a) => a.path || "",
-      "fs.replaceString": (a) => path.basename(a.path || ""),
-      "fs.rename": (a) =>
-        `${path.basename(a.origin || "")} -> ${path.basename(a.destination || "")}`,
-      "fs.copyFile": (a) =>
-        `${path.basename(a.origin || "")} -> ${path.basename(a.destination || "")}`,
-      "fs.concatFile": (a) => path.basename(a.destination || ""),
-      "pyright.analyze": (a) => path.basename(a.path || ""),
-      "eslint.lint": (a) => path.basename(a.path || ""),
-      "jsdoc.generate": (a) =>
-        `Docs for ${path.basename(a.path || ".")} -> ${a.outputDir || "docs/api"}`,
-      "child_process.exec": (a) =>
-        a.command.substring(0, 50) + (a.command.length > 50 ? "..." : ""),
+      "fs.replaceString": (a) => bn(a),
+      "fs.rename": (a) => `${bn(a, 'origin')} -> ${bn(a, 'destination')}`,
+      "fs.copyFile": (a) => `${bn(a, 'origin')} -> ${bn(a, 'destination')}`,
+      "fs.concatFile": (a) => bn(a, 'destination'),
+      "pyright.analyze": (a) => bn(a),
+      "eslint.lint": (a) => bn(a),
+      "jsdoc.generate": (a) => `Docs for ${bn(a, '.')} -> ${a.outputDir || "docs/api"}`,
+      "child_process.exec": (a) => a.command.substring(0, 50) + (a.command.length > 50 ? "..." : ""),
       "grep.search": (a) => a.query || "",
       "glob.search": (a) => `pattern: ${a.pattern || ""}`,
       "json.validate": (a) => `len: ${a.json_string?.length || 0}`,
       "config.setNickname": (a) => a.newNickname || "",
-      "memento.push": (a) => "insight",
+      "memento.push": () => "insight",
       "chatManager.getTokenCount": () => "tokens",
       "git.lsFiles": () => "tree",
-      "git.diff": (a) => path.basename(a.path || ""),
-      "git.restore": (a) => path.basename(a.path || ""),
+      "git.diff": (a) => bn(a),
+      "git.restore": (a) => bn(a),
       "git.diffAll": () => "all",
       "git.remoteUrl": () => "url",
-      "json.getStructure": (a) => path.basename(a.file_path || ""),
-      "json.getNode": (a) => path.basename(a.file_path || ""),
-      "json.getArrayInfo": (a) => path.basename(a.file_path || ""),
-      "json.updateNode": (a) => path.basename(a.file_path || ""),
+      "json.getStructure": (a) => bn(a, 'file_path'),
+      "json.getNode": (a) => bn(a, 'file_path'),
+      "json.getArrayInfo": (a) => bn(a, 'file_path'),
+      "json.updateNode": (a) => bn(a, 'file_path'),
       "github.listIssues": (a) => a.repo || "",
       "github.createIssue": (a) => a.title || "",
       "github.editIssue": (a) => `#${a.issue_number || ""}`,
@@ -60,136 +59,75 @@ class ExecutionEngine {
       "github.postComment": (a) => `#${a.issue_number || ""}`,
       "system.notify": (a) => a.message?.substring(0, 30) || "",
       "fountain.insertScene": (a) => a.scene || "",
-      "jszip.listContents": (a) => path.basename(a.filePath || ""),
-      "binary.analyze": (a) =>
-        `${a.action || "analysis"} on ${path.basename(a.filePath || "unknown")}`,
+      "jszip.listContents": (a) => bn(a, 'filePath'),
+      "binary.analyze": (a) => `${a.action || "analysis"} on ${bn(a, 'filePath')}`,
       "duckduckgo.search": (a) => a.query || "",
       "elinks.render": (a) => a.url || "",
       "vm.runInContext": () => "sandbox",
-      "seeImage": (a) => path.basename(a.path || ""),
+      "seeImage": (a) => bn(a),
     };
   }
 
   async executeToolCall(name, args, callData) {
     const displayName = name;
     const toolName = name;
-
-    if (this.strictPureMode) {
-      return {
-        response: this.toolParser.formatToolResponse(
-          "ERR: Pure Mode active. Tool execution is strictly disabled.",
-          callData.id,
-          false,
-        ),
-        success: false,
-      };
-    }
-    if (!this.toolTracker.recordAttempt(toolName, args)) {
-      return {
-        response: this.toolParser.formatToolResponse(
-          `Tool loop detected: ${toolName} called too many times.`,
-          callData.id,
-          false,
-        ),
-        success: false,
-      };
-    }
-
-    if (toolName === "executeBash" && !this.ui.bashEnabled) {
-      return {
-        response: this.toolParser.formatToolResponse(
-          "ERR: Bash access is disabled for security. Please use /enableBash to activate it.",
-          callData.id,
-          false,
-        ),
-        success: false,
-      };
-    }
-
-    if (!(toolName in this.tools)) {
-      return {
-        response: this.toolParser.formatToolResponse(
-          `Unknown tool: ${toolName}`,
-          callData.id,
-          false,
-        ),
-        success: false,
-      };
-    }
-
-    if (toolName === "runInstance" && this.instanceMode === true) {
-      return {
-        response: this.toolParser.formatToolResponse(
-          "ERR: Recursion disabled.",
-          callData.id,
-          false,
-        ),
-        success: false,
-      };
-    }
-
-    if (toolName === "sh") {
-      const result = await this.tools[toolName](args);
-      return {
-        response: this.toolParser.formatToolResponse(result, callData.id, true),
-        result,
-        success: true,
-      };
-    }
-
-    // Safe detail mapping
+    let result;
+    let success = false;
     let detail = "no details";
+    let monitoringStarted = false;
+
     try {
-      const mapper = this._detailMappers[toolName] ?? (() => "no details");
-      detail = mapper(args);
+      if (this.strictPureMode) {
+        result = "ERR: Pure Mode active. Tool execution is strictly disabled.";
+      } else if (!this.toolTracker.recordAttempt(toolName, args)) {
+        result = `Tool loop detected: ${toolName} called too many times.`;
+      } else if (toolName === "executeBash" && !this.ui.bashEnabled) {
+        result = "ERR: Bash access is disabled for security. Please use /enableBash to activate it.";
+      } else if (!(toolName in this.tools)) {
+        result = `Unknown tool: ${toolName}`;
+      } else if (toolName === "runInstance" && this.instanceMode === true) {
+        result = "ERR: Recursion disabled.";
+      } else {
+        try {
+          const mapper = this._detailMappers[toolName] ?? (() => "no details");
+          detail = mapper(args);
+        } catch (e) {
+          detail = "error mapping details";
+        }
+
+        this.ui.startToolMonitoring(displayName, detail);
+        monitoringStarted = true;
+
+        const toolFunc = this.tools[toolName];
+        result = await toolFunc(args);
+        success = typeof result === 'string' ? !result.startsWith('ERR:') : true;
+
+        if (toolName === "pushMemory") {
+          this.ui.displayPanel("Memento Push", result, "info");
+        } else if (toolName === "runInstance") {
+          this.ui.displayPanel("Instance Test Output", result, "info");
+        }
+      }
     } catch (e) {
-      detail = "error mapping details";
+      result = `ERR: ${e.message}`;
+      success = false;
     }
 
-    this.ui.startToolMonitoring(displayName, detail);
+    if (monitoringStarted) {
+      this.ui.endToolMonitoring(displayName, success, detail);
+    }
 
-    try {
-      const toolFunc = this.tools[toolName];
-      const result = await toolFunc(args);
-
-      const isError = typeof result === 'string' && result.startsWith('ERR:');
-
-      if (toolName === "pushMemory") {
-        this.ui.displayPanel("Memento Push", result, "info");
-      } else if (toolName === "runInstance") {
-        this.ui.displayPanel("Instance Test Output", result, "info");
-      }
-
-      if (isError) {
-        this.toolTracker.recordFailure(toolName);
-        this.ui.endToolMonitoring(displayName, false, detail);
-        return {
-          response: this.toolParser.formatToolResponse(result, callData.id, false),
-          result,
-          success: false,
-        };
-      }
-
+    if (success) {
       this.toolTracker.recordSuccess(toolName);
-      this.ui.endToolMonitoring(displayName, true, detail);
-
-      return {
-        response: this.toolParser.formatToolResponse(result, callData.id, true),
-        result,
-        success: true,
-      };
-    } catch (e) {
+    } else {
       this.toolTracker.recordFailure(toolName);
-      this.ui.endToolMonitoring(displayName, false, detail);
-      return {
-        response: this.toolParser.formatToolResponse(
-          `ERR: ${e.message}`,
-          callData.id,
-          false,
-        ),
-        success: false,
-      };
     }
+
+    return {
+      response: this.toolParser.formatToolResponse(result, callData.id, success),
+      result,
+      success
+    };
   }
 }
 

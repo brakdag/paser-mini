@@ -27,6 +27,7 @@ This document provides a comprehensive specification of all tools available to t
 | Tool | Description | Arguments | Status |
 | :--- | :--- | :--- | :--- |
 | `analyzeCode` | Static analysis for JS/TS errors. | `path` (str) | ✅ Stable |
+| `ast.analyze` | Structural AST analysis. | `path` (str), `query` (str) | ✅ Stable |
 | `lintCode` | Runs ESLint analysis. | `path` (str) | ✅ Stable |
 | `generateDocs` | Generates HTML docs via JSDoc. | `path` (str), `outputDir` (str) | ✅ Stable |
 | `searchTextGlobal` | Global string search across all files. | `query` (str) | ✅ Stable |
@@ -100,6 +101,16 @@ This document provides a comprehensive specification of all tools available to t
 | `saveZip` | Saves a ZIP from RAM to disk. | `zipId` (str), `outputPath` (str) | ✅ Stable |
 | `listZipFiles` | Lists files within a loaded ZIP. | `zipId` (str) | ✅ Stable |
 | `binaryAnalysis` | Performs binary analysis on a file. | `action` (str), `filePath` (str), etc. | ✅ Stable |
+
+
+---
+
+## 🚀 Performance & Telemetry
+
+| Tool | Description | Arguments | Status |
+| :--- | :--- | :--- | :--- |
+| `perf.metrics` | Current process memory and CPU usage. | None | ✅ Stable |
+| `perf.snapshot` | Creates a V8 heap snapshot. | `path` (str) | ✅ Stable |
 
 ---
 

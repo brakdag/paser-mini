@@ -24,6 +24,7 @@ Paser Mini is designed to strip away operational noise, ensuring that every toke
 - **Zero-Friction Interface:** Optimized for Debian/Linux environments to ensure peak performance.
 - **RAM-Native Manipulation:** Advanced capabilities for handling data containers (ZIP) in memory to reduce disk I/O latency.
 - **Integrated Ecosystem:** Native support for Git, GitHub, and complex JSON data structures.
+- **Performance Telemetry:** Low-overhead V8 metrics and heap snapshotting for Absolute Zero optimization.
 
 ## 📐 Operational Constraints
 

@@ -21,6 +21,7 @@ const MODULE_MAP = {
   webTools: "./webTools.js",
   evalTools: "./evalTools.js",
   astTools: "./astTools.js",
+  perfTools: "./perfTools.js",
   
 };
 
@@ -106,6 +107,8 @@ export const AVAILABLE_TOOLS = {
   "elinks.render": async (args) => (await getTool("webTools", "renderWeb"))(args),
   "vm.runInContext": async (args) => (await getTool("evalTools", "executeJS"))(args),
   "ast.analyze": async (args) => (await getTool("astTools", "analyze"))(args),
+  "perf.metrics": async (args) => (await getTool("perfTools", "metrics"))(args),
+  "perf.snapshot": async (args) => (await getTool("perfTools", "snapshot"))(args),
   "seeImage": async (args) => (await getTool("utilTools", "seeImage"))(args),
   "reloadTools": async () => {
     toolCache = {};

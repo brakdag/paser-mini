@@ -11,7 +11,7 @@ This document serves as the definitive reference for the tools available to the 
 ### 🔍 Search & Analysis
 
 - **Global Search**: `searchTextGlobal`, `searchFilesPattern`.
-- **Code Intelligence**: `analyzeCode`, `gitDiff`.
+- **Code Intelligence**: `analyzeCode`, `ast.analyze`, `gitDiff`.
 
 ### 🧠 Memento (Cognitive Log)
 
@@ -30,6 +30,12 @@ This document serves as the definitive reference for the tools available to the 
 - **Validation**: `validateJson` - Checks if a string is valid JSON.
 - **Structural Analysis**: `getJsonStructure`, `getJsonArrayInfo`.
 - **Surgical Access**: `getJsonNode`, `updateJsonNode`.
+
+
+### 🚀 Performance & Telemetry
+
+- **Runtime Metrics**: `perf.metrics` - Returns real-time memory and CPU usage.
+- **Memory Analysis**: `perf.snapshot` - Generates V8 heap snapshots for leak detection.
 
 ---
 
