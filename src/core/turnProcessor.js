@@ -126,7 +126,7 @@ class TurnProcessor {
               const [, name] = result.match(/is now known as\s+(.+)$/);
               if (name) this.ui.agentNickname = name;
             }
-            toolResults.push(response);
+            toolResults.push({ response, result });
           } else if (call.error) {
             consecutiveErrors += 1;
             toolResults.push(`<TOOL_RESPONSE>ERR: ${call.error}</TOOL_RESPONSE>`);
@@ -140,8 +140,8 @@ class TurnProcessor {
         }
 
         const resultsPayload = this.ui.renderingMode === "FOUNTAIN"
-          ? this.fountain.formatToolResults(toolResults)
-          : toolResults.join("\n");
+          ? this.fountain.formatToolResults(toolResults.map(r => r.response))
+          : toolResults.map(r => (r.result && r.result.mime_type ? r.result : r.response));
 
         try {
           currentResponse = await this.api.send(resultsPayload, "user");
