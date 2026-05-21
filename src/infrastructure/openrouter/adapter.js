@@ -49,9 +49,7 @@ class OpenRouterAdapter extends BaseAdapter {
     this.currentModel = modelName || this.currentModel;
     this.systemInstruction = systemInstruction;
     this.temperature = temperature;
-    this.history = [];
-
-    if (this.systemInstruction) {
+    if (this.history.length === 0 && this.systemInstruction) {
       this.injectMessage("system", this.systemInstruction);
     }
   }

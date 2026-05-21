@@ -74,7 +74,6 @@ class GeminiAdapter extends BaseAdapter {
     this.currentModel = modelName || this.currentModel;
     this.systemInstruction = systemInstruction;
     this.temperature = temperature;
-    this.history = [];
   }
 
   _buildPayload() {

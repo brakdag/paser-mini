@@ -24,7 +24,6 @@ class NvidiaAdapter extends BaseAdapter {
     this.currentModel = modelName || this.currentModel;
     this.systemInstruction = systemInstruction;
     this.temperature = temperature;
-    this.state.hardReset();
     logger.info("NvidiaAdapter: Chat started", {
       model: this.currentModel,
       temperature,
