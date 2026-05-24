@@ -3,8 +3,29 @@ import { promisify } from "util";
 import fs from "fs";
 import { registerSchemas } from "../core/schemaRegistry.js";
 
+export const SYSTEM_TOOLS_VERSION = "1.0.0";
+
 export class SystemTools {
   #execPromise = promisify(exec);
+
+  setContext(assistant, chatManager) {
+    this._assistant = assistant;
+    this._chatManager = chatManager;
+  }
+
+  async reset({ user_message }) {
+    if (!this._assistant || !this._chatManager) {
+      throw new Error("System context not initialized");
+    }
+    try {
+      this._assistant.hardReset();
+      this._assistant.injectMessage("user", user_message);
+      this._chatManager.engine.toolTracker.reset();
+      return `Context reset successfully. New session started with message: "${user_message}"`;
+    } catch (e) {
+      return `ERR: Reset failed: ${e.message}`;
+    }
+  }
 
   async analyzeCode({ path: targetPath = "." }) {
     try {

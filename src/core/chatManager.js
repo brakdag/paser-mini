@@ -152,6 +152,8 @@ class ChatManager {
       const { getToolInstance } = await import("../tools/registry.js");
       const memoryTools = await getToolInstance("memoryTools");
       memoryTools.setMemoryContext(this.assistant, this);
+      const systemTools = await getToolInstance("systemTools");
+      systemTools.setContext(this.assistant, this);
     } catch (e) {
       logger.error("Failed to initialize memory context", e);
     }

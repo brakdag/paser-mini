@@ -65,6 +65,7 @@ class ExecutionEngine {
       "elinks.render": (a) => a.url || "",
       "vm.runInContext": () => "sandbox",
       "seeImage": (a) => bn(a),
+      "system.reset": (a) => a.user_message?.substring(0, 30) || "no message",
     };
   }
 

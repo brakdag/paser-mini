@@ -292,8 +292,7 @@
     "seeImage",
     "Visualizes an image. Supports optional cropping [left, top, right, bottom].",
     {
-      "path": "string",
-      "crop": "number[]"
+      "path": "string"
     }
   ],
   [
@@ -314,6 +313,13 @@
     "Create a V8 heap snapshot for memory analysis.",
     {
       "path": "string"
+    }
+  ],
+  [
+    "system.reset",
+    "Resets the conversation context and injects a new initial user message. Use this when the context window is nearly full or a fresh start is needed.",
+    {
+      "user_message": "string"
     }
   ]
 ]

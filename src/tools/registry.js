@@ -37,7 +37,7 @@ export async function getToolInstance(moduleKey) {
     let className = moduleKey.charAt(0).toUpperCase() + moduleKey.slice(1);
     if (moduleKey === "githubTools") className = "GithubTools";
 
-    const ToolClass = module[className];
+    const ToolClass = module[className] || module.default;
     if (!ToolClass)
       throw new Error(`Class ${className} not found in ${modulePath}`);
 
@@ -70,6 +70,7 @@ export const AVAILABLE_TOOLS = {
   "fs.rm": async (args) => (await getTool("fileTools", "removeFile"))(args),
   "fs.mkdir": async (args) => (await getTool("fileTools", "createDir"))(args),
   "system.reloadSchemas": async (args) => (await getTool("systemTools", "reloadSchemas"))(args),
+  "system.reset": async (args) => (await getTool("systemTools", "reset"))(args),
   "pyright.analyze": async (args) => (await getTool("systemTools", "analyzeCode"))(args),
   "fs.readdir": async (args) => (await getTool("fileTools", "listDir"))(args),
   "fs.replaceString": async (args) => (await getTool("fileTools", "replaceString"))(args),
