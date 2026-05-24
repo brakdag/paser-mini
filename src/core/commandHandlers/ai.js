@@ -10,7 +10,7 @@ class AICommands {
   }
 
   static async handleConnect(chatManager, ui) {
-    ui.displayMessage("Select Provider:\n0: Gemini\n1: NVIDIA\n2: OpenRouter");
+    ui.displayMessage("Select Provider:\n0: Gemini\n1: NVIDIA\n2: OpenRouter\n3: Groq");
     const choice = await ui.requestInput("Provider: ");
 
     let provider;
@@ -24,6 +24,9 @@ class AICommands {
     } else if (choice === "2") {
       provider = "OPENROUTER";
       model = "openai/gpt-4o";
+    } else if (choice === "3") {
+      provider = "GROQ";
+      model = "llama3-8b-8192";
     } else {
       ui.displayError("Invalid provider.");
       return true;

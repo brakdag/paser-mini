@@ -97,10 +97,19 @@ class ChatManager {
         this.ui.userNickname,
         this.ui.agentNickname,
       );
-    } else if (provider === "OPENROUTER") {
+        } else if (provider === "OPENROUTER") {
       const { default: OpenRouterAdapter } =
         await import("../infrastructure/openrouter/adapter.js");
       newAssistant = new OpenRouterAdapter(
+        this.ui,
+        this.configManager,
+        this.ui.userNickname,
+        this.ui.agentNickname,
+      );
+    } else if (provider === "GROQ") {
+      const { default: GroqAdapter } =
+        await import("../infrastructure/groq/adapter.js");
+      newAssistant = new GroqAdapter(
         this.ui,
         this.configManager,
         this.ui.userNickname,
@@ -134,6 +143,12 @@ class ChatManager {
     // Synchronize references
     if (this.turnProcessor) {
       this.turnProcessor.assistant = newAssistant;
+      if (this.turnProcessor.api) {
+        this.turnProcessor.api.assistant = newAssistant;
+      }
+      if (this.turnProcessor.fountain) {
+        this.turnProcessor.fountain.assistant = newAssistant;
+      }
     }
     if (this.engine) {
       this.engine.assistant = newAssistant;
