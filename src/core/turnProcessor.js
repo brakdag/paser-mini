@@ -139,9 +139,15 @@ class TurnProcessor {
           break;
         }
 
-        const resultsPayload = this.ui.renderingMode === "FOUNTAIN"
-          ? this.fountain.formatToolResults(toolResults.map(r => r.response))
-          : toolResults.map(r => (r.result && r.result.mime_type ? r.result : r.response));
+        let resultsPayload;
+        if (this.ui.renderingMode === "FOUNTAIN") {
+          resultsPayload = this.fountain.formatToolResults(toolResults.map(r => r.response));
+        } else {
+          const mapped = toolResults.map(r => (r.result && r.result.mime_type ? r.result : r.response));
+          resultsPayload = mapped.every(item => typeof item === 'string')
+            ? mapped.join('\n\n')
+            : mapped;
+        }
 
         try {
           currentResponse = await this.api.send(resultsPayload, "user");

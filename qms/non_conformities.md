@@ -9,3 +9,4 @@
 | NC-005 | 6.2 | Absence of Quality Objectives. No measurable goals established to ensure the quality of the software product. | Major | Closed |
 | NC-006 | 7.5 | Inadequate control of documented information. The current policy lacks procedures for review, approval, and version control. | Minor | Closed |
 | NC-007 | 8.7 | Absence of a formal process for the control of non-conforming outputs. While technical tests exist in /tests, there is no documented procedure to treat failures as NCs or track their resolution. | Major | Closed |
+| NC-008 | 8.7 | Multi-part tool responses caused the LLM to trigger a critical error, rejecting the input format. Fixed by aggregating text responses in TurnProcessor. | Major | Closed |
