@@ -9,6 +9,7 @@ class TerminalUI {
   get inputQueue() {
     return input.inputQueue;
   }
+
   constructor() {
     this.noSpinner = true;
     this.activeSpinners = new Map();

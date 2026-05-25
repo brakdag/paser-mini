@@ -125,7 +125,7 @@ const TOOL_CATALOG = fullCatalog
   .map((t) => {
     const canonicalName = t[0];
     const args =
-      t[2] && typeof t[2] === "object" ? Object.keys(t[2]).join(", ") : "data";
+      t[2] && typeof t[2] === "object" ? Object.entries(t[2]).map(([k, v]) => `${k} (${v})`).join(", ") : "data";
     const returns = t[1].split(". ")[0] || "status";
     return `${canonicalName}(${args}): returns ${returns}`;
   })

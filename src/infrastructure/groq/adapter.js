@@ -47,8 +47,16 @@ class GroqAdapter extends BaseAdapter {
     this.currentModel = modelName || this.currentModel;
     this.systemInstruction = systemInstruction;
     this.temperature = temperature;
-    if (this.history.length === 0 && this.systemInstruction) {
-      this.injectMessage("system", this.systemInstruction);
+    if (this.systemInstruction) {
+      if (this.history.length > 0 && this.history[0].role === "system") {
+        this.history[0].content = this.systemInstruction;
+      } else {
+        this.history.unshift({
+          role: "system",
+          content: this.systemInstruction,
+          timestamp: new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }),
+        });
+      }
     }
   }
 
@@ -94,6 +102,8 @@ class GroqAdapter extends BaseAdapter {
         { type: "text", text: `Image resolution: ${content.resolution || 'unknown'}` },
         { type: "image_url", image_url: { url: `data:${content.mime_type};base64,${content.data}` } }
       ];
+    } else if (Array.isArray(content)) {
+      finalContent = content.join("\n");
     }
 
     this.history.push({
@@ -107,6 +117,11 @@ class GroqAdapter extends BaseAdapter {
     if (this.history.length > 0) {
       this.history.pop();
     }
+  }
+
+  hardReset(historyOverride = null) {
+    this.history = historyOverride || [];
+    logger.info("[GroqAdapter] History hard reset");
   }
 
   getHistory() {

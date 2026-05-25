@@ -127,7 +127,7 @@ class GeminiAdapter extends BaseAdapter {
             { text: `Image resolution: ${m.resolution || 'unknown'}` },
           ];
         }
-        return [{ text: JSON.stringify(m) }];
+        return [{ text: m === undefined ? "" : JSON.stringify(m) }];
       });
     } else if (typeof message === 'string') {
       parts = [{ text: message }];
@@ -137,7 +137,7 @@ class GeminiAdapter extends BaseAdapter {
         { text: `Image resolution: ${message.resolution || 'unknown'}` },
       ];
     } else {
-      parts = [{ text: JSON.stringify(message) }];
+      parts = [{ text: message === undefined ? "" : JSON.stringify(message) }];
     }
 
     this.history.push({
@@ -218,7 +218,7 @@ class GeminiAdapter extends BaseAdapter {
             { text: `Image resolution: ${m.resolution || 'unknown'}` },
           ];
         }
-        return [{ text: JSON.stringify(m) }];
+        return [{ text: m === undefined ? "" : JSON.stringify(m) }];
       });
     } else if (typeof content === 'string') {
       parts = [{ text: content }];
@@ -228,7 +228,7 @@ class GeminiAdapter extends BaseAdapter {
         { text: `Image resolution: ${content.resolution || 'unknown'}` },
       ];
     } else {
-      parts = [{ text: JSON.stringify(content) }];
+      parts = [{ text: content === undefined ? "" : JSON.stringify(content) }];
     }
 
     this.history.push({
