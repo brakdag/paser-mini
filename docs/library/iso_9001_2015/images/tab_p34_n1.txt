@@ -1,0 +1,15 @@
+ISO 9001:2008	ISO 9001:2015
+Productos	Productos y servicios
+Exclusiones	No se utiliza
+(Véase el Capítulo A.5. para aclarar su
+aplicabilidad)
+Representante de la dirección	No se utiliza
+(Se asignan responsabilidades y autoridades
+similares pero ningún requisito para un único
+representante de la dirección)
+Documentación, manual de la calidad, procedimientos
+documentados, registros	Información documentada
+Ambiente de trabajo	Ambiente para la operación de los procesos
+Equipo de seguimiento y medición	Recursos de seguimiento y medición
+Productos comprados	Productos y servicios suministrados externamente
+Proveedor	Proveedor externo
