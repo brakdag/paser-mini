@@ -120,24 +120,27 @@ export const AVAILABLE_TOOLS = {
 const registryPath = path.join(__dirname, "registry_positional.json");
 const fullCatalog = JSON.parse(fs.readFileSync(registryPath, "utf8"));
 
-const TOOL_CATALOG = fullCatalog
-  .filter((t) => t[0] !== "executeBash")
-  .map((t) => {
-    const canonicalName = t[0];
-    const args =
-      t[2] && typeof t[2] === "object" ? Object.entries(t[2]).map(([k, v]) => `${k} (${v})`).join(", ") : "data";
-    const returns = t[1].split(". ")[0] || "status";
-    return `${canonicalName}(${args}): returns ${returns}`;
-  })
-  .join("\n");
-
 const _S = `${String.fromCharCode(60)}TOOL_CALL${String.fromCharCode(62)}`;
 const _E = `${String.fromCharCode(60)}/TOOL_CALL${String.fromCharCode(62)}`;
 
 const systemInstrData = JSON.parse(
   fs.readFileSync(path.join(__dirname, "system_instruction.json"), "utf8"),
 );
-export const SYSTEM_INSTRUCTION = systemInstrData.instruction
-  .replace("{TOOL_CATALOG}", TOOL_CATALOG)
-  .replace("[[S]]", _S)
-  .replace("[[E]]", _E);
+
+export function generateSystemInstruction(availableToolNames) {
+  const filteredCatalog = fullCatalog
+    .filter((t) => t[0] !== "executeBash" && availableToolNames.includes(t[0]))
+    .map((t) => {
+      const canonicalName = t[0];
+      const args =
+        t[2] && typeof t[2] === "object" ? Object.entries(t[2]).map(([k, v]) => `${k} (${v})`).join(", ") : "data";
+      const returns = t[1].split(". ")[0] || "status";
+      return `${canonicalName}(${args}): returns ${returns}`;
+    })
+    .join("\n");
+
+  return systemInstrData.instruction
+    .replace("{TOOL_CATALOG}", filteredCatalog || "No tools available.")
+    .replace("[[S]]", _S)
+    .replace("[[E]]", _E);
+}

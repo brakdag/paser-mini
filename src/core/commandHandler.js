@@ -23,6 +23,7 @@ const COMMAND_MAP = {
   "/connect": AICommands.handleConnect,
   "/config": ConfigCommands.handleConfig,
   "/models_check": (cm, ui) => ModelCommands.handleModelsCheck(cm, ui),
+  "/sp": (cm, ui) => SystemCommands.handleShowSystemPrompt(cm, ui),
 };
 
 const PREFIX_COMMANDS = {

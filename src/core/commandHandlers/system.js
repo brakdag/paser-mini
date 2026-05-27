@@ -1,4 +1,3 @@
-import MementoManager from "../../infrastructure/memento/manager.js";
 
 class SystemCommands {
   static handleClear() {
@@ -38,6 +37,14 @@ class SystemCommands {
         ? ui._renderFountain("system", bashInstruction)
         : bashInstruction;
     chatManager.assistant.injectMessage("server", content);
+    return true;
+  }
+
+  static async handleShowSystemPrompt(chatManager, ui) {
+    const systemInstruction = chatManager.systemInstruction;
+    ui.displayInfo("--- CURRENT SYSTEM PROMPT ---");
+    ui.displayMessage(systemInstruction);
+    ui.displayInfo("----------------------------");
     return true;
   }
 }

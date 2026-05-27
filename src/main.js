@@ -6,7 +6,7 @@ import NvidiaAdapter from "./infrastructure/nvidia/adapter.js";
 import TerminalUI from "./core/terminalUI.js";
 import ChatManager from "./core/chatManager.js";
 import ConfigManager from "./core/configManager.js";
-import { SYSTEM_INSTRUCTION, AVAILABLE_TOOLS } from "./tools/registry.js";
+import { generateSystemInstruction, AVAILABLE_TOOLS } from "./tools/registry.js";
 import { MemoryTools } from "./tools/memoryTools.js";
 
 async function main() {
@@ -45,7 +45,7 @@ async function main() {
     const orchestrator = new GitHubModeOrchestrator(
       options.noSystemInstruction
         ? ""
-        : options.systemInstruction || SYSTEM_INSTRUCTION,
+        : options.systemInstruction || generateSystemInstruction(Object.keys(AVAILABLE_TOOLS)),
       tools,
     );
     await orchestrator.runForever();
@@ -63,8 +63,9 @@ async function main() {
       : new GeminiAdapter(ui, configManager, userNick, agentNick);
 
   let sysInstr = "";
+  let filteredTools = options.noSystemInstruction ? {} : AVAILABLE_TOOLS;
+
   if (!options.noSystemInstruction) {
-    const baseInstr = options.systemInstruction || SYSTEM_INSTRUCTION;
     let injection = "";
 
     if (options.injectSystemInstruction) {
@@ -72,11 +73,26 @@ async function main() {
     } else if (options.fileSystemInstruction) {
       try {
         injection = fs.readFileSync(options.fileSystemInstruction, "utf8");
+
+        // Parse TOOLS_AVAILABLE from the persona log to filter available tools
+        const toolsMatch = injection.match(/TOOLS_AVAILABLE\s*=\s*(\[.*?\])/s);
+        if (toolsMatch) {
+          try {
+            const availableList = JSON.parse(toolsMatch[1]);
+            filteredTools = Object.fromEntries(
+              Object.entries(AVAILABLE_TOOLS).filter(([name]) => availableList.includes(name))
+            );
+          } catch (e) {
+            console.warn(`Warning: Could not parse TOOLS_AVAILABLE array in ${options.fileSystemInstruction}: ${e.message}`);
+          }
+        }
       } catch (e) {
         console.error(`Error reading instruction file: ${e.message}`);
         process.exit(1);
       }
     }
+
+    const baseInstr = options.systemInstruction || generateSystemInstruction(Object.keys(filteredTools));
 
     sysInstr = injection
       ? `IDENTITY AND PERSONA:\n${injection}\n\nCORE OPERATIONAL PROTOCOLS:\n${baseInstr}`
@@ -85,7 +101,7 @@ async function main() {
 
   const chatManager = new ChatManager(
     assistant,
-    options.noSystemInstruction ? {} : AVAILABLE_TOOLS,
+    filteredTools,
     sysInstr,
     ui,
   );
