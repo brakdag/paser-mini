@@ -10,3 +10,4 @@
 | NC-006 | 7.5 | Inadequate control of documented information. The current policy lacks procedures for review, approval, and version control. | Minor | Closed |
 | NC-007 | 8.7 | Absence of a formal process for the control of non-conforming outputs. While technical tests exist in /tests, there is no documented procedure to treat failures as NCs or track their resolution. | Major | Closed |
 | NC-008 | 8.7 | Multi-part tool responses caused the LLM to trigger a critical error, rejecting the input format. Fixed by aggregating text responses in TurnProcessor. | Major | Closed |
+| NC-009 | 8.7 | Silent failure in `fs.writeFile` for files > 5KB with high escape character density (LaTeX). Mitigated via Layered Construction Protocol. | Major | Mitigated |

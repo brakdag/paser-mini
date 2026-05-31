@@ -67,6 +67,7 @@ export const GITHUB_SYSTEM_INSTRUCTION =
 export const AVAILABLE_TOOLS = {
   "fs.readFile": async (args) => (await getTool("fileTools", "readFile"))(args),
   "fs.writeFile": async (args) => (await getTool("fileTools", "writeFile"))(args),
+  
   "fs.rm": async (args) => (await getTool("fileTools", "removeFile"))(args),
   "fs.mkdir": async (args) => (await getTool("fileTools", "createDir"))(args),
   "system.reloadSchemas": async (args) => (await getTool("systemTools", "reloadSchemas"))(args),
