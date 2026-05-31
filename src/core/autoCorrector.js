@@ -6,12 +6,14 @@ class AutoCorrector {
   static fixJson(content) {
     let fixed = content.trim();
 
-    // Fix invalid backslashes
+    // 1. Fix newlines (turn raw newlines into \n)
+    fixed = fixed.replace(/\n/g, "\\n");
+
+    // 2. Fix invalid backslashes
     fixed = fixed.replace(/\\(?!(?:["\\/bfnrt]|u[0-9a-fA-F]{4}))/g, "\\\\");
 
-    // Only replace single quotes if they are acting as delimiters
-    fixed = fixed.replace(/^'|'$|'\\\\s*:\\\\s*|:\\\\s*'/g, '"');
-
+    // 3. Fix quotes and trailing commas
+    fixed = fixed.replace(/^'|'$|'\\s*:\\s*|:\\s*'/g, '"');
     fixed = fixed.replace(this.KEY_FIX_PATTERN, '$1 "$2":');
     fixed = fixed.replace(this.TRAILING_COMMA_PATTERN, "$1");
 

@@ -1,7 +1,14 @@
 export default class BaseAdapter {
-  constructor(ui, configManager, userNickname = "user", agentNickname = "assistant") {
+  constructor(
+    ui,
+    configManager,
+    userNickname = "user",
+    agentNickname = "assistant",
+  ) {
     if (this.constructor === BaseAdapter) {
-      throw new Error("BaseAdapter is an abstract class and cannot be instantiated directly.");
+      throw new Error(
+        "BaseAdapter is an abstract class and cannot be instantiated directly.",
+      );
     }
     this.ui = ui;
     this.configManager = configManager;
@@ -36,5 +43,9 @@ export default class BaseAdapter {
 
   async getAvailableModels() {
     throw new Error("Method 'getAvailableModels()' must be implemented.");
+  }
+
+  getVariants() {
+    return [];
   }
 }

@@ -2,10 +2,18 @@ import axios from "axios";
 import axiosRetry from "axios-retry";
 import logger from "../../core/logger.js";
 import BaseAdapter from "../baseAdapter.js";
-import { GeminiSafetyError, GeminiEmptyResponseError } from "../../core/exceptions.js";
+import {
+  GeminiSafetyError,
+  GeminiEmptyResponseError,
+} from "../../core/exceptions.js";
 
 class GeminiAdapter extends BaseAdapter {
-  constructor(ui, configManager, userNickname = "user", agentNickname = "assistant") {
+  constructor(
+    ui,
+    configManager,
+    userNickname = "user",
+    agentNickname = "assistant",
+  ) {
     super(ui, configManager, userNickname, agentNickname);
     this.apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     this.history = [];
@@ -43,7 +51,9 @@ class GeminiAdapter extends BaseAdapter {
         logger.warn(msg);
         if (this.ui && this.ui.displayInfo) {
           const status = error.response?.status || error.message;
-          this.ui.displayInfo(`Reintentando conexión... (${retryCount}/5) | Error: ${status}`);
+          this.ui.displayInfo(
+            `Reintentando conexión... (${retryCount}/5) | Error: ${status}`,
+          );
         }
       },
     });
@@ -116,25 +126,30 @@ class GeminiAdapter extends BaseAdapter {
       second: "2-digit",
       hour12: false,
     });
-    
+
     let parts = [];
     if (Array.isArray(message)) {
       parts = message.flatMap((m) => {
-        if (typeof m === 'string') return [{ text: m }];
-        if (m && typeof m === 'object' && m.mime_type && m.data) {
+        if (typeof m === "string") return [{ text: m }];
+        if (m && typeof m === "object" && m.mime_type && m.data) {
           return [
             { inline_data: { mime_type: m.mime_type, data: m.data } },
-            { text: `Image resolution: ${m.resolution || 'unknown'}` },
+            { text: `Image resolution: ${m.resolution || "unknown"}` },
           ];
         }
         return [{ text: m === undefined ? "" : JSON.stringify(m) }];
       });
-    } else if (typeof message === 'string') {
+    } else if (typeof message === "string") {
       parts = [{ text: message }];
-    } else if (message && typeof message === 'object' && message.mime_type && message.data) {
+    } else if (
+      message &&
+      typeof message === "object" &&
+      message.mime_type &&
+      message.data
+    ) {
       parts = [
         { inline_data: { mime_type: message.mime_type, data: message.data } },
-        { text: `Image resolution: ${message.resolution || 'unknown'}` },
+        { text: `Image resolution: ${message.resolution || "unknown"}` },
       ];
     } else {
       parts = [{ text: message === undefined ? "" : JSON.stringify(message) }];
@@ -157,7 +172,9 @@ class GeminiAdapter extends BaseAdapter {
 
       const { candidates } = data;
       if (!candidates || candidates.length === 0) {
-        throw new GeminiEmptyResponseError("No response candidates returned (possible safety block).");
+        throw new GeminiEmptyResponseError(
+          "No response candidates returned (possible safety block).",
+        );
       }
 
       const candidate = candidates[0];
@@ -180,7 +197,7 @@ class GeminiAdapter extends BaseAdapter {
           second: "2-digit",
           hour12: false,
         });
-        
+
         this.history.push({
           role: "model",
           parts: [{ text: textContent }],
@@ -207,25 +224,30 @@ class GeminiAdapter extends BaseAdapter {
         second: "2-digit",
         hour12: false,
       });
-    
+
     let parts = [];
     if (Array.isArray(content)) {
       parts = content.flatMap((m) => {
-        if (typeof m === 'string') return [{ text: m }];
-        if (m && typeof m === 'object' && m.mime_type && m.data) {
+        if (typeof m === "string") return [{ text: m }];
+        if (m && typeof m === "object" && m.mime_type && m.data) {
           return [
             { inline_data: { mime_type: m.mime_type, data: m.data } },
-            { text: `Image resolution: ${m.resolution || 'unknown'}` },
+            { text: `Image resolution: ${m.resolution || "unknown"}` },
           ];
         }
         return [{ text: m === undefined ? "" : JSON.stringify(m) }];
       });
-    } else if (typeof content === 'string') {
+    } else if (typeof content === "string") {
       parts = [{ text: content }];
-    } else if (content && typeof content === 'object' && content.mime_type && content.data) {
+    } else if (
+      content &&
+      typeof content === "object" &&
+      content.mime_type &&
+      content.data
+    ) {
       parts = [
         { inline_data: { mime_type: content.mime_type, data: content.data } },
-        { text: `Image resolution: ${content.resolution || 'unknown'}` },
+        { text: `Image resolution: ${content.resolution || "unknown"}` },
       ];
     } else {
       parts = [{ text: content === undefined ? "" : JSON.stringify(content) }];
@@ -269,6 +291,14 @@ class GeminiAdapter extends BaseAdapter {
       console.error(`Error fetching models: ${e.message}`);
       return ["models/gemini-2.0-flash", "models/gemini-1.5-flash"];
     }
+  }
+
+  getVariants() {
+    return [
+      { name: "flash", model: "models/gemini-2.0-flash", temp: 0.5 },
+      { name: "high", model: "models/gemini-2.0-pro-exp-02-05", temp: 0.7 },
+      { name: "pro", model: "models/gemini-1.5-pro", temp: 0.7 },
+    ];
   }
 }
 

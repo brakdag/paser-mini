@@ -9,7 +9,7 @@ const READ_CACHE = new Map();
 
 class FileTools {
   async #guardianValidate(filePath) {
-    if (!filePath.endsWith('.js')) return { valid: true };
+    if (!filePath.endsWith(".js")) return { valid: true };
     try {
       const pyrightValid = true;
       const pyrightMsg = "";
@@ -17,9 +17,14 @@ class FileTools {
       let eslintValid = true;
       let eslintMsg = "";
       try {
-        const { stdout } = await execPromise(`npx eslint ${filePath} --format json`, { timeout: 30000 });
+        const { stdout } = await execPromise(
+          `npx eslint ${filePath} --format json`,
+          { timeout: 30000 },
+        );
         const data = JSON.parse(stdout);
-        const errors = data.flatMap(f => f.messages.filter(m => m.severity === 2));
+        const errors = data.flatMap((f) =>
+          f.messages.filter((m) => m.severity === 2),
+        );
         if (errors.length > 0) {
           eslintValid = false;
           eslintMsg = `ESLint found ${errors.length} errors.`;
@@ -27,7 +32,9 @@ class FileTools {
       } catch (e) {
         if (e.stdout) {
           const data = JSON.parse(e.stdout);
-          const errors = data.flatMap(f => f.messages.filter(m => m.severity === 2));
+          const errors = data.flatMap((f) =>
+            f.messages.filter((m) => m.severity === 2),
+          );
           if (errors.length > 0) {
             eslintValid = false;
             eslintMsg = `ESLint found ${errors.length} errors.`;
@@ -39,7 +46,10 @@ class FileTools {
       }
 
       if (!pyrightValid || !eslintValid) {
-        return { valid: false, error: `Guardian Validation Failed: ${pyrightMsg} ${eslintMsg}` };
+        return {
+          valid: false,
+          error: `Guardian Validation Failed: ${pyrightMsg} ${eslintMsg}`,
+        };
       }
       return { valid: true };
     } catch (e) {
@@ -105,12 +115,18 @@ class FileTools {
       if (Buffer.byteLength(content, "utf8") > FILE_SIZE_LIMIT)
         return "ERR: Content too large";
       const safePath = this.#getSafePath(filePath);
-      
+
       await fs.mkdir(path.dirname(safePath), { recursive: true });
       await fs.writeFile(safePath, content, "utf8");
 
+      // Verify the write
+      const written = await fs.readFile(safePath, "utf8");
+      if (written !== content) {
+        return "ERR: Content mismatch, potential corruption during write";
+      }
+
       // FAST PATH: Skip Guardian for non-JS files
-      if (!filePath.endsWith('.js')) {
+      if (!filePath.endsWith(".js")) {
         READ_CACHE.delete(safePath);
         return "OK";
       }
@@ -119,7 +135,9 @@ class FileTools {
       let originalContent = null;
       try {
         originalContent = await fs.readFile(safePath, "utf8");
-      } catch (e) { /* empty */ }
+      } catch (e) {
+        /* empty */
+      }
 
       const validation = await this.#guardianValidate(safePath);
       if (!validation.valid) {
@@ -201,7 +219,7 @@ class FileTools {
       await fs.writeFile(safePath, newContent, "utf8");
 
       // FAST PATH: Skip Guardian for non-JS files
-      if (!filePath.endsWith('.js')) {
+      if (!filePath.endsWith(".js")) {
         READ_CACHE.delete(safePath);
         return "OK";
       }
@@ -280,7 +298,15 @@ class FileTools {
       const safeDst = this.#getSafePath(destination);
       const safeSrc = this.#getSafePath(source);
 
-      const dstContent = await fs.readFile(safeDst, "utf8");
+      // Handle non-existent destination
+      let dstContent = "";
+      try {
+        dstContent = await fs.readFile(safeDst, "utf8");
+      } catch (e) {
+        if (e.code !== "ENOENT") throw e;
+        // If it doesn't exist, we'll start with empty content
+      }
+
       const srcContent = await fs.readFile(safeSrc, "utf8");
       const combined = dstContent + srcContent;
 
@@ -288,6 +314,14 @@ class FileTools {
         return "ERR: Resulting file too large";
 
       await fs.writeFile(safeDst, combined, "utf8");
+
+      // Verify the write
+      const written = await fs.readFile(safeDst, "utf8");
+      if (written !== combined) {
+        return "ERR: Content mismatch, potential corruption during write";
+      }
+
+      READ_CACHE.delete(safeDst);
       return "OK";
     } catch (e) {
       return `ERR: ${e.message}`;

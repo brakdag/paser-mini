@@ -24,6 +24,8 @@ const COMMAND_MAP = {
   "/config": ConfigCommands.handleConfig,
   "/models_check": (cm, ui) => ModelCommands.handleModelsCheck(cm, ui),
   "/sp": (cm, ui) => SystemCommands.handleShowSystemPrompt(cm, ui),
+  "/variants": (cm, ui, input) =>
+    ModelCommands.handleVariants(cm, ui, input.split(/\s+/)),
 };
 
 const PREFIX_COMMANDS = {

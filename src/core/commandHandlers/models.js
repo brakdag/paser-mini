@@ -91,7 +91,43 @@ class ModelCommands {
 
     return true;
   }
-}
 
+  static async handleVariants(chatManager, ui, parts) {
+    const variants = chatManager.assistant.getVariants();
+    if (variants.length === 0) {
+      ui.displayInfo("No variants available for the current provider.");
+      return true;
+    }
+
+    if (parts.length === 1) {
+      ui.displayMessage(
+        `Available variants:\n${variants.map((v, i) => `${i}: ${v.name} (${v.model})`).join("\n")}\n\nUse /variants <index> to select.`,
+      );
+      return true;
+    }
+
+    const idx = parseInt(parts[1], 10);
+    if (idx < 0 || idx >= variants.length) {
+      ui.displayError("Invalid variant index.");
+      return true;
+    }
+
+    const variant = variants[idx];
+    chatManager.configManager.save("model_name", variant.model);
+    chatManager.configManager.save("default_temperature", variant.temp);
+    chatManager.temperature = variant.temp;
+
+    chatManager.assistant.startChat(
+      variant.model,
+      chatManager.systemInstruction,
+      variant.temp,
+    );
+
+    ui.displayInfo(
+      `Variant changed to ${variant.name} (${variant.model}) | Temperature: ${variant.temp}`,
+    );
+    return true;
+  }
+}
 
 export default ModelCommands;
