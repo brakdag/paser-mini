@@ -14,7 +14,7 @@ class NvidiaRestClient {
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      timeout: 60000,
+      timeout: 600000,
     });
   }
 
@@ -79,3 +79,4 @@ class NvidiaRestClient {
 }
 
 export default NvidiaRestClient;
+
