@@ -87,14 +87,24 @@ class GeminiAdapter extends BaseAdapter {
   }
 
   _buildPayload() {
-    const contents = JSON.parse(JSON.stringify(this.history)).map((c) => {
-      const rest = { ...c };
-      delete rest.timestamp;
-      if (rest.role === "server") {
-        rest.role = "user";
-      }
-      return rest;
+    const contents = this.history.map((c) => {
+      const role = c.role === "server" ? "user" : c.role;
+      const nickname = role === "user" ? this.ui.userNickname : this.ui.agentNickname;
+      const timestamp = c.timestamp || "[00:00:00]";
+      
+      const parts = c.parts.map(p => {
+        if (typeof p === 'object' && p.text) {
+          return { ...p, text: `[${timestamp}] <${nickname}> ${p.text}` };
+        }
+        if (typeof p === 'string') {
+          return { text: `[${timestamp}] <${nickname}> ${p}` };
+        }
+        return p;
+      });
+
+      return { role, parts };
     });
+
     const payload = {
       contents,
       generationConfig: {
