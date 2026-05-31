@@ -2,6 +2,7 @@ import axios from "axios";
 import axiosRetry from "axios-retry";
 import BaseAdapter from "../baseAdapter.js";
 import logger from "../../core/logger.js";
+import IRCFormatter from "../../utils/ircFormatter.js";
 
 class OpenRouterAdapter extends BaseAdapter {
   constructor(ui, configManager, userNickname = "user", agentNickname = "assistant") {
@@ -35,7 +36,7 @@ class OpenRouterAdapter extends BaseAdapter {
         );
       },
       onRetry: (retryCount, error) => {
-        const time = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+        const time = IRCFormatter.getTimestamp();
         const msg = `[${time}] -!- [OpenRouterAdapter] API Retry ${retryCount}/5 due to: ${error.response?.status || error.message}`;
         logger.warn(msg);
         if (this.ui && this.ui.displayInfo) {
@@ -55,7 +56,7 @@ class OpenRouterAdapter extends BaseAdapter {
   }
 
   async sendMessage(message, role = "user") {
-    const timestamp = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+    const timestamp = IRCFormatter.getTimestamp();
     
     this.injectMessage(role, message, timestamp);
 
@@ -70,7 +71,7 @@ class OpenRouterAdapter extends BaseAdapter {
       const textContent = response.data.choices[0].message.content;
 
       if (textContent) {
-        const msgTimestamp = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+        const msgTimestamp = IRCFormatter.getTimestamp();
         this.injectMessage("assistant", textContent, msgTimestamp);
         return textContent;
       }
@@ -102,7 +103,7 @@ class OpenRouterAdapter extends BaseAdapter {
     this.history.push({
       role: apiRole,
       content: finalContent,
-      timestamp: timestamp || new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }),
+      timestamp: timestamp || IRCFormatter.getTimestamp(),
     });
   }
 

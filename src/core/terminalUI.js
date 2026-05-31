@@ -4,6 +4,7 @@ import ora from "ora";
 import renderer from "./TerminalRenderer.js";
 import input from "./TerminalInput.js";
 import sessionLogger from "./SessionLogger.js";
+import IRCFormatter from "../utils/ircFormatter.js";
 
 class TerminalUI {
   get inputQueue() {
@@ -45,25 +46,20 @@ class TerminalUI {
     if (this.renderingMode === "CLEAN") {
       const renderedText = renderer.formatMarkdown(trimmedText);
       process.stdout.write(`${renderedText}\n`);
-      const now = new Date();
-      const time = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-      this.writeToLog(`[${time}] <${nickname}> ${trimmedText}`);
+      this.writeToLog(IRCFormatter.formatMessage(nickname, trimmedText));
       return;
     }
 
     const renderedText = renderer.formatMarkdown(trimmedText);
-    const now = new Date();
-    const time = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
     if (trimmedText.startsWith("---") || trimmedText.startsWith("***") || trimmedText.startsWith("-!-")) {
-      const formatted = `[${time}] ${trimmedText}`;
-      process.stdout.write(`${chalk.white(`[${time}]`)} ${renderedText}\n`);
+      const formatted = `[${IRCFormatter.getTimestamp()}] ${trimmedText}`;
+      process.stdout.write(`${chalk.white(`[${IRCFormatter.getTimestamp()}]`)} ${renderedText}\n`);
       this.writeToLog(formatted);
     } else {
-      const nameColor = nickname === this.agentNickname ? chalk.cyan : chalk.green;
-      const formatted = `[${time}] <${nickname}> ${trimmedText}`;
-      const prefix = `[${time}] <${nameColor(nickname)}>`;
-      process.stdout.write(`${prefix} ${renderedText}\n`);
+      const formatted = IRCFormatter.formatMessage(nickname, trimmedText);
+      const terminalMsg = IRCFormatter.formatTerminalMessage(nickname, renderedText, this.agentNickname);
+      process.stdout.write(`${terminalMsg}\n`);
       this.writeToLog(formatted);
     }
   }
@@ -79,18 +75,14 @@ class TerminalUI {
 
   displayInfo(text) {
     input.clearCurrentLine();
-    const now = new Date();
-    const time = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
     process.stdout.write(`${chalk.blue("\u2139 ") + chalk.cyan(text)}\n`);
-    this.writeToLog(`[${time}] [INFO] ${text}`);
+    this.writeToLog(IRCFormatter.formatSystemMessage("INFO", text));
   }
 
   displayError(text) {
     input.clearCurrentLine();
-    const now = new Date();
-    const time = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
     process.stdout.write(`${chalk.red("\u2716 ") + chalk.red.bold(text)}\n`);
-    this.writeToLog(`[${time}] [ERROR] ${text}`);
+    this.writeToLog(IRCFormatter.formatSystemMessage("ERROR", text));
   }
 
   displaySystemMessage(text) {
@@ -117,16 +109,17 @@ class TerminalUI {
   }
 
   displayToolStatus(name, success, detail) {
-    const now = new Date();
-    const time = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
     const nameColor = chalk.cyan;
     const statusIcon = success ? "✓" : "✗";
     const statusColor = success ? chalk.green : chalk.red;
-    const prefix = `[${time}] <${nameColor(this.agentNickname)}>`;
+    
+    const timestamp = IRCFormatter.getTimestamp();
+    const prefix = `[${timestamp}] <${nameColor(this.agentNickname)}>`;
     const finalMsg = `${prefix} * ${name} (${detail}) ${statusColor(statusIcon)}`;
     console.log(finalMsg);
+    
     const plainStatus = success ? "✓" : "✗";
-    const plainPrefix = `[${time}] <${this.agentNickname}>`;
+    const plainPrefix = `[${timestamp}] <${this.agentNickname}>`;
     if (this.renderingMode === "FOUNTAIN") {
       const cleanToolLog = `${name} (${detail}) ${plainStatus}`;
       this.writeToLog(renderer.renderFountain("system", `* ACTION: ${cleanToolLog}`));
@@ -139,7 +132,7 @@ class TerminalUI {
     const spinner = this.activeSpinners.get(name);
     if (spinner) spinner.stop();
     this.displayToolStatus(name, success, detail);
-    if (spinner) this.activeSpinners.delete(name);
+    if (spinner) this.activeSpinners.delete(spinner);
   }
 
   stopAllMonitoring() {

@@ -2,6 +2,7 @@ import axios from "axios";
 import axiosRetry from "axios-retry";
 import logger from "../../core/logger.js";
 import BaseAdapter from "../baseAdapter.js";
+import IRCFormatter from "../../utils/ircFormatter.js";
 import {
   GeminiSafetyError,
   GeminiEmptyResponseError,
@@ -41,12 +42,7 @@ class GeminiAdapter extends BaseAdapter {
         );
       },
       onRetry: (retryCount, error) => {
-        const time = new Date().toLocaleTimeString("en-GB", {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: false,
-        });
+        const time = IRCFormatter.getTimestamp();
         const msg = `[${time}] -!- [GeminiAdapter] API Retry ${retryCount}/5 due to: ${error.response?.status || error.message}`;
         logger.warn(msg);
         if (this.ui && this.ui.displayInfo) {
@@ -90,16 +86,26 @@ class GeminiAdapter extends BaseAdapter {
     const contents = this.history.map((c) => {
       const role = c.role === "server" ? "user" : c.role;
       const nickname = role === "user" ? this.ui.userNickname : this.ui.agentNickname;
-      const timestamp = c.timestamp || "[00:00:00]";
       
       const parts = c.parts.map(p => {
+        let textContent;
         if (typeof p === 'object' && p.text) {
-          return { ...p, text: `[${timestamp}] <${nickname}> ${p.text}` };
+          textContent = p.text;
+        } else if (typeof p === 'string') {
+          textContent = p;
+        } else {
+          textContent = JSON.stringify(p);
+        }
+        
+        const formattedText = IRCFormatter.formatMessage(nickname, textContent, c.timestamp);
+        
+        if (typeof p === 'object' && p.text) {
+          return { ...p, text: formattedText };
         }
         if (typeof p === 'string') {
-          return { text: `[${timestamp}] <${nickname}> ${p}` };
+          return { text: formattedText };
         }
-        return p;
+        return { text: formattedText };
       });
 
       return { role, parts };
@@ -130,12 +136,7 @@ class GeminiAdapter extends BaseAdapter {
 
   async sendMessage(message, role = "user") {
     await this._applyRateLimit();
-    const timestamp = new Date().toLocaleTimeString("en-GB", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-    });
+    const timestamp = IRCFormatter.getTimestamp();
 
     let parts = [];
     if (Array.isArray(message)) {
@@ -201,12 +202,7 @@ class GeminiAdapter extends BaseAdapter {
       textContent = this._filterThoughts(textContent);
 
       if (textContent) {
-        const msgTimestamp = new Date().toLocaleTimeString("en-GB", {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: false,
-        });
+        const msgTimestamp = IRCFormatter.getTimestamp();
 
         this.history.push({
           role: "model",
@@ -226,14 +222,7 @@ class GeminiAdapter extends BaseAdapter {
   }
 
   injectMessage(role, content, timestamp = null) {
-    const ts =
-      timestamp ||
-      new Date().toLocaleTimeString("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: false,
-      });
+    const ts = timestamp || IRCFormatter.getTimestamp();
 
     let parts = [];
     if (Array.isArray(content)) {
@@ -293,8 +282,8 @@ class GeminiAdapter extends BaseAdapter {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${this.apiKey}`;
       const response = await this.client.get(url);
-      const models = response.data.models || [];
-      return models
+      const { data } = response;
+      return data.models
         .filter((m) => m.name.includes("gemini") || m.name.includes("gemma"))
         .map((m) => m.name);
     } catch (e) {

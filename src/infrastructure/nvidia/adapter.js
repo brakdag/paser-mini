@@ -41,15 +41,23 @@ class NvidiaAdapter extends BaseAdapter {
     this.state.addMessage(role, message);
 
     const history = this.state.getRawHistory();
-    const processedHistory =
-      this.state.renderingMode === "CLEAN"
-        ? history.map((m) => ({
-            ...m,
-            text: m.text
-              .replace(/^(\[\d{2}:\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, "")
-              .trim(),
-          }))
-        : history;
+    let processedHistory;
+
+    if (this.state.renderingMode === "CLEAN") {
+      processedHistory = history.map((m) => ({
+        ...m,
+        text: m.text
+          .replace(/^(\[\d{2}:\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, "")
+          .trim(),
+      }));
+    } else if (this.state.renderingMode === "IRC") {
+      processedHistory = history.map((m) => ({
+        ...m,
+        text: this.state._formatMessage(m.role, m.text, m.timestamp),
+      }));
+    } else {
+      processedHistory = history;
+    }
 
     const payload = PayloadMapper.toNvidia(
       processedHistory,

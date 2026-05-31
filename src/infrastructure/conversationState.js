@@ -1,3 +1,5 @@
+import IRCFormatter from "../utils/ircFormatter.js";
+
 class ConversationState {
   constructor(userNickname = "user", agentNickname = "assistant") {
     this.userNickname = userNickname;
@@ -10,14 +12,7 @@ class ConversationState {
     this.renderingMode = mode;
   }
 
-  getTimestamp() {
-    return new Date().toLocaleTimeString("en-GB", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  }
-
-  _formatMessage(role, text, timestamp = this.getTimestamp()) {
+  _formatMessage(role, text, timestamp = null) {
     if (this.renderingMode === "FOUNTAIN") return text;
 
     if (
@@ -25,17 +20,18 @@ class ConversationState {
       text.startsWith("***") ||
       text.startsWith("<TOOL_RESPONSE>")
     ) {
-      return `[${timestamp}] ${text}`;
+      return `[${timestamp || IRCFormatter.getTimestamp()}] ${text}`;
     }
+    
     const nickname = role === "user" ? this.userNickname : this.agentNickname;
-    return `[${timestamp}] <${nickname}> ${text}`;
+    return IRCFormatter.formatMessage(nickname, text, timestamp);
   }
 
   addMessage(role, text, timestamp = null) {
     const normalizedRole =
       role === "model" || role === "assistant" ? "model" : "user";
 
-    const ts = timestamp || this.getTimestamp();
+    const ts = timestamp || IRCFormatter.getTimestamp();
     
     // Store RAW text in history to avoid token noise in AI requests
     this.history.push({
@@ -59,6 +55,5 @@ class ConversationState {
     return this.history;
   }
 }
-
 
 export default ConversationState;
