@@ -1,0 +1,16 @@
+diff --git a/ejemplo1.txt b/ejemplo1.txt
+--- a/ejemplo1.txt
++++ b/ejemplo1.txt
+@@ -1,3 +1,3 @@
+ Linea 1 de ejemplo
+-Linea 2 de ejemplo
++Linea 2 MODIFICADA por el parche
+ Linea 3 de ejemplo
+diff --git a/ejemplo2.txt b/ejemplo2.txt
+--- a/ejemplo2.txt
++++ b/ejemplo2.txt
+@@ -1,3 +1,4 @@
+ Hola, este es el archivo dos.
+ Tiene mas texto.
++Una linea nueva agregada.
+ Fin del archivo dos.
