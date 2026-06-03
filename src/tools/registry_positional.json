@@ -235,7 +235,7 @@
   ],
   [
     "git.patch",
-    "Apply a git patch (diff) to the codebase using git apply",
+    "Apply a git patch (unified diff format) to the codebase using git apply. Can be used to modify multiple files at once.",
     {
       "patch": "string"
     }

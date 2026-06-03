@@ -1,3 +1,0 @@
-Hola, este es el archivo dos.
-Tiene mas texto.
-Fin del archivo dos.
