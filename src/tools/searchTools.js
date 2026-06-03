@@ -54,7 +54,7 @@ export default class SearchTools {
     
     return new Promise((resolve) => {
       const rootPath = process.cwd();
-      const child = spawn('grep', ['-rIn', '--exclude-dir={.*,node_modules}', '--', query, rootPath]);
+      const child = spawn('grep', ['-rIn', '--exclude-dir=.git', '--exclude-dir=node_modules', '--exclude-dir=log', '--', query, rootPath]);
       
       let stdoutData = '';
 
@@ -96,8 +96,7 @@ export default class SearchTools {
         const parts = line.split(":");
         const filePath = parts[0];
         const lineNum = parseInt(parts[1], 10);
-        const text = parts.slice(2).join(":").trim();
-        return { file: path.relative(rootPath, filePath), line: lineNum, text };
+        return { file: path.relative(rootPath, filePath), line: lineNum };
       })
       .filter(Boolean);
     return JSON.stringify(parsedResults);
