@@ -143,7 +143,10 @@ class TurnProcessor {
         if (this.ui.renderingMode === "FOUNTAIN") {
           resultsPayload = this.fountain.formatToolResults(toolResults.map(r => r.response));
         } else {
-          const mapped = toolResults.map(r => (r.result && r.result.mime_type ? r.result : r.response));
+          const mapped = toolResults.map((r) => {
+            if (typeof r === 'string') return r;
+            return r.result && r.result.mime_type ? r.result : r.response;
+          });
           resultsPayload = mapped.every(item => typeof item === 'string')
             ? mapped.join('\n\n')
             : mapped;
