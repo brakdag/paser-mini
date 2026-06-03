@@ -1,29 +1,8 @@
-import { exec } from "child_process";
-import { promisify } from "util";
+import { spawn } from "child_process";
 import path from "path";
 import fs from "fs/promises";
 
-export class SearchTools {
-  #execPromise = promisify(exec);
-
-  #globToRegex(glob) {
-    let result = "";
-    const specialChars = ".+^${}()|[]\\";
-    for (let i = 0; i < glob.length; i++) {
-      const char = glob[i];
-      if (char === '*') {
-        result += '.*';
-      } else if (char === '?') {
-        result += '.';
-      } else if (specialChars.includes(char)) {
-        result += '\\' + char;
-      } else {
-        result += char;
-      }
-    }
-    return new RegExp('^' + result + '$', 'i');
-  }
-
+export default class SearchTools {
   async searchFilesPatternFixed({ pattern }) {
     try {
       const results = [];
@@ -52,29 +31,75 @@ export class SearchTools {
     }
   }
 
+  #globToRegex(glob) {
+    let result = "";
+    const specialChars = ".+^${}()|[]\\";
+    for (let i = 0; i < glob.length; i += 1) {
+      const char = glob[i];
+      if (char === '*') {
+        result += '.*';
+      } else if (char === '?') {
+        result += '.';
+      } else if (specialChars.includes(char)) {
+        result += `\\${char}`;
+      } else {
+        result += char;
+      }
+    }
+    return new RegExp(`^${result}$`, 'i');
+  }
+
   async searchTextGlobal({ query }) {
     if (!query || query.trim() === "") return JSON.stringify([]);
-    try {
+    
+    return new Promise((resolve) => {
       const rootPath = process.cwd();
-      const cmd = `grep -rIn --exclude-dir={'.*',node_modules} -- '${query.replace(/'/g, "'\\''")}' "${rootPath}" | head -n 10`;
-      const { stdout } = await this.#execPromise(cmd, { timeout: 80000 });
-      if (!stdout) return JSON.stringify([]);
-      const parsedResults = stdout
-        .split("\n")
-        .filter((line) => line)
-        .map((line) => {
-          const parts = line.split(":");
-          const filePath = parts[0];
-          const lineNum = parseInt(parts[1], 10);
-          const text = parts.slice(2).join(":").trim();
-          return { file: path.relative(rootPath, filePath), line: lineNum, text };
-        })
-        .filter(Boolean);
-      return JSON.stringify(parsedResults);
-    } catch (e) {
-      if (e.code === 1) return JSON.stringify([]);
-      if (e.stderr) return `ERR: Search error: ${e.stderr}`;
-      return `ERR: Search error: ${e.message}`;
-    }
+      const child = spawn('grep', ['-rIn', '--exclude-dir={.*,node_modules}', '--', query, rootPath]);
+      
+      let stdoutData = '';
+
+      child.stdout.on('data', (data) => {
+        stdoutData += data.toString();
+        const currentLines = stdoutData.split('\n').filter(Boolean).length;
+        
+        if (currentLines >= 10) {
+          child.kill('SIGKILL');
+          resolve(this.#parseGrepOutput(stdoutData, rootPath));
+        }
+      });
+
+      child.stderr.on('data', (_data) => {
+        // Grep returns 1 if no matches are found, which is not an error
+      });
+
+      child.on('close', (code) => {
+        if (code === 1) {
+          return resolve(JSON.stringify([]));
+        }
+        return resolve(this.#parseGrepOutput(stdoutData, rootPath));
+      });
+
+      setTimeout(() => {
+        child.kill('SIGKILL');
+        resolve(this.#parseGrepOutput(stdoutData, rootPath));
+      }, 80000);
+    });
+  }
+
+  #parseGrepOutput(stdout, rootPath) {
+    if (!stdout) return JSON.stringify([]);
+    const parsedResults = stdout
+      .split("\n")
+      .filter((line) => line)
+      .slice(0, 10)
+      .map((line) => {
+        const parts = line.split(":");
+        const filePath = parts[0];
+        const lineNum = parseInt(parts[1], 10);
+        const text = parts.slice(2).join(":").trim();
+        return { file: path.relative(rootPath, filePath), line: lineNum, text };
+      })
+      .filter(Boolean);
+    return JSON.stringify(parsedResults);
   }
 }

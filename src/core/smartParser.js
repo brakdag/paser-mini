@@ -2,9 +2,9 @@ import AutoCorrector from "./autoCorrector.js";
 import validator from "./schemaRegistry.js";
 
 class SmartToolParser {
-  // Optimized regex: limits capture to 10k characters to avoid blocking the main thread
+  // Optimized regex: captures tool call payloads of any length
   static TOOL_PATTERN =
-    /<(?:TOOL_CALL|tool_call)\s*>([\s\S]{1,10000}?)(?:<\/(?:TOOL_CALL|tool_call)>|$)/gis;
+    /<(?:TOOL_CALL|tool_call)\s*>([\s\S]*?)(?:<\/(?:TOOL_CALL|tool_call)>|$)/gis;
 
   constructor() {
     this.validator = validator;
