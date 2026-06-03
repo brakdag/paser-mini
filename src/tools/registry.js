@@ -101,6 +101,7 @@ export const AVAILABLE_TOOLS = {
   "github.postComment": async (args) => (await getTool("githubTools", "postComment"))(args),
   "git.remoteUrl": async (args) => (await getTool("gitTools", "getCurrentRepo"))(args),
   "git.diffAll": async (args) => (await getTool("gitTools", "gitDiffAll"))(args),
+  "git.patch": async (args) => (await getTool("gitTools", "applyPatch"))(args),
   "system.notify": async (args) => (await getTool("notificationTools", "notifyUser"))(args),
   "fountain.insertScene": async (args) => (await getTool("fountainTools", "insertSceneFountain"))(args),
   "jszip.listContents": async (args) => (await getTool("zipTools", "listContents"))(args),

@@ -234,6 +234,13 @@
     {}
   ],
   [
+    "git.patch",
+    "Apply a git patch (diff) to the codebase using git apply",
+    {
+      "patch": "string"
+    }
+  ],
+  [
     "system.notify",
     "Sends a notification to the user and plays a sound.",
     {
