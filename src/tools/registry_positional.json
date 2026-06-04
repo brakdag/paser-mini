@@ -323,6 +323,15 @@
     }
   ],
   [
+    "browser.interact",
+    "Interact with a mobile-emulated browser (iPhone Mini). Actions: navigate, screenshot, click, type, scroll, inspect.",
+    {
+      "url": "string",
+      "action": "string",
+      "params": "any"
+    }
+  ],
+  [
     "system.reset",
     "Resets the conversation context and injects a new initial user message. Use this when the context window is nearly full or a fresh start is needed.",
     {
