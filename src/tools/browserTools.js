@@ -15,7 +15,11 @@ export default class BrowserTools {
 
   async ensureBrowser() {
     if (!this._browser) {
-      this._browser = await chromium.launch({ headless: true });
+      this._browser = await chromium.launch({
+        headless: true,
+        executablePath: '/usr/bin/google-chrome',
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
       this._context = await this._browser.newContext(this._IPHONE_MINI_CONFIG);
       this._page = await this._context.newPage();
     }
@@ -36,35 +40,37 @@ export default class BrowserTools {
     try {
       switch (action) {
         case "navigate":
-          if (!url) return "ERR: URL is required";
+          if (!url) return JSON.stringify({ status: "error", message: "URL is required" });
           await this._page.goto(url, { waitUntil: "networkidle" });
           await this._cleanPage();
-          return "Page loaded and cleaned.";
+          return JSON.stringify({ status: "success", message: "Page loaded and cleaned." });
         case "screenshot":
           const path = `screenshot_${Date.now()}.png`;
           await this._page.screenshot({ path });
-          return `Screenshot saved to ${path}`;
+          return JSON.stringify({ status: "success", message: `Screenshot saved to ${path}` });
         case "click":
-          if (!params.selector) return "ERR: Selector required";
+          if (!params.selector) return JSON.stringify({ status: "error", message: "Selector required" });
           await this._page.click(params.selector);
-          return "Element clicked.";
+          return JSON.stringify({ status: "success", message: "Element clicked." });
         case "type":
-          if (!params.selector || !params.text) return "ERR: Selector/text required";
+          if (!params.selector || !params.text) return JSON.stringify({ status: "error", message: "Selector/text required" });
           await this._page.fill(params.selector, params.text);
           if (params.pressEnter) await this._page.keyboard.press("Enter");
-          return "Text entered.";
+          return JSON.stringify({ status: "success", message: "Text entered." });
         case "scroll":
-          if (!params.direction) return "ERR: Direction required";
+          if (!params.direction) return JSON.stringify({ status: "error", message: "Direction required" });
           const amount = params.amount || 500;
           const scrollY = params.direction === "down" ? amount : -amount;
           await this._page.evaluate((y) => window.scrollBy(0, y), scrollY);
-          return `Scrolled ${params.direction}.`;
+          return JSON.stringify({ status: "success", message: `Scrolled ${params.direction}.` });
         case "inspect":
           const acc = await this._page.accessibility.snapshot();
-          return JSON.stringify(acc, null, 2);
+          return JSON.stringify({ status: "success", data: acc });
         default:
-          return "ERR: Unknown action";
+          return JSON.stringify({ status: "error", message: "Unknown action" });
       }
     } catch (e) {
-      return `ERR: ${e.message}`;
+      return JSON.stringify({ status: "error", message: e.message });
     }
+  }
+}
