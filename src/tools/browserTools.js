@@ -18,7 +18,7 @@ export default class BrowserTools {
   async ensureBrowser() {
     if (!this._browser) {
       this._browser = await chromium.launch({
-        headless: true,
+        headless: false,
         executablePath: '/usr/bin/google-chrome',
         args: ['--no-sandbox', '--disable-setuid-sandbox']
       });
