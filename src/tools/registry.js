@@ -21,7 +21,6 @@ const MODULE_MAP = {
   webTools: "./webTools.js",
   evalTools: "./evalTools.js",
   astTools: "./astTools.js",
-  browserTools: "./browserTools.js",
   perfTools: "./perfTools.js",
   
 };
@@ -114,7 +113,6 @@ export const AVAILABLE_TOOLS = {
   "perf.metrics": async (args) => (await getTool("perfTools", "metrics"))(args),
   "perf.snapshot": async (args) => (await getTool("perfTools", "snapshot"))(args),
   "seeImage": async (args) => (await getTool("utilTools", "seeImage"))(args),
-  "browser.interact": async (args) => (await getTool("browserTools", "interact"))(args),
   "reloadTools": async () => {
     toolCache = {};
     return "Tool cache purged. All modules will be reloaded on next call.";
