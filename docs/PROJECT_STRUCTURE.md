@@ -12,6 +12,7 @@ This document provides the definitive map of the Paser Mini codebase. The projec
 │   │   ├── chatManager.js    # Message queue & session orchestration
 │   │   ├── turnProcessor.js   # Main ReAct loop & turn logic
 │   │   ├── ApiCommunicator.js # Resilient API communication layer
+│   │   ├── systemPromptManager.js # Prompt aggregation & tool filtering
 │   │   ├── FountainAdapter.js # Screenplay mode orchestration
 │   │   ├── terminalUI.js     # UI Orchestrator (Delegates to Renderer/Input)
 │   │   ├── TerminalRenderer.js# Visual output & Markdown formatting
@@ -49,3 +50,4 @@ This document provides the definitive map of the Paser Mini codebase. The projec
 3. **Persistence**: The `memento` infrastructure ensures that distilled insights survive across sessions via the Cognitive Graph.
 4. **Resilience**: API communication is abstracted into a dedicated communicator to handle retries and recovery without polluting the reasoning loop.
 5. **Scalability**: The `ProviderManager` ensures that new LLM providers can be integrated without modifying the core orchestration logic.
+6. **Formalization**: The `SystemPromptManager` ensures that the agent's identity and operational protocols are constructed through a consistent, verifiable pipeline.

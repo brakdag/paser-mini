@@ -48,17 +48,15 @@ class CohereAdapter extends BaseAdapter {
     this.currentModel = modelName || this.currentModel;
     this.systemInstruction = systemInstruction;
     this.temperature = temperature;
-    // Cohere uses 'preamble' instead of a system message in history
+    logger.info(`[CohereAdapter] startChat received systemInstruction. Length: ${systemInstruction?.length || 0} chars`);
   }
 
   async sendMessage(message, role = "user") {
     const timestamp = IRCFormatter.getTimestamp();
     this.injectMessage(role, message, timestamp);
 
-    // Cohere expects the last message separately from the history
     const lastMessage = this.history.pop();
     
-    // Map history to Cohere format: { role: 'USER' | 'CHATBOT', message: string }
     const chatHistory = this.history
       .filter(msg => msg.role !== 'system')
       .map(msg => ({
@@ -72,12 +70,15 @@ class CohereAdapter extends BaseAdapter {
       chat_history: chatHistory,
       preamble: this.systemInstruction,
       temperature: this.temperature,
+      stream: false,
     };
 
-    // Restore last message to history for consistency
     this.history.push(lastMessage);
 
     try {
+      logger.info(`[CohereAdapter] Requesting: ${this.client.defaults.baseURL}/chat`);
+      logger.info(`[CohereAdapter] Payload: ${JSON.stringify(payload)}`);
+
       const response = await this.client.post("/chat", payload);
       const textContent = response.data.text;
 
@@ -136,7 +137,13 @@ class CohereAdapter extends BaseAdapter {
   }
 
   async getAvailableModels() {
-    return ["command-r-plus", "command-r"];
+    try {
+      const response = await this.client.get("/models");
+      return response.data.models.map((m) => m.name);
+    } catch (e) {
+      console.error(`[CohereAdapter] Error fetching models: ${e.message}`);
+      return ["command-r-plus", "command-r"];
+    }
   }
 }
 

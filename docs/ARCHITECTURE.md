@@ -9,6 +9,7 @@ This project follows a modular ReAct (Reasoning and Acting) architecture. Below 
 - **`chatManager.js`**: The central orchestrator. It manages the conversation loop and prevents infinite loops via `RepetitionDetector`.
 - **`turnProcessor.js`**: Implements the ReAct loop. It coordinates between the API, the tool engine, and the UI to process a single user turn.
 - **`ApiCommunicator.js`**: Handles the resilient communication with the LLM, implementing exponential backoff and error recovery.
+- **`systemPromptManager.js`**: Encapsulates the logic for constructing the system prompt, handling CLI injections (`-isi`, `-fsi`), and filtering available tools based on persona requirements.
 - **`FountainAdapter.js`**: Manages the specific logic for Screenplay (Fountain) mode, including message injection and formatting.
 - **`terminalUI.js`**: The UI facade. It delegates to `TerminalRenderer` for output, `TerminalInput` for input, and `SessionLogger` for persistence.
 - **`TerminalRenderer.js`**: Pure rendering logic. Handles Markdown, Tables, and Fountain layouts.

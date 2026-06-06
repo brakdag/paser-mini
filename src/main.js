@@ -1,12 +1,11 @@
 import "dotenv/config";
-import fs from "fs";
 import { Command } from "commander";
-import GeminiAdapter from "./infrastructure/gemini/adapter.js";
-import NvidiaAdapter from "./infrastructure/nvidia/adapter.js";
 import TerminalUI from "./core/terminalUI.js";
 import ChatManager from "./core/chatManager.js";
 import ConfigManager from "./core/configManager.js";
-import { generateSystemInstruction, AVAILABLE_TOOLS } from "./tools/registry.js";
+import ProviderManager from "./infrastructure/providerManager.js";
+import SystemPromptManager from "./core/systemPromptManager.js";
+import { AVAILABLE_TOOLS } from "./tools/registry.js";
 import { MemoryTools } from "./tools/memoryTools.js";
 
 async function main() {
@@ -41,72 +40,45 @@ async function main() {
   if (options.githubMode) {
     const { GitHubModeOrchestrator } =
       await import("./core/githubModeOrchestrator.js");
-    const tools = options.noSystemInstruction ? {} : AVAILABLE_TOOLS;
+    
+    const promptManager = new SystemPromptManager();
+    const { systemInstruction, filteredTools } = promptManager.buildPrompt(options);
+
     const orchestrator = new GitHubModeOrchestrator(
-      options.noSystemInstruction
-        ? ""
-        : options.systemInstruction || generateSystemInstruction(Object.keys(AVAILABLE_TOOLS)),
-      tools,
+      systemInstruction,
+      filteredTools,
     );
     await orchestrator.runForever();
     return;
   }
 
   const ui = new TerminalUI();
+  const providerManager = new ProviderManager();
+  const promptManager = new SystemPromptManager();
 
-  const provider = configManager.get("provider", "Gemini");
+  const { systemInstruction, filteredTools } = promptManager.buildPrompt(options);
+
+  const providerId = configManager.get("provider", "GEMINI");
   const userNick = configManager.get("user_nickname", "user");
   const agentNick = configManager.get("agent_nickname", "assistant");
-  const assistant =
-    provider === "NVIDIA"
-      ? new NvidiaAdapter(ui, configManager, userNick, agentNick)
-      : new GeminiAdapter(ui, configManager, userNick, agentNick);
 
-  let sysInstr = "";
-  let filteredTools = options.noSystemInstruction ? {} : AVAILABLE_TOOLS;
-
-  if (!options.noSystemInstruction) {
-    let injection = "";
-
-    if (options.injectSystemInstruction) {
-      injection = options.injectSystemInstruction;
-    } else if (options.fileSystemInstruction) {
-      try {
-        injection = fs.readFileSync(options.fileSystemInstruction, "utf8");
-
-        // Parse TOOLS_AVAILABLE from the persona log to filter available tools
-        const toolsMatch = injection.match(/TOOLS_AVAILABLE\s*=\s*(\[.*?\])/s);
-        if (toolsMatch) {
-          try {
-            const availableList = JSON.parse(toolsMatch[1]);
-            filteredTools = Object.fromEntries(
-              Object.entries(AVAILABLE_TOOLS).filter(([name]) => availableList.includes(name))
-            );
-          } catch (e) {
-            console.warn(`Warning: Could not parse TOOLS_AVAILABLE array in ${options.fileSystemInstruction}: ${e.message}`);
-          }
-        }
-      } catch (e) {
-        console.error(`Error reading instruction file: ${e.message}`);
-        process.exit(1);
-      }
-    }
-
-    const baseInstr = options.systemInstruction || generateSystemInstruction(Object.keys(filteredTools));
-
-    sysInstr = injection
-      ? `IDENTITY AND PERSONA:\n${injection}\n\nCORE OPERATIONAL PROTOCOLS:\n${baseInstr}`
-      : baseInstr;
-  }
+  const assistant = await providerManager.createAdapter(
+    providerId,
+    ui,
+    configManager,
+    userNick,
+    agentNick,
+  );
 
   const chatManager = new ChatManager(
     assistant,
     filteredTools,
-    sysInstr,
+    systemInstruction,
     ui,
   );
 
   chatManager.configManager = configManager;
+  chatManager.providerManager = providerManager;
 
   const memoryToolsInstance = new MemoryTools();
   memoryToolsInstance.setMemoryContext(assistant, chatManager);
@@ -114,7 +86,7 @@ async function main() {
 }
 
 process.on("unhandledRejection", (reason, promise) => {
-  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+  console.error("Unhandled Rejection at:", reason, promise);
 });
 
 process.on("uncaughtException", (err) => {
