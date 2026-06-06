@@ -7,6 +7,7 @@ import logger from "./logger.js";
 import ConfigManager from "./configManager.js";
 import TurnProcessor from "./turnProcessor.js";
 import HistoryManager from "./historyManager.js";
+import ProviderManager from "../infrastructure/providerManager.js";
 
 class ChatManager {
   constructor(assistant, tools, systemInstruction, ui, instanceMode = false) {
@@ -16,6 +17,7 @@ class ChatManager {
     this.ui = ui;
     this.instanceMode = instanceMode;
     this.configManager = new ConfigManager();
+    this.providerManager = new ProviderManager();
     this.temperature = parseFloat(
       this.configManager.get("default_temperature", 0.7),
     );
@@ -84,46 +86,21 @@ class ChatManager {
     }
   }
 
-  async switchProvider(provider, model, temperature) {
+  async switchProvider(providerId, model, temperature) {
     const oldAssistant = this.assistant;
     let newAssistant;
 
-    if (provider === "NVIDIA") {
-      const { default: NvidiaAdapter } =
-        await import("../infrastructure/nvidia/adapter.js");
-      newAssistant = new NvidiaAdapter(
+    try {
+      newAssistant = await this.providerManager.createAdapter(
+        providerId,
         this.ui,
         this.configManager,
         this.ui.userNickname,
         this.ui.agentNickname,
       );
-        } else if (provider === "OPENROUTER") {
-      const { default: OpenRouterAdapter } =
-        await import("../infrastructure/openrouter/adapter.js");
-      newAssistant = new OpenRouterAdapter(
-        this.ui,
-        this.configManager,
-        this.ui.userNickname,
-        this.ui.agentNickname,
-      );
-    } else if (provider === "GROQ") {
-      const { default: GroqAdapter } =
-        await import("../infrastructure/groq/adapter.js");
-      newAssistant = new GroqAdapter(
-        this.ui,
-        this.configManager,
-        this.ui.userNickname,
-        this.ui.agentNickname,
-      );
-    } else {
-      const { default: GeminiAdapter } =
-        await import("../infrastructure/gemini/adapter.js");
-      newAssistant = new GeminiAdapter(
-        this.ui,
-        this.configManager,
-        this.ui.userNickname,
-        this.ui.agentNickname,
-      );
+    } catch (e) {
+      this.ui.displayError(`Failed to switch provider: ${e.message}`);
+      return;
     }
 
     // Migrate history
@@ -154,7 +131,7 @@ class ChatManager {
       this.engine.assistant = newAssistant;
     }
 
-    logger.info(`Provider switched to ${provider} | Model: ${model}`);
+    logger.info(`Provider switched to ${providerId} | Model: ${model}`);
   }
 
   async run(initialInput = null) {

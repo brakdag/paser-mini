@@ -21,7 +21,11 @@ This document provides the definitive map of the Paser Mini codebase. The projec
 │   │   ├── commandHandler.js  # Internal system command logic
 │   │   └── schemas/           # JSON Tool definitions (The Source of Truth)
 │   ├── infrastructure/        # The "Nerves": System & API wrappers
+│   │   ├── providerManager.js # Provider registry & adapter factory
 │   │   ├── gemini/            # LLM client & adapter
+│   │   ├── openrouter/        # LLM client & adapter
+│   │   ├── groq/              # LLM client & adapter
+│   │   ├── cohere/            # LLM client & adapter
 │   │   ├── memento/           # Cognitive Graph (SQLite implementation)
 │   │   └── nvidia/            # Hardware-specific integrations
 │   ├── tools/                 # The "Hands": Minimalist toolset
@@ -44,3 +48,4 @@ This document provides the definitive map of the Paser Mini codebase. The projec
 2. **Surgicality**: Tools are designed to perform the smallest possible change to minimize token consumption.
 3. **Persistence**: The `memento` infrastructure ensures that distilled insights survive across sessions via the Cognitive Graph.
 4. **Resilience**: API communication is abstracted into a dedicated communicator to handle retries and recovery without polluting the reasoning loop.
+5. **Scalability**: The `ProviderManager` ensures that new LLM providers can be integrated without modifying the core orchestration logic.

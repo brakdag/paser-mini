@@ -50,8 +50,12 @@ class OpenRouterAdapter extends BaseAdapter {
     this.currentModel = modelName || this.currentModel;
     this.systemInstruction = systemInstruction;
     this.temperature = temperature;
-    if (this.history.length === 0 && this.systemInstruction) {
-      this.injectMessage("system", this.systemInstruction);
+    if (this.systemInstruction) {
+      if (this.history.length > 0 && this.history[0].role === "system") {
+        this.history[0].content = this.systemInstruction;
+      } else {
+        this.injectMessage("system", this.systemInstruction);
+      }
     }
   }
 
@@ -62,7 +66,7 @@ class OpenRouterAdapter extends BaseAdapter {
 
     const payload = {
       model: this.currentModel,
-      messages: this.history,
+      messages: this.history.map(({ role, content }) => ({ role, content })),
       temperature: this.temperature,
     };
 
@@ -98,6 +102,12 @@ class OpenRouterAdapter extends BaseAdapter {
         { type: "text", text: `Image resolution: ${content.resolution || 'unknown'}` },
         { type: "image_url", image_url: { url: `data:${content.mime_type};base64,${content.data}` } }
       ];
+    } else if (Array.isArray(content)) {
+      finalContent = content.join("\n");
+    }
+
+    if (typeof finalContent === 'string' && apiRole === 'assistant') {
+      finalContent = finalContent.replace(/<thought>[\s\S]*?<\/thought>/gi, '').trim();
     }
 
     this.history.push({
@@ -111,6 +121,11 @@ class OpenRouterAdapter extends BaseAdapter {
     if (this.history.length > 0) {
       this.history.pop();
     }
+  }
+
+  hardReset(historyOverride = null) {
+    this.history = historyOverride || [];
+    logger.info("[OpenRouterAdapter] History hard reset");
   }
 
   getHistory() {

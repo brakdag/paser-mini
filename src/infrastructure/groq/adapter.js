@@ -106,6 +106,10 @@ class GroqAdapter extends BaseAdapter {
       finalContent = content.join("\n");
     }
 
+    if (typeof finalContent === 'string' && apiRole === 'assistant') {
+      finalContent = finalContent.replace(/<thought>[\s\S]*?<\/thought>/gi, '').trim();
+    }
+
     this.history.push({
       role: apiRole,
       content: finalContent,

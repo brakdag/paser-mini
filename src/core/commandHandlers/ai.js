@@ -10,32 +10,27 @@ class AICommands {
   }
 
   static async handleConnect(chatManager, ui) {
-    ui.displayMessage("Select Provider:\n0: Gemini\n1: NVIDIA\n2: OpenRouter\n3: Groq");
-    const choice = await ui.requestInput("Provider: ");
+    const providers = chatManager.providerManager.getProviders();
+    let menu = "Select Provider:\n";
+    providers.forEach((p, i) => {
+      menu += `${i}: ${p.name}\n`;
+    });
 
-    let provider;
-    let model;
-    if (choice === "0") {
-      provider = "Gemini";
-      model = "gemini-2.0-flash";
-    } else if (choice === "1") {
-      provider = "NVIDIA";
-      model = "meta/llama-3.1-405b-instruct";
-    } else if (choice === "2") {
-      provider = "OPENROUTER";
-      model = "openai/gpt-4o";
-    } else if (choice === "3") {
-      provider = "GROQ";
-      model = "llama3-8b-8192";
-    } else {
+    ui.displayMessage(menu);
+    const choice = await ui.requestInput("Provider: ");
+    const selectedIndex = parseInt(choice, 10);
+
+    if (Number.isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex >= providers.length) {
       ui.displayError("Invalid provider.");
       return true;
     }
 
-    await chatManager.switchProvider(provider, model, chatManager.temperature);
-    chatManager.configManager.save("provider", provider);
-    chatManager.configManager.save("model_name", model);
-    ui.displayInfo(`Connected to ${provider}`);
+    const { id, defaultModel } = providers[selectedIndex];
+
+    await chatManager.switchProvider(id, defaultModel, chatManager.temperature);
+    chatManager.configManager.save("provider", id);
+    chatManager.configManager.save("model_name", defaultModel);
+    ui.displayInfo(`Connected to ${id}`);
     return true;
   }
 }
