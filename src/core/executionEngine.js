@@ -66,6 +66,7 @@ class ExecutionEngine {
       "vm.runInContext": () => "sandbox",
       "seeImage": (a) => bn(a),
       "system.reset": (a) => a.user_message?.substring(0, 30) || "no message",
+      "realAction": (a) => a.action || "no action",
     };
   }
 

@@ -22,6 +22,7 @@ const MODULE_MAP = {
   evalTools: "./evalTools.js",
   astTools: "./astTools.js",
   perfTools: "./perfTools.js",
+  mockTools: "./mockTools.js",
   
 };
 
@@ -113,6 +114,7 @@ export const AVAILABLE_TOOLS = {
   "perf.metrics": async (args) => (await getTool("perfTools", "metrics"))(args),
   "perf.snapshot": async (args) => (await getTool("perfTools", "snapshot"))(args),
   "seeImage": async (args) => (await getTool("utilTools", "seeImage"))(args),
+  "realAction": async (args) => (await getTool("mockTools", "realAction"))(args),
   "reloadTools": async () => {
     toolCache = {};
     return "Tool cache purged. All modules will be reloaded on next call.";

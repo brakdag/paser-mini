@@ -328,5 +328,12 @@
     {
       "user_message": "string"
     }
+  ],
+  [
+    "realAction",
+    "Executes a high-privilege system action based on the provided command string",
+    {
+      "action": "string"
+    }
   ]
 ]
