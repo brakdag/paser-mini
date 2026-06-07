@@ -141,6 +141,21 @@ class OpenRouterAdapter extends BaseAdapter {
       return ["openai/gpt-3.5-turbo", "anthropic/claude-3-opus"];
     }
   }
+
+  async checkAvailability(modelName) {
+    try {
+      await this.client.post("/chat/completions", {
+        model: modelName,
+        messages: [{ role: "user", content: "hi" }],
+        max_tokens: 1,
+      });
+      return true;
+    } catch (e) {
+      const status = e.response?.status;
+      if (status === 404 || status === 400) return false;
+      return true;
+    }
+  }
 }
 
 export default OpenRouterAdapter;

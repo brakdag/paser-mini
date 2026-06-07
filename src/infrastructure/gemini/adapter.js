@@ -292,6 +292,20 @@ class GeminiAdapter extends BaseAdapter {
     }
   }
 
+  async checkAvailability(modelName) {
+    try {
+      const name = modelName.replace(/^models\//, "");
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${name}:generateContent?key=${this.apiKey}`;
+      const payload = { contents: [{ role: "user", parts: [{ text: "hi" }] }] };
+      await this.client.post(url, payload);
+      return true;
+    } catch (e) {
+      const status = e.response?.status;
+      if (status === 404 || status === 400) return false;
+      return true;
+    }
+  }
+
   getVariants() {
     return [
       { name: "flash", model: "models/gemini-2.0-flash", temp: 0.5 },

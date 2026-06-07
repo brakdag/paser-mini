@@ -145,6 +145,21 @@ class CohereAdapter extends BaseAdapter {
       return ["command-r-plus", "command-r"];
     }
   }
+
+  async checkAvailability(modelName) {
+    try {
+      await this.client.post("/chat", {
+        model: modelName,
+        message: "hi",
+        max_tokens: 1,
+      });
+      return true;
+    } catch (e) {
+      const status = e.response?.status;
+      if (status === 404 || status === 400) return false;
+      return true;
+    }
+  }
 }
 
 export default CohereAdapter;

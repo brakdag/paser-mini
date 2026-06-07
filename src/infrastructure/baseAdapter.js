@@ -45,6 +45,10 @@ export default class BaseAdapter {
     throw new Error("Method 'getAvailableModels()' must be implemented.");
   }
 
+  async checkAvailability(modelName) {
+    throw new Error("Method 'checkAvailability()' must be implemented.");
+  }
+
   getVariants() {
     return [];
   }

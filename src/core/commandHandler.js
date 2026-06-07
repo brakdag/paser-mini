@@ -22,7 +22,7 @@ const COMMAND_MAP = {
   "/help": (_, ui) => InterfaceCommands.handleHelp(ui),
   "/connect": AICommands.handleConnect,
   "/config": ConfigCommands.handleConfig,
-  "/models_check": (cm, ui) => ModelCommands.handleModelsCheck(cm, ui),
+  "/mchk": (cm, ui) => ModelCommands.handleModelsCheck(cm, ui),
   "/sp": (cm, ui) => SystemCommands.handleShowSystemPrompt(cm, ui),
   "/variants": (cm, ui, input) =>
     ModelCommands.handleVariants(cm, ui, input.split(/\s+/)),

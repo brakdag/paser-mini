@@ -141,6 +141,21 @@ class GroqAdapter extends BaseAdapter {
       return ["llama3-8b-8192", "llama3-70b-8192", "mixtral-8x7b-32768"];
     }
   }
+
+  async checkAvailability(modelName) {
+    try {
+      await this.client.post("/chat/completions", {
+        model: modelName,
+        messages: [{ role: "user", content: "hi" }],
+        max_tokens: 1,
+      });
+      return true;
+    } catch (e) {
+      const status = e.response?.status;
+      if (status === 404 || status === 400) return false;
+      return true;
+    }
+  }
 }
 
 export default GroqAdapter;
