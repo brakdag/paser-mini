@@ -8,6 +8,7 @@ class ConfigCommands {
 
     const configInfo = `| Setting | Value |
 | :--- | :--- |
+| Provider | ${chatManager.assistant.providerId || "Unknown"} |
 | Model | ${chatManager.assistant.currentModel} |
 | Temperature | ${chatManager.temperature} |
 | Rendering Mode | ${chatManager.ui.renderingMode} |
