@@ -6,10 +6,10 @@ import BaseAdapter from "../baseAdapter.js";
 
 class NvidiaAdapter extends BaseAdapter {
   constructor(
-    ui, 
-    configManager, 
-    userNickname = "user", 
-    agentNickname = "assistant"
+    ui,
+    configManager,
+    userNickname = "user",
+    agentNickname = "assistant",
   ) {
     super(ui, configManager, userNickname, agentNickname);
     this.state = new ConversationState(userNickname, agentNickname);
@@ -37,7 +37,7 @@ class NvidiaAdapter extends BaseAdapter {
     return cleaned.trim();
   }
 
-  async sendMessage(message, role = "user", maxTokens = 512) {
+  async sendMessage(message, role = "user") {
     this.state.addMessage(role, message);
 
     const history = this.state.getRawHistory();
@@ -65,7 +65,7 @@ class NvidiaAdapter extends BaseAdapter {
       this.temperature,
     );
     payload.model = this.currentModel;
-    payload.max_tokens = maxTokens;
+    // payload.max_tokens removed to prevent truncated responses
     this.lastPayload = payload;
 
     try {
@@ -89,7 +89,7 @@ class NvidiaAdapter extends BaseAdapter {
     } catch (e) {
       const errorMsg = e.response?.data?.error?.message || e.message;
       logger.error("NvidiaAdapter: Request failed", { error: errorMsg });
-      
+
       const error = new Error(errorMsg);
       error.name = "APIError";
       throw error;
@@ -168,3 +168,4 @@ class NvidiaAdapter extends BaseAdapter {
 }
 
 export default NvidiaAdapter;
+
