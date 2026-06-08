@@ -1,8 +1,12 @@
 import * as acorn from "acorn";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import AutoCorrector from "./autoCorrector.js";
 import validator from "./schemaRegistry.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 class SmartToolParser {
   static TOOL_PATTERN = /\u2030([\s\S]*?)(?:\u203b|$)/gis;
@@ -10,7 +14,7 @@ class SmartToolParser {
   constructor() {
     this.validator = validator;
     this.corrector = AutoCorrector;
-    const regPath = path.join(process.cwd(), "src/tools/registry_positional.json");
+    const regPath = path.join(__dirname, "../tools/registry_positional.json");
     this.positionalRegistry = JSON.parse(fs.readFileSync(regPath, "utf8"));
     this.toolMap = Object.fromEntries(this.positionalRegistry.map(t => [t[0], t]));
   }
