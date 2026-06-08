@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const gh_editSchema = z
+export const editSchema = z
   .object({
     issue_number: z.number().int(),
     repo: z.string().optional(),
@@ -9,4 +9,4 @@ export const gh_editSchema = z
   })
   .strict();
 
-export default gh_editSchema;
+export default editSchema;

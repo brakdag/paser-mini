@@ -1,10 +1,10 @@
 import { z } from "zod";
 
-export const json_nodeSchema = z
+export const nodeSchema = z
   .object({
     file_path: z.string(),
     path: z.string(),
   })
   .strict();
 
-export default json_nodeSchema;
+export default nodeSchema;

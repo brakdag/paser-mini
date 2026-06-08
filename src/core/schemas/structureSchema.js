@@ -1,11 +1,10 @@
 import { z } from "zod";
 
-export const json_updSchema = z
+export const structureSchema = z
   .object({
     file_path: z.string(),
     path: z.string(),
-    value: z.any(),
   })
   .strict();
 
-export default json_updSchema;
+export default structureSchema;

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const gh_postSchema = z
+export const postSchema = z
   .object({
     issue_number: z.number().int(),
     body: z.string(),
@@ -8,4 +8,4 @@ export const gh_postSchema = z
   })
   .strict();
 
-export default gh_postSchema;
+export default postSchema;

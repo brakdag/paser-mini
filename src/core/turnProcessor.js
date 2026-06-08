@@ -8,6 +8,7 @@ const DESTRUCTIVE_TOOLS = [
   "write",
   "replace",
   "execute",
+  "update",
 ];
 
 class TurnProcessor {

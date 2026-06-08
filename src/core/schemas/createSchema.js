@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const gh_createSchema = z
+export const createSchema = z
   .object({
     title: z.string(),
     body: z.string(),
@@ -8,4 +8,4 @@ export const gh_createSchema = z
   })
   .strict();
 
-export default gh_createSchema;
+export default createSchema;

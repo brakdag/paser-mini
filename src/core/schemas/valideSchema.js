@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-export const json_valSchema = z
+export const valideSchema = z
   .object({
     json_string: z.string(),
   })
   .strict();
 
-export default json_valSchema;
+export default valideSchema;

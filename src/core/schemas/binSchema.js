@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const bin_anaSchema = z.object({
+export const binSchema = z.object({
   action: z.enum(["inspect", "extract", "search", "detect", "convert"]),
   filePath: z.string().optional(),
   offset: z.number().optional(),
@@ -24,4 +24,4 @@ export const bin_anaSchema = z.object({
   endianness: z.enum(["LE", "BE"]).optional(),
 });
 
-export default bin_anaSchema;
+export default binSchema;
