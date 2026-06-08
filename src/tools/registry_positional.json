@@ -1,339 +1,48 @@
 [
-  [
-    "fs.readFile",
-    "Read file content. Use 'tail' to read only the last N lines (bypasses size limit).",
-    {
-      "path": "string",
-      "tail": "number"
-    }
-  ],
-  [
-    "fs.writeFile",
-    "Write content to file. Returns 'OK' on success.",
-    {
-      "path": "string",
-      "content": "string"
-    }
-  ],
-  [
-    "fs.rm",
-    "Delete file. Returns 'OK' on success. Throws ERR if not found.",
-    {
-      "path": "string"
-    }
-  ],
-  [
-    "fs.readdir",
-    "List directory contents",
-    {
-      "path": "string"
-    }
-  ],
-  [
-    "fs.replaceString",
-    "Search and replace string. Returns 'OK' on success. If no exact match is found, it may suggest a similar line using fuzzy matching. Throws ERR if ambiguous or not found.",
-    {
-      "path": "string",
-      "search_text": "string",
-      "replace_text": "string"
-    }
-  ],
-  [
-    "pyright.analyze",
-    "Run static analysis for JS/TS codebase to detect type and syntax errors",
-    {
-      "path": "string"
-    }
-  ],
-  [
-    "eslint.lint",
-    "Run ESLint analysis",
-    {
-      "path": "string"
-    }
-  ],
-  [
-    "jsdoc.generate",
-    "Generate HTML documentation using JSDoc",
-    {
-      "path": "string",
-      "outputDir": "string"
-    }
-  ],
-  [
-    "child_process.exec",
-    "Execute a bash command in the project root",
-    {
-      "command": "string"
-    }
-  ],
-  [
-    "grep.search",
-    "Search string in all files",
-    {
-      "query": "string"
-    }
-  ],
-  [
-    "glob.search",
-    "Search files by pattern",
-    {
-      "pattern": "string"
-    }
-  ],
-  [
-    "fs.rename",
-    "Move/Rename path. Returns 'OK' on success. Throws ERR if origin not found.",
-    {
-      "origin": "string",
-      "destination": "string"
-    }
-  ],
-  [
-    "fs.copyFile",
-    "Copy file from origin to destination. Returns 'OK' on success.",
-    {
-      "origin": "string",
-      "destination": "string"
-    }
-  ],
-  [
-    "json.validate",
-    "Validates if a string is a valid JSON",
-    {
-      "json_string": "string"
-    }
-  ],
-  [
-    "config.setNickname",
-    "Changes the agent's display nickname in the chat log",
-    {
-      "newNickname": "string"
-    }
-  ],
-  [
-    "memento.push",
-    "Stores in memento.log. To reference MUST use the #ID format (e.g., #1).",
-    "string"
-  ],
-  [
-    "chatManager.getTokenCount",
-    "Returns the current token count of the conversation history and its percentage relative to the limit.",
-    {}
-  ],
-  [
-    "git.lsFiles",
-    "Get the project file tree (very fast)",
-    {}
-  ],
-  [
-    "git.diff",
-    "Show differences of a file using git diff",
-    {
-      "path": "string"
-    }
-  ],
-  [
-    "git.restore",
-    "Restore a file to its previous state using git restore",
-    {
-      "path": "string"
-    }
-  ],
-  [
-    "fs.concatFile",
-    "Concatenates the content of the source file to the end of the destination file.",
-    {
-      "destination": "string",
-      "source": "string"
-    }
-  ],
-  [
-    "json.getStructure",
-    "Returns the keys and structure of a JSON node at a given path.",
-    {
-      "file_path": "string",
-      "path": "string"
-    }
-  ],
-  [
-    "json.getNode",
-    "Retrieves the content of a specific JSON node using a path.",
-    {
-      "file_path": "string",
-      "path": "string"
-    }
-  ],
-  [
-    "json.getArrayInfo",
-    "Returns the length and item type of a JSON array at a given path.",
-    {
-      "file_path": "string",
-      "path": "string"
-    }
-  ],
-  [
-    "json.updateNode",
-    "Updates a specific JSON node with a new value using a path.",
-    {
-      "file_path": "string",
-      "path": "string",
-      "value": "any"
-    }
-  ],
-  [
-    "github.listIssues",
-    "List issues in a GitHub repository",
-    {
-      "repo": "string"
-    }
-  ],
-  [
-    "github.createIssue",
-    "Create a new GitHub issue",
-    {
-      "title": "string",
-      "body": "string",
-      "repo": "string"
-    }
-  ],
-  [
-    "github.editIssue",
-    "Edit an existing issue in a GitHub repository",
-    {
-      "issue_number": "integer",
-      "repo": "string",
-      "title": "string",
-      "body": "string"
-    }
-  ],
-  [
-    "github.closeIssue",
-    "Close an issue in a GitHub repository",
-    {
-      "issue_number": "integer",
-      "repo": "string"
-    }
-  ],
-  [
-    "github.postComment",
-    "Post a comment to a specific GitHub issue.",
-    {
-      "issue_number": "integer",
-      "body": "string"
-    }
-  ],
-  [
-    "git.remoteUrl",
-    "Get the current GitHub repository name",
-    {}
-  ],
-  [
-    "git.diffAll",
-    "Show all changes in the current repository using git diff",
-    {}
-  ],
-  [
-    "git.patch",
-    "Apply a git patch (unified diff format) to the codebase using git apply. Can be used to modify multiple files at once.",
-    {
-      "patch": "string"
-    }
-  ],
-  [
-    "system.notify",
-    "Sends a notification to the user and plays a sound.",
-    {
-      "message": "string"
-    }
-  ],
-  [
-    "fountain.insertScene",
-    "Insert a Fountain scene into the chat as a user message.",
-    {
-      "scene": "string",
-      "action": "string"
-    }
-  ],
-  [
-    "jszip.listContents",
-    "Lists all files contained within a ZIP archive without loading it into memory.",
-    {
-      "filePath": "string"
-    }
-  ],
-  [
-    "binary.analyze",
-    "Perform binary analysis on a file (inspect, extract, search, detect, convert)",
-    {
-      "action": "string",
-      "filePath": "string",
-      "offset": "number",
-      "length": "number",
-      "end": "number",
-      "endianness": "string"
-    }
-  ],
-  [
-    "duckduckgo.search",
-    "Search the web using DuckDuckGo Lite.",
-    {
-      "query": "string"
-    }
-  ],
-  [
-    "elinks.render",
-    "Render a webpage to text using elinks.",
-    {
-      "url": "string"
-    }
-  ],
-  [
-    "vm.runInContext",
-    "Execute raw JavaScript in a secure, isolated V8 sandbox with BrowserFS access. Returns execution trace and result.",
-    {
-      "code": "string"
-    }
-  ],
-  [
-    "seeImage",
-    "Visualizes an image. Supports optional cropping [left, top, right, bottom].",
-    {
-      "path": "string"
-    }
-  ],
-  [
-    "ast.analyze",
-    "Analyze JavaScript AST. Can filter by node type using 'query'.",
-    {
-      "path": "string",
-      "query": "string"
-    }
-  ],
-  [
-    "perf.metrics",
-    "Get current process memory and CPU usage metrics.",
-    {}
-  ],
-  [
-    "perf.snapshot",
-    "Create a V8 heap snapshot for memory analysis.",
-    {
-      "path": "string"
-    }
-  ],
-  [
-    "system.reset",
-    "Resets the conversation context and injects a new initial user message. Use this when the context window is nearly full or a fresh start is needed.",
-    {
-      "user_message": "string"
-    }
-  ],
-  [
-    "realAction",
-    "Executes a high-privilege system action based on the provided command string",
-    {
-      "action": "string"
-    }
-  ]
+  ["read", "Read file content. Use tail to read only the last N lines.", {"path": "string", "tail": "number"}],
+  ["write", "Write content to file. Returns OK on success.", {"path": "string", "content": "string"}],
+  ["rm", "Delete file. Returns OK on success.", {"path": "string"}],
+  ["ls", "List directory contents", {"path": "string"}],
+  ["replace", "Search and replace string.", {"path": "string", "search_text": "string", "replace_text": "string"}],
+  ["analysis", "Run static analysis for JS/TS codebase.", {"path": "string"}],
+  ["eslint", "Run ESLint analysis", {"path": "string"}],
+  ["doc", "Generate HTML documentation using JSDoc", {"path": "string", "outputDir": "string"}],
+  ["execute", "Execute a bash command in the project root", {"command": "string"}],
+  ["grep", "Search string in all files", {"query": "string"}],
+  ["glob", "Search files by pattern", {"pattern": "string"}],
+  ["rename", "Move/Rename path.", {"origin": "string", "destination": "string"}],
+  ["copy", "Copy file from origin to destination.", {"origin": "string", "destination": "string"}],
+  ["json_val", "Validates if a string is a valid JSON", {"json_string": "string"}],
+  ["nickname", "Changes the agent display nickname", {"newNickname": "string"}],
+  ["push", "Stores in memento.log.", "string"],
+  ["token", "Returns the current token count.", {}],
+  ["tree", "Get the project file tree", {}],
+  ["diff", "Show differences of a file using git diff", {"path": "string"}],
+  ["restore", "Restore a file using git restore", {"path": "string"}],
+  ["concat", "Concatenates source file to destination file.", {"destination": "string", "source": "string"}],
+  ["json_str", "Returns keys and structure of a JSON node.", {"file_path": "string", "path": "string"}],
+  ["json_node", "Retrieves content of a specific JSON node.", {"file_path": "string", "path": "string"}],
+  ["json_arr", "Returns length and item type of a JSON array.", {"file_path": "string", "path": "string"}],
+  ["json_upd", "Updates a specific JSON node.", {"file_path": "string", "path": "string", "value": "any"}],
+  ["gh_list", "List issues in a GitHub repository", {"repo": "string"}],
+  ["gh_create", "Create a new GitHub issue", {"title": "string", "body": "string", "repo": "string"}],
+  ["gh_edit", "Edit an existing issue", {"issue_number": "integer", "repo": "string", "title": "string", "body": "string"}],
+  ["gh_close", "Close an issue", {"issue_number": "integer", "repo": "string"}],
+  ["gh_post", "Post a comment to a GitHub issue.", {"issue_number": "integer", "body": "string"}],
+  ["remote", "Get the current GitHub repository name", {}],
+  ["diff_all", "Show all changes in the current repository", {}],
+  ["git.patch", "Apply a git patch", {"patch": "string"}],
+  ["notify", "Sends a notification to the user", {"message": "string"}],
+  ["scene", "Insert a Fountain scene", {"scene": "string", "action": "string"}],
+  ["jszip", "Lists all files in a ZIP archive", {"filePath": "string"}],
+  ["bin_ana", "Perform binary analysis on a file", {"action": "string", "filePath": "string", "offset": "number", "length": "number", "end": "number", "endianness": "string"}],
+  ["search", "Search the web using DuckDuckGo Lite.", {"query": "string"}],
+  ["url", "Render a webpage to text using elinks.", {"url": "string"}],
+  ["run", "Execute raw JavaScript in a secure sandbox.", {"code": "string"}],
+  ["img", "Visualizes an image.", {"path": "string"}],
+  ["ast", "Analyze JavaScript AST.", {"path": "string", "query": "string"}],
+  ["metrics", "Get current process memory and CPU usage.", {}],
+  ["snapshot", "Create a V8 heap snapshot", {"path": "string"}],
+  ["reset", "Resets the conversation context", {"user_message": "string"}],
+  ["real", "Executes a high-privilege system action", {"action": "string"}]
 ]

@@ -23,7 +23,6 @@ const MODULE_MAP = {
   astTools: "./astTools.js",
   perfTools: "./perfTools.js",
   mockTools: "./mockTools.js",
-  
 };
 
 let toolCache = {};
@@ -33,15 +32,10 @@ export async function getToolInstance(moduleKey) {
     const modulePath = MODULE_MAP[moduleKey];
     if (!modulePath) throw new Error(`Module ${moduleKey} not mapped.`);
     const module = await import(`${modulePath}?update=${Date.now()}`);
-
-    // Derive class name. Need to handle special case for GithubTools
     let className = moduleKey.charAt(0).toUpperCase() + moduleKey.slice(1);
     if (moduleKey === "githubTools") className = "GithubTools";
-
     const ToolClass = module[className] || module.default;
-    if (!ToolClass)
-      throw new Error(`Class ${className} not found in ${modulePath}`);
-
+    if (!ToolClass) throw new Error(`Class ${className} not found in ${modulePath}`);
     toolCache[moduleKey] = new ToolClass();
   }
   return toolCache[moduleKey];
@@ -54,90 +48,76 @@ async function getTool(moduleKey, funcName) {
   return func.bind(instance);
 }
 
-export const GITHUB_SYSTEM_INSTRUCTION =
-  "## GitHub Mode Protocol\n" +
-  "You are operating in GitHub Mode. Your primary interface is GitHub Issues.\n" +
-  "1. Communication: You are not in a live chat. All communication must be done via GitHub issue comments.\n" +
-  "2.Planning: Before executing any engineering changes, you MUST post a comment with a detailed Work Plan.\n" +
-  "3. Progress Tracking: Use a Markdown checklist in your plan.\n" +
-  "   As you complete each task, post a progress update comment marking the task as completed.\n" +
-  "4. Transparency: Be explicit about what you are doing and why.\n" +
-  "   Since the user is not watching your internal process, your comments are the only way\n" +
-  "they know the agent is still active and making progress.";
+export const GITHUB_SYSTEM_INSTRUCTION = "## GitHub Mode Protocol\nYou are operating in GitHub Mode. Your primary interface is GitHub/Issues.\n1. Communication: All via GitHub issue comments.\n2. Planning: Post a detailed Work Plan first.\n3. Progress: Use Markdown checklists.\n4. Transparency: Be explicit about actions.";
 
 export const AVAILABLE_TOOLS = {
-  "fs.readFile": async (args) => (await getTool("fileTools", "readFile"))(args),
-  "fs.writeFile": async (args) => (await getTool("fileTools", "writeFile"))(args),
-  
-  "fs.rm": async (args) => (await getTool("fileTools", "removeFile"))(args),
-  "fs.mkdir": async (args) => (await getTool("fileTools", "createDir"))(args),
-  "system.reloadSchemas": async (args) => (await getTool("systemTools", "reloadSchemas"))(args),
-  "system.reset": async (args) => (await getTool("systemTools", "reset"))(args),
-  "pyright.analyze": async (args) => (await getTool("systemTools", "analyzeCode"))(args),
-  "fs.readdir": async (args) => (await getTool("fileTools", "listDir"))(args),
-  "fs.replaceString": async (args) => (await getTool("fileTools", "replaceString"))(args),
-  "eslint.lint": async (args) => (await getTool("systemTools", "lintCode"))(args),
-  "jsdoc.generate": async (args) => (await getTool("systemTools", "generateDocs"))(args),
-  "child_process.exec": async (args) => (await getTool("systemTools", "executeBash"))(args),
-  "grep.search": async (args) => (await getTool("searchTools", "searchTextGlobal"))(args),
-  "glob.search": async (args) => (await getTool("searchTools", "searchFilesPatternFixed"))(args),
-  "fs.rename": async (args) => (await getTool("fileTools", "renamePath"))(args),
-  "fs.copyFile": async (args) => (await getTool("fileTools", "copyFile"))(args),
-  "git.lsFiles": async (args) => (await getTool("fileTools", "getTrackedFiles"))(args),
-  "json.validate": async (args) => (await getTool("utilTools", "validateJson"))(args),
-  "config.setNickname": async (args) => (await getTool("utilTools", "setNickname"))(args),
-  "memento.push": async (args) => (await getTool("memoryTools", "pushMemory"))(args),
-  "chatManager.getTokenCount": async (args) => (await getTool("memoryTools", "getTokenCount"))(args),
-  "git.diff": async (args) => (await getTool("fileTools", "gitDiff"))(args),
-  "git.restore": async (args) => (await getTool("fileTools", "restoreFile"))(args),
-  "fs.concatFile": async (args) => (await getTool("fileTools", "concatFile"))(args),
-  "json.getStructure": async (args) => (await getTool("jsonTools", "getJsonStructure"))(args),
-  "json.getNode": async (args) => (await getTool("jsonTools", "getJsonNode"))(args),
-  "json.getArrayInfo": async (args) => (await getTool("jsonTools", "getJsonArrayInfo"))(args),
-  "json.updateNode": async (args) => (await getTool("jsonTools", "updateJsonNode"))(args),
-  "github.listIssues": async (args) => (await getTool("githubTools", "listIssues"))(args),
-  "github.createIssue": async (args) => (await getTool("githubTools", "createIssue"))(args),
-  "github.editIssue": async (args) => (await getTool("githubTools", "editIssue"))(args),
-  "github.closeIssue": async (args) => (await getTool("githubTools", "closeIssue"))(args),
-  "github.postComment": async (args) => (await getTool("githubTools", "postComment"))(args),
-  "git.remoteUrl": async (args) => (await getTool("gitTools", "getCurrentRepo"))(args),
-  "git.diffAll": async (args) => (await getTool("gitTools", "gitDiffAll"))(args),
+  "read": async (args) => (await getTool("fileTools", "readFile"))(args),
+  "write": async (args) => (await getTool("fileTools", "writeFile"))(args),
+  "rm": async (args) => (await getTool("fileTools", "removeFile"))(args),
+  "mkdir": async (args) => (await getTool("fileTools", "createDir"))(args),
+  "reloadSchemas": async (args) => (await getTool("systemTools", "reloadSchemas"))(args),
+  "reset": async (args) => (await getTool("systemTools", "reset"))(args),
+  "analysis": async (args) => (await getTool("systemTools", "analyzeCode"))(args),
+  "ls": async (args) => (await getTool("fileTools", "listDir"))(args),
+  "replace": async (args) => (await getTool("fileTools", "replaceString"))(args),
+  "eslint": async (args) => (await getTool("systemTools", "lintCode"))(args),
+  "doc": async (args) => (await getTool("systemTools", "generateDocs"))(args),
+  "execute": async (args) => (await getTool("systemTools", "executeBash"))(args),
+  "grep": async (args) => (await getTool("searchTools", "searchTextGlobal"))(args),
+  "glob": async (args) => (await getTool("searchTools", "searchFilesPatternFixed"))(args),
+  "rename": async (args) => (await getTool("fileTools", "renamePath"))(args),
+  "copy": async (args) => (await getTool("fileTools", "copyFile"))(args),
+  "tree": async (args) => (await getTool("fileTools", "getTrackedFiles"))(args),
+  "json_val": async (args) => (await getTool("utilTools", "validateJson"))(args),
+  "nickname": async (args) => (await getTool("utilTools", "setNickname"))(args),
+  "push": async (args) => (await getTool("memoryTools", "pushMemory"))(args),
+  "token": async (args) => (await getTool("memoryTools", "getTokenCount"))(args),
+  "diff": async (args) => (await getTool("fileTools", "gitDiff"))(args),
+  "restore": async (args) => (await getTool("fileTools", "restoreFile"))(args),
+  "concat": async (args) => (await getTool("fileTools", "concatFile"))(args),
+  "json_str": async (args) => (await getTool("jsonTools", "getJsonStructure"))(args),
+  "json_node": async (args) => (await getTool("jsonTools", "getJsonNode"))(args),
+  "json_arr": async (args) => (await getTool("jsonTools", "getJsonArrayInfo"))(args),
+  "json_upd": async (args) => (await getTool("jsonTools", "updateJsonNode"))(args),
+  "gh_list": async (args) => (await getTool("githubTools", "listIssues"))(args),
+  "gh_create": async (args) => (await getTool("githubTools", "createIssue"))(args),
+  "gh_edit": async (args) => (await getTool("githubTools", "editIssue"))(args),
+  "gh_close": async (args) => (await getTool("githubTools", "closeIssue"))(args),
+  "gh_post": async (args) => (await getTool("githubTools", "postComment"))(args),
+  "remote": async (args) => (await getTool("gitTools", "getCurrentRepo"))(args),
+  "diff_all": async (args) => (await getTool("gitTools", "gitDiffAll"))(args),
   "git.patch": async (args) => (await getTool("gitTools", "applyPatch"))(args),
-  "system.notify": async (args) => (await getTool("notificationTools", "notifyUser"))(args),
-  "fountain.insertScene": async (args) => (await getTool("fountainTools", "insertSceneFountain"))(args),
-  "jszip.listContents": async (args) => (await getTool("zipTools", "listContents"))(args),
-  "binary.analyze": async (args) => (await getTool("binaryTools", "handleHexCommand"))(args),
-  "duckduckgo.search": async (args) => (await getTool("webTools", "searchWeb"))(args),
-  "elinks.render": async (args) => (await getTool("webTools", "renderWeb"))(args),
-  "vm.runInContext": async (args) => (await getTool("evalTools", "executeJS"))(args),
-  "ast.analyze": async (args) => (await getTool("astTools", "analyze"))(args),
-  "perf.metrics": async (args) => (await getTool("perfTools", "metrics"))(args),
-  "perf.snapshot": async (args) => (await getTool("perfTools", "snapshot"))(args),
-  "seeImage": async (args) => (await getTool("utilTools", "seeImage"))(args),
-  "realAction": async (args) => (await getTool("mockTools", "realAction"))(args),
+  "notify": async (args) => (await getTool("notificationTools", "notifyUser"))(args),
+  "scene": async (args) => (await getTool("fountainTools", "insertSceneFountain"))(args),
+  "jszip": async (args) => (await getTool("zipTools", "listContents"))(args),
+  "bin_ana": async (args) => (await getTool("binaryTools", "handleHexCommand"))(args),
+  "search": async (args) => (await getTool("webTools", "searchWeb"))(args),
+  "url": async (args) => (await getTool("webTools", "renderWeb"))(args),
+  "run": async (args) => (await getTool("evalTools", "executeJS"))(args),
+  "ast": async (args) => (await getTool("astTools", "analyze"))(args),
+  "metrics": async (args) => (await getTool("perfTools", "metrics"))(args),
+  "snapshot": async (args) => (await getTool("perfTools", "snapshot"))(args),
+  "img": async (args) => (await getTool("utilTools", "seeImage"))(args),
+  "real": async (args) => (await getTool("mockTools", "realAction"))(args),
+  "reset": async (args) => (await getTool("systemTools", "reset"))(args),
   "reloadTools": async () => {
     toolCache = {};
-    return "Tool cache purged. All modules will be reloaded on next call.";
+    return "Tool cache purged.";
   },
 };
 
 const registryPath = path.join(__dirname, "registry_positional.json");
 const fullCatalog = JSON.parse(fs.readFileSync(registryPath, "utf8"));
-
 const _S = "‰";
 const _E = "※";
-
-const systemInstrData = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "system_instruction.json"), "utf8"),
-);
+const systemInstrData = JSON.parse(fs.readFileSync(path.join(__dirname, "system_instruction.json"), "utf8"));
 
 export function generateSystemInstruction(availableToolNames) {
   const filteredCatalog = fullCatalog
     .filter((t) => t[0] !== "executeBash" && availableToolNames.includes(t[0]))
     .map((t) => {
       const canonicalName = t[0];
-      const args =
-        t[2] && typeof t[2] === "object" ? Object.entries(t[2]).map(([k, v]) => `${k} (${v})`).join(", ") : "data";
+      const args = t[2] && typeof t[2] === "object" ? Object.entries(t[2]).map(([k, v]) => `${k} (${v})`).join(", ") : "data";
       const returns = t[1].split(". ")[0] || "status";
       return `${canonicalName}(${args}): returns ${returns}`;
     })

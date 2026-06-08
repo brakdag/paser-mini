@@ -22,55 +22,53 @@ class ExecutionEngine {
     this.maxTurns = 10000;
     this.stopRequested = false;
 
-    const bn = (a, k = 'path') => path.basename(a[k] || "");
-
     this._detailMappers = {
-      "fs.readFile": (a) => bn(a),
-      "fs.writeFile": (a) => bn(a),
-      "fs.rm": (a) => bn(a),
-      "fs.readdir": (a) => a.path || "",
-      "fs.replaceString": (a) => bn(a),
-      "fs.rename": (a) => `${bn(a, 'origin')} -> ${bn(a, 'destination')}`,
-      "fs.copyFile": (a) => `${bn(a, 'origin')} -> ${bn(a, 'destination')}`,
-      "fs.concatFile": (a) => bn(a, 'destination'),
-      "pyright.analyze": (a) => bn(a),
-      "eslint.lint": (a) => bn(a),
-      "jsdoc.generate": (a) => `Docs for ${bn(a, '.')} -> ${a.outputDir || "docs/api"}`,
-      "child_process.exec": (a) => a.command.substring(0, 50) + (a.command.length > 50 ? "..." : ""),
-      "grep.search": (a) => a.query || "",
-      "glob.search": (a) => `pattern: ${a.pattern || ""}`,
-      "json.validate": (a) => `len: ${a.json_string?.length || 0}`,
-      "config.setNickname": (a) => a.newNickname || "",
-      "memento.push": () => "insight",
-      "chatManager.getTokenCount": () => "tokens",
-      "git.lsFiles": () => "tree",
-      "git.diff": (a) => bn(a),
-      "git.restore": (a) => bn(a),
-      "git.diffAll": () => "all",
-      "git.remoteUrl": () => "url",
-      "json.getStructure": (a) => bn(a, 'file_path'),
-      "json.getNode": (a) => bn(a, 'file_path'),
-      "json.getArrayInfo": (a) => bn(a, 'file_path'),
-      "json.updateNode": (a) => bn(a, 'file_path'),
-      "github.listIssues": (a) => a.repo || "",
-      "github.createIssue": (a) => a.title || "",
-      "github.editIssue": (a) => `#${a.issue_number || ""}`,
-      "github.closeIssue": (a) => `#${a.issue_number || ""}`,
-      "github.postComment": (a) => `#${a.issue_number || ""}`,
-      "system.notify": (a) => a.message?.substring(0, 30) || "",
-      "fountain.insertScene": (a) => a.scene || "",
-      "jszip.listContents": (a) => bn(a, 'filePath'),
-      "binary.analyze": (a) => `${a.action || "analysis"} on ${bn(a, 'filePath')}`,
-      "duckduckgo.search": (a) => a.query || "",
-      "elinks.render": (a) => a.url || "",
-      "vm.runInContext": () => "sandbox",
-      "seeImage": (a) => bn(a),
-      "system.reset": (a) => a.user_message?.substring(0, 30) || "no message",
-      "realAction": (a) => a.action || "no action",
+      "read": (a) => a.path ? path.basename(a.path) : "unknown",
+      "write": (a) => a.path ? path.basename(a.path) : "unknown",
+      "rm": (a) => a.path ? path.basename(a.path) : "unknown",
+      "ls": (a) => a.path || "root",
+      "replace": (a) => a.path ? path.basename(a.path) : "unknown",
+      "rename": (a) => (a.origin && a.destination) ? `${path.basename(a.origin)} -> ${path.basename(a.destination)}` : "unknown",
+      "copy": (a) => (a.origin && a.destination) ? `${path.basename(a.origin)} -> ${path.basename(a.destination)}` : "unknown",
+      "concat": (a) => a.destination ? path.basename(a.destination) : "unknown",
+      "analysis": (a) => a.path ? path.basename(a.path) : "unknown",
+      "eslint": (a) => a.path ? path.basename(a.path) : "unknown",
+      "doc": (a) => a.path ? `Docs: ${path.basename(a.path)}` : "unknown",
+      "execute": (a) => a.command ? a.command.substring(0, 50) : "bash",
+      "grep": (a) => a.query || "search",
+      "glob": (a) => a.pattern || "pattern",
+      "json_val": (a) => a.json_string ? `len: ${a.json_string.length}` : "json",
+      "nickname": (a) => a.newNickname || "nickname",
+      "push": () => "insight",
+      "token": () => "tokens",
+      "tree": () => "tree",
+      "diff": (a) => a.path ? path.basename(a.path) : "unknown",
+      "restore": (a) => a.path ? path.basename(a.path) : "unknown",
+      "diff_all": () => "all",
+      "remote": () => "url",
+      "json_str": (a) => a.file_path ? path.basename(a.file_path) : "unknown",
+      "json_node": (a) => a.file_path ? path.basename(a.file_path) : "unknown",
+      "json_arr": (a) => a.file_path ? path.basename(a.file_path) : "unknown",
+      "json_upd": (a) => a.file_path ? path.basename(a.file_path) : "unknown",
+      "gh_list": (a) => a.repo || "repo",
+      "gh_create": (a) => a.title || "issue",
+      "gh_edit": (a) => a.issue_number ? `#${a.issue_number}` : "issue",
+      "gh_close": (a) => a.issue_number ? `#${a.issue_number}` : "issue",
+      "gh_post": (a) => a.issue_number ? `#${a.issue_number}` : "issue",
+      "notify": (a) => a.message ? a.message.substring(0, 30) : "notify",
+      "scene": (a) => a.scene || "scene",
+      "jszip": (a) => a.filePath ? path.basename(a.filePath) : "zip",
+      "bin_ana": (a) => a.filePath ? path.basename(a.filePath) : "binary",
+      "search": (a) => a.query || "web",
+      "url": (a) => a.url || "url",
+      "run": () => "sandbox",
+      "img": (a) => a.path ? path.basename(a.path) : "image",
+      "reset": (a) => a.user_message ? a.user_message.substring(0, 30) : "reset",
+      "real": (a) => a.action || "action",
     };
   }
 
-  async executeToolCall(name, args, callData) {
+  async executeToolCall(name, args) {
     const displayName = name;
     const toolName = name;
     let result;
@@ -87,8 +85,6 @@ class ExecutionEngine {
         result = "ERR: Bash access is disabled for security. Please use /enableBash to activate it.";
       } else if (!(toolName in this.tools)) {
         result = `Unknown tool: ${toolName}`;
-      } else if (toolName === "runInstance" && this.instanceMode === true) {
-        result = "ERR: Recursion disabled.";
       } else {
         try {
           const mapper = this._detailMappers[toolName] ?? (() => "no details");
@@ -103,12 +99,6 @@ class ExecutionEngine {
         const toolFunc = this.tools[toolName];
         result = await toolFunc(args);
         success = typeof result === 'string' ? !result.startsWith('ERR:') : true;
-
-        if (toolName === "pushMemory") {
-          this.ui.displayPanel("Memento Push", result, "info");
-        } else if (toolName === "runInstance") {
-          this.ui.displayPanel("Instance Test Output", result, "info");
-        }
       }
     } catch (e) {
       result = `ERR: ${e.message}`;
@@ -126,7 +116,7 @@ class ExecutionEngine {
     }
 
     return {
-      response: this.toolParser.formatToolResponse(result, callData.id, success),
+      response: this.toolParser.formatToolResponse(detail, result, success),
       result,
       success
     };

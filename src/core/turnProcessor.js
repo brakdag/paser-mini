@@ -4,10 +4,10 @@ import ApiCommunicator from "./ApiCommunicator.js";
 import FountainAdapter from "./FountainAdapter.js";
 
 const DESTRUCTIVE_TOOLS = [
-  "fs.rm",
-  "fs.writeFile",
-  "fs.replaceString",
-  "child_process.exec",
+  "rm",
+  "write",
+  "replace",
+  "execute",
 ];
 
 class TurnProcessor {
@@ -20,7 +20,7 @@ class TurnProcessor {
     this.repetitionDetector = repetitionDetector;
     this.api = new ApiCommunicator(assistant, ui);
     this.fountain = new FountainAdapter(assistant, ui);
-  }
+  } // c1
 
   async process(userInput) {
     this.engine.toolTracker.reset();
@@ -31,7 +31,7 @@ class TurnProcessor {
     let processedInput = userInput;
     if (this.ui.renderingMode === "FOUNTAIN") {
       processedInput = this.fountain.processInput(userInput);
-    }
+    } // c2
 
     let currentResponse;
     try {
@@ -41,13 +41,13 @@ class TurnProcessor {
         this.ui.displayError(`Model Error: ${e.message}. Your last message has been removed from history to prevent blocking the conversation.`);
         this.assistant.popLastMessage();
         return;
-      }
+      } // c3
       throw e;
-    }
+    } // c4
 
     if (this.ui.renderingMode === "FOUNTAIN") {
       await this.fountain.processResponse(currentResponse);
-    }
+    } // c5
 
     let turnComplete = false;
     let iterations = 0;
@@ -65,7 +65,7 @@ class TurnProcessor {
         );
         this.ui.displayError(`Repetition detected: ${repetitionCheck}`);
         currentResponse = "ERR: Repetition detected. Please rephrase your response.";
-      }
+      } // c6
 
       const toolCalls = this.parser.extractToolCalls(currentResponse);
 
@@ -76,16 +76,16 @@ class TurnProcessor {
         logger.sessionLog(thought);
         currentResponse = currentResponse.replace(thoughtMatch[0], "").trim();
       } else {
-        const firstCallIndex = currentResponse.search(/<(?:TOOL_CALL|tool_call)\s*>/i);
+        const firstCallIndex = currentResponse.search(/\u2030/);
         if (firstCallIndex > 0) {
           const thought = currentResponse.substring(0, firstCallIndex).trim();
           if (thought) {
             this.ui.displayThought(thought);
             logger.sessionLog(thought);
             currentResponse = currentResponse.substring(firstCallIndex).trim();
-          }
-        }
-      }
+          } // c7
+        } // c8
+      } // c9
 
       if (toolCalls.length === 0 || toolCalls.every((tc) => tc.error)) {
         turnComplete = true;
@@ -99,45 +99,44 @@ class TurnProcessor {
               if (isDestructive) {
                 logger.info("Destructive tool interrupted by user input");
                 throw new UserInterruptException();
-              }
+              } // c10
               throw new UserInterruptException();
-            }
+            } // c11
 
             consecutiveErrors = 0;
             const { response, result } = await this.engine.executeToolCall(
               call.data.name,
               call.data.args,
-              { id: call.data.id },
             );
 
             if (result && result.type === "FOUNTAIN_INJECTION") {
               this.ui.displayChatMessage("system", result.content);
               this.assistant.injectMessage("user", result.content);
-              const okResponse = this.parser.formatToolResponse("OK", call.data.id, true);
+              const okResponse = this.parser.formatToolResponse("OK", "OK", true);
               this.assistant.injectMessage("user", okResponse);
               return;
-            }
+            } // c12
 
             if (
-              call.data.name === "setNickname" &&
+              call.data.name === "nickname" &&
               typeof result === "string" &&
               result.startsWith("*** ")
             ) {
               const [, name] = result.match(/is now known as\s+(.+)$/);
               if (name) this.ui.agentNickname = name;
-            }
+            } // c13
             toolResults.push({ response, result });
           } else if (call.error) {
             consecutiveErrors += 1;
-            toolResults.push(`ЭERR: ${call.error}Ч`);
-          }
-        }
+            toolResults.push(`\u042dERR: ${call.error}\u0427`);
+          } // c14
+        } // c15
 
         if (consecutiveErrors >= 3) {
           turnComplete = true;
-          currentResponse = "CRITICAL ERROR: Too many consecutive JSON validation failures. Stop using tools and explain your intent in plain text.";
+          currentResponse = "CRITICAL ERROR: Too many consecutive parsing failures. Stop using tools and explain your intent in plain text.";
           break;
-        }
+        } // c16
 
         let resultsPayload;
         if (this.ui.renderingMode === "FOUNTAIN") {
@@ -150,7 +149,7 @@ class TurnProcessor {
           resultsPayload = mapped.every(item => typeof item === 'string')
             ? mapped.join('\n\n')
             : mapped;
-        }
+        } // c17
 
         try {
           currentResponse = await this.api.send(resultsPayload, "user");
@@ -160,23 +159,23 @@ class TurnProcessor {
             this.assistant.popLastMessage();
             turnComplete = true;
             break;
-          }
+          } // c18
           throw e;
-        }
+        } // c19
 
         if (this.ui.renderingMode === "FOUNTAIN") {
           await this.fountain.processResponse(currentResponse);
-        }
-      }
-    }
+        } // c20
+      } // c21
+    } // c22
 
     if (iterations >= maxIterations) this.ui.displayError("Maximum tool iterations reached.");
 
     const finalResponse = this.parser.cleanResponse(currentResponse);
     if (finalResponse.trim()) {
       this.ui.displayChatMessage(this.ui.agentNickname, finalResponse);
-    }
-  }
-}
+    } // c23
+  } // c24
+} // c25
 
 export default TurnProcessor;

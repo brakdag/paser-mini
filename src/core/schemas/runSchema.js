@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-export const evalSchema = z
+export const runSchema = z
   .object({
     code: z.string(),
   })
   .strict();
 
-export default evalSchema;
+export default runSchema;

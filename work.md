@@ -1,4 +1,30 @@
-# Modificación de nombres de tools.
+## Modificación de nombres de tools.
+
+Necesitamos reducir drásticamente el consumo de tokens en la aplicación.
+
+Para esto vamos a reducir los simbolos de las llamadas a herramientas.
+‰inicio ※ final
+Y de las respuestas
+
+inicio de respuesta :Э
+fin de respuesta :Ч
+
+Ejemplo:
+
+‰{"id":1,"name":"fs.readFile","args":{"path":"./README.md"}}※
+
+(acá hemos optimizado el uso de los tokens de inicio y final de llamada pero
+usamos json y en esta llamada tenemos 25 tokens)
+
+queremos pasar a esto.
+
+‰read("1","./README.md")※
+
+pasamos a 11 tokens.
+Hay que repensar como se procesan las llamadas, las respuestas no importan, podemos seguir
+usando json, creo que las llamadas pueden procesarse con acorn y no usar schemas zod.
+
+## Renombar tools (desde siempre de la base, no crear alias)
 
 fs.readFile:read,
 fs.writeFile:write,

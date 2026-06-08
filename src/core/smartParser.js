@@ -1,76 +1,77 @@
+import * as acorn from "acorn";
+import fs from "fs";
+import path from "path";
 import AutoCorrector from "./autoCorrector.js";
 import validator from "./schemaRegistry.js";
 
 class SmartToolParser {
-  // Optimized regex: captures tool call payloads of any length
-  static TOOL_PATTERN = /‰([\s\S]*?)※/gis;
+  static TOOL_PATTERN = /\u2030([\s\S]*?)\u203b/gis;
 
   constructor() {
     this.validator = validator;
     this.corrector = AutoCorrector;
+    const regPath = path.join(process.cwd(), "src/tools/registry_positional.json");
+    this.positionalRegistry = JSON.parse(fs.readFileSync(regPath, "utf8"));
+    this.toolMap = Object.fromEntries(this.positionalRegistry.map(t => [t[0], t]));
   }
 
   parseCall(rawContent) {
-    let data;
     try {
-      data = JSON.parse(rawContent);
-    } catch (e) {
-      try {
-        data = JSON.parse(this.corrector.fixJson(rawContent));
-      } catch (e2) {
-        return { data: null, error: "Invalid JSON format." };
+      // Remove escaped quotes that models sometimes add when they think they are in JSON
+      const sanitizedContent = rawContent.replace(/\\"/g, '"');
+      const ast = acorn.parse(sanitizedContent, { ecmaVersion: 2020 });
+      const expr = ast.body[0]?.expression;
+      if (!expr || expr.type !== "CallExpression") throw new Error("Not a function call");
+      const name = expr.callee.name;
+      const args = expr.arguments.map(arg => {
+        if (arg.type === "Literal") return arg.value;
+        if (arg.type === "ArrayExpression") return arg.elements.map(e => e.value);
+        if (arg.type === "ObjectExpression") {
+          return Object.fromEntries(arg.properties.map(p => [p.key.name || p.key.value, p.value.value]));
+        }
+        return null;
+      });
+
+      const toolDef = this.toolMap[name];
+      if (!toolDef) return { data: null, error: `Unknown tool: ${name}` };
+      const schema = toolDef[2];
+      let finalArgs = {};
+      if (typeof schema === "object" && schema !== null) {
+        const keys = Object.keys(schema);
+        args.forEach((val, i) => { if (keys[i]) finalArgs[keys[i]] = val; });
+      } else {
+        finalArgs = { data: args.join(" ") };
       }
+
+      const validation = this.validator.validate(name, finalArgs);
+      if (!validation.isValid) return { data: null, error: `Validation: ${validation.errors.join("; ")}` };
+      return { data: { name, args: finalArgs }, error: null };
+    } catch (e) {
+      return { data: null, error: `Parse error: ${e.message}` };
     }
-
-    if (!data || typeof data !== "object" || !data.name) {
-      return { data: null, error: "Missing 'name' field." };
-    }
-
-    if (typeof data.name === "string" && data.name.endsWith("()")) {
-      data.name = data.name.slice(0, -2);
-    }
-
-    data.args = data.args || {};
-
-    const validation = this.validator.validate(data.name, data.args);
-    if (!validation.isValid) {
-      return {
-        data: null,
-        error: `Validation error: ${validation.errors.join("; ")}`,
-      };
-    }
-
-    return { data, error: null };
   }
 
   extractToolCalls(text) {
     const results = [];
     let match;
     SmartToolParser.TOOL_PATTERN.lastIndex = 0;
-
-    match = SmartToolParser.TOOL_PATTERN.exec(text);
-    while (match !== null) {
-
+    while ((match = SmartToolParser.TOOL_PATTERN.exec(text)) !== null) {
       const content = match[1].trim();
       const { data, error } = this.parseCall(content);
       results.push({ data, content, error });
-      match = SmartToolParser.TOOL_PATTERN.exec(text);
     }
-
     return results;
   }
 
-  formatToolResponse(data, callId = null, success = true) {
-    return `Э${JSON.stringify({
-      id: callId,
-      status: success ? "success" : "error",
-      data,
-    })}Ч`;
+  formatToolResponse(context, data, success = true) {
+    const header = context ? `[${context}]` : "[no details]";
+    const content = typeof data === 'object' ? JSON.stringify(data) : data;
+    return `\u042d${header} ${content}\u0427`;
   }
 
   cleanResponse(text) {
     if (!text) return "";
-    return text.replace(/‰[\s\S]*?※|Э[\s\S]*?Ч|<[^>]+>.*?<\/[^>]+>/gs, "");
+    return text.replace(/\u2030[\s\S]*?\u203b|\u042d[\s\S]*?\u0427|<[^>]+>.*?<\/[^>]+>/gs, "");
   }
 }
 
