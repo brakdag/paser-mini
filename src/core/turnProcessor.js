@@ -129,7 +129,7 @@ class TurnProcessor {
             toolResults.push({ response, result });
           } else if (call.error) {
             consecutiveErrors += 1;
-            toolResults.push(`<TOOL_RESPONSE>ERR: ${call.error}</TOOL_RESPONSE>`);
+            toolResults.push(`ЭERR: ${call.error}Ч`);
           }
         }
 

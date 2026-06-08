@@ -124,8 +124,8 @@ export const AVAILABLE_TOOLS = {
 const registryPath = path.join(__dirname, "registry_positional.json");
 const fullCatalog = JSON.parse(fs.readFileSync(registryPath, "utf8"));
 
-const _S = `${String.fromCharCode(60)}TOOL_CALL${String.fromCharCode(62)}`;
-const _E = `${String.fromCharCode(60)}/TOOL_CALL${String.fromCharCode(62)}`;
+const _S = "‰";
+const _E = "※";
 
 const systemInstrData = JSON.parse(
   fs.readFileSync(path.join(__dirname, "system_instruction.json"), "utf8"),

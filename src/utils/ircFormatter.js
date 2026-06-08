@@ -21,7 +21,7 @@ class IRCFormatter {
    */
   static formatMessage(nickname, text, timestamp = null) {
     const ts = timestamp || this.getTimestamp();
-    if (text && text.startsWith("<TOOL_RESPONSE>")) {
+    if (text && text.startsWith("Э")) {
       return `[${ts}] ${text}`;
     }
     return `[${ts}] <${nickname}> ${text}`;

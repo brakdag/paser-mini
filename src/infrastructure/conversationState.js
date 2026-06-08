@@ -18,7 +18,7 @@ class ConversationState {
     if (
       text.startsWith("---") ||
       text.startsWith("***") ||
-      text.startsWith("<TOOL_RESPONSE>")
+      text.startsWith("Э")
     ) {
       return `[${timestamp || IRCFormatter.getTimestamp()}] ${text}`;
     }

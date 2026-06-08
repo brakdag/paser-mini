@@ -3,8 +3,7 @@ import validator from "./schemaRegistry.js";
 
 class SmartToolParser {
   // Optimized regex: captures tool call payloads of any length
-  static TOOL_PATTERN =
-    /<(?:TOOL_CALL|tool_call)\s*>([\s\S]*?)(?:<\/(?:TOOL_CALL|tool_call)>|$)/gis;
+  static TOOL_PATTERN = /‰([\s\S]*?)※/gis;
 
   constructor() {
     this.validator = validator;
@@ -62,16 +61,16 @@ class SmartToolParser {
   }
 
   formatToolResponse(data, callId = null, success = true) {
-    return `<TOOL_RESPONSE>${JSON.stringify({
+    return `Э${JSON.stringify({
       id: callId,
       status: success ? "success" : "error",
       data,
-    })}</TOOL_RESPONSE>`;
+    })}Ч`;
   }
 
   cleanResponse(text) {
     if (!text) return "";
-    return text.replace(/<[^>]+>.*?<\/[^>]+>/gs, "");
+    return text.replace(/‰[\s\S]*?※|Э[\s\S]*?Ч|<[^>]+>.*?<\/[^>]+>/gs, "");
   }
 }
 
