@@ -5,7 +5,7 @@ import AutoCorrector from "./autoCorrector.js";
 import validator from "./schemaRegistry.js";
 
 class SmartToolParser {
-  static TOOL_PATTERN = /\u2030([\s\S]*?)\u203b/gis;
+  static TOOL_PATTERN = /\u2030([\s\S]*?)(?:\u203b|$)/gis;
 
   constructor() {
     this.validator = validator;
@@ -17,20 +17,29 @@ class SmartToolParser {
 
   parseCall(rawContent) {
     try {
-      // Remove escaped quotes that models sometimes add when they think they are in JSON
-      const sanitizedContent = rawContent.replace(/\\"/g, '"');
-      const ast = acorn.parse(sanitizedContent, { ecmaVersion: 2020 });
+      const ast = acorn.parse(rawContent, { ecmaVersion: 2020 });
       const expr = ast.body[0]?.expression;
       if (!expr || expr.type !== "CallExpression") throw new Error("Not a function call");
+      
       const name = expr.callee.name;
-      const args = expr.arguments.map(arg => {
-        if (arg.type === "Literal") return arg.value;
-        if (arg.type === "ArrayExpression") return arg.elements.map(e => e.value);
-        if (arg.type === "ObjectExpression") {
-          return Object.fromEntries(arg.properties.map(p => [p.key.name || p.key.value, p.value.value]));
+      
+      const resolveValue = (node) => {
+        if (!node) return null;
+        if (node.type === "Literal") return node.value;
+        if (node.type === "TemplateLiteral") {
+          return node.quasis.map(q => q.value.cooked).join("");
+        }
+        if (node.type === "ArrayExpression") return node.elements.map(resolveValue);
+        if (node.type === "ObjectExpression") {
+          return Object.fromEntries(node.properties.map(p => [
+            p.key.name || p.key.value,
+            resolveValue(p.value)
+          ]));
         }
         return null;
-      });
+      };
+
+      const args = expr.arguments.map(resolveValue);
 
       const toolDef = this.toolMap[name];
       if (!toolDef) return { data: null, error: `Unknown tool: ${name}` };
@@ -71,7 +80,8 @@ class SmartToolParser {
 
   cleanResponse(text) {
     if (!text) return "";
-    return text.replace(/\u2030[\s\S]*?\u203b|\u042d[\s\S]*?\u0427|<[^>]+>.*?<\/[^>]+>/gs, "");
+    // Tolerant cleaning: removes tool calls even if the closing delimiter is missing
+    return text.replace(/\u2030[\s\S]*?(?:\u203b|$)|\u042d[\s\S]*?\u0427|<[^>]+>.*?<\/[^>]+>/gs, "");
   }
 }
 

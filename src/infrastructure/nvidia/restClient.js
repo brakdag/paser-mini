@@ -19,7 +19,7 @@ class NvidiaRestClient {
   }
 
   async _applyRateLimit(currentTokens = 1000) {
-    let rpmLimit = parseInt(this.configManager.get("rpm_limit", 15), 10);
+    let rpmLimit = Math.max(1, parseInt(this.configManager.get("rpm_limit", 15), 10) || 1);
     const tpmLimit = parseInt(this.configManager.get("tpm_limit", 15000), 10);
     const autoRpmEnabled = this.configManager.get("auto_rpm_enabled", false);
 

@@ -88,6 +88,10 @@ class GeminiAdapter extends BaseAdapter {
       const nickname = role === "user" ? this.ui.userNickname : this.ui.agentNickname;
       
       const parts = c.parts.map(p => {
+        if (p && typeof p === 'object' && p.inline_data) {
+          return p;
+        }
+
         let textContent;
         if (typeof p === 'object' && p.text) {
           textContent = p.text;
@@ -97,15 +101,7 @@ class GeminiAdapter extends BaseAdapter {
           textContent = JSON.stringify(p);
         }
         
-        const formattedText = IRCFormatter.formatMessage(nickname, textContent, c.timestamp);
-        
-        if (typeof p === 'object' && p.text) {
-          return { ...p, text: formattedText };
-        }
-        if (typeof p === 'string') {
-          return { text: formattedText };
-        }
-        return { text: formattedText };
+        return { text: IRCFormatter.formatMessage(nickname, textContent, c.timestamp) };
       });
 
       return { role, parts };

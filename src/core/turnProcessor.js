@@ -88,9 +88,15 @@ class TurnProcessor {
         } // c8
       } // c9
 
-      if (toolCalls.length === 0 || toolCalls.every((tc) => tc.error)) {
+      if (toolCalls.length === 0) {
         turnComplete = true;
+      } else if (toolCalls.every((tc) => tc.error)) {
+        const errors = toolCalls.map(tc => `Parse Error: ${tc.error}`).join('\n');
+        currentResponse = `ERR: All tool calls failed to parse:\n${errors}\nPlease check your syntax.`;
+        this.ui.displayError(currentResponse);
+        // We don't set turnComplete = true here so the model can try to fix it
       } else {
+
         const toolResults = [];
         for (let i = 0; i < toolCalls.length; i += 1) {
           const call = toolCalls[i];

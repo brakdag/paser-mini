@@ -43,21 +43,11 @@ class NvidiaAdapter extends BaseAdapter {
     const history = this.state.getRawHistory();
     let processedHistory;
 
-    if (this.state.renderingMode === "CLEAN") {
-      processedHistory = history.map((m) => ({
-        ...m,
-        text: m.text
-          .replace(/^(\[\d{2}:\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, "")
-          .trim(),
-      }));
-    } else if (this.state.renderingMode === "IRC") {
-      processedHistory = history.map((m) => ({
-        ...m,
-        text: this.state._formatMessage(m.role, m.text, m.timestamp),
-      }));
-    } else {
-      processedHistory = history;
-    }
+    // Always send RAW text to the model to avoid IRC noise and formatting issues
+    processedHistory = history.map((m) => ({
+      ...m,
+      text: typeof m.text === 'string' ? m.text : JSON.stringify(m.text),
+    }));
 
     const payload = PayloadMapper.toNvidia(
       processedHistory,
