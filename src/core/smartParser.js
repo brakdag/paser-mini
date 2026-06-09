@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 class SmartToolParser {
-  static TOOL_PATTERN = /\u2030([\s\S]*?)(?:\u203b|$)/gis;
+  static TOOL_PATTERN = /<\|tool_call>([\s\S]*?)(?:<tool_call\|>|$)/gis;
 
   constructor() {
     this.validator = validator;
@@ -79,13 +79,13 @@ class SmartToolParser {
   formatToolResponse(context, data, success = true) {
     const header = context ? `[${context}]` : "[no details]";
     const content = typeof data === 'object' ? JSON.stringify(data) : data;
-    return `\u042d${header} ${content}\u0427`;
+    return `<|tool_response>${header} ${content}<tool_response|>`;
   }
 
   cleanResponse(text) {
     if (!text) return "";
     // Tolerant cleaning: removes tool calls even if the closing delimiter is missing
-    return text.replace(/\u2030[\s\S]*?(?:\u203b|$)|\u042d[\s\S]*?\u0427|<[^>]+>.*?<\/[^>]+>/gs, "");
+    return text.replace(/<\|tool_call>[\s\S]*?(?:<tool_call\|>|$)|<\|tool_response>[\s\S]*?<tool_response\|>|<[^>]+>.*?<\/[^>]+>/gs, "");
   }
 }
 

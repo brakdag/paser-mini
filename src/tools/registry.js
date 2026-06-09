@@ -108,8 +108,8 @@ export const AVAILABLE_TOOLS = {
 
 const registryPath = path.join(__dirname, "registry_positional.json");
 const fullCatalog = JSON.parse(fs.readFileSync(registryPath, "utf8"));
-const _S = "‰";
-const _E = "※";
+const _S = "<|tool_call>";
+const _E = "<tool_call|>";
 const systemInstrData = JSON.parse(fs.readFileSync(path.join(__dirname, "system_instruction.json"), "utf8"));
 
 export function generateSystemInstruction(availableToolNames) {
@@ -121,10 +121,10 @@ export function generateSystemInstruction(availableToolNames) {
       const returns = t[1].split(". ")[0] || "status";
       return `${canonicalName}(${args}): returns ${returns}`;
     })
-    .join("\n");
+    .join("<|\"|>");
 
   return systemInstrData.instruction
-    .replace("{TOOL_CATALOG}", filteredCatalog || "No tools available.")
+    .replace("{TOOL_CATALOG}", filteredCatalog ? `<|tool>${filteredCatalog}<tool|>` : "No tools available.")
     .replace("[[S]]", _S)
     .replace("[[E]]", _E);
 }
