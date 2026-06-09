@@ -14,14 +14,14 @@ class IRCFormatter {
 
   /**
    * Formats a message into the standard IRC string.
-   * @param {string} nickname 
-   * @param {string} text 
+   * @param {string} nickname
+   * @param {string} text
    * @param {string} [timestamp] - Optional override for the timestamp
    * @returns {string}
    */
   static formatMessage(nickname, text, timestamp = null) {
     const ts = timestamp || this.getTimestamp();
-    if (text && text.startsWith("Э")) {
+    if (text && text.startsWith("<|tool_response>")) {
       return `[${ts}] ${text}`;
     }
     return `[${ts}] <${nickname}> ${text}`;
@@ -30,8 +30,8 @@ class IRCFormatter {
   /**
    * Formats a system/info message.
    * @param {string} type - 'INFO', 'ERROR', etc.
-   * @param {string} text 
-   * @param {string} [timestamp] 
+   * @param {string} text
+   * @param {string} [timestamp]
    * @returns {string}
    */
   static formatSystemMessage(type, text, timestamp = null) {
@@ -41,13 +41,18 @@ class IRCFormatter {
 
   /**
    * Formats a message for terminal output with colors.
-   * @param {string} nickname 
-   * @param {string} text 
-   * @param {string} agentNickname 
-   * @param {string} [timestamp] 
+   * @param {string} nickname
+   * @param {string} text
+   * @param {string} agentNickname
+   * @param {string} [timestamp]
    * @returns {string}
    */
-  static formatTerminalMessage(nickname, text, agentNickname, timestamp = null) {
+  static formatTerminalMessage(
+    nickname,
+    text,
+    agentNickname,
+    timestamp = null,
+  ) {
     const ts = timestamp || this.getTimestamp();
     const nameColor = nickname === agentNickname ? chalk.cyan : chalk.green;
     return `${chalk.white(`[${ts}]`)} <${nameColor(nickname)}> ${text}`;
@@ -55,3 +60,4 @@ class IRCFormatter {
 }
 
 export default IRCFormatter;
+

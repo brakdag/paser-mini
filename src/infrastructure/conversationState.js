@@ -18,11 +18,11 @@ class ConversationState {
     if (
       text.startsWith("---") ||
       text.startsWith("***") ||
-      text.startsWith("Э")
+      text.startsWith("<|tool_response>")
     ) {
       return `[${timestamp || IRCFormatter.getTimestamp()}] ${text}`;
     }
-    
+
     const nickname = role === "user" ? this.userNickname : this.agentNickname;
     return IRCFormatter.formatMessage(nickname, text, timestamp);
   }
@@ -32,14 +32,14 @@ class ConversationState {
       role === "model" || role === "assistant" ? "model" : "user";
 
     const ts = timestamp || IRCFormatter.getTimestamp();
-    
+
     // Store RAW text in history to avoid token noise in AI requests
     this.history.push({
       role: normalizedRole,
       text,
       timestamp: ts,
     });
-    
+
     return this._formatMessage(normalizedRole, text, ts);
   }
 
@@ -57,3 +57,4 @@ class ConversationState {
 }
 
 export default ConversationState;
+
