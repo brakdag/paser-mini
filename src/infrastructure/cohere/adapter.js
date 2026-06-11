@@ -72,6 +72,7 @@ class CohereAdapter extends BaseAdapter {
       temperature: this.temperature,
       stream: false,
     };
+    this.lastPayload = payload;
 
     this.history.push(lastMessage);
 

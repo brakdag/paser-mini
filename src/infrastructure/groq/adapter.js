@@ -70,6 +70,7 @@ class GroqAdapter extends BaseAdapter {
       messages: this.history.map(({ role, content }) => ({ role, content })),
       temperature: this.temperature,
     };
+    this.lastPayload = payload;
 
     try {
       const response = await this.client.post("/chat/completions", payload);
@@ -125,6 +126,9 @@ class GroqAdapter extends BaseAdapter {
 
   hardReset(historyOverride = null) {
     this.history = historyOverride || [];
+    if (this.systemInstruction) {
+      this.injectMessage("system", this.systemInstruction);
+    }
     logger.info("[GroqAdapter] History hard reset");
   }
 
