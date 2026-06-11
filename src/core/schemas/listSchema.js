@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-export const listSchema = z
+export const lsSchema = z
   .object({
-    repo: z.string().optional(),
+    path: z.string(),
   })
   .strict();
 
-export default listSchema;
+export default lsSchema;

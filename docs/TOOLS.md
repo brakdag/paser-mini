@@ -3,40 +3,46 @@
 This document serves as the definitive reference for the tools available to the Paser Mini agent. To maintain extreme lightness and token efficiency, tools are designed for surgical precision, avoiding bloated outputs and unnecessary context flooding.
 
 ### 📁 File System & Navigation
-
-- **Reading**: `readFile`, `listDir`, `getTrackedFiles`.
-- **Writing/Editing**: `writeFile`, `replaceString`, `concatFile`.
-- **Management**: `removeFile`, `renamePath`, `copyFile`, `restoreFile`.
+- **Reading**: `read`, `tree`.
+- **Writing/Editing**: `write`, `replace`, `concat`.
+- **Management**: `delete`, `rename`, `copy`, `restore`.
+- **Navigation**: `list`.
 
 ### 🔍 Search & Analysis
-
-- **Global Search**: `searchTextGlobal`, `searchFilesPattern`.
-- **Code Intelligence**: `analyzeCode`, `ast.analyze`, `gitDiff`.
+- **Global Search**: `grep`, `glob`.
+- **Code Intelligence**: `analysis`, `eslint`, `doc`, `ast`.
 
 ### 🧠 Memento (Cognitive Log)
+**The Distillation Loop**: `read` $ightarrow$ Analyze $ightarrow$ `push` $ightarrow$ Forget file content $ightarrow$ `token` (future retrieval).
 
-**The Distillation Loop**: `readFile` $\rightarrow$ Analyze $\rightarrow$ `pushMemory` $\rightarrow$ Forget file content $\rightarrow$ `pullMemory` (future retrieval).
-
-- **Capture**: `pushMemory(role, scope, value, key)` - Appends an entry to `memento.log` with a unique ID, timestamp, and initial `Rank: 0`. Use `scope='tattoo'` for core truths.
-- **Retrieval**: `pullMemory(scope, key, direction)` - Retrieves memories based on scope and key. Use `readFile("memento.log")` for full raw access.
-
-### 🛠️ Technical Execution
-
-- **Orchestration**: `newAgent` - Launches a new independent instance of Paser Mini in the project root.
-- **Metrics**: `getTokenCount` - Returns current token usage and percentage relative to the limit.
+- **Capture**: `push(data)` - Appends an entry to `memento.log`.
+- **Retrieval**: Use `read("memento.log")` for full raw access.
 
 ### ⚡ JSON Intelligence
+- **Validation**: `valide`.
+- **Structural Analysis**: `structure`, `arrange`.
+- **Surgical Access**: `node`, `update`.
 
-- **Validation**: `validateJson` - Checks if a string is valid JSON.
-- **Structural Analysis**: `getJsonStructure`, `getJsonArrayInfo`.
-- **Surgical Access**: `getJsonNode`, `updateJsonNode`.
+### 🐙 GitHub Integration
+- **Issue Management**: `issues`, `create`, `edit`, `close`, `post`.
+- **Repo Info**: `remote`.
 
+### ⚙️ System & Utilities
+- **Orchestration**: `execute`, `run`.
+- **Agent State**: `nickname`, `reset`.
+- **Communication**: `notify`.
+
+### 🛠️ Specialized Tools
+- **Content**: `scene`.
+- **Archives**: `zip`.
+- **Binary**: `bin`.
+- **Web**: `search`, `url`.
+- **Visual**: `img`.
 
 ### 🚀 Performance & Telemetry
-
-- **Runtime Metrics**: `perf.metrics` - Returns real-time memory and CPU usage.
-- **Memory Analysis**: `perf.snapshot` - Generates V8 heap snapshots for leak detection.
+- **Runtime Metrics**: `metrics`.
+- **Memory Analysis**: `snapshot`.
 
 ---
 
-**Constraint**: Always prioritize the most surgical tool. If you can use `replaceString`, never use `writeFile`. Every token saved is reasoning capacity gained.
+**Constraint**: Always prioritize the most surgical tool. If you can use `update`, never use `write`. Every token saved is reasoning capacity gained.
