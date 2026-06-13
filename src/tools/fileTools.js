@@ -70,7 +70,15 @@ class FileTools {
       const safePath = this.#getSafePath(filePath);
       const stats = await fs.stat(safePath);
 
-      if (tail) {
+      if (tail !== undefined && tail !== null) {
+        const numericTail = parseInt(tail, 10);
+        if (isNaN(numericTail)) {
+          return "ERR: tail must be a number";
+        }
+        if (numericTail <= 0) {
+          return "";
+        }
+
         const bufferSize = 64 * 1024;
         const start = Math.max(0, stats.size - bufferSize);
         const length = stats.size - start;
@@ -85,7 +93,7 @@ class FileTools {
 
         const content = buffer.toString("utf8");
         const lines = content.split("\n");
-        const result = lines.slice(-tail).join("\n");
+        const result = lines.slice(-numericTail).join("\n");
 
         if (Buffer.byteLength(result, "utf8") > FILE_SIZE_LIMIT) {
           return "ERR: Tail result too large";
