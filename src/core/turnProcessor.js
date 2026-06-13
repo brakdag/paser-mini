@@ -44,7 +44,7 @@ class TurnProcessor {
           `Model Error: ${e.message}. Your last message has been removed from history to prevent blocking the conversation.`,
         );
         this.assistant.popLastMessage();
-        return;
+        currentResponse = await this.api.send("Model Error: Safety or Empty response. Please rephrase your request to avoid filters.", "user");
       } // c3
       throw e;
     } // c4
@@ -68,8 +68,11 @@ class TurnProcessor {
           `-!- [RepetitionDetector] Repetition detected: ${repetitionCheck}`,
         );
         this.ui.displayError(`Repetition detected: ${repetitionCheck}`);
-        currentResponse =
-          "ERR: Repetition detected. Please rephrase your response.";
+        currentResponse = await this.api.send(
+          "ERR: Repetition detected. Please rephrase your response.",
+          "user",
+        );
+        continue;
       } // c6
 
       const toolCalls = this.parser.extractToolCalls(currentResponse);
@@ -96,13 +99,6 @@ class TurnProcessor {
 
       if (toolCalls.length === 0) {
         turnComplete = true;
-      } else if (toolCalls.every((tc) => tc.error)) {
-        const errors = toolCalls
-          .map((tc) => `Parse Error: ${tc.error}`)
-          .join("\n");
-        currentResponse = `ERR: All tool calls failed to parse:\n${errors}\nPlease check your syntax.`;
-        this.ui.displayError(currentResponse);
-        // We don't set turnComplete = true here so the model can try to fix it
       } else {
         const toolResults = [];
         for (let i = 0; i < toolCalls.length; i += 1) {
@@ -150,11 +146,9 @@ class TurnProcessor {
           } // c14
         } // c15
 
-        if (consecutiveErrors >= 3) {
-          turnComplete = true;
-          currentResponse =
-            "CRITICAL ERROR: Too many consecutive parsing failures. Stop using tools and explain your intent in plain text.";
-          break;
+        if (consecutiveErrors >= 30) {
+          currentResponse = await this.api.send("CRITICAL ERROR: Too many consecutive parsing failures. Stop using tools and explain your intent in plain text.", "user");
+          consecutiveErrors = 0;
         } // c16
 
         let resultsPayload;
@@ -183,8 +177,7 @@ class TurnProcessor {
               `Model Error during tool execution: ${e.message}. Your last message has been removed from history.`,
             );
             this.assistant.popLastMessage();
-            turnComplete = true;
-            break;
+            currentResponse = await this.api.send("Model Error during tool execution: Safety or Empty response. Please rephrase your approach.", "user");
           } // c18
           throw e;
         } // c19
@@ -206,4 +199,3 @@ class TurnProcessor {
 } // c25
 
 export default TurnProcessor;
-
