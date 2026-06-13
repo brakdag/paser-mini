@@ -136,7 +136,7 @@ export function generateSystemInstruction(availableToolNames) {
       const returns = t[1].split(". ")[0] || "status";
       return `${canonicalName}(${args}): returns ${returns}`;
     })
-    .join(" ");
+    .join("\n");
 
   return systemInstrData.instruction
     .replace(
