@@ -23,43 +23,33 @@ export class AstTools {
 
     if (results.length >= limit) return;
 
-    for (const key in node) {
+    Object.keys(node).forEach((key) => {
       const child = node[key];
       if (child && typeof child === 'object') {
         if (Array.isArray(child)) {
-          for (let i = 0; i < child.length; i++) {
-            if (child[i] && typeof child[i] === 'object') {
-              this.walk(child[i], query, results, limit);
-              if (results.length >= limit) return;
+          child.forEach((item) => {
+            if (item && typeof item === 'object') {
+              this.walk(item, query, results, limit);
             }
-          }
+          });
         } else {
           this.walk(child, query, results, limit);
-          if (results.length >= limit) return;
         }
       }
-    }
+    });
   }
 
   async analyze({ path: filePath, query, limit = 100 }) {
     try {
       const code = await fs.readFile(filePath, 'utf8');
-      
-      if (!query) {
-        return "ERR: Query parameter is required.";
-      }
-
+      if (!query) return "ERR: Query parameter is required.";
       const results = [];
-
-      // FAST PATH: Tokenizer for simple queries (Zero AST overhead)
       if (query === 'Identifier' || query === 'Literal') {
         try {
           const tokenizer = acorn.tokenizer(code, { ecmaVersion: 'latest', sourceType: 'module' });
           let token = tokenizer.getToken();
-          
           while (token.type.label !== 'eof') {
             if (results.length >= limit) break;
-
             if (query === 'Identifier' && token.type.label === 'name') {
               results.push({ type: 'Identifier', name: token.value });
             } else if (query === 'Literal' && (token.type.label === 'num' || token.type.label === 'string' || token.type.label === 'regexp' || token.type.label === 'true' || token.type.label === 'false' || token.type.label === 'null')) {
@@ -67,30 +57,16 @@ export class AstTools {
             }
             token = tokenizer.getToken();
           }
-          
-          return JSON.stringify({
-            count: results.length,
-            limit,
-            strategy: "tokenizer_fast_path",
-            results
-          }, null, 2);
-        } catch (tokenizerError) {
-          // Fallback to AST if tokenizer fails
-        }
+          return JSON.stringify({ count: results.length, limit, strategy: "tokenizer_fast_path", results }, null, 2);
+        } catch (e) { /* Fallback to AST */ }
       }
-
-      // SLOW PATH: Full AST for structural queries
       const ast = acorn.parse(code, { ecmaVersion: 'latest', sourceType: 'module' });
       this.walk(ast, query, results, limit);
-
-      return JSON.stringify({
-        count: results.length,
-        limit,
-        strategy: "ast_slow_path",
-        results
-      }, null, 2);
+      return JSON.stringify({ count: results.length, limit, strategy: "ast_slow_path", results }, null, 2);
     } catch (e) {
       return `ERR: AST Analysis failed: ${e.message}`;
     }
   }
 }
+
+export default AstTools;

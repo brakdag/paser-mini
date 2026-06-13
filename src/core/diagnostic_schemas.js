@@ -1,7 +1,10 @@
 export class DiagnosticAuditor {
   static audit(validator) {
     const audit = [];
-    for (const [toolName, schema] of validator.schemas.entries()) {
+    const keys = Array.from(validator.schemas.keys());
+    for (let i = 0; i < keys.length; i += 1) {
+      const toolName = keys[i];
+      const schema = validator.schemas.get(toolName);
       audit.push({
         tool: toolName,
         type: typeof schema,
@@ -12,3 +15,5 @@ export class DiagnosticAuditor {
     console.log(JSON.stringify(audit, null, 2));
   }
 }
+
+export default DiagnosticAuditor;

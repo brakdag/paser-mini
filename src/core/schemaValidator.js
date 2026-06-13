@@ -1,5 +1,5 @@
-import ValidationResult from "./validationResult.js";
 import fs from "fs";
+import ValidationResult from "./validationResult.js";
 
 class SchemaValidator {
   constructor() {
@@ -40,7 +40,7 @@ class SchemaValidator {
 
     if (typeof schema.safeParse !== 'function') {
       const errorMsg = `CRITICAL: Schema for tool '${toolName}' is not a Zod schema. Type: ${typeof schema}. Value: ${JSON.stringify(schema)}`;
-      fs.appendFileSync('./log/schema_audit.log', errorMsg + '\n');
+      fs.appendFileSync('./log/schema_audit.log', `${errorMsg}\n`);
       throw new TypeError(errorMsg);
     }
 

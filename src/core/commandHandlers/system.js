@@ -41,7 +41,7 @@ class SystemCommands {
   }
 
   static async handleShowSystemPrompt(chatManager, ui) {
-    const systemInstruction = chatManager.systemInstruction;
+    const { systemInstruction } = chatManager;
     ui.displayInfo("--- CURRENT SYSTEM PROMPT ---");
     ui.displayMessage(systemInstruction);
     ui.displayInfo("----------------------------");

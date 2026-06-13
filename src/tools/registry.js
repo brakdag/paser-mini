@@ -55,13 +55,13 @@ export const GITHUB_SYSTEM_INSTRUCTION =
 export const AVAILABLE_TOOLS = {
   read: async (args) => (await getTool("fileTools", "readFile"))(args),
   write: async (args) => (await getTool("fileTools", "writeFile"))(args),
-  rm: async (args) => (await getTool("fileTools", "removeFile"))(args),
+  delete: async (args) => (await getTool("fileTools", "removeFile"))(args),
   mkdir: async (args) => (await getTool("fileTools", "createDir"))(args),
   reloadSchemas: async (args) =>
     (await getTool("systemTools", "reloadSchemas"))(args),
   reset: async (args) => (await getTool("systemTools", "reset"))(args),
   analysis: async (args) => (await getTool("systemTools", "analyzeCode"))(args),
-  ls: async (args) => (await getTool("fileTools", "listDir"))(args),
+  list: async (args) => (await getTool("fileTools", "listDir"))(args),
   replace: async (args) => (await getTool("fileTools", "replaceString"))(args),
   eslint: async (args) => (await getTool("systemTools", "lintCode"))(args),
   doc: async (args) => (await getTool("systemTools", "generateDocs"))(args),
@@ -86,7 +86,7 @@ export const AVAILABLE_TOOLS = {
   arrange: async (args) =>
     (await getTool("jsonTools", "getJsonArrayInfo"))(args),
   update: async (args) => (await getTool("jsonTools", "updateJsonNode"))(args),
-  list: async (args) => (await getTool("githubTools", "listIssues"))(args),
+  issues: async (args) => (await getTool("githubTools", "listIssues"))(args),
   create: async (args) => (await getTool("githubTools", "createIssue"))(args),
   edit: async (args) => (await getTool("githubTools", "editIssue"))(args),
   close: async (args) => (await getTool("githubTools", "closeIssue"))(args),
@@ -98,7 +98,7 @@ export const AVAILABLE_TOOLS = {
     (await getTool("notificationTools", "notifyUser"))(args),
   scene: async (args) =>
     (await getTool("fountainTools", "insertSceneFountain"))(args),
-  jszip: async (args) => (await getTool("zipTools", "listContents"))(args),
+  zip: async (args) => (await getTool("zipTools", "listContents"))(args),
   bin: async (args) => (await getTool("binaryTools", "handleHexCommand"))(args),
   search: async (args) => (await getTool("webTools", "searchWeb"))(args),
   url: async (args) => (await getTool("webTools", "renderWeb"))(args),
