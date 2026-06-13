@@ -1,7 +1,7 @@
 /**
  * Maps neutral history to Gemini/NVIDIA API formats
  */
-export class PayloadMapper {
+class PayloadMapper {
   /**
    * Maps neutral history to Gemini API format
    * Gemini expects: { contents: [ { role: 'user'|'model', parts: [ { text: '...' } ] } ] }
@@ -52,3 +52,5 @@ export class PayloadMapper {
     };
   }
 }
+
+export default PayloadMapper;

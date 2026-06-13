@@ -16,15 +16,15 @@ export default class BaseAdapter {
     this.agentNickname = agentNickname;
   }
 
-  async sendMessage(message, role = "user") {
+  async sendMessage(message, _role = "user") {
     throw new Error("Method 'sendMessage()' must be implemented.");
   }
 
-  startChat(modelName, systemInstruction, temperature = 0.7) {
+  startChat(_modelName, systemInstruction, _temperature = 0.7) {
     throw new Error("Method 'startChat()' must be implemented.");
   }
 
-  injectMessage(role, content, timestamp = null) {
+  injectMessage(_role, content, _timestamp = null) {
     throw new Error("Method 'injectMessage()' must be implemented.");
   }
 
@@ -45,7 +45,7 @@ export default class BaseAdapter {
     throw new Error("Method 'getAvailableModels()' must be implemented.");
   }
 
-  async checkAvailability(modelName) {
+  async checkAvailability(_modelName) {
     throw new Error("Method 'checkAvailability()' must be implemented.");
   }
 

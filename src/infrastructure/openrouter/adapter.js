@@ -66,7 +66,7 @@ class OpenRouterAdapter extends BaseAdapter {
 
     const payload = {
       model: this.currentModel,
-      messages: this.history.map(({ role, content }) => ({ role, content })),
+      messages: this.history.map(({ role: msgRole, content }) => ({ role: msgRole, content })),
       temperature: this.temperature,
     };
     this.lastPayload = payload;

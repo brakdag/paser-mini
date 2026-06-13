@@ -75,7 +75,9 @@ class NvidiaRestClient {
     return response.data;
   }
 
-  async close() {}
+  async close() {
+  // Intentionally empty: no resources to release.
+}
 }
 
 export default NvidiaRestClient;

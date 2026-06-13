@@ -1,5 +1,5 @@
 import ConversationState from "../conversationState.js";
-import { PayloadMapper } from "../payloadMapper.js";
+import PayloadMapper from "../payloadMapper.js";
 import NvidiaRestClient from "./restClient.js";
 import logger from "../../core/logger.js";
 import BaseAdapter from "../baseAdapter.js";
@@ -41,13 +41,12 @@ class NvidiaAdapter extends BaseAdapter {
     this.state.addMessage(role, message);
 
     const history = this.state.getRawHistory();
-    let processedHistory;
-
-    // Always send RAW text to the model to avoid IRC noise and formatting issues
-    processedHistory = history.map((m) => ({
+    const processedHistory = history.map((m) => ({
       ...m,
       text: typeof m.text === 'string' ? m.text : JSON.stringify(m.text),
     }));
+
+    // Always send RAW text to the model to avoid IRC noise and formatting issues
 
     const payload = PayloadMapper.toNvidia(
       processedHistory,
