@@ -24,10 +24,10 @@ class GitHubModeOrchestrator {
         !(i.labels || []).map((l) => l.name).includes(this.processingLabel),
     );
 
-    for (let i = 0; i < filtered.length; i += 1) {
-      // eslint-disable-next-line no-await-in-loop
-      await this.processIssue(filtered[i]);
-    }
+    await filtered.reduce(async (promise, issue) => {
+      await promise;
+      return this.processIssue(issue);
+    }, Promise.resolve());
   }
 
   async processIssue(issue) {

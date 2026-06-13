@@ -12,32 +12,29 @@ const validator = new SchemaValidator();
 async function registerSchemas() {
   try {
     const files = fs.readdirSync(SCHEMAS_DIR);
+    const jsFiles = files.filter(f => f.endsWith(".js"));
 
-    for (let i = 0; i < files.length; i += 1) {
-      const file = files[i];
-      if (file.endsWith(".js")) {
-        const schemaName = file.replace(".js", "").replace("Schema", "");
-        const toolName = schemaName;
+    await Promise.all(jsFiles.map(async (file) => {
+      const schemaName = file.replace(".js", "").replace("Schema", "");
+      const toolName = schemaName;
 
-        try {
-          // eslint-disable-next-line no-await-in-loop
-          const module = await import(`./schemas/${file}?update=${Date.now()}`);
-          const schema = module.default || module[`${schemaName}Schema`];
+      try {
+        const module = await import(`./schemas/${file}?update=${Date.now()}`);
+        const schema = module.default || module[`${schemaName}Schema`];
 
-          if (schema) {
-            validator.registerSchema(toolName, schema);
-          } else {
-            console.error(
-              `[SchemaRegistry] Warning: No export named ${schemaName}Schema found in ${file}`,
-            );
-          }
-        } catch (e) {
+        if (schema) {
+          validator.registerSchema(toolName, schema);
+        } else {
           console.error(
-            `[SchemaRegistry] Error loading schema ${file}: ${e.message}`,
+            `[SchemaRegistry] Warning: No export named ${schemaName}Schema found in ${file}`,
           );
         }
+      } catch (e) {
+        console.error(
+          `[SchemaRegistry] Error loading schema ${file}: ${e.message}`,
+        );
       }
-    }
+    }));
   } catch (e) {
     console.error(
       `[SchemaRegistry] Critical error reading schemas directory: ${e.message}`,

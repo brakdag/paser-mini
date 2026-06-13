@@ -35,8 +35,7 @@ class ModelCommands {
 
       chatManager.configManager.save("model_name", modelName);
       chatManager.configManager.save("default_temperature", newTemp);
-      // eslint-disable-next-line no-param-reassign
-      chatManager.temperature = newTemp;
+      chatManager.setTemperature(newTemp);
       chatManager.assistant.startChat(
         modelName,
         chatManager.systemInstruction,
@@ -62,16 +61,13 @@ class ModelCommands {
     const unavailable = [];
     ui.displayInfo("Model Scan: Initializing...");
 
-    for (let i = 0; i < models.length; i += 1) {
-      const model = models[i];
+    await Promise.all(models.map(async (model, i) => {
       ui.displayInfo(`Model Scan: Checking ${i + 1}/${models.length} -> ${model}`);
-
-      // eslint-disable-next-line no-await-in-loop
       const isAvailable = await chatManager.assistant.checkAvailability(model);
       if (!isAvailable) {
         unavailable.push(model);
       }
-    }
+    }));
 
     chatManager.configManager.save("unavailable_models", unavailable);
     ui.displayInfo(`Model Scan complete. ${unavailable.length} models unavailable.`)
@@ -105,7 +101,7 @@ class ModelCommands {
     const variant = variants[idx];
     chatManager.configManager.save("model_name", variant.model);
     chatManager.configManager.save("default_temperature", variant.temp);
-    chatManager.temperature = variant.temp;
+    chatManager.setTemperature(variant.temp);
 
     chatManager.assistant.startChat(
       variant.model,

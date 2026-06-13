@@ -6,8 +6,7 @@ class SystemCommands {
   }
 
   static handleExit(chatManager) {
-    // eslint-disable-next-line no-param-reassign
-    chatManager.shouldExit = true;
+    chatManager.requestExit();
     process.exit(0);
   }
 
@@ -27,8 +26,7 @@ class SystemCommands {
   }
 
   static handleEnableBash(chatManager, ui) {
-    // eslint-disable-next-line no-param-reassign
-    ui.bashEnabled = true;
+    ui.setBashEnabled(true);
     ui.displayInfo("Bash access enabled. You can now use executeBash.");
     const bashInstruction =
       "SYSTEM UPDATE: Bash access has been enabled. You now have access to the tool `executeBash(command: string)`, which allows you to execute shell commands in the project root.";

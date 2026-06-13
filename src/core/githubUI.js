@@ -4,17 +4,16 @@ class GitHubUI {
   constructor(issueNumber, repo = null) {
     this.issueNumber = issueNumber;
     this.repo = repo;
+    this.bashEnabled = false;
   }
 
   async requestInput(_prompt) {
-    // In GitHub mode, input is managed by the orchestrator via message queue
     return "";
   }
 
   displayMessage(text) {
     console.log(`[POSTING TO GITHUB] Issue #${this.issueNumber}: ${text}`);
     try {
-      // Nota: githubTools.postComment es async
       githubTools
         .postComment({
           issue_number: this.issueNumber,
@@ -76,6 +75,10 @@ class GitHubUI {
 
   updateQueueCount() {
     console.log(`[QUEUE UPDATE] [Issue ${this.issueNumber}]`);
+  }
+
+  setBashEnabled(enabled) {
+    this.bashEnabled = enabled;
   }
 }
 

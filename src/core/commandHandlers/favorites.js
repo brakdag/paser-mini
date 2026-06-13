@@ -73,8 +73,7 @@ class FavoriteCommands {
 
         chatManager.configManager.save("model_name", fav.model);
         chatManager.configManager.save("default_temperature", fav.temp);
-        // eslint-disable-next-line no-param-reassign
-        chatManager.temperature = fav.temp;
+        chatManager.setTemperature(fav.temp);
         chatManager.assistant.startChat(
           fav.model,
           chatManager.systemInstruction,

@@ -1,4 +1,3 @@
-// Navigation: See /robots.txt for the Cognitive Navigation Map
 import SmartToolParser from "./smartParser.js";
 import ExecutionEngine from "./executionEngine.js";
 import CommandHandler from "./commandHandler.js";
@@ -26,7 +25,7 @@ class ChatManager {
       10,
     );
     this.tpmLimit = parseInt(this.configManager.get("tpm_limit", 15000), 10);
-    this.ui.bashEnabled = false;
+    this.ui.setBashEnabled(false);
     this.currentChannel = "#main";
     this.timestampsEnabled = this.configManager.get(
       "timestamps_enabled",
@@ -84,6 +83,14 @@ class ChatManager {
         this.assistant.state.setRenderingMode(mode);
       }
     }
+  }
+
+  setTemperature(temp) {
+    this.temperature = temp;
+  }
+
+  requestExit() {
+    this.stopRequested = true;
   }
 
   async switchProvider(providerId, model, temperature) {
@@ -153,7 +160,8 @@ class ChatManager {
     if (initialInput) {
       const logMsg = this.ui.getLogOpenedString();
       const welcomeMsg = "System initialized. Ready for input.";
-      const combinedMsg = `${logMsg}\n${welcomeMsg}`;
+      const combinedMsg = `${logMsg}
+${welcomeMsg}`;
 
       this.ui.displayChatMessage("system", combinedMsg);
       this.assistant.injectMessage("server", combinedMsg);
@@ -232,4 +240,3 @@ class ChatManager {
 }
 
 export default ChatManager;
-
