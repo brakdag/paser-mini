@@ -25,7 +25,7 @@ class SmartToolParser {
       const expr = ast.body[0]?.expression;
       if (!expr || expr.type !== "CallExpression") throw new Error("Not a function call");
       
-      const name = expr.callee.name;
+      const { name } = expr.callee;
       
       const resolveValue = (node) => {
         if (!node) return null;
@@ -68,15 +68,17 @@ class SmartToolParser {
     const results = [];
     let match;
     SmartToolParser.TOOL_PATTERN.lastIndex = 0;
-    while ((match = SmartToolParser.TOOL_PATTERN.exec(text)) !== null) {
+    match = SmartToolParser.TOOL_PATTERN.exec(text);
+    while (match !== null) {
       const content = match[1].trim();
       const { data, error } = this.parseCall(content);
       results.push({ data, content, error });
+      match = SmartToolParser.TOOL_PATTERN.exec(text);
     }
     return results;
   }
 
-  formatToolResponse(context, data, success = true) {
+  formatToolResponse(context, data) {
     const header = context ? `[${context}]` : "[no details]";
     const content = typeof data === 'object' ? JSON.stringify(data) : data;
     return `ø${header} ${content}ć`;

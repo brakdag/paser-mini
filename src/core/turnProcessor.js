@@ -72,8 +72,7 @@ class TurnProcessor {
           "ERR: Repetition detected. Please rephrase your response.",
           "user",
         );
-        continue;
-      } // c6
+      } else {
 
       const toolCalls = this.parser.extractToolCalls(currentResponse);
 
@@ -186,6 +185,7 @@ class TurnProcessor {
           await this.fountain.processResponse(currentResponse);
         } // c20
       } // c21
+    } // end else
     } // c22
 
     if (iterations >= maxIterations)
