@@ -1,15 +1,13 @@
 import logger from "./logger.js";
-import { UserInterruptException, GeminiSafetyError, GeminiEmptyResponseError } from "./exceptions.js";
+import {
+  UserInterruptException,
+  GeminiSafetyError,
+  GeminiEmptyResponseError,
+} from "./exceptions.js";
 import ApiCommunicator from "./ApiCommunicator.js";
 import FountainAdapter from "./FountainAdapter.js";
 
-const DESTRUCTIVE_TOOLS = [
-  "rm",
-  "write",
-  "replace",
-  "execute",
-  "update",
-];
+const DESTRUCTIVE_TOOLS = ["rm", "write", "replace", "execute", "update"];
 
 class TurnProcessor {
   constructor(assistant, tools, parser, engine, ui, repetitionDetector) {
@@ -38,8 +36,13 @@ class TurnProcessor {
     try {
       currentResponse = await this.api.send(processedInput);
     } catch (e) {
-      if (e instanceof GeminiSafetyError || e instanceof GeminiEmptyResponseError) {
-        this.ui.displayError(`Model Error: ${e.message}. Your last message has been removed from history to prevent blocking the conversation.`);
+      if (
+        e instanceof GeminiSafetyError ||
+        e instanceof GeminiEmptyResponseError
+      ) {
+        this.ui.displayError(
+          `Model Error: ${e.message}. Your last message has been removed from history to prevent blocking the conversation.`,
+        );
         this.assistant.popLastMessage();
         return;
       } // c3
@@ -65,12 +68,15 @@ class TurnProcessor {
           `-!- [RepetitionDetector] Repetition detected: ${repetitionCheck}`,
         );
         this.ui.displayError(`Repetition detected: ${repetitionCheck}`);
-        currentResponse = "ERR: Repetition detected. Please rephrase your response.";
+        currentResponse =
+          "ERR: Repetition detected. Please rephrase your response.";
       } // c6
 
       const toolCalls = this.parser.extractToolCalls(currentResponse);
 
-      const thoughtMatch = currentResponse.match(/<thought>([\s\S]*?)<\/thought>/i);
+      const thoughtMatch = currentResponse.match(
+        /<thought>([\s\S]*?)<\/thought>/i,
+      );
       if (thoughtMatch && thoughtMatch[1]) {
         const thought = thoughtMatch[1].trim();
         this.ui.displayThought(thought);
@@ -91,12 +97,13 @@ class TurnProcessor {
       if (toolCalls.length === 0) {
         turnComplete = true;
       } else if (toolCalls.every((tc) => tc.error)) {
-        const errors = toolCalls.map(tc => `Parse Error: ${tc.error}`).join('\n');
+        const errors = toolCalls
+          .map((tc) => `Parse Error: ${tc.error}`)
+          .join("\n");
         currentResponse = `ERR: All tool calls failed to parse:\n${errors}\nPlease check your syntax.`;
         this.ui.displayError(currentResponse);
         // We don't set turnComplete = true here so the model can try to fix it
       } else {
-
         const toolResults = [];
         for (let i = 0; i < toolCalls.length; i += 1) {
           const call = toolCalls[i];
@@ -119,7 +126,11 @@ class TurnProcessor {
             if (result && result.type === "FOUNTAIN_INJECTION") {
               this.ui.displayChatMessage("system", result.content);
               this.assistant.injectMessage("user", result.content);
-              const okResponse = this.parser.formatToolResponse("OK", "OK", true);
+              const okResponse = this.parser.formatToolResponse(
+                "OK",
+                "OK",
+                true,
+              );
               this.assistant.injectMessage("user", okResponse);
               return;
             } // c12
@@ -135,34 +146,42 @@ class TurnProcessor {
             toolResults.push({ response, result });
           } else if (call.error) {
             consecutiveErrors += 1;
-            toolResults.push(`\u042dERR: ${call.error}\u0427`);
+            toolResults.push(`ERR: ${call.error}`);
           } // c14
         } // c15
 
         if (consecutiveErrors >= 3) {
           turnComplete = true;
-          currentResponse = "CRITICAL ERROR: Too many consecutive parsing failures. Stop using tools and explain your intent in plain text.";
+          currentResponse =
+            "CRITICAL ERROR: Too many consecutive parsing failures. Stop using tools and explain your intent in plain text.";
           break;
         } // c16
 
         let resultsPayload;
         if (this.ui.renderingMode === "FOUNTAIN") {
-          resultsPayload = this.fountain.formatToolResults(toolResults.map(r => r.response));
+          resultsPayload = this.fountain.formatToolResults(
+            toolResults.map((r) => r.response),
+          );
         } else {
           const mapped = toolResults.map((r) => {
-            if (typeof r === 'string') return r;
+            if (typeof r === "string") return r;
             return r.result && r.result.mime_type ? r.result : r.response;
           });
-          resultsPayload = mapped.every(item => typeof item === 'string')
-            ? mapped.join('\n\n')
+          resultsPayload = mapped.every((item) => typeof item === "string")
+            ? mapped.join("\n\n")
             : mapped;
         } // c17
 
         try {
           currentResponse = await this.api.send(resultsPayload, "user");
         } catch (e) {
-          if (e instanceof GeminiSafetyError || e instanceof GeminiEmptyResponseError) {
-            this.ui.displayError(`Model Error during tool execution: ${e.message}. Your last message has been removed from history.`);
+          if (
+            e instanceof GeminiSafetyError ||
+            e instanceof GeminiEmptyResponseError
+          ) {
+            this.ui.displayError(
+              `Model Error during tool execution: ${e.message}. Your last message has been removed from history.`,
+            );
             this.assistant.popLastMessage();
             turnComplete = true;
             break;
@@ -176,7 +195,8 @@ class TurnProcessor {
       } // c21
     } // c22
 
-    if (iterations >= maxIterations) this.ui.displayError("Maximum tool iterations reached.");
+    if (iterations >= maxIterations)
+      this.ui.displayError("Maximum tool iterations reached.");
 
     const finalResponse = this.parser.cleanResponse(currentResponse);
     if (finalResponse.trim()) {
@@ -186,3 +206,4 @@ class TurnProcessor {
 } // c25
 
 export default TurnProcessor;
+

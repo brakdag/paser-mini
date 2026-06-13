@@ -107,10 +107,10 @@ class FileTools {
       const content = await fs.readFile(safePath, "utf8");
       if (!content) return "";
 
-      if (READ_CACHE.get(safePath) === content) {
+      /*if (READ_CACHE.get(safePath) === content) {
         return "ERR: No changes since last read";
       }
-      READ_CACHE.set(safePath, content);
+      READ_CACHE.set(safePath, content);*/
 
       return content;
     } catch (e) {
