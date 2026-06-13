@@ -55,7 +55,7 @@ class TurnProcessor {
 
     let turnComplete = false;
     let iterations = 0;
-    const maxIterations = 100;
+    const maxIterations = 1500;
     let consecutiveErrors = 0;
 
     while (!turnComplete && iterations < maxIterations) {
