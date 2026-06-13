@@ -227,8 +227,9 @@ class ChatManager {
     const limit = this.contextWindowLimit || 250000;
 
     const percentage = (count / limit) * 100;
-    return `Current tokens (est.): ${count} / ${limit} (${percentage.toFixed(2)}%)`;
+    return `${count}/${limit}(${percentage.toFixed(1)}%)`;
   }
 }
 
 export default ChatManager;
+
