@@ -1,9 +1,10 @@
 import { z } from "zod";
 
-export const rmSchema = z
+export const removeSchema = z
   .object({
     path: z.string(),
   })
   .strict();
 
-export default rmSchema;
+export default removeSchema;
+

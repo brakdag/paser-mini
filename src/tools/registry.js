@@ -55,11 +55,10 @@ export const GITHUB_SYSTEM_INSTRUCTION =
 export const AVAILABLE_TOOLS = {
   read: async (args) => (await getTool("fileTools", "readFile"))(args),
   write: async (args) => (await getTool("fileTools", "writeFile"))(args),
-  delete: async (args) => (await getTool("fileTools", "removeFile"))(args),
+  remove: async (args) => (await getTool("fileTools", "removeFile"))(args),
   mkdir: async (args) => (await getTool("fileTools", "createDir"))(args),
   reloadSchemas: async (args) =>
     (await getTool("systemTools", "reloadSchemas"))(args),
-  reset: async (args) => (await getTool("systemTools", "reset"))(args),
   analysis: async (args) => (await getTool("systemTools", "analyzeCode"))(args),
   list: async (args) => (await getTool("fileTools", "listDir"))(args),
   replace: async (args) => (await getTool("fileTools", "replaceString"))(args),
