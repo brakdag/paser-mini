@@ -5,7 +5,6 @@ import ChatManager from "./core/chatManager.js";
 import ConfigManager from "./core/configManager.js";
 import ProviderManager from "./infrastructure/providerManager.js";
 import SystemPromptManager from "./core/systemPromptManager.js";
-import { AVAILABLE_TOOLS } from "./tools/registry.js";
 import MemoryTools from "./tools/memoryTools.js";
 
 async function main() {
