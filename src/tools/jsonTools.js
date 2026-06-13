@@ -11,7 +11,7 @@ export default class JsonTools {
   }
 
   #parsePath(pathStr) {
-    const normalized = pathStr.replace(/\[(\d+)\]/g, ".$1");
+    const normalized = pathStr.replace(/[(d+)]/g, ".$1");
     return normalized
       .split(".")
       .filter((p) => p)
@@ -52,7 +52,7 @@ export default class JsonTools {
 
   async getJsonStructure({ filePath, path: pathStr }) {
     try {
-      const safePath = this.#getSafePath(file_path);
+      const safePath = this.#getSafePath(filePath);
       const content = await fs.readFile(safePath, "utf8");
       const data = JSON.parse(content);
       const parts = this.#parsePath(pathStr);
@@ -80,9 +80,9 @@ export default class JsonTools {
     }
   }
 
-  async getJsonNode({ file_path, path: pathStr }) {
+  async getJsonNode({ filePath, path: pathStr }) {
     try {
-      const safePath = this.#getSafePath(file_path);
+      const safePath = this.#getSafePath(filePath);
       const content = await fs.readFile(safePath, "utf8");
       const data = JSON.parse(content);
       const parts = this.#parsePath(pathStr);
@@ -93,9 +93,9 @@ export default class JsonTools {
     }
   }
 
-  async getJsonArrayInfo({ file_path, path: pathStr }) {
+  async getJsonArrayInfo({ filePath, path: pathStr }) {
     try {
-      const safePath = this.#getSafePath(file_path);
+      const safePath = this.#getSafePath(filePath);
       const content = await fs.readFile(safePath, "utf8");
       const data = JSON.parse(content);
       const parts = this.#parsePath(pathStr);
@@ -114,9 +114,9 @@ export default class JsonTools {
     }
   }
 
-  async updateJsonNode({ file_path, path: pathStr, value }) {
+  async updateJsonNode({ filePath, path: pathStr, value }) {
     try {
-      const safePath = this.#getSafePath(file_path);
+      const safePath = this.#getSafePath(filePath);
       const content = await fs.readFile(safePath, "utf8");
       const data = JSON.parse(content);
       const parts = this.#parsePath(pathStr);

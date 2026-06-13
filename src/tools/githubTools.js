@@ -1,10 +1,12 @@
 import axios from "axios";
 import axiosRetry from "axios-retry";
-import { GitTools } from "./gitTools.js";
+import GitTools from "./gitTools.js";
 
 export default class GithubTools {
   #GITHUB_API_URL = "https://api.github.com";
+
   #client;
+
   #gitTools;
 
   constructor() {
@@ -14,7 +16,7 @@ export default class GithubTools {
         Accept: "application/vnd.github.v3+json",
       },
     });
-    
+
     axiosRetry(this.#client, {
       retries: 3,
       retryDelay: axiosRetry.exponentialDelay,
@@ -22,7 +24,7 @@ export default class GithubTools {
         axiosRetry.isNetworkOrIdempotentRequestError(error) ||
         error.response?.status === 429,
     });
-    
+
     this.#gitTools = new GitTools();
   }
 
@@ -52,7 +54,9 @@ export default class GithubTools {
 
   async listIssues({ repo = "" }) {
     try {
-      const targetRepo = repo ? this.#resolveRepo(repo) : await this.#gitTools.getCurrentRepo();
+      const targetRepo = repo
+        ? this.#resolveRepo(repo)
+        : await this.#gitTools.getCurrentRepo();
       const headers = await this.#getHeaders();
       const response = await this.#client.get(`/repos/${targetRepo}/issues`, {
         headers,
@@ -65,7 +69,9 @@ export default class GithubTools {
 
   async createIssue({ title, body, repo = "" }) {
     try {
-      const targetRepo = repo ? this.#resolveRepo(repo) : await this.#gitTools.getCurrentRepo();
+      const targetRepo = repo
+        ? this.#resolveRepo(repo)
+        : await this.#gitTools.getCurrentRepo();
       const headers = await this.#getHeaders();
       const response = await this.#client.post(
         `/repos/${targetRepo}/issues`,
@@ -80,85 +86,101 @@ export default class GithubTools {
 
   async editIssue({ issueNumber, repo = "", title, body }) {
     try {
-      const targetRepo = repo ? this.#resolveRepo(repo) : await this.#gitTools.getCurrentRepo();
+      const targetRepo = repo
+        ? this.#resolveRepo(repo)
+        : await this.#gitTools.getCurrentRepo();
       const headers = await this.#getHeaders();
       const data = {};
       if (title) data.title = title;
       if (body) data.body = body;
-      await this.#client.patch(`/repos/${targetRepo}/issues/${issue_number}`, data, {
-        headers,
-      });
-      return `Issue #${issue_number} edited successfully.`;
+      await this.#client.patch(
+        `/repos/${targetRepo}/issues/${issueNumber}`,
+        data,
+        {
+          headers,
+        },
+      );
+      return `Issue #${issueNumber} edited successfully.`;
     } catch (e) {
       return `ERR: ${e.message}`;
     }
   }
 
-  async closeIssue({ issue_number, repo = "" }) {
+  async closeIssue({ issueNumber, repo = "" }) {
     try {
-      const targetRepo = repo ? this.#resolveRepo(repo) : await this.#gitTools.getCurrentRepo();
+      const targetRepo = repo
+        ? this.#resolveRepo(repo)
+        : await this.#gitTools.getCurrentRepo();
       const headers = await this.#getHeaders();
       await this.#client.patch(
-        `/repos/${targetRepo}/issues/${issue_number}`,
+        `/repos/${targetRepo}/issues/${issueNumber}`,
         { state: "closed" },
         { headers },
       );
-      return `Issue #${issue_number} closed successfully.`;
+      return `Issue #${issueNumber} closed successfully.`;
     } catch (e) {
       return `ERR: ${e.message}`;
     }
   }
 
-  async postComment({ issue_number, body, repo = "" }) {
+  async postComment({ issueNumber, body, repo = "" }) {
     try {
-      const targetRepo = repo ? this.#resolveRepo(repo) : await this.#gitTools.getCurrentRepo();
+      const targetRepo = repo
+        ? this.#resolveRepo(repo)
+        : await this.#gitTools.getCurrentRepo();
       const headers = await this.#getHeaders();
       await this.#client.post(
-        `/repos/${targetRepo}/issues/${issue_number}/comments`,
+        `/repos/${targetRepo}/issues/${issueNumber}/comments`,
         { body },
         { headers },
       );
-      return `Comment posted to issue #${issue_number}.`;
+      return `Comment posted to issue #${issueNumber}.`;
     } catch (e) {
       return `ERR: ${e.message}`;
     }
   }
 
-  async addLabel({ issue_number, label, repo = "" }) {
+  async addLabel({ issueNumber, label, repo = "" }) {
     try {
-      const targetRepo = repo ? this.#resolveRepo(repo) : await this.#gitTools.getCurrentRepo();
+      const targetRepo = repo
+        ? this.#resolveRepo(repo)
+        : await this.#gitTools.getCurrentRepo();
       const headers = await this.#getHeaders();
       await this.#client.post(
-        `/repos/${targetRepo}/issues/${issue_number}/labels`,
+        `/repos/${targetRepo}/issues/${issueNumber}/labels`,
         { labels: [label] },
         { headers },
       );
-      return `Label '${label}' added to issue #${issue_number}.`;
+      return `Label '${label}' added to issue #${issueNumber}.`;
     } catch (e) {
       return `ERR: ${e.message}`;
     }
   }
 
-  async removeLabel({ issue_number, label, repo = "" }) {
+  async removeLabel({ issueNumber, label, repo = "" }) {
     try {
-      const targetRepo = repo ? this.#resolveRepo(repo) : await this.#gitTools.getCurrentRepo();
+      const targetRepo = repo
+        ? this.#resolveRepo(repo)
+        : await this.#gitTools.getCurrentRepo();
       const headers = await this.#getHeaders();
       await this.#client.delete(
-        `/repos/${targetRepo}/issues/${issue_number}/labels/${label}`,
+        `/repos/${targetRepo}/issues/${issueNumber}/labels/${label}`,
         { headers },
       );
-      return `Label '${label}' removed from issue #${issue_number}.`;
+      return `Label '${label}' removed from issue #${issueNumber}.`;
     } catch (e) {
       return `ERR: ${e.message}`;
     }
   }
 
-  async getIssueComments({ issue_number, repo = "" }) {
+  async getIssueComments({ issueNumber, repo = "" }) {
     try {
-      const targetRepo = repo ? this.#resolveRepo(repo) : await this.#gitTools.getCurrentRepo();
+      const targetRepo = repo
+        ? this.#resolveRepo(repo)
+        : await this.#gitTools.getCurrentRepo();
       const headers = await this.#getHeaders();
       const response = await this.#client.get(
-        `/repos/${targetRepo}/issues/${issue_number}/comments`,
+        `/repos/${targetRepo}/issues/${issueNumber}/comments`,
         { headers },
       );
       return response.data;

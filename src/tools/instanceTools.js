@@ -4,6 +4,7 @@ import ConfigManager from "./configManager.js";
 
 export default class InstanceTools {
   #execPromise = promisify(exec);
+
   #config = new ConfigManager();
 
   async newAgent({ message = null, args = [] }) {

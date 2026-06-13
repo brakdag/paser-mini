@@ -7,10 +7,10 @@ import ConfigManager from "../core/configManager.js";
 
 const execPromise = promisify(exec);
 
-export class UtilTools {
+export default class UtilTools {
   async validateJson({ jsonString }) {
     try {
-      JSON.parse(json_string);
+      JSON.parse(jsonString);
       return "El JSON es valido.";
     } catch (e) {
       return `ERR: JSON invalido: ${e.message}`;

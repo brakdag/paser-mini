@@ -19,9 +19,9 @@ export class SystemTools {
     }
     try {
       this._assistant.hardReset();
-      this._assistant.injectMessage("user", user_message);
+      this._assistant.injectMessage("user", userMessage);
       this._chatManager.engine.toolTracker.reset();
-      return `Context reset successfully. New session started with message: "${user_message}"`;
+      return `Context reset successfully. New session started with message: "${userMessage}"`;
     } catch (e) {
       return `ERR: Reset failed: ${e.message}`;
     }
