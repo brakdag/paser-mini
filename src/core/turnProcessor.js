@@ -77,7 +77,7 @@ class TurnProcessor {
         logger.sessionLog(thought);
         currentResponse = currentResponse.replace(thoughtMatch[0], "").trim();
       } else {
-        const firstCallIndex = currentResponse.search(/<\|tool_call>/);
+        const firstCallIndex = currentResponse.search(/Ə/);
         if (firstCallIndex > 0) {
           const thought = currentResponse.substring(0, firstCallIndex).trim();
           if (thought) {

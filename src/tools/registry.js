@@ -108,8 +108,8 @@ export const AVAILABLE_TOOLS = {
 
 const registryPath = path.join(__dirname, "registry_positional.json");
 const fullCatalog = JSON.parse(fs.readFileSync(registryPath, "utf8"));
-const _S = "<|tool_call>";
-const _E = "<tool_call|>";
+const _S = "Ə";
+const _E = "ə";
 const systemInstrData = JSON.parse(fs.readFileSync(path.join(__dirname, "system_instruction.json"), "utf8"));
 
 export function generateSystemInstruction(availableToolNames) {

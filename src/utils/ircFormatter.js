@@ -21,7 +21,7 @@ class IRCFormatter {
    */
   static formatMessage(nickname, text, timestamp = null) {
     const ts = timestamp || this.getTimestamp();
-    if (text && text.startsWith("<|tool_response>")) {
+    if (text && text.startsWith("ø")) {
       return `[${ts}] ${text}`;
     }
     return `[${ts}] <${nickname}> ${text}`;
@@ -60,4 +60,3 @@ class IRCFormatter {
 }
 
 export default IRCFormatter;
-
