@@ -103,7 +103,6 @@
     { "issue_number": "integer", "body": "string", "repo": "string" }
   ],
   ["remote", "Get the current GitHub repository name", {}],
-  ["difference", "Show all changes in the current repository", {}],
   ["patch", "Apply a git patch", { "patch": "string" }],
   ["notify", "Sends a notification to the user", { "message": "string" }],
   [
@@ -134,4 +133,3 @@
   ["reset", "Resets the conversation context", { "user_message": "string" }],
   ["real", "Executes a high-privilege system action", { "action": "string" }]
 ]
-

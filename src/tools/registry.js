@@ -91,14 +91,12 @@ export const AVAILABLE_TOOLS = {
   close: async (args) => (await getTool("githubTools", "closeIssue"))(args),
   post: async (args) => (await getTool("githubTools", "postComment"))(args),
   remote: async (args) => (await getTool("gitTools", "getCurrentRepo"))(args),
-  difference: async (args) => (await getTool("gitTools", "gitDiffAll"))(args),
   patch: async (args) => (await getTool("gitTools", "applyPatch"))(args),
   notify: async (args) =>
     (await getTool("notificationTools", "notifyUser"))(args),
   scene: async (args) =>
     (await getTool("fountainTools", "insertSceneFountain"))(args),
   zip: async (args) => (await getTool("zipTools", "listContents"))(args),
-  bin: async (args) => (await getTool("binaryTools", "handleHexCommand"))(args),
   bin: async (args) => (await getTool("binaryTools", "handleHexCommand"))(args),
   search: async (args) => (await getTool("webTools", "searchWeb"))(args),
   url: async (args) => (await getTool("webTools", "renderWeb"))(args),
