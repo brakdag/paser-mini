@@ -137,13 +137,13 @@ export function generateSystemInstruction(availableToolNames) {
       const returns = t[1].split(". ")[0] || "status";
       return `${canonicalName}(${args}): returns ${returns}`;
     })
-    .join("\n");
+    .join(" ");
 
   return systemInstrData.instruction
     .replace(
       "{TOOL_CATALOG}",
       filteredCatalog ? ` ${filteredCatalog} ` : "No tools available.",
     )
-    .replace("[[S]]", _S)
-    .replace("[[E]]", _E);
+    .replaceAll("[[S]]", _S)
+    .replaceAll("[[E]]", _E);
 }
