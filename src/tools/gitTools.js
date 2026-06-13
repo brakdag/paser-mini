@@ -3,7 +3,7 @@ import { promisify } from "util";
 import fs from "fs/promises";
 import path from "path";
 
-export class GitTools {
+export default class GitTools {
   #execPromise = promisify(exec);
 
   async getCurrentRepo() {

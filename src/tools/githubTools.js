@@ -2,7 +2,7 @@ import axios from "axios";
 import axiosRetry from "axios-retry";
 import { GitTools } from "./gitTools.js";
 
-export class GithubTools {
+export default class GithubTools {
   #GITHUB_API_URL = "https://api.github.com";
   #client;
   #gitTools;
@@ -78,7 +78,7 @@ export class GithubTools {
     }
   }
 
-  async editIssue({ issue_number, repo = "", title, body }) {
+  async editIssue({ issueNumber, repo = "", title, body }) {
     try {
       const targetRepo = repo ? this.#resolveRepo(repo) : await this.#gitTools.getCurrentRepo();
       const headers = await this.#getHeaders();

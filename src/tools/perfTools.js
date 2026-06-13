@@ -1,7 +1,7 @@
 import v8 from 'v8';
 import fs from 'fs';
 
-export class PerfTools {
+export default class PerfTools {
   async metrics() {
     const mem = process.memoryUsage();
     const cpu = process.cpuUsage();

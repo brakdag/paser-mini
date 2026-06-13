@@ -1,4 +1,4 @@
-export class MockTools {
+export default class MockTools {
   async realAction({ action }) {
     const actionLower = action.toLowerCase().trim();
     

@@ -1,4 +1,4 @@
-import { MemoryTools } from "../../tools/memoryTools.js";
+import MemoryTools from "../../tools/memoryTools.js";
 
 class ConfigCommands {
   static async handleConfig(chatManager, ui) {

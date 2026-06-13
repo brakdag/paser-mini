@@ -5,7 +5,7 @@ import { promisify } from "util";
 
 const execPromise = promisify(exec);
 const FILE_SIZE_LIMIT = 100 * 1024;
-const READ_CACHE = new Map();
+
 
 class FileTools {
   async #guardianValidate(filePath) {

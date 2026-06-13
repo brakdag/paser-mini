@@ -8,7 +8,7 @@ import ConfigManager from "../core/configManager.js";
 const execPromise = promisify(exec);
 
 export class UtilTools {
-  async validateJson({ json_string }) {
+  async validateJson({ jsonString }) {
     try {
       JSON.parse(json_string);
       return "El JSON es valido.";
@@ -62,7 +62,7 @@ export class UtilTools {
       return {
         mime_type: "image/jpeg",
         data: base64Data,
-        resolution: resolution
+        resolution
       };
     } catch (error) {
       throw new Error(`Vision Tool Error: ${error.message}`);

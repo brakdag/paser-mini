@@ -2,7 +2,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import ConfigManager from "./configManager.js";
 
-export class InstanceTools {
+export default class InstanceTools {
   #execPromise = promisify(exec);
   #config = new ConfigManager();
 

@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
 
-export class JsonTools {
+export default class JsonTools {
   #getSafePath(inputPath) {
     const resolved = path.resolve(process.cwd(), inputPath);
     if (!resolved.startsWith(process.cwd())) {
@@ -50,7 +50,7 @@ export class JsonTools {
     }
   }
 
-  async getJsonStructure({ file_path, path: pathStr }) {
+  async getJsonStructure({ filePath, path: pathStr }) {
     try {
       const safePath = this.#getSafePath(file_path);
       const content = await fs.readFile(safePath, "utf8");

@@ -1,7 +1,7 @@
 import JSZip from "jszip";
 import fs from "fs/promises";
 
-export class ZipTools {
+export default class ZipTools {
   async listContents({ filePath }) {
     try {
       const data = await fs.readFile(filePath);

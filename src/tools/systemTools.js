@@ -13,7 +13,7 @@ export class SystemTools {
     this._chatManager = chatManager;
   }
 
-  async reset({ user_message }) {
+  async reset({ userMessage }) {
     if (!this._assistant || !this._chatManager) {
       throw new Error("System context not initialized");
     }

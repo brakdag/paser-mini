@@ -1,6 +1,6 @@
 import MementoManager from "../infrastructure/memento/manager.js";
 
-export class MemoryTools {
+export default class MemoryTools {
   #memento = new MementoManager();
   #currentAssistant = null;
   #currentChatManager = null;

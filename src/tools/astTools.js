@@ -52,7 +52,7 @@ export class AstTools {
             if (results.length >= limit) break;
             if (query === 'Identifier' && token.type.label === 'name') {
               results.push({ type: 'Identifier', name: token.value });
-            } else if (query === 'Literal' && (token.type.label === 'num' || token.type.label === 'string' || token.type.label === 'regexp' || token.type.label === 'true' || token.type.label === 'false' || token.type.label === 'null')) {
+            } else if (query === 'Literal' && ['num', 'string', 'regexp', 'true', 'false', 'null'].includes(token.type.label)) {
               results.push({ type: 'Literal', value: token.value });
             }
             token = tokenizer.getToken();

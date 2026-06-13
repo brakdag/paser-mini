@@ -99,6 +99,7 @@ export const AVAILABLE_TOOLS = {
     (await getTool("fountainTools", "insertSceneFountain"))(args),
   zip: async (args) => (await getTool("zipTools", "listContents"))(args),
   bin: async (args) => (await getTool("binaryTools", "handleHexCommand"))(args),
+  bin: async (args) => (await getTool("binaryTools", "handleHexCommand"))(args),
   search: async (args) => (await getTool("webTools", "searchWeb"))(args),
   url: async (args) => (await getTool("webTools", "renderWeb"))(args),
   run: async (args) => (await getTool("evalTools", "executeJS"))(args),
