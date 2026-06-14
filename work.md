@@ -10,7 +10,8 @@ Workloop:
 
 - System is static require restart to try fixed tools.
 - Repair fix, and request for restart, session is saved in ./log/session.log for persist.
-- try with "execute" if the paser-mini fail fix or restore, DO NOT use "execute" for other things.
+- Use "execute" for try paser-mini, if it fail: fix or restore
+- DO NOT use "execute" for other things.
 
 Goals:
 
