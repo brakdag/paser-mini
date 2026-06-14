@@ -49,7 +49,7 @@ async function getTool(moduleKey, funcName) {
   return func.bind(instance);
 }
 
-export const GITHUB_SYSTEM_INSTRUCTION = 
+export const GITHUB_SYSTEM_INSTRUCTION =
   "## GitHub Mode Protocol\n" +
   "You are operating in GitHub Mode. Your primary interface is GitHub/Issues.\n" +
   "1. Communication: All via GitHub issue comments.\n" +
@@ -76,13 +76,13 @@ export const AVAILABLE_TOOLS = {
     (await getTool("searchTools", "searchFilesPatternFixed"))(args),
   rename: async (args) => (await getTool("fileTools", "renamePath"))(args),
   copy: async (args) => (await getTool("fileTools", "copyFile"))(args),
-  tree: async (args) => (await getTool("fileTools", "getTrackedFiles"))(args),
+  tree: async (args) => (await getTool("gitTools", "getTrackedFiles"))(args),
   valide: async (args) => (await getTool("utilTools", "validateJson"))(args),
   nickname: async (args) => (await getTool("utilTools", "setNickname"))(args),
   push: async (args) => (await getTool("memoryTools", "pushMemory"))(args),
   token: async (args) => (await getTool("memoryTools", "getTokenCount"))(args),
   diff: async (args) => (await getTool("fileTools", "gitDiff"))(args),
-  restore: async (args) => (await getTool("fileTools", "restoreFile"))(args),
+  restore: async (args) => (await getTool("gitTools", "restoreFile"))(args),
   concat: async (args) => (await getTool("fileTools", "concatFile"))(args),
   structure: async (args) =>
     (await getTool("jsonTools", "getJsonStructure"))(args),
