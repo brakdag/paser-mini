@@ -11,14 +11,20 @@ export default class GitTools {
       const { stdout } = await this.#execFilePromise("git", args);
       return stdout.trim();
     } catch (e) {
-      throw new Error(`Git error (${args.join(" ")}): ${e.stderr || e.message}`);
+      throw new Error(
+        `Git error (${args.join(" ")}): ${e.stderr || e.message}`,
+      );
     }
   }
 
   async getCurrentRepo() {
     try {
       const stdout = await this.#run(["remote", "get-url", "origin"]);
-      return stdout.replace(/\.git$/, '').split(/[:/]/).slice(-2).join('/');
+      return stdout
+        .replace(/\.git$/, "")
+        .split(/[:/]/)
+        .slice(-2)
+        .join("/");
     } catch {
       return "";
     }
@@ -48,8 +54,8 @@ export default class GitTools {
     return stdout ? stdout.split("\n").filter(Boolean) : [];
   }
 
-  async restoreFile(filePath) {
-    if (!filePath) throw new Error("File path is required.");
-    return this.#run(["restore", filePath]);
+  async restoreFile(filepath) {
+    if (!filepath) throw new Error("File path is required.");
+    return this.#run(["restore", filepath]);
   }
 }
