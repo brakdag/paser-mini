@@ -11,23 +11,15 @@ export default class GitTools {
       const { stdout } = await this.#execFilePromise("git", args);
       return stdout.trim();
     } catch (e) {
-      throw new Error(
-        `Git error (${args.join(" ")}): ${e.stderr || e.message}`,
-      );
+      throw new Error(`Git error (${args.join(" ")}): ${e.stderr || e.message}`);
     }
   }
 
   async getCurrentRepo() {
     try {
       const stdout = await this.#run(["remote", "get-url", "origin"]);
-      return stdout
-        .replace(/\.git$/, "")
-        .split(/[:/]/)
-        .slice(-2)
-        .join("/");
-    } catch {
-      return "";
-    }
+      return stdout.replace(/\.git$/, "").split(/[:/]/).slice(-2).join("/");
+    } catch { return ""; }
   }
 
   async gitDiffAll() {
@@ -35,7 +27,8 @@ export default class GitTools {
     return stdout || "No changes found in the repository.";
   }
 
-  async applyPatch({ patch }) {
+  async applyPatch(p) {
+    const patch = typeof p === 'object' ? p.patch : p;
     if (!patch) throw new Error("Patch content is required.");
     const tempFileName = `.temp_${Date.now()}_patch.patch`;
     const tempFilePath = path.join(process.cwd(), tempFileName);
@@ -54,7 +47,8 @@ export default class GitTools {
     return stdout ? stdout.split("\n").filter(Boolean) : [];
   }
 
-  async restoreFile({ filepath }) {
+  async restoreFile(f) {
+    const filepath = typeof f === 'object' ? f.path : f;
     if (!filepath) throw new Error("File path is required.");
     return this.#run(["restore", filepath]);
   }
