@@ -1,9 +1,0 @@
-import { z } from "zod";
-
-export const evalSchema = z
-  .object({
-    code: z.string(),
-  })
-  .strict();
-
-export default evalSchema;

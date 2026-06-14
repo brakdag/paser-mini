@@ -1,48 +1,18 @@
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
 import SchemaValidator from "./schemaValidator.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const SCHEMAS_DIR = path.join(__dirname, "schemas");
+import SCHEMAS from "./schemas.js";
 
 const validator = new SchemaValidator();
 
 async function registerSchemas() {
   try {
-    const files = fs.readdirSync(SCHEMAS_DIR);
-    const jsFiles = files.filter(f => f.endsWith(".js"));
-
-    await Promise.all(jsFiles.map(async (file) => {
-      const schemaName = file.replace(".js", "").replace("Schema", "");
-      const toolName = schemaName;
-
-      try {
-        const module = await import(`./schemas/${file}?update=${Date.now()}`);
-        const schema = module.default || module[`${schemaName}Schema`];
-
-        if (schema) {
-          validator.registerSchema(toolName, schema);
-        } else {
-          console.error(
-            `[SchemaRegistry] Warning: No export named ${schemaName}Schema found in ${file}`,
-          );
-        }
-      } catch (e) {
-        console.error(
-          `[SchemaRegistry] Error loading schema ${file}: ${e.message}`,
-        );
-      }
-    }));
+    Object.entries(SCHEMAS).forEach(([toolName, schema]) => {
+      validator.registerSchema(toolName, schema);
+    });
   } catch (e) {
-    console.error(
-      `[SchemaRegistry] Critical error reading schemas directory: ${e.message}`,
-    );
+    console.error(`[SchemaRegistry] Critical error registering schemas: ${e.message}`);
   }
 }
 
-// Top-level await ensures all schemas are registered before the validator is exported
 await registerSchemas();
 
 export { registerSchemas };
