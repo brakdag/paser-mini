@@ -1,4 +1,4 @@
-import * as acorn from "acorn";
+
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -19,31 +19,57 @@ class SmartToolParser {
     this.toolMap = Object.fromEntries(this.positionalRegistry.map(t => [t[0], t]));
   }
 
+  _castValue(val) {
+    if (!val) return null;
+    const trimmed = val.trim();
+    if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+      return trimmed.substring(1, trimmed.length - 1);
+    }
+    if (!isNaN(trimmed) && trimmed !== "") return Number(trimmed);
+    if (trimmed === "true") return true;
+    if (trimmed === "false") return false;
+    if (trimmed === "null") return null;
+    try {
+      if (trimmed.startsWith("[") && trimmed.endsWith("]")) return JSON.parse(trimmed.replace(/'/g, '"'));
+      if (trimmed.startsWith("{") && trimmed.endsWith("}")) return JSON.parse(trimmed.replace(/'/g, '"'));
+    } catch (e) {}
+    return trimmed;
+  }
+
   parseCall(rawContent) {
     try {
-      const ast = acorn.parse(rawContent, { ecmaVersion: 2020 });
-      const expr = ast.body[0]?.expression;
-      if (!expr || expr.type !== "CallExpression") throw new Error("Not a function call");
-      
-      const { name } = expr.callee;
-      
-      const resolveValue = (node) => {
-        if (!node) return null;
-        if (node.type === "Literal") return node.value;
-        if (node.type === "TemplateLiteral") {
-          return node.quasis.map(q => q.value.cooked).join("");
-        }
-        if (node.type === "ArrayExpression") return node.elements.map(resolveValue);
-        if (node.type === "ObjectExpression") {
-          return Object.fromEntries(node.properties.map(p => [
-            p.key.name || p.key.value,
-            resolveValue(p.value)
-          ]));
-        }
-        return null;
-      };
+      const match = rawContent.match(/^([a-zA-Z0-9_]+)\s*\((.*)\)$/s);
+      if (!match) return { data: null, error: "Not a function call" };
 
-      const args = expr.arguments.map(resolveValue);
+      const name = match[1];
+      const argsRaw = match[2].trim();
+      const args = [];
+      let current = "";
+      let depth = 0;
+      let inQuote = null;
+
+      for (let i = 0; i < argsRaw.length; i++) {
+        const char = argsRaw[i];
+        if (inQuote) {
+          if (char === inQuote && argsRaw[i - 1] !== "\\") inQuote = null;
+          current += char;
+        } else if (char === '"' || char === "'") {
+          inQuote = char;
+          current += char;
+        } else if (char === "[ " || char === "{") {
+          depth++;
+          current += char;
+        } else if (char === "]" || char === "}") {
+          depth--;
+          current += char;
+        } else if (char === "," && depth === 0) {
+          args.push(this._castValue(current.trim()));
+          current = "";
+        } else {
+          current += char;
+        }
+      }
+      if (current.trim()) args.push(this._castValue(current.trim()));
 
       const toolDef = this.toolMap[name];
       if (!toolDef) return { data: null, error: `Unknown tool: ${name}` };

@@ -130,13 +130,9 @@ class GeminiAdapter extends BaseAdapter {
     return cleaned.trim();
   }
 
-  async sendMessage(message, role = "user") {
-    await this._applyRateLimit();
-    const timestamp = IRCFormatter.getTimestamp();
-
-    let parts = [];
-    if (Array.isArray(message)) {
-      parts = message.flatMap((m) => {
+  _createParts(content) {
+    if (Array.isArray(content)) {
+      return content.flatMap((m) => {
         if (typeof m === "string") return [{ text: m }];
         if (m && typeof m === "object" && m.mime_type && m.data) {
           return [
@@ -146,21 +142,26 @@ class GeminiAdapter extends BaseAdapter {
         }
         return [{ text: m === undefined ? "" : JSON.stringify(m) }];
       });
-    } else if (typeof message === "string") {
-      parts = [{ text: message }];
+    } else if (typeof content === "string") {
+      return [{ text: content }];
     } else if (
-      message &&
-      typeof message === "object" &&
-      message.mime_type &&
-      message.data
+      content &&
+      typeof content === "object" &&
+      content.mime_type &&
+      content.data
     ) {
-      parts = [
-        { inline_data: { mime_type: message.mime_type, data: message.data } },
-        { text: `Image resolution: ${message.resolution || "unknown"}` },
+      return [
+        { inline_data: { mime_type: content.mime_type, data: content.data } },
+        { text: `Image resolution: ${content.resolution || "unknown"}` },
       ];
-    } else {
-      parts = [{ text: message === undefined ? "" : JSON.stringify(message) }];
     }
+    return [{ text: content === undefined ? "" : JSON.stringify(content) }];
+  }
+
+  async sendMessage(message, role = "user") {
+    await this._applyRateLimit();
+    const timestamp = IRCFormatter.getTimestamp();
+    const parts = this._createParts(message);
 
     this.history.push({
       role,
@@ -169,7 +170,7 @@ class GeminiAdapter extends BaseAdapter {
     });
 
     const payload = this._buildPayload();
-    this.lastPayload = JSON.parse(JSON.stringify(payload));
+    this.lastPayload = payload;
     const modelName = this.currentModel.replace(/^models\//, "");
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${this.apiKey}`;
 
@@ -219,34 +220,7 @@ class GeminiAdapter extends BaseAdapter {
 
   injectMessage(role, content, timestamp = null) {
     const ts = timestamp || IRCFormatter.getTimestamp();
-
-    let parts = [];
-    if (Array.isArray(content)) {
-      parts = content.flatMap((m) => {
-        if (typeof m === "string") return [{ text: m }];
-        if (m && typeof m === "object" && m.mime_type && m.data) {
-          return [
-            { inline_data: { mime_type: m.mime_type, data: m.data } },
-            { text: `Image resolution: ${m.resolution || "unknown"}` },
-          ];
-        }
-        return [{ text: m === undefined ? "" : JSON.stringify(m) }];
-      });
-    } else if (typeof content === "string") {
-      parts = [{ text: content }];
-    } else if (
-      content &&
-      typeof content === "object" &&
-      content.mime_type &&
-      content.data
-    ) {
-      parts = [
-        { inline_data: { mime_type: content.mime_type, data: content.data } },
-        { text: `Image resolution: ${content.resolution || "unknown"}` },
-      ];
-    } else {
-      parts = [{ text: content === undefined ? "" : JSON.stringify(content) }];
-    }
+    const parts = this._createParts(content);
 
     this.history.push({
       role,

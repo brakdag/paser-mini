@@ -82,7 +82,7 @@ class ExecutionEngine {
         result = "ERR: Pure Mode active. Tool execution is strictly disabled.";
       } else if (!this.toolTracker.recordAttempt(toolName, args)) {
         result = `Tool loop detected: ${toolName} called too many times.`;
-      } else if (toolName === "executeBash" && !this.ui.bashEnabled) {
+      } else if (toolName === "execute" && !this.ui.bashEnabled) {
         result = "ERR: Bash access is disabled for security. Please use /enableBash to activate it.";
       } else if (!(toolName in this.tools)) {
         result = `Unknown tool: ${toolName}`;

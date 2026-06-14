@@ -55,7 +55,7 @@ class TurnProcessor {
 
     let turnComplete = false;
     let iterations = 0;
-    const maxIterations = 1500;
+    const maxIterations = 20;
     let consecutiveErrors = 0;
 
     while (!turnComplete && iterations < maxIterations) {
@@ -103,14 +103,9 @@ class TurnProcessor {
         for (let i = 0; i < toolCalls.length; i += 1) {
           const call = toolCalls[i];
           if (call.data) {
-            const isDestructive = DESTRUCTIVE_TOOLS.includes(call.data.name);
             if (this.ui.inputQueue && this.ui.inputQueue.length > 0) {
-              if (isDestructive) {
-                logger.info("Destructive tool interrupted by user input");
-                throw new UserInterruptException();
-              } // c10
               throw new UserInterruptException();
-            } // c11
+            }
 
             consecutiveErrors = 0;
             const { response, result } = await this.engine.executeToolCall(
@@ -145,7 +140,7 @@ class TurnProcessor {
           } // c14
         } // c15
 
-        if (consecutiveErrors >= 30) {
+        if (consecutiveErrors >= 5) {
           currentResponse = await this.api.send("CRITICAL ERROR: Too many consecutive parsing failures. Stop using tools and explain your intent in plain text.", "user");
           consecutiveErrors = 0;
         } // c16
