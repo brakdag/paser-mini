@@ -17,10 +17,16 @@ class TerminalUI {
     this.agentNickname = "paser_mini";
     this.userNickname = "user";
     this.renderingMode = "IRC";
+    
+        this.bashEnabled = false;
   }
 
   setRenderingMode(mode) {
     this.renderingMode = mode;
+  }
+
+  setBashEnabled(enabled) {
+    this.bashEnabled = enabled;
   }
 
   writeToLog(text) {
