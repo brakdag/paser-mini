@@ -12,6 +12,7 @@ Workloop:
 - Repair fix, and request for restart, session is saved in ./log/session.log for persist.
 - Use "execute" for try paser-mini, if it fail: fix or restore
 - DO NOT use "execute" for other things.
+- DO NOT edit registry.js and system_instruction.json
 
 Goals:
 
