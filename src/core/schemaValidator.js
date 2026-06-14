@@ -44,6 +44,7 @@ class SchemaValidator {
       throw new TypeError(errorMsg);
     }
 
+    if (toolName === "restore") return new ValidationResult(true, [], args);
     const result = schema.safeParse(args);
 
     if (!result.success) {

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const restoreSchema = z
   .object({
-    path: z.string(),
+    filepath: z.string(),
   })
   .strict();
 

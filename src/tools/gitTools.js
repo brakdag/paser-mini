@@ -54,7 +54,7 @@ export default class GitTools {
     return stdout ? stdout.split("\n").filter(Boolean) : [];
   }
 
-  async restoreFile(filepath) {
+  async restoreFile({ filepath }) {
     if (!filepath) throw new Error("File path is required.");
     return this.#run(["restore", filepath]);
   }

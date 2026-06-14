@@ -54,7 +54,7 @@
   ["token", "Returns the current token count.", {}],
   ["tree", "Get the project file tree", {}],
   ["diff", "Show differences of a file using git diff", { "path": "string" }],
-  ["restore", "Restore a file using git restore", { "filepath": "string" }],
+  ["restore", "Restore a file using git restore", { "path": "string" }],
   [
     "concat",
     "Concatenates source file to destination file.",
