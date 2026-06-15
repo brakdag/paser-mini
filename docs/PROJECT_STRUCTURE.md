@@ -20,7 +20,7 @@ This document provides the definitive map of the Paser Mini codebase. The projec
 │   │   ├── SessionLogger.js   # Session persistence & logging
 │   │   ├── configManager.js  # Application settings
 │   │   ├── commandHandler.js  # Internal system command logic
-│   │   └── schemas/           # JSON Tool definitions (The Source of Truth)
+│   │   └── schemas.js         # Centralized Zod Tool definitions
 │   ├── infrastructure/        # The "Nerves": System & API wrappers
 │   │   ├── providerManager.js # Provider registry & adapter factory
 │   │   ├── gemini/            # LLM client & adapter
@@ -39,7 +39,7 @@ This document provides the definitive map of the Paser Mini codebase. The projec
 │   └── config/                # Local configuration & cache
 ├── tests/                     # Test suite & stress tests
 ├── docs/                      # Technical documentation & protocols
-├── scripts/                   # Maintenance & utility scripts
+
 └── package.json             # Project metadata & dependencies
 ```
 

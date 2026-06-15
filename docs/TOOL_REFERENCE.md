@@ -10,7 +10,7 @@ This document provides a comprehensive specification of all tools available to t
 | :--- | :--- | :--- |
 | `read` | Reads file content. Use `tail` for large files. | `path` (str), `tail` (num) |
 | `write` | Writes content to a file. | `path` (str), `content` (str) |
-| `delete` | Deletes a file. | `path` (str) |
+| `remove` | Deletes a file. | `path` (str) |
 | `list` | Lists directory contents. | `path` (str) |
 | `replace` | Search and replace text. | `path` (str), `search_text` (str), `replace_text` (str) |
 | `rename` | Moves or renames a path. | `origin` (str), `destination` (str) |
@@ -39,7 +39,7 @@ This document provides a comprehensive specification of all tools available to t
 | Tool | Description | Arguments |
 | :--- | :--- | :--- |
 | `diff` | Shows differences for a specific file. | `path` (str) |
-| `difference` | Shows all changes in the repository. | None |
+
 | `patch` | Apply a git patch. | `patch` (str) |
 | `remote` | Gets the current GitHub repo name. | None |
 

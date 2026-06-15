@@ -5,7 +5,7 @@ This document serves as the definitive reference for the tools available to the 
 ### 📁 File System & Navigation
 - **Reading**: `read`, `tree`.
 - **Writing/Editing**: `write`, `replace`, `concat`.
-- **Management**: `delete`, `rename`, `copy`, `restore`.
+- **Management**: `remove`, `rename`, `copy`, `restore`.
 - **Navigation**: `list`.
 
 ### 🔍 Search & Analysis
