@@ -134,11 +134,11 @@ export function generateSystemInstruction(availableToolNames) {
       const args =
         t[2] && typeof t[2] === "object"
           ? Object.entries(t[2])
-              .map(([k, v]) => `${k} (${v})`)
-              .join(", ")
+              .map(([k, v]) => `${k}`)
+              .join(",")
           : "data";
       const returns = t[1].split(". ")[0] || "status";
-      return `${canonicalName}(${args}): returns ${returns}`;
+      return `${canonicalName}(${args}) ${returns}`;
     })
     .join("\n");
 
