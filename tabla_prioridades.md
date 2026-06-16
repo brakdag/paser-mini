@@ -6,7 +6,7 @@
 | Componente | Problema Crítico | Impacto | Rating |
 |---|---|---|---|
 | `schemaValidator.js` | I/O Sincrónico en cada validación | Latencia extrema / Bloqueo | F |
-| `historyManager.js` | Log-as-Memory / Carga total de archivo | Riesgo de OOM (Crash) | F |
+
 | `logger.js` | `appendFileSync` sistémico | Jitter y Latencia | F |
 | `SessionLogger.js` | `appendFileSync` sistémico | Bloqueo de Event Loop | F |
 | `configManager.js` | `readFileSync`/`writeFileSync` | Bloqueo de Event Loop | F |

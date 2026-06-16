@@ -5,7 +5,6 @@ import RepetitionDetector from "./repetitionDetector.js";
 import logger from "./logger.js";
 import ConfigManager from "./configManager.js";
 import TurnProcessor from "./turnProcessor.js";
-import HistoryManager from "./historyManager.js";
 import ProviderManager from "../infrastructure/providerManager.js";
 
 class ChatManager {
@@ -52,7 +51,6 @@ class ChatManager {
       ui,
       this.repetitionDetector,
     );
-    this.historyManager = new HistoryManager(assistant, ui, this.configManager);
 
     this.ui.agentNickname = this.configManager.get(
       "agent_nickname",
@@ -240,3 +238,4 @@ ${welcomeMsg}`;
 }
 
 export default ChatManager;
+
