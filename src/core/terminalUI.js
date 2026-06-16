@@ -177,7 +177,6 @@ class TerminalUI {
   getLogOpenedString() {
     const now = new Date();
     const datePart = now.toDateString();
-    const timePart = now.toTimeString().split(" ")[0];
     const [dayName, month, day, year] = datePart.split(" ");
     return `--- Log ${month} ${day} ${year} San Rafael Mendoza Argentina resumed from ./log/session.log`;
   }
