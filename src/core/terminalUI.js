@@ -17,8 +17,8 @@ class TerminalUI {
     this.agentNickname = "paser_mini";
     this.userNickname = "user";
     this.renderingMode = "IRC";
-    
-        this.bashEnabled = false;
+
+    this.bashEnabled = false;
   }
 
   setRenderingMode(mode) {
@@ -58,13 +58,23 @@ class TerminalUI {
 
     const renderedText = renderer.formatMarkdown(trimmedText);
 
-    if (trimmedText.startsWith("---") || trimmedText.startsWith("***") || trimmedText.startsWith("-!-")) {
+    if (
+      trimmedText.startsWith("---") ||
+      trimmedText.startsWith("***") ||
+      trimmedText.startsWith("-!-")
+    ) {
       const formatted = `[${IRCFormatter.getTimestamp()}] ${trimmedText}`;
-      process.stdout.write(`${chalk.white(`[${IRCFormatter.getTimestamp()}]`)} ${renderedText}\n`);
+      process.stdout.write(
+        `${chalk.white(`[${IRCFormatter.getTimestamp()}]`)} ${renderedText}\n`,
+      );
       this.writeToLog(formatted);
     } else {
       const formatted = IRCFormatter.formatMessage(nickname, trimmedText);
-      const terminalMsg = IRCFormatter.formatTerminalMessage(nickname, renderedText, this.agentNickname);
+      const terminalMsg = IRCFormatter.formatTerminalMessage(
+        nickname,
+        renderedText,
+        this.agentNickname,
+      );
       process.stdout.write(`${terminalMsg}\n`);
       this.writeToLog(formatted);
     }
@@ -118,17 +128,19 @@ class TerminalUI {
     const nameColor = chalk.cyan;
     const statusIcon = success ? "✓" : "✗";
     const statusColor = success ? chalk.green : chalk.red;
-    
+
     const timestamp = IRCFormatter.getTimestamp();
     const prefix = `[${timestamp}] <${nameColor(this.agentNickname)}>`;
     const finalMsg = `${prefix} * ${name} (${detail}) ${statusColor(statusIcon)}`;
     console.log(finalMsg);
-    
+
     const plainStatus = success ? "✓" : "✗";
     const plainPrefix = `[${timestamp}] <${this.agentNickname}>`;
     if (this.renderingMode === "FOUNTAIN") {
       const cleanToolLog = `${name} (${detail}) ${plainStatus}`;
-      this.writeToLog(renderer.renderFountain("system", `* ACTION: ${cleanToolLog}`));
+      this.writeToLog(
+        renderer.renderFountain("system", `* ACTION: ${cleanToolLog}`),
+      );
     } else {
       this.writeToLog(`${plainPrefix} * ${name} (${detail}) ${plainStatus}`);
     }
@@ -167,7 +179,7 @@ class TerminalUI {
     const datePart = now.toDateString();
     const timePart = now.toTimeString().split(" ")[0];
     const [dayName, month, day, year] = datePart.split(" ");
-    return `--- Log opened ${dayName} ${month} ${day} ${timePart} ${year} resumed from ./log/session.log`;
+    return `--- Log ${month} ${day} ${year} San Rafael Mendoza Argentina resumed from ./log/session.log`;
   }
 
   displayLogOpened() {
