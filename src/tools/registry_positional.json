@@ -130,6 +130,5 @@
   ["ast", "Analyze JavaScript AST.", { "path": "string", "query": "string" }],
   ["metrics", "Get current process memory and CPU usage.", {}],
   ["snapshot", "Create a V8 heap snapshot", { "path": "string" }],
-  ["reset", "Resets the conversation context", { "user_message": "string" }],
-  ["real", "Executes a high-privilege system action", { "action": "string" }]
+  ["reset", "Resets the conversation context", { "user_message": "string" }]
 ]

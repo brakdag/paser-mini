@@ -21,8 +21,7 @@ const MODULE_MAP = {
   webTools: "./webTools.js",
   evalTools: "./evalTools.js",
   astTools: "./astTools.js",
-  perfTools: "./perfTools.js",
-  mockTools: "./mockTools.js",
+  perfTools: "./perfTools.js"
 };
 
 let toolCache = {};
@@ -110,7 +109,6 @@ export const AVAILABLE_TOOLS = {
   metrics: async (args) => (await getTool("perfTools", "metrics"))(args),
   snapshot: async (args) => (await getTool("perfTools", "snapshot"))(args),
   img: async (args) => (await getTool("utilTools", "seeImage"))(args),
-  real: async (args) => (await getTool("mockTools", "realAction"))(args),
   reset: async (args) => (await getTool("systemTools", "reset"))(args),
   reloadTools: async () => {
     toolCache = {};
