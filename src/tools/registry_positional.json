@@ -6,14 +6,14 @@
   ],
   [
     "write",
-    "Write content to file. Returns OK on success.",
+    "Write content to file. Returns OK on success after write check ESLint.",
     { "path": "string", "content": "string" }
   ],
   ["remove", "Remove file. Returns OK on success.", { "path": "string" }],
   ["list", "List directory contents", { "path": "string" }],
   [
     "replace",
-    "Search and replace string.",
+    "Search and replace string after replace check ESLint",
     { "path": "string", "search_text": "string", "replace_text": "string" }
   ],
   ["analysis", "Run static analysis for JS/TS codebase.", { "path": "string" }],
