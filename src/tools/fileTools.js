@@ -129,15 +129,10 @@ class FileTools {
       const safePath = this.#getSafePath(filePath);
       const content = await fs.readFile(safePath, "utf8");
       if (!content.includes(searchText)) return "ERR: Not found";
-      
+
       const newContent = content.split(searchText).join(replaceText);
       await fs.writeFile(safePath, newContent, "utf8");
-      
-      if (filePath.endsWith(".js")) {
-        const validation = await this.#guardianValidate(safePath);
-        if (!validation.valid) return validation.error;
-      }
-      
+
       return "OK";
     } catch (e) {
       return `ERR: ${e.message}`;

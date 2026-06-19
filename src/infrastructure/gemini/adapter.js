@@ -142,9 +142,9 @@ class GeminiAdapter extends BaseAdapter {
         }
         return [{ text: m === undefined ? "" : JSON.stringify(m) }];
       });
-    } else if (typeof content === "string") {
+    } if (typeof content === "string") {
       return [{ text: content }];
-    } else if (
+    } if (
       content &&
       typeof content === "object" &&
       content.mime_type &&
