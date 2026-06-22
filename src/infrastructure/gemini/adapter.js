@@ -18,7 +18,7 @@ class GeminiAdapter extends BaseAdapter {
     super(ui, configManager, userNickname, agentNickname);
     this.apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     this.history = [];
-    this.currentModel = "gemini-2.0-flash";
+    this.currentModel = "models/gemma-4-26b-a4b-it";
     this.systemInstruction = null;
     this.temperature = 0.7;
     this.lastPayload = null;
@@ -85,23 +85,26 @@ class GeminiAdapter extends BaseAdapter {
   _buildPayload() {
     const contents = this.history.map((c) => {
       const role = c.role === "server" ? "user" : c.role;
-      const nickname = role === "user" ? this.ui.userNickname : this.ui.agentNickname;
-      
-      const parts = c.parts.map(p => {
-        if (p && typeof p === 'object' && p.inline_data) {
+      const nickname =
+        role === "user" ? this.ui.userNickname : this.ui.agentNickname;
+
+      const parts = c.parts.map((p) => {
+        if (p && typeof p === "object" && p.inline_data) {
           return p;
         }
 
         let textContent;
-        if (typeof p === 'object' && p.text) {
+        if (typeof p === "object" && p.text) {
           textContent = p.text;
-        } else if (typeof p === 'string') {
+        } else if (typeof p === "string") {
           textContent = p;
         } else {
           textContent = JSON.stringify(p);
         }
-        
-        return { text: IRCFormatter.formatMessage(nickname, textContent, c.timestamp) };
+
+        return {
+          text: IRCFormatter.formatMessage(nickname, textContent, c.timestamp),
+        };
       });
 
       return { role, parts };
@@ -142,9 +145,11 @@ class GeminiAdapter extends BaseAdapter {
         }
         return [{ text: m === undefined ? "" : JSON.stringify(m) }];
       });
-    } if (typeof content === "string") {
+    }
+    if (typeof content === "string") {
       return [{ text: content }];
-    } if (
+    }
+    if (
       content &&
       typeof content === "object" &&
       content.mime_type &&
@@ -253,9 +258,7 @@ class GeminiAdapter extends BaseAdapter {
       const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${this.apiKey}`;
       const response = await this.client.get(url);
       const { data } = response;
-      return data.models
-        .filter((m) => m.name.includes("gemini") || m.name.includes("gemma"))
-        .map((m) => m.name);
+      return data.models.map((m) => m.name);
     } catch (e) {
       console.error(`Error fetching models: ${e.message}`);
       return ["models/gemini-2.0-flash", "models/gemini-1.5-flash"];
@@ -286,3 +289,4 @@ class GeminiAdapter extends BaseAdapter {
 }
 
 export default GeminiAdapter;
+
