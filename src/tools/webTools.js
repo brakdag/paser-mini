@@ -18,7 +18,7 @@ export default class WebTools {
     "Sec-Fetch-User": "?1",
   };
 
-  async searchWeb({ query }) {
+  async searchWeb(query) {
     const encodedQuery = encodeURIComponent(query);
     const searchUrls = [
       `https://lite.duckduckgo.com/lite/?q=${encodedQuery}`,
@@ -57,7 +57,7 @@ export default class WebTools {
     }
   }
 
-  async renderWeb({ url }) {
+  async renderWeb(url) {
     try {
       const output = execSync(`elinks -dump ${url}`, {
         encoding: "utf8",

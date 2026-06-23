@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs/promises";
 
 export default class SearchTools {
-  async searchFilesPatternFixed({ pattern }) {
+  async searchFilesPatternFixed(pattern) {
     try {
       const results = [];
       const walk = async (dir) => {
@@ -36,43 +36,51 @@ export default class SearchTools {
     const specialChars = ".+^${}()|[]\\";
     for (let i = 0; i < glob.length; i += 1) {
       const char = glob[i];
-      if (char === '*') {
-        result += '.*';
-      } else if (char === '?') {
-        result += '.';
+      if (char === "*") {
+        result += ".*";
+      } else if (char === "?") {
+        result += ".";
       } else if (specialChars.includes(char)) {
         result += `\\${char}`;
       } else {
         result += char;
       }
     }
-    return new RegExp(`^${result}$`, 'i');
+    return new RegExp(`^${result}$`, "i");
   }
 
-  async searchTextGlobal({ query }) {
+  async searchTextGlobal(query) {
     if (!query || query.trim() === "") return JSON.stringify([]);
-    
+
     return new Promise((resolve) => {
       const rootPath = process.cwd();
-      const child = spawn('grep', ['-rIn', '--exclude-dir=.git', '--exclude-dir=node_modules', '--exclude-dir=log', '--', query, rootPath]);
-      
-      let stdoutData = '';
+      const child = spawn("grep", [
+        "-rIn",
+        "--exclude-dir=.git",
+        "--exclude-dir=node_modules",
+        "--exclude-dir=log",
+        "--",
+        query,
+        rootPath,
+      ]);
 
-      child.stdout.on('data', (data) => {
+      let stdoutData = "";
+
+      child.stdout.on("data", (data) => {
         stdoutData += data.toString();
-        const currentLines = stdoutData.split('\n').filter(Boolean).length;
-        
+        const currentLines = stdoutData.split("\n").filter(Boolean).length;
+
         if (currentLines >= 10) {
-          child.kill('SIGKILL');
+          child.kill("SIGKILL");
           resolve(this.#parseGrepOutput(stdoutData, rootPath));
         }
       });
 
-      child.stderr.on('data', (_data) => {
+      child.stderr.on("data", (_data) => {
         // Grep returns 1 if no matches are found, which is not an error
       });
 
-      child.on('close', (code) => {
+      child.on("close", (code) => {
         if (code === 1) {
           return resolve(JSON.stringify([]));
         }
@@ -80,7 +88,7 @@ export default class SearchTools {
       });
 
       setTimeout(() => {
-        child.kill('SIGKILL');
+        child.kill("SIGKILL");
         resolve(this.#parseGrepOutput(stdoutData, rootPath));
       }, 80000);
     });
