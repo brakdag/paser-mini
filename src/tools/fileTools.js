@@ -66,11 +66,12 @@ class FileTools {
 
   async writeFile({ path: filePath, content }) {
     try {
+      const newContent = content.replaceAll("\\`", "`");
       if (Buffer.byteLength(content, "utf8") > FILE_SIZE_LIMIT)
         return "ERR: Content too large";
       const safePath = this.#getSafePath(filePath);
       await fs.mkdir(path.dirname(safePath), { recursive: true });
-      await fs.writeFile(safePath, content, "utf8");
+      await fs.writeFile(safePath, newContent, "utf8");
       if (!filePath.endsWith(".js")) return "OK";
       const validation = await this.#guardianValidate(safePath);
       if (!validation.valid) {
