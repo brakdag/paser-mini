@@ -23,49 +23,56 @@ class ExecutionEngine {
     this.stopRequested = false;
 
     this._detailMappers = {
-      "read": (a) => a.path ? path.basename(a.path) : "unknown",
-      "write": (a) => a.path ? path.basename(a.path) : "unknown",
-      "rm": (a) => a.path ? path.basename(a.path) : "unknown",
-      "ls": (a) => a.path || "root",
-      "replace": (a) => a.path ? path.basename(a.path) : "unknown",
-      "rename": (a) => (a.origin && a.destination) ? `${path.basename(a.origin)} -> ${path.basename(a.destination)}` : "unknown",
-      "copy": (a) => (a.origin && a.destination) ? `${path.basename(a.origin)} -> ${path.basename(a.destination)}` : "unknown",
-      "concat": (a) => a.destination ? path.basename(a.destination) : "unknown",
-      "analysis": (a) => a.path ? path.basename(a.path) : "unknown",
-      "eslint": (a) => a.path ? path.basename(a.path) : "unknown",
-      "doc": (a) => a.path ? `Docs: ${path.basename(a.path)}` : "unknown",
-      "execute": (a) => a.command ? a.command.substring(0, 50) : "bash",
-      "grep": (a) => a.query || "search",
-      "glob": (a) => a.pattern || "pattern",
-      "valide": (a) => a.json_string ? `len: ${a.json_string.length}` : "json",
-      "nickname": (a) => a.newNickname || "nickname",
-      "push": () => "insight",
-      "token": () => "tokens",
-      "tree": () => "tree",
-      "diff": (a) => a.path ? path.basename(a.path) : "unknown",
-      "restore": (a) => a.path ? path.basename(a.path) : "unknown",
-      "difference": () => "all",
-      "remote": () => "url",
-      "patch": () => "git patch",
-      "structure": (a) => a.file_path ? path.basename(a.file_path) : "unknown",
-      "node": (a) => a.file_path ? path.basename(a.file_path) : "unknown",
-      "arrange": (a) => a.file_path ? path.basename(a.file_path) : "unknown",
-      "update": (a) => a.file_path ? path.basename(a.file_path) : "unknown",
-      "list": (a) => a.repo || "repo",
-      "create": (a) => a.title || "issue",
-      "edit": (a) => a.issue_number ? `#${a.issue_number}` : "issue",
-      "close": (a) => a.issue_number ? `#${a.issue_number}` : "issue",
-      "post": (a) => a.issue_number ? `#${a.issue_number}` : "issue",
-      "notify": (a) => a.message ? a.message.substring(0, 30) : "notify",
-      "scene": (a) => a.scene || "scene",
-      "jszip": (a) => a.filePath ? path.basename(a.filePath) : "zip",
-      "bin": (a) => a.filePath ? path.basename(a.filePath) : "binary",
-      "search": (a) => a.query || "web",
-      "url": (a) => a.url || "url",
-      "run": () => "sandbox",
-      "img": (a) => a.path ? path.basename(a.path) : "image",
-      "reset": (a) => a.user_message ? a.user_message.substring(0, 30) : "reset",
-      "real": (a) => a.action || "action",
+      read: (a) => (a.path ? path.basename(a.path) : "unknown"),
+      write: (a) => (a.path ? path.basename(a.path) : "unknown"),
+      rm: (a) => (a.path ? path.basename(a.path) : "unknown"),
+      ls: (a) => a.path || "root",
+      replace: (a) => (a.path ? path.basename(a.path) : "unknown"),
+      rename: (a) =>
+        a.origin && a.destination
+          ? `${path.basename(a.origin)} -> ${path.basename(a.destination)}`
+          : "unknown",
+      copy: (a) =>
+        a.origin && a.destination
+          ? `${path.basename(a.origin)} -> ${path.basename(a.destination)}`
+          : "unknown",
+      concat: (a) => (a.destination ? path.basename(a.destination) : "unknown"),
+      analysis: (a) => (a.path ? path.basename(a.path) : "unknown"),
+      eslint: (a) => (a.path ? path.basename(a.path) : "unknown"),
+      doc: (a) => (a.path ? `Docs: ${path.basename(a.path)}` : "unknown"),
+      execute: (a) => (a.command ? a.command.substring(0, 50) : "bash"),
+      grep: (a) => a.query || "search",
+      glob: (a) => a.pattern || "pattern",
+      valide: (a) => (a.json_string ? `len: ${a.json_string.length}` : "json"),
+      nickname: (a) => a.newNickname || "nickname",
+      push: () => "insight",
+      token: () => "tokens",
+      tree: () => "tree",
+      diff: (a) => (a.path ? path.basename(a.path) : "unknown"),
+      restore: (a) => (a.path ? path.basename(a.path) : "unknown"),
+      difference: () => "all",
+      remote: () => "url",
+      patch: () => "git patch",
+      structure: (a) => (a.file_path ? path.basename(a.file_path) : "unknown"),
+      node: (a) => (a.file_path ? path.basename(a.file_path) : "unknown"),
+      arrange: (a) => (a.file_path ? path.basename(a.file_path) : "unknown"),
+      update: (a) => (a.file_path ? path.basename(a.file_path) : "unknown"),
+      list: (a) => a.repo || "repo",
+      create: (a) => a.title || "issue",
+      edit: (a) => (a.issue_number ? `#${a.issue_number}` : "issue"),
+      close: (a) => (a.issue_number ? `#${a.issue_number}` : "issue"),
+      post: (a) => (a.issue_number ? `#${a.issue_number}` : "issue"),
+      notify: (a) => (a.message ? a.message.substring(0, 30) : "notify"),
+      scene: (a) => a.scene || "scene",
+      jszip: (a) => (a.filePath ? path.basename(a.filePath) : "zip"),
+      bin: (a) => (a.filePath ? path.basename(a.filePath) : "binary"),
+      search: (a) => a.query || "web",
+      url: (a) => a.url || "url",
+      run: () => "sandbox",
+      img: (a) => (a.path ? path.basename(a.path) : "image"),
+      reset: (a) =>
+        a.user_message ? a.user_message.substring(0, 30) : "reset",
+      real: (a) => a.action || "action",
     };
   }
 
@@ -83,14 +90,15 @@ class ExecutionEngine {
       } else if (!this.toolTracker.recordAttempt(toolName, args)) {
         result = `Tool loop detected: ${toolName} called too many times.`;
       } else if (toolName === "execute" && !this.ui.bashEnabled) {
-        result = "ERR: Bash access is disabled for security. Please use /enableBash to activate it.";
+        result =
+          "ERR: Bash access is disabled for security. Please use /enableBash to activate it.";
       } else if (!(toolName in this.tools)) {
         result = `Unknown tool: ${toolName}`;
       } else {
         try {
           const mapper = this._detailMappers[toolName] ?? (() => "no details");
           detail = mapper(args);
-        } catch (e) {
+        } catch {
           detail = "error mapping details";
         }
 
@@ -99,7 +107,8 @@ class ExecutionEngine {
 
         const toolFunc = this.tools[toolName];
         result = await toolFunc(args);
-        success = typeof result === 'string' ? !result.startsWith('ERR:') : true;
+        success =
+          typeof result === "string" ? !result.startsWith("ERR:") : true;
       }
     } catch (e) {
       result = `ERR: ${e.message}`;
@@ -119,9 +128,10 @@ class ExecutionEngine {
     return {
       response: this.toolParser.formatToolResponse(detail, result, success),
       result,
-      success
+      success,
     };
   }
 }
 
 export default ExecutionEngine;
+

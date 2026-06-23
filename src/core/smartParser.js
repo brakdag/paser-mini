@@ -1,4 +1,3 @@
-
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -16,23 +15,33 @@ class SmartToolParser {
     this.corrector = AutoCorrector;
     const regPath = path.join(__dirname, "../tools/registry_positional.json");
     this.positionalRegistry = JSON.parse(fs.readFileSync(regPath, "utf8"));
-    this.toolMap = Object.fromEntries(this.positionalRegistry.map(t => [t[0], t]));
+    this.toolMap = Object.fromEntries(
+      this.positionalRegistry.map((t) => [t[0], t]),
+    );
   }
 
   _castValue(val) {
     if (!val) return null;
     const trimmed = val.trim();
-    if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+    if (
+      (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+      (trimmed.startsWith("'") && trimmed.endsWith("'"))
+    ) {
       return trimmed.substring(1, trimmed.length - 1);
     }
-    if (!isNaN(trimmed) && trimmed !== "") return Number(trimmed);
+    if (!Number.isNaN(Number(trimmed)) && trimmed !== "")
+      return Number(trimmed);
     if (trimmed === "true") return true;
     if (trimmed === "false") return false;
     if (trimmed === "null") return null;
     try {
-      if (trimmed.startsWith("[") && trimmed.endsWith("]")) return JSON.parse(trimmed.replace(/'/g, '"'));
-      if (trimmed.startsWith("{") && trimmed.endsWith("}")) return JSON.parse(trimmed.replace(/'/g, '"'));
-    } catch { /* empty */ }
+      if (trimmed.startsWith("[") && trimmed.endsWith("]"))
+        return JSON.parse(trimmed.replace(/'/g, '"'));
+      if (trimmed.startsWith("{") && trimmed.endsWith("}"))
+        return JSON.parse(trimmed.replace(/'/g, '"'));
+    } catch {
+      /* empty */
+    }
     return trimmed;
   }
 
@@ -57,10 +66,10 @@ class SmartToolParser {
           inQuote = char;
           current += char;
         } else if (char === "[ " || char === "{") {
-          depth++;
+          depth += 1;
           current += char;
         } else if (char === "]" || char === "}") {
-          depth--;
+          depth -= 1;
           current += char;
         } else if (char === "," && depth === 0) {
           args.push(this._castValue(current.trim()));
@@ -77,13 +86,19 @@ class SmartToolParser {
       let finalArgs = {};
       if (typeof schema === "object" && schema !== null) {
         const keys = Object.keys(schema);
-        args.forEach((val, i) => { if (keys[i]) finalArgs[keys[i]] = val; });
+        args.forEach((val, i) => {
+          if (keys[i]) finalArgs[keys[i]] = val;
+        });
       } else {
         finalArgs = { data: args.join(" ") };
       }
 
       const validation = this.validator.validate(name, finalArgs);
-      if (!validation.isValid) return { data: null, error: `Validation: ${validation.errors.join("; ")}` };
+      if (!validation.isValid)
+        return {
+          data: null,
+          error: `Validation: ${validation.errors.join("; ")}`,
+        };
       return { data: { name, args: finalArgs }, error: null };
     } catch (e) {
       return { data: null, error: `Parse error: ${e.message}` };
@@ -106,15 +121,19 @@ class SmartToolParser {
 
   formatToolResponse(context, data) {
     const header = context ? `[${context}]` : "[no details]";
-    const content = typeof data === 'object' ? JSON.stringify(data) : data;
+    const content = typeof data === "object" ? JSON.stringify(data) : data;
     return `ø${header} ${content}ć`;
   }
 
   cleanResponse(text) {
     if (!text) return "";
     // Tolerant cleaning: removes tool calls even if the closing delimiter is missing
-    return text.replace(/Ə[\s\S]*?(?:ə|$)|ø[\s\S]*?ć|<[^>]+>.*?<\/[^>]+>/gs, "");
+    return text.replace(
+      /Ə[\s\S]*?(?:ə|$)|ø[\s\S]*?ć|<[^>]+>.*?<\/[^>]+>/gs,
+      "",
+    );
   }
 }
 
 export default SmartToolParser;
+
