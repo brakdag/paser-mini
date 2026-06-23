@@ -5,7 +5,7 @@ import path from "path";
 export default class NotificationTools {
   #execPromise = promisify(exec);
 
-  async notifyUser({ message }) {
+  async notifyUser(message) {
     try {
       const rootPath = process.cwd();
       const soundPath = path.join(rootPath, "src/assets/type.wav");
