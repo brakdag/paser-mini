@@ -50,7 +50,7 @@ class FavoriteCommands {
         } else {
           ui.displayError("Invalid index.");
         }
-      } catch (e) {
+      } catch {
         ui.displayError("Usage: /fav -<index>");
       }
       return true;
@@ -86,7 +86,7 @@ class FavoriteCommands {
       } else {
         ui.displayError("Favorite index not found.");
       }
-    } catch (e) {
+    } catch {
       ui.displayError("Usage: /fav <index> or /fav+ or /fav -<index>");
     }
     return true;

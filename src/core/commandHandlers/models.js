@@ -43,7 +43,7 @@ class ModelCommands {
       );
 
       ui.displayInfo(`Model changed to ${modelName} | Temperature: ${newTemp}`);
-    } catch (e) {
+    } catch {
       ui.displayError("Invalid model index or temperature.");
     }
     return true;

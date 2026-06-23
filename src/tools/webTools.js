@@ -34,7 +34,7 @@ export default class WebTools {
         if (!data.includes("captcha") && !data.includes("anomaly-modal") && !data.includes("Robot Check")) {
           return data;
         }
-      } catch (e) {
+      } catch {
         // Silently fail and try next provider
       }
     }
@@ -42,7 +42,7 @@ export default class WebTools {
     // Final fallback: Use elinks for the primary search engine
     try {
       return execSync(`elinks -dump ${searchUrls[0]}`, { encoding: "utf8", timeout: 20000 });
-    } catch (e) {
+    } catch {
       return `ERR: All search methods failed: ${e.message}`;
     }
   }
@@ -51,7 +51,7 @@ export default class WebTools {
     try {
       const output = execSync(`elinks -dump ${url}`, { encoding: "utf8", timeout: 30000 });
       return output;
-    } catch (e) {
+    } catch {
       return `ERR: Rendering failed: ${e.message}`;
     }
   }

@@ -90,7 +90,7 @@ class ExecutionEngine {
         try {
           const mapper = this._detailMappers[toolName] ?? (() => "no details");
           detail = mapper(args);
-        } catch (e) {
+        } catch {
           detail = "error mapping details";
         }
 
@@ -101,7 +101,7 @@ class ExecutionEngine {
         result = await toolFunc(args);
         success = typeof result === 'string' ? !result.startsWith('ERR:') : true;
       }
-    } catch (e) {
+    } catch {
       result = `ERR: ${e.message}`;
       success = false;
     }

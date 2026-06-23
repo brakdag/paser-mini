@@ -32,7 +32,7 @@ class SmartToolParser {
     try {
       if (trimmed.startsWith("[") && trimmed.endsWith("]")) return JSON.parse(trimmed.replace(/'/g, '"'));
       if (trimmed.startsWith("{") && trimmed.endsWith("}")) return JSON.parse(trimmed.replace(/'/g, '"'));
-    } catch (e) {}
+    } catch { /* empty */ }
     return trimmed;
   }
 
@@ -48,7 +48,7 @@ class SmartToolParser {
       let depth = 0;
       let inQuote = null;
 
-      for (let i = 0; i < argsRaw.length; i++) {
+      for (let i = 0; i < argsRaw.length; i += 1) {
         const char = argsRaw[i];
         if (inQuote) {
           if (char === inQuote && argsRaw[i - 1] !== "\\") inQuote = null;

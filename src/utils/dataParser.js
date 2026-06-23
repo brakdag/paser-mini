@@ -14,7 +14,7 @@ export function parseData(data) {
 
   try {
     return JSON.parse(data);
-  } catch (e) {
+  } catch {
     throw new ParserError(
       "The data format is invalid. Please check that it is a valid JSON structure.",
     );

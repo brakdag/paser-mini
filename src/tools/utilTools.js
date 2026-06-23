@@ -12,7 +12,7 @@ export default class UtilTools {
     try {
       JSON.parse(jsonString);
       return "El JSON es valido.";
-    } catch (e) {
+    } catch {
       return `ERR: JSON invalido: ${e.message}`;
     }
   }
@@ -23,7 +23,7 @@ export default class UtilTools {
       const oldNickname = config.get("agent_nickname", "paser_mini");
       config.save("agent_nickname", newNickname);
       return `*** ${oldNickname} is now known as ${newNickname}`;
-    } catch (e) {
+    } catch {
       return `ERR: Failed to update nickname: ${e.message}`;
     }
   }
@@ -69,7 +69,7 @@ export default class UtilTools {
     } finally {
       try {
         await fs.unlink(tempFile);
-      } catch (e) {
+      } catch {
         // Ignore unlink errors
       }
     }

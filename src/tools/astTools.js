@@ -58,7 +58,7 @@ export class AstTools {
             token = tokenizer.getToken();
           }
           return JSON.stringify({ count: results.length, limit, strategy: "tokenizer_fast_path", results }, null, 2);
-        } catch (e) { /* Fallback to AST */ }
+        } catch { /* Fallback to AST */ }
       }
       const ast = acorn.parse(code, { ecmaVersion: 'latest', sourceType: 'module' });
       this.walk(ast, query, results, limit);

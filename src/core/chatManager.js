@@ -174,7 +174,7 @@ ${welcomeMsg}`;
 
     while (!this.stopRequested) {
       try {
-        // eslint-disable-next-line no-await-in-loop
+         
         const input = await this.ui.requestInput();
         if (input) {
           if (!this.logOpened && this.systemInstruction) {
@@ -188,11 +188,11 @@ ${welcomeMsg}`;
             this.assistant.injectMessage("server", formattedLog);
           }
 
-          // eslint-disable-next-line no-await-in-loop
+           
           const handled = await this.commandHandler.handle(input);
           if (!handled) {
             this.ui.displayChatMessage(this.ui.userNickname, input);
-            // eslint-disable-next-line no-await-in-loop
+             
             await this.processTurn(input);
           }
         }
