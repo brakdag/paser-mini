@@ -43,7 +43,7 @@ export default [
       "no-underscore-dangle": "off",
       "class-methods-use-this": "off",
       "no-console": "off",
-      "no-param-reassign": "off",
+      "no-param-reassign": "error",
       "no-cond-assign": "error",
       "import/no-extraneous-dependencies": "error",
     },

@@ -83,8 +83,10 @@ class ChatManager {
     }
   }
 
-  setTemperature(temp) {
-    this.temperature = temp;
+  setTemperature() {}
+
+  setCurrentChannel(channel) {
+    this.currentChannel = channel;
   }
 
   requestExit() {
@@ -174,7 +176,6 @@ ${welcomeMsg}`;
 
     while (!this.stopRequested) {
       try {
-         
         const input = await this.ui.requestInput();
         if (input) {
           if (!this.logOpened && this.systemInstruction) {
@@ -188,11 +189,10 @@ ${welcomeMsg}`;
             this.assistant.injectMessage("server", formattedLog);
           }
 
-           
           const handled = await this.commandHandler.handle(input);
           if (!handled) {
             this.ui.displayChatMessage(this.ui.userNickname, input);
-             
+
             await this.processTurn(input);
           }
         }
@@ -238,4 +238,3 @@ ${welcomeMsg}`;
 }
 
 export default ChatManager;
-

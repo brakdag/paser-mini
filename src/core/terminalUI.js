@@ -25,8 +25,10 @@ class TerminalUI {
     this.renderingMode = mode;
   }
 
-  setBashEnabled(enabled) {
-    this.bashEnabled = enabled;
+  setBashEnabled() {}
+
+  setUserNickname(nick) {
+    this.userNickname = nick;
   }
 
   writeToLog(text) {

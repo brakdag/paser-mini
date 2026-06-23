@@ -42,7 +42,7 @@ class InterfaceCommands {
     const oldNick = ui.userNickname;
     chatManager.configManager.save("user_nickname", newNick);
      
-    ui.userNickname = newNick;
+    ui.setUserNickname(newNick);
     chatManager.assistant.updateNicknames(newNick, ui.agentNickname);
     ui.displaySystemMessage(`${oldNick} changes his alias to ${newNick}`);
     const actionMsg = `changes his alias to ${newNick}`;
@@ -88,7 +88,7 @@ class InterfaceCommands {
       return true;
     }
      
-    chatManager.currentChannel = channel;
+    chatManager.setCurrentChannel(channel);
     if (ui.renderingMode === "FOUNTAIN") {
       ui.displaySystemMessage(`Scene changed to: ${channel}`);
       await chatManager.processTurn(`* SCENE: ${channel} *`);
