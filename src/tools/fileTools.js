@@ -130,7 +130,7 @@ class FileTools {
       const content = await fs.readFile(safePath, "utf8");
       if (!content.includes(searchText)) return "ERR: Not found";
 
-      const newContent = content.split(searchText).join(replaceText);
+      const newContent = content.replaceAll(searchText, replaceText);
       await fs.writeFile(safePath, newContent, "utf8");
 
       return "OK";
