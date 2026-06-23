@@ -57,15 +57,15 @@ export const GITHUB_SYSTEM_INSTRUCTION =
   "4. Transparency: Be explicit about actions.";
 
 export const AVAILABLE_TOOLS = {
-  read: async (args) => (await getTool("fileTools", "readFile"))(args),
-  write: async (args) => (await getTool("fileTools", "writeFile"))(args),
-  remove: async (args) => (await getTool("fileTools", "removeFile"))(args),
-  mkdir: async (args) => (await getTool("fileTools", "createDir"))(args),
+  read: async (...args) => (await getTool("fileTools", "read"))(...args),
+  write: async (...args) => (await getTool("fileTools", "write"))(...args),
+  remove: async (...args) => (await getTool("fileTools", "remove"))(...args),
+  mkdir: async (...args) => (await getTool("fileTools", "mkdir"))(...args),
   reloadSchemas: async (args) =>
     (await getTool("systemTools", "reloadSchemas"))(args),
   analysis: async (args) => (await getTool("systemTools", "analyzeCode"))(args),
-  list: async (args) => (await getTool("fileTools", "listDir"))(args),
-  replace: async (args) => (await getTool("fileTools", "replaceString"))(args),
+  list: async (...args) => (await getTool("fileTools", "list"))(...args),
+  replace: async (...args) => (await getTool("fileTools", "replace"))(...args),
   eslint: async (args) => (await getTool("systemTools", "lintCode"))(args),
   doc: async (args) => (await getTool("systemTools", "generateDocs"))(args),
   execute: async (args) => (await getTool("systemTools", "executeBash"))(args),
@@ -73,16 +73,16 @@ export const AVAILABLE_TOOLS = {
     (await getTool("searchTools", "searchTextGlobal"))(args),
   glob: async (args) =>
     (await getTool("searchTools", "searchFilesPatternFixed"))(args),
-  rename: async (args) => (await getTool("fileTools", "renamePath"))(args),
-  copy: async (args) => (await getTool("fileTools", "copyFile"))(args),
+  rename: async (...args) => (await getTool("fileTools", "rename"))(...args),
+  copy: async (...args) => (await getTool("fileTools", "copy"))(...args),
   tree: async (args) => (await getTool("gitTools", "getTrackedFiles"))(args),
   valide: async (args) => (await getTool("utilTools", "validateJson"))(args),
   nickname: async (args) => (await getTool("utilTools", "setNickname"))(args),
   push: async (args) => (await getTool("memoryTools", "pushMemory"))(args),
   token: async (args) => (await getTool("memoryTools", "getTokenCount"))(args),
-  diff: async (args) => (await getTool("fileTools", "gitDiff"))(args),
+  diff: async (...args) => (await getTool("gitTools", "gitDiffAll"))(...args),
   restore: async (args) => (await getTool("gitTools", "restoreFile"))(args),
-  concat: async (args) => (await getTool("fileTools", "concatFile"))(args),
+  concat: async (...args) => (await getTool("fileTools", "concat"))(...args),
   structure: async (args) =>
     (await getTool("jsonTools", "getJsonStructure"))(args),
   node: async (args) => (await getTool("jsonTools", "getJsonNode"))(args),
