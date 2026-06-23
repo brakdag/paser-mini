@@ -106,7 +106,11 @@ class ExecutionEngine {
         monitoringStarted = true;
 
         const toolFunc = this.tools[toolName];
-        result = await toolFunc(args);
+        if (this.toolParser.isPositional(toolName)) {
+          result = await toolFunc(...Object.values(args));
+        } else {
+          result = await toolFunc(args);
+        }
         success =
           typeof result === "string" ? !result.startsWith("ERR:") : true;
       }
@@ -134,4 +138,3 @@ class ExecutionEngine {
 }
 
 export default ExecutionEngine;
-

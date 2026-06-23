@@ -15,6 +15,7 @@ class SmartToolParser {
     this.corrector = AutoCorrector;
     const regPath = path.join(__dirname, "../tools/registry_positional.json");
     this.positionalRegistry = JSON.parse(fs.readFileSync(regPath, "utf8"));
+    this.isPositional = (name) => !!this.toolMap[name];
     this.toolMap = Object.fromEntries(
       this.positionalRegistry.map((t) => [t[0], t]),
     );
@@ -136,4 +137,3 @@ class SmartToolParser {
 }
 
 export default SmartToolParser;
-

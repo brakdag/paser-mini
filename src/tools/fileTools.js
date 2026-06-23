@@ -11,18 +11,32 @@ class FileTools {
     if (!filePath.endsWith(".js")) return { valid: true };
     try {
       const { stdout } = await execPromise(
-        `npx eslint ${filePath} --format json`,
+        `npx eslint \${filePath} --format json`,
         { timeout: 30000 },
       );
+      return this.#parseEslintOutput(stdout);
+    } catch (e) {
+      if (e.stdout) {
+        return this.#parseEslintOutput(e.stdout);
+      }
+      return { valid: false, error: `Guardian System Error: \${e.message}` };
+    }
+  }
+
+  #parseEslintOutput(stdout) {
+    try {
       const data = JSON.parse(stdout);
       const errors = data.flatMap((f) =>
         f.messages.filter((m) => m.severity === 2),
       );
       return errors.length === 0
         ? { valid: true }
-        : { valid: false, error: `ESLint found ${errors.length} errors.` };
-    } catch (e) {
-      return { valid: false, error: `Guardian System Error: ${e.message}` };
+        : { valid: false, error: `ESLint found \${errors.length} errors.` };
+    } catch (parseError) {
+      return {
+        valid: false,
+        error: `Guardian Parse Error: \${parseError.message}`,
+      };
     }
   }
 
@@ -33,7 +47,7 @@ class FileTools {
     return resolved;
   }
 
-  async readFile({ path: filePath, tail }) {
+  async readFile(filePath, tail) {
     try {
       const safePath = this.#getSafePath(filePath);
       const stats = await fs.stat(safePath);
@@ -60,11 +74,11 @@ class FileTools {
       if (stats.size > FILE_SIZE_LIMIT) return "ERR: File too large";
       return await fs.readFile(safePath, "utf8");
     } catch (e) {
-      return `ERR: ${e.message}`;
+      return `ERR: \${e.message}`;
     }
   }
 
-  async writeFile({ path: filePath, content }) {
+  async writeFile(filePath, content) {
     try {
       const newContent = content.replaceAll("\\`", "`");
       if (Buffer.byteLength(content, "utf8") > FILE_SIZE_LIMIT)
@@ -79,37 +93,37 @@ class FileTools {
       }
       return "OK";
     } catch (e) {
-      return `ERR: ${e.message}`;
+      return `ERR: \${e.message}`;
     }
   }
 
-  async listDir({ path: dirPath = "." }) {
+  async listDir(dirPath = ".") {
     try {
       return (await fs.readdir(this.#getSafePath(dirPath))).join("\n");
     } catch (e) {
-      return `ERR: ${e.message}`;
+      return `ERR: \${e.message}`;
     }
   }
 
-  async removeFile({ path: filePath }) {
+  async removeFile(filePath) {
     try {
       await fs.rm(this.#getSafePath(filePath), { recursive: true });
       return "OK";
     } catch (e) {
-      return `ERR: ${e.message}`;
+      return `ERR: \${e.message}`;
     }
   }
 
-  async createDir({ path: dirPath }) {
+  async createDir(dirPath) {
     try {
       await fs.mkdir(this.#getSafePath(dirPath), { recursive: true });
       return "OK";
     } catch (e) {
-      return `ERR: ${e.message}`;
+      return `ERR: \${e.message}`;
     }
   }
 
-  async renamePath({ origin, destination }) {
+  async renamePath(origin, destination) {
     try {
       await fs.rename(
         this.#getSafePath(origin),
@@ -117,15 +131,11 @@ class FileTools {
       );
       return "OK";
     } catch (e) {
-      return `ERR: ${e.message}`;
+      return `ERR: \${e.message}`;
     }
   }
 
-  async replaceString({
-    path: filePath,
-    search_text: searchText,
-    replace_text: replaceText,
-  }) {
+  async replaceString(filePath, searchText, replaceText) {
     try {
       const safePath = this.#getSafePath(filePath);
       const content = await fs.readFile(safePath, "utf8");
@@ -136,11 +146,11 @@ class FileTools {
 
       return "OK";
     } catch (e) {
-      return `ERR: ${e.message}`;
+      return `ERR: \${e.message}`;
     }
   }
 
-  async copyFile({ origin, destination }) {
+  async copyFile(origin, destination) {
     try {
       await fs.copyFile(
         this.#getSafePath(origin),
@@ -148,7 +158,7 @@ class FileTools {
       );
       return "OK";
     } catch (e) {
-      return `ERR: ${e.message}`;
+      return `ERR: \${e.message}`;
     }
   }
 }
