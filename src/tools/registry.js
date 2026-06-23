@@ -21,7 +21,7 @@ const MODULE_MAP = {
   webTools: "./webTools.js",
   evalTools: "./evalTools.js",
   astTools: "./astTools.js",
-  perfTools: "./perfTools.js"
+  perfTools: "./perfTools.js",
 };
 
 let toolCache = {};
@@ -132,7 +132,7 @@ export function generateSystemInstruction(availableToolNames) {
       const args =
         t[2] && typeof t[2] === "object"
           ? Object.entries(t[2])
-              .map(([k, v]) => `${k}`)
+              .map(([k]) => `${k}`)
               .join(",")
           : "data";
       const returns = t[1].split(". ")[0] || "status";
