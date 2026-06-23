@@ -129,8 +129,8 @@ class FileTools {
       const safePath = this.#getSafePath(filePath);
       const content = await fs.readFile(safePath, "utf8");
       if (!content.includes(searchText)) return "ERR: Not found";
-
-      const newContent = content.replaceAll(searchText, replaceText);
+      if (content.split(searchText).length > 2) return "ERR: Multiple results";
+      const newContent = content.replace(searchText, replaceText);
       await fs.writeFile(safePath, newContent, "utf8");
 
       return "OK";
