@@ -2,6 +2,7 @@ class ToolAttemptTracker {
   constructor() {
     this.attempts = new Map();
     this.maxAttempts = 100;
+    this.errors = 0;
   }
 
   /**
@@ -33,7 +34,10 @@ class ToolAttemptTracker {
   reset() {
     this.attempts.clear();
   }
+
+  recordFailure() {
+    this.errors += 1;
+  }
 }
 
 export default ToolAttemptTracker;
-
