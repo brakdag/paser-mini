@@ -106,11 +106,22 @@ class TerminalRenderer {
     if (!text) return "";
     let formatted = text;
     const tableRegex = /((?:^\s*\|.*\n?)+)/gm;
-    formatted = formatted.replace(tableRegex, (match) => this.renderTable(match));
-    formatted = formatted.replace(/```([\s\S]*?)```/g, (_, code) => `\n${chalk.gray(code.trim())}\n`);
-    formatted = formatted.replace(/`([^`]+)`/g, (_, code) => chalk.cyan(` ${code} `));
-    formatted = formatted.replace(/\*\*(.*?)\*\*/g, (_, content) => chalk.bold(content));
-    formatted = formatted.replace(/\*(.*?)\*/g, (_, content) => chalk.italic(content));
+    formatted = formatted.replace(tableRegex, (match) =>
+      this.renderTable(match),
+    );
+    formatted = formatted.replace(
+      /```([\s\S]*?)```/g,
+      (_, code) => `\n${chalk.blueBright(code.trim())}\n`,
+    );
+    formatted = formatted.replace(/`([^`]+)`/g, (_, code) =>
+      chalk.cyan(` ${code} `),
+    );
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, (_, content) =>
+      chalk.bold(content),
+    );
+    formatted = formatted.replace(/\*(.*?)\*/g, (_, content) =>
+      chalk.italic(content),
+    );
     return formatted;
   }
 
