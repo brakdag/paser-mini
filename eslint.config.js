@@ -12,6 +12,7 @@ const compat = new FlatCompat({
 
 export default [
   ...compat.extends("airbnb-base"),
+  ...compat.extends("plugin:jsdoc/recommended"),
   prettierConfig,
   {
     languageOptions: {
@@ -46,6 +47,8 @@ export default [
       "no-param-reassign": "error",
       "no-cond-assign": "error",
       "import/no-extraneous-dependencies": "error",
+      "jsdoc/require-param-description": "warn",
+      "jsdoc/require-returns-description": "warn",
     },
   },
 ];
