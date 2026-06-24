@@ -1,4 +1,4 @@
-`import fs from "fs";
+import fs from "fs";
 import path from "path";
 
 class MementoManager {
@@ -16,12 +16,12 @@ class MementoManager {
       .replace("T", " ")
       .substring(0, 19);
     const category = scope || "general";
-    const keyTag = key ? ` [Key: \${key}]` : "";
+    const keyTag = key ? ` [Key: ${key}]` : "";
 
-    const entry = `[ID: \${nextId}] [\${timestamp}] [Rank: 0] <\${category}>\${keyTag} \${value}\\n`;
+    const entry = `[ID: ${nextId}] [${timestamp}] [Rank: 0] <${category}>${keyTag} ${value}\n`;
 
     fs.appendFileSync(this.LOG_FILE, entry, "utf8");
-    return `Memory stored in memento.log as entry #\${nextId}. Referenced ranks updated.`;
+    return `Memory stored in memento.log as entry #${nextId}. Referenced ranks updated.`;
   }
 
   _incrementReferencedRanks(text) {
@@ -84,7 +84,7 @@ export default class MemoryTools {
         null,
       );
     } catch (e) {
-      return `ERR: \${e.message}`;
+      return `ERR: ${e.message}`;
     }
   }
 
@@ -96,7 +96,8 @@ export default class MemoryTools {
 
       return this.#currentChatManager.getTokenCount();
     } catch (e) {
-      return `ERR: \${e.message}`;
+      return `ERR: ${e.message}`;
     }
   }
-}`
+}
+
