@@ -26,7 +26,8 @@ class SmartToolParser {
     const trimmed = val.trim();
     if (
       (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-      (trimmed.startsWith("'") && trimmed.endsWith("'"))
+      (trimmed.startsWith("'") && trimmed.endsWith("'")) ||
+      (trimmed.startsWith("`") && trimmed.endsWith("`"))
     ) {
       return trimmed.substring(1, trimmed.length - 1);
     }
