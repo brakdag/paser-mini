@@ -63,7 +63,7 @@ class SmartToolParser {
         if (inQuote) {
           if (char === inQuote && argsRaw[i - 1] !== "\\") inQuote = null;
           current += char;
-        } else if (char === '"' || char === "'") {
+        } else if (char === '"' || char === "'" || char === "`") {
           inQuote = char;
           current += char;
         } else if (char === "[ " || char === "{") {
