@@ -4,7 +4,15 @@ import path from "path";
 
 const FILE_SIZE_LIMIT = 100 * 1024;
 
+/**
+ * Provides tools for file operations.
+ */
 class FileTools {
+  /**
+   * Resolves and verifies that a path is safely within the project root.
+   * @param {string} inputPath The path to verify.
+   * @returns {string} The safe absolute path.
+   */
   #getSafePath(inputPath) {
     const resolved = path.resolve(process.cwd(), inputPath);
     if (!resolved.startsWith(process.cwd()))
@@ -12,6 +20,12 @@ class FileTools {
     return resolved;
   }
 
+  /**
+   * Reads the contents of a file, optionally tailing the last N lines.
+   * @param {string} filepath The path to the file.
+   * @param {string|number} [tail] Number of lines to tail from the end.
+   * @returns {Promise<string>} The file contents or an error string.
+   */
   async read(filepath, tail) {
     try {
       const safePath = this.#getSafePath(filepath);
@@ -43,6 +57,12 @@ class FileTools {
     }
   }
 
+  /**
+   * Writes content to a file, creating parent directories if needed.
+   * @param {string} filepath The file path.
+   * @param {string} content The content to write.
+   * @returns {Promise<string>} 'OK' or an error string.
+   */
   async write(filepath, content) {
     try {
       const newContent = content.replaceAll("\\`", "`");
@@ -57,6 +77,11 @@ class FileTools {
     }
   }
 
+  /**
+   * Lists the contents of a directory.
+   * @param {string} dirPath The path of the directory to list.
+   * @returns {Promise<string>} A newline-separated string of contents or an error.
+   */
   async list(dirPath = ".") {
     try {
       return (await fs.readdir(this.#getSafePath(dirPath))).join("\n");
@@ -65,6 +90,11 @@ class FileTools {
     }
   }
 
+  /**
+   * Removes a file or directory recursively.
+   * @param {string} filepath The path to remove.
+   * @returns {Promise<string>} 'OK' or an error string.
+   */
   async remove(filepath) {
     try {
       await fs.rm(this.#getSafePath(filepath), { recursive: true });
@@ -74,6 +104,12 @@ class FileTools {
     }
   }
 
+  /**
+   * Renames or moves a file or directory.
+   * @param {string} origin The source path.
+   * @param {string} destination The target path.
+   * @returns {Promise<string>} 'OK' or an error string.
+   */
   async rename(origin, destination) {
     try {
       await fs.rename(
@@ -86,6 +122,11 @@ class FileTools {
     }
   }
 
+    /**
+     * Creates a directory recursively.
+     * @param {string} dirPath The directory path to create.
+     * @returns {Promise<string>} 'OK' or an error string.
+     */
     async mkdir(dirPath) {
       try {
         await fs.mkdir(this.#getSafePath(dirPath), { recursive: true });
@@ -95,6 +136,13 @@ class FileTools {
       }
     }
   
+  /**
+   * Replaces the first occurrence of text in a file.
+   * @param {string} filepath The file path.
+   * @param {string} searchText The text to find.
+   * @param {string} replaceText The text to replace it with.
+   * @returns {Promise<string>} 'OK' or an error string.
+   */
   async replace(filepath, searchText, replaceText) {
     try {
       const safePath = this.#getSafePath(filepath);
@@ -110,6 +158,12 @@ class FileTools {
     }
   }
 
+    /**
+     * Appends content to the end of a file.
+     * @param {string} filepath The file path.
+     * @param {string} content The content to append.
+     * @returns {Promise<string>} 'OK' or an error string.
+     */
     async concat(filepath, content) {
       try {
         const safePath = this.#getSafePath(filepath);
@@ -120,6 +174,12 @@ class FileTools {
       }
     }
   
+  /**
+   * Copies a file from origin to destination.
+   * @param {string} origin The source file path.
+   * @param {string} destination The destination file path.
+   * @returns {Promise<string>} 'OK' or an error string.
+   */
   async copy(origin, destination) {
     try {
       await fs.copyFile(

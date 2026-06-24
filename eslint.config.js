@@ -47,8 +47,16 @@ export default [
       "no-param-reassign": "error",
       "no-cond-assign": "error",
       "import/no-extraneous-dependencies": "error",
-      "jsdoc/require-param-description": "warn",
-      "jsdoc/require-returns-description": "warn",
+      "jsdoc/require-param-description": "error",
+      "jsdoc/require-returns-description": "error",
+      "jsdoc/require-jsdoc": ["error", {
+        "require": {
+          "MethodDefinition": true,
+          "ClassDeclaration": true,
+          "FunctionDeclaration": true,
+          "ArrowFunctionExpression": true
+        }
+      }],
     },
   },
 ];
