@@ -1,14 +1,14 @@
 class ToolAttemptTracker {
   constructor() {
     this.attempts = new Map();
-    this.maxAttempts = 10; // Límite por defecto para evitar bucles
+    this.maxAttempts = 30;
   }
 
   /**
-   * Registra un intento de llamada a una herramienta
+   * Records a tool call attempt.
    * @param {string} name
    * @param {any} args
-   * @returns {boolean} true if the attempt is allowed, false if a loop is detected
+   * @returns {boolean} true if allowed, false if loop detected
    */
   recordAttempt(name, args) {
     const argKey = JSON.stringify(args);
@@ -21,19 +21,13 @@ class ToolAttemptTracker {
   }
 
   /**
-   * Registra que una herramienta se ejecutó con éxito
+   * Clears the attempt counter upon successful execution.
    * @param {string} name
+   * @param {any} args
    */
-  recordSuccess(_name) {
-    // Podríamos limpiar intentos fallidos aquí si fuera necesario
-  }
-
-  /**
-   * Registra que una herramienta falló
-   * @param {string} _name
-   */
-  recordFailure(_name) {
-    // Registro de fallos para análisis
+  recordSuccess(name, args) {
+    const argKey = JSON.stringify(args);
+    this.attempts.delete(`${name}:${argKey}`);
   }
 
   reset() {
@@ -41,5 +35,5 @@ class ToolAttemptTracker {
   }
 }
 
-
 export default ToolAttemptTracker;
+
