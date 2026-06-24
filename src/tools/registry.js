@@ -26,6 +26,11 @@ const MODULE_MAP = {
 
 let toolCache = {};
 
+/**
+ * Retrieves the singleton instance of a tool based on its module key.
+ * @param {string} moduleKey The key of the module to instantiate.
+ * @returns {Promise<object>} The instantiated tool object.
+ */
 export async function getToolInstance(moduleKey) {
   if (!toolCache[moduleKey]) {
     const modulePath = MODULE_MAP[moduleKey];
@@ -41,6 +46,12 @@ export async function getToolInstance(moduleKey) {
   return toolCache[moduleKey];
 }
 
+/**
+ * Retrieves a specific function bound to its tool instance.
+ * @param {string} moduleKey The key of the module containing the tool.
+ * @param {string} funcName The name of the function to retrieve.
+ * @returns {Promise<(...args: unknown[]) => unknown>} The requested function bound to the tool instance.
+ */
 async function getTool(moduleKey, funcName) {
   const instance = await getToolInstance(moduleKey);
   const func = instance[funcName];
@@ -124,6 +135,11 @@ const systemInstrData = JSON.parse(
   fs.readFileSync(path.join(__dirname, "system_instruction.json"), "utf8"),
 );
 
+/**
+ * Generates system instructions for the LLM agent based on the available tools.
+ * @param {string[]} availableToolNames Array of names of tools that are currently available.
+ * @returns {string} The formatted system instruction string containing the tool catalog.
+ */
 export function generateSystemInstruction(availableToolNames) {
   const filteredCatalog = fullCatalog
     .filter((t) => t[0] !== "executeBash" && availableToolNames.includes(t[0]))

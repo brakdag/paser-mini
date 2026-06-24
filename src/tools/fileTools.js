@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
-import { exec } from "child_process";
-import { promisify } from "util";
+
+
 const FILE_SIZE_LIMIT = 100 * 1024;
 
 class FileTools {
