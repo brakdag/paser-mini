@@ -1,7 +1,7 @@
 class ToolAttemptTracker {
   constructor() {
     this.attempts = new Map();
-    this.maxAttempts = 30;
+    this.maxAttempts = 100;
   }
 
   /**
