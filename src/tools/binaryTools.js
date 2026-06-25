@@ -1,5 +1,6 @@
 import fs from "fs/promises";
 
+/** Binary data manipulation tools. */
 class BinaryTools {
   #MAGIC_NUMBERS = {
     ZIP: "504b0304",
@@ -14,6 +15,13 @@ class BinaryTools {
     ELF: "7f454c46",
   };
 
+  /**
+   * Inspect binary file.
+   * @param {string} filePath Path to file.
+   * @param {number} offset Start offset.
+   * @param {number} length Bytes to read.
+   * @returns {Promise<object>} Inspection result.
+   */
   async #inspectBinary(filePath, offset, length) {
     const handle = await fs.open(filePath, "r");
     const buffer = Buffer.alloc(length);
@@ -26,13 +34,22 @@ class BinaryTools {
     for (let i = 0; i < buffer.length; i += 16) {
       const chunk = buffer.slice(i, i + 16);
       const hex = chunk.toString("hex").match(/.{1,2}/g)?.join(" ") || "";
-      const ascii = chunk.toString("utf8").replace(/[^\x20-\x7E]/g, ".");
+      const ascii = chunk.toString("utf8").replace(/[\x20-\x7E]/g, ".");
       const currentOffset = (offset + i).toString(16).padStart(8, "0");
       output += `${currentOffset} | ${hex.padEnd(47)} | ${ascii}\n`;
     }
     return { success: true, data: output };
   }
 
+  /**
+   * Extract binary range.
+   * @param {string} filePath Path to file.
+   * @param {number} start Start offset.
+   * @param {number} end End offset.
+   * @param {number} length Length to extract.
+   * @param {string} outputFile Output path.
+   * @returns {Promise<object>} Extraction result.
+   */
   async #extractBinary(filePath, start, end, length, outputFile) {
     const handle = await fs.open(filePath, "r");
     const readLength = end !== undefined ? end - start : length || 0;
@@ -47,6 +64,12 @@ class BinaryTools {
     return { success: true, message: `Extracted ${readLength} bytes to ${outputFile}` };
   }
 
+  /**
+   * Search binary pattern.
+   * @param {string} filePath Path to file.
+   * @param {string} pattern Hex pattern.
+   * @returns {Promise<object>} Search results.
+   */
   async #searchBinary(filePath, pattern) {
     const searchBuf = Buffer.from(pattern.replace(/\s+/g, ""), "hex");
     const buffer = await fs.readFile(filePath);
@@ -59,6 +82,11 @@ class BinaryTools {
     return { success: true, data: { offsets, count: offsets.length } };
   }
 
+  /**
+   * Detect binary file type.
+   * @param {string} filePath Path to file.
+   * @returns {Promise<object>} Detection result.
+   */
   async #detectBinary(filePath) {
     const handle = await fs.open(filePath, "r");
     const buffer = Buffer.alloc(32);
@@ -73,6 +101,13 @@ class BinaryTools {
     return { success: true, data: { type: "Unknown", signature: null } };
   }
 
+  /**
+   * Convert hex to value.
+   * @param {string} hexString Hex string.
+   * @param {string} type Data type.
+   * @param {string} endianness Endianness (LE/BE).
+   * @returns {object} Conversion result.
+   */
   #convertBinary(hexString, type, endianness) {
     const buf = Buffer.from(hexString.replace(/\s+/g, ""), "hex");
     const isLE = endianness === "LE";
@@ -89,6 +124,11 @@ class BinaryTools {
     }
   }
 
+  /**
+   * Handle hex commands.
+   * @param {object} args Command arguments.
+   * @returns {Promise<object>} Command result.
+   */
   async handleHexCommand(args) {
     const { action, filePath, offset = 0, length = 256, end, outputFile, pattern, hexString, type, endianness = "LE" } = args;
     try {
