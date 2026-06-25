@@ -46,7 +46,7 @@ export class SystemTools {
   async lintCode(targetPath) {
     try {
       const { stdout } = await this.#execPromise(
-        `npx eslint ${targetPath} --format json`,
+        `npx eslint ${targetPath} --no-color`,
         { timeout: 60000 },
       );
       if (!stdout || stdout.trim() === "[]") {
