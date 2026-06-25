@@ -50,7 +50,7 @@ export default class JsonTools {
     }
   }
 
-  async getJsonStructure({ filePath, path: pathStr }) {
+  async getJsonStructure(filePath, pathStr) {
     try {
       const safePath = this.#getSafePath(filePath);
       const content = await fs.readFile(safePath, "utf8");
@@ -80,7 +80,7 @@ export default class JsonTools {
     }
   }
 
-  async getJsonNode({ filePath, path: pathStr }) {
+  async getJsonNode(filePath, pathStr) {
     try {
       const safePath = this.#getSafePath(filePath);
       const content = await fs.readFile(safePath, "utf8");
@@ -93,7 +93,7 @@ export default class JsonTools {
     }
   }
 
-  async getJsonArrayInfo({ filePath, path: pathStr }) {
+  async getJsonArrayInfo(filePath, pathStr) {
     try {
       const safePath = this.#getSafePath(filePath);
       const content = await fs.readFile(safePath, "utf8");
@@ -114,7 +114,7 @@ export default class JsonTools {
     }
   }
 
-  async updateJsonNode({ filePath, path: pathStr, value }) {
+  async updateJsonNode(filePath, pathStr, value) {
     try {
       const safePath = this.#getSafePath(filePath);
       const content = await fs.readFile(safePath, "utf8");
