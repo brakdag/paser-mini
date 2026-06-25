@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import * as acorn from "acorn";
 import AutoCorrector from "./autoCorrector.js";
 import validator from "./schemaRegistry.js";
 
@@ -63,42 +64,50 @@ class SmartToolParser {
 
   /**
    *
+   * @param node
+   * @param rawContent
+   */
+  _evaluateAST(node, rawContent) {
+    if (node.type === "Literal") return node.value;
+    if (node.type === "ArrayExpression") {
+      return node.elements.map((e) => this._evaluateAST(e, rawContent));
+    }
+    if (node.type === "ObjectExpression") {
+      const obj = {};
+      for (const prop of node.properties) {
+        let key = prop.key.type === "Identifier" ? prop.key.name : prop.key.value;
+        obj[key] = this._evaluateAST(prop.value, rawContent);
+      }
+      return obj;
+    }
+    return this._castValue(rawContent.substring(node.start, node.end));
+  }
+
+  /**
+   *
    * @param rawContent
    */
   parseCall(rawContent) {
     try {
-      const match = rawContent.match(/^([a-zA-Z0-9_]+)\s*\((.*)\)$/s);
-      if (!match) return { data: null, error: "Not a function call" };
-
-      const name = match[1];
-      const argsRaw = match[2].trim();
-      const args = [];
-      let current = "";
-      let depth = 0;
-      let inQuote = null;
-
-      for (let i = 0; i < argsRaw.length; i += 1) {
-        const char = argsRaw[i];
-        if (inQuote) {
-          if (char === inQuote && argsRaw[i - 1] !== "\\") inQuote = null;
-          current += char;
-        } else if (char === '"' || char === "'" || char === "`") {
-          inQuote = char;
-          current += char;
-        } else if (char === "[ " || char === "{") {
-          depth += 1;
-          current += char;
-        } else if (char === "]" || char === "}") {
-          depth -= 1;
-          current += char;
-        } else if (char === "," && depth === 0) {
-          args.push(this._castValue(current.trim()));
-          current = "";
-        } else {
-          current += char;
-        }
+      const ast = acorn.parse(rawContent, { ecmaVersion: 2020 });
+      if (ast.body.length === 0) return { data: null, error: "Empty call" };
+      const stmt = ast.body[0];
+      if (
+        stmt.type !== "ExpressionStatement" ||
+        stmt.expression.type !== "CallExpression"
+      ) {
+        return { data: null, error: "Not a function call" };
       }
-      if (current.trim()) args.push(this._castValue(current.trim()));
+
+      const callExpr = stmt.expression;
+      if (callExpr.callee.type !== "Identifier") {
+        return { data: null, error: "Invalid function name" };
+      }
+
+      const name = callExpr.callee.name;
+      const args = callExpr.arguments.map((arg) =>
+        this._evaluateAST(arg, rawContent),
+      );
 
       const toolDef = this.toolMap[name];
       if (!toolDef) return { data: null, error: `Unknown tool: ${name}` };
