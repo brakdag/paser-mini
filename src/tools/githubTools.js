@@ -2,6 +2,9 @@ import axios from "axios";
 import axiosRetry from "axios-retry";
 import GitTools from "./gitTools.js";
 
+/**
+ *
+ */
 export default class GithubTools {
   #GITHUB_API_URL = "https://api.github.com";
 
@@ -9,6 +12,9 @@ export default class GithubTools {
 
   #gitTools;
 
+  /**
+   *
+   */
   constructor() {
     this.#client = axios.create({
       baseURL: this.#GITHUB_API_URL,
@@ -20,6 +26,10 @@ export default class GithubTools {
     axiosRetry(this.#client, {
       retries: 3,
       retryDelay: axiosRetry.exponentialDelay,
+      /**
+       *
+       * @param error
+       */
       retryCondition: (error) =>
         axiosRetry.isNetworkOrIdempotentRequestError(error) ||
         error.response?.status === 429,
@@ -28,12 +38,19 @@ export default class GithubTools {
     this.#gitTools = new GitTools();
   }
 
+  /**
+   *
+   */
   async #getHeaders() {
     const token = process.env.GITHUB_TOKEN;
     if (!token) throw new Error("GITHUB_TOKEN no configurado.");
     return { Authorization: `token ${token}` };
   }
 
+  /**
+   *
+   * @param repo
+   */
   #resolveRepo(repo) {
     const raw = repo || "";
     return raw
@@ -42,6 +59,9 @@ export default class GithubTools {
       .replace(".git", "");
   }
 
+  /**
+   *
+   */
   async getAuthenticatedUser() {
     try {
       const headers = await this.#getHeaders();
@@ -52,7 +72,11 @@ export default class GithubTools {
     }
   }
 
-  async listIssues({ repo = "" }) {
+  /**
+   *
+   * @param repo
+   */
+  async listIssues(repo) {
     try {
       const targetRepo = repo
         ? this.#resolveRepo(repo)
@@ -67,7 +91,13 @@ export default class GithubTools {
     }
   }
 
-  async createIssue({ title, body, repo = "" }) {
+  /**
+   *
+   * @param title
+   * @param body
+   * @param repo
+   */
+  async createIssue(title, body, repo) {
     try {
       const targetRepo = repo
         ? this.#resolveRepo(repo)
@@ -84,7 +114,14 @@ export default class GithubTools {
     }
   }
 
-  async editIssue({ issueNumber, repo = "", title, body }) {
+  /**
+   *
+   * @param issueNumber
+   * @param repo
+   * @param title
+   * @param body
+   */
+  async editIssue(issueNumber, repo, title, body) {
     try {
       const targetRepo = repo
         ? this.#resolveRepo(repo)
@@ -106,7 +143,12 @@ export default class GithubTools {
     }
   }
 
-  async closeIssue({ issueNumber, repo = "" }) {
+  /**
+   *
+   * @param issueNumber
+   * @param repo
+   */
+  async closeIssue(issueNumber, repo) {
     try {
       const targetRepo = repo
         ? this.#resolveRepo(repo)
@@ -123,7 +165,13 @@ export default class GithubTools {
     }
   }
 
-  async postComment({ issueNumber, body, repo = "" }) {
+  /**
+   *
+   * @param issueNumber
+   * @param body
+   * @param repo
+   */
+  async postComment(issueNumber, body, repo) {
     try {
       const targetRepo = repo
         ? this.#resolveRepo(repo)
@@ -140,7 +188,13 @@ export default class GithubTools {
     }
   }
 
-  async addLabel({ issueNumber, label, repo = "" }) {
+  /**
+   *
+   * @param issueNumber
+   * @param label
+   * @param repo
+   */
+  async addLabel(issueNumber, label, repo) {
     try {
       const targetRepo = repo
         ? this.#resolveRepo(repo)
@@ -157,7 +211,13 @@ export default class GithubTools {
     }
   }
 
-  async removeLabel({ issueNumber, label, repo = "" }) {
+  /**
+   *
+   * @param issueNumber
+   * @param label
+   * @param repo
+   */
+  async removeLabel(issueNumber, label, repo) {
     try {
       const targetRepo = repo
         ? this.#resolveRepo(repo)
@@ -173,7 +233,12 @@ export default class GithubTools {
     }
   }
 
-  async getIssueComments({ issueNumber, repo = "" }) {
+  /**
+   *
+   * @param issueNumber
+   * @param repo
+   */
+  async getIssueComments(issueNumber, repo) {
     try {
       const targetRepo = repo
         ? this.#resolveRepo(repo)
