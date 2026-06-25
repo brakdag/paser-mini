@@ -1,7 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
 
-
 const FILE_SIZE_LIMIT = 100 * 1024;
 
 /**
@@ -65,7 +64,6 @@ class FileTools {
    */
   async write(filepath, content) {
     try {
-      const newContent = content.replaceAll("\\`", "`");
       if (Buffer.byteLength(content, "utf8") > FILE_SIZE_LIMIT)
         return "ERR: Content too large";
       const safePath = this.#getSafePath(filepath);
@@ -122,20 +120,20 @@ class FileTools {
     }
   }
 
-    /**
-     * Creates a directory recursively.
-     * @param {string} dirPath The directory path to create.
-     * @returns {Promise<string>} 'OK' or an error string.
-     */
-    async mkdir(dirPath) {
-      try {
-        await fs.mkdir(this.#getSafePath(dirPath), { recursive: true });
-        return "OK";
-      } catch (e) {
-        return `ERR: ${e.message}`;
-      }
+  /**
+   * Creates a directory recursively.
+   * @param {string} dirPath The directory path to create.
+   * @returns {Promise<string>} 'OK' or an error string.
+   */
+  async mkdir(dirPath) {
+    try {
+      await fs.mkdir(this.#getSafePath(dirPath), { recursive: true });
+      return "OK";
+    } catch (e) {
+      return `ERR: ${e.message}`;
     }
-  
+  }
+
   /**
    * Replaces the first occurrence of text in a file.
    * @param {string} filepath The file path.
@@ -158,22 +156,22 @@ class FileTools {
     }
   }
 
-    /**
-     * Appends content to the end of a file.
-     * @param {string} filepath The file path.
-     * @param {string} content The content to append.
-     * @returns {Promise<string>} 'OK' or an error string.
-     */
-    async concat(filepath, content) {
-      try {
-        const safePath = this.#getSafePath(filepath);
-        await fs.appendFile(safePath, content, "utf8");
-        return "OK";
-      } catch (e) {
-        return `ERR: ${e.message}`;
-      }
+  /**
+   * Appends content to the end of a file.
+   * @param {string} filepath The file path.
+   * @param {string} content The content to append.
+   * @returns {Promise<string>} 'OK' or an error string.
+   */
+  async concat(filepath, content) {
+    try {
+      const safePath = this.#getSafePath(filepath);
+      await fs.appendFile(safePath, content, "utf8");
+      return "OK";
+    } catch (e) {
+      return `ERR: ${e.message}`;
     }
-  
+  }
+
   /**
    * Copies a file from origin to destination.
    * @param {string} origin The source file path.

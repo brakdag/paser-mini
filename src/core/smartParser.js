@@ -7,20 +7,34 @@ import validator from "./schemaRegistry.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+/**
+ *
+ */
 class SmartToolParser {
   static TOOL_PATTERN = /Ə([\s\S]*?)(?:ə|$)/gis;
 
+  /**
+   *
+   */
   constructor() {
     this.validator = validator;
     this.corrector = AutoCorrector;
     const regPath = path.join(__dirname, "../tools/registry_positional.json");
     this.positionalRegistry = JSON.parse(fs.readFileSync(regPath, "utf8"));
+    /**
+     *
+     * @param name
+     */
     this.isPositional = (name) => !!this.toolMap[name];
     this.toolMap = Object.fromEntries(
       this.positionalRegistry.map((t) => [t[0], t]),
     );
   }
 
+  /**
+   *
+   * @param val
+   */
   _castValue(val) {
     if (!val) return null;
     const trimmed = val.trim();
@@ -47,6 +61,10 @@ class SmartToolParser {
     return trimmed;
   }
 
+  /**
+   *
+   * @param rawContent
+   */
   parseCall(rawContent) {
     try {
       const match = rawContent.match(/^([a-zA-Z0-9_]+)\s*\((.*)\)$/s);
@@ -107,6 +125,10 @@ class SmartToolParser {
     }
   }
 
+  /**
+   *
+   * @param text
+   */
   extractToolCalls(text) {
     const results = [];
     let match;
@@ -121,12 +143,21 @@ class SmartToolParser {
     return results;
   }
 
+  /**
+   *
+   * @param context
+   * @param data
+   */
   formatToolResponse(context, data) {
     const header = context ? `[${context}]` : "[no details]";
     const content = typeof data === "object" ? JSON.stringify(data) : data;
     return `ø${header} ${content}ć`;
   }
 
+  /**
+   *
+   * @param text
+   */
   cleanResponse(text) {
     if (!text) return "";
     // Tolerant cleaning: removes tool calls even if the closing delimiter is missing
