@@ -1,5 +1,5 @@
 import fs from "fs";
-import { generateSystemInstruction, AVAILABLE_TOOLS } from "../tools/registry.js";
+import { generateSystemInstruction, AVAILABLE_TOOLS } from "../infrastructure/registry.js";
 
 class SystemPromptManager {
   /**

@@ -20,7 +20,7 @@ class SmartToolParser {
   constructor() {
     this.validator = validator;
     this.corrector = AutoCorrector;
-    const regPath = path.join(__dirname, "../tools/registry_positional.json");
+    const regPath = path.join(__dirname, "../infrastructure/registry_positional.json");
     this.positionalRegistry = JSON.parse(fs.readFileSync(regPath, "utf8"));
     /**
      *
