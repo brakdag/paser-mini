@@ -1,12 +1,12 @@
 [
   [
     "read",
-    "Read file content. Use tail to read only the last N lines.",
+    "Read file content - use tail to read only the last N lines.",
     { "path": "string", "tail": "number" }
   ],
   [
     "write",
-    "Write content to file. In multiline content use doble quotes new backslash n for new lines (not backticks). Returns OK on success after write check ESLint.",
+    "Write content to file - in multiline content use \" for new lines \\n (not backticks) it Returns OK on success after write check ESLint.",
     { "path": "string", "content": "string" }
   ],
   ["remove", "Remove file. Returns OK on success.", { "path": "string" }],
