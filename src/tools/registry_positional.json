@@ -6,7 +6,7 @@
   ],
   [
     "write",
-    "Write content to file,in content use raw ` without any backslashes before them. Returns OK on success after write check ESLint.",
+    "Write content to file. In multiline content use \" and \\n (not backticks). Returns OK on success after write check ESLint.",
     { "path": "string", "content": "string" }
   ],
   ["remove", "Remove file. Returns OK on success.", { "path": "string" }],
