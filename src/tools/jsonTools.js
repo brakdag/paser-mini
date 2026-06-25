@@ -1,7 +1,15 @@
 import fs from "fs/promises";
 import path from "path";
 
+/**
+ * Provides utilities for manipulating JSON files.
+ */
 export default class JsonTools {
+  /**
+   * Resolves and validates the input path.
+   * @param {string} inputPath - The path to resolve.
+   * @returns {string} The resolved absolute path.
+   */
   #getSafePath(inputPath) {
     const resolved = path.resolve(process.cwd(), inputPath);
     if (!resolved.startsWith(process.cwd())) {
@@ -10,6 +18,11 @@ export default class JsonTools {
     return resolved;
   }
 
+  /**
+   * Parses a path string into segments.
+   * @param {string} pathStr - The path string to parse.
+   * @returns {Array<string|number>} The parsed path segments.
+   */
   #parsePath(pathStr) {
     const normalized = pathStr.replace(/[(d+)]/g, ".$1");
     return normalized
@@ -18,6 +31,12 @@ export default class JsonTools {
       .map((p) => (typeof p === "string" && /\d+/.test(p) ? parseInt(p, 10) : p));
   }
 
+  /**
+   * Retrieves a value from a data object by path.
+   * @param {unknown} data - The source data object.
+   * @param {Array<string|number>} pathParts - The path segments.
+   * @returns {unknown} The retrieved value.
+   */
   #getByPath(data, pathParts) {
     let current = data;
     for (let i = 0; i < pathParts.length; i += 1) {
@@ -31,6 +50,12 @@ export default class JsonTools {
     return current;
   }
 
+  /**
+   * Sets a value in a data object by path.
+   * @param {unknown} data - The source data object.
+   * @param {Array<string|number>} pathParts - The path segments.
+   * @param {unknown} value - The value to set.
+   */
   #setByPath(data, pathParts, value) {
     let current = data;
     for (let i = 0; i < pathParts.length - 1; i += 1) {
@@ -50,6 +75,12 @@ export default class JsonTools {
     }
   }
 
+  /**
+   * Gets the structure of a JSON node.
+   * @param {string} filePath - Path to the JSON file.
+   * @param {string} pathStr - Path to the node.
+   * @returns {Promise<string>} JSON string describing the structure.
+   */
   async getJsonStructure(filePath, pathStr) {
     try {
       const safePath = this.#getSafePath(filePath);
@@ -80,6 +111,12 @@ export default class JsonTools {
     }
   }
 
+  /**
+   * Retrieves a specific JSON node.
+   * @param {string} filePath - Path to the JSON file.
+   * @param {string} pathStr - Path to the node.
+   * @returns {Promise<string>} The node content as a JSON string.
+   */
   async getJsonNode(filePath, pathStr) {
     try {
       const safePath = this.#getSafePath(filePath);
@@ -93,6 +130,12 @@ export default class JsonTools {
     }
   }
 
+  /**
+   * Gets information about a JSON array.
+   * @param {string} filePath - Path to the JSON file.
+   * @param {string} pathStr - Path to the array.
+   * @returns {Promise<string>} JSON string with array info.
+   */
   async getJsonArrayInfo(filePath, pathStr) {
     try {
       const safePath = this.#getSafePath(filePath);
@@ -114,6 +157,13 @@ export default class JsonTools {
     }
   }
 
+  /**
+   * Updates a value in a JSON file.
+   * @param {string} filePath - Path to the JSON file.
+   * @param {string} pathStr - Path to the node.
+   * @param {unknown} value - The new value to set.
+   * @returns {Promise<string>} "OK" on success, or an error message.
+   */
   async updateJsonNode(filePath, pathStr, value) {
     try {
       const safePath = this.#getSafePath(filePath);

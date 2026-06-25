@@ -1,7 +1,15 @@
 import fs from 'fs/promises';
 import * as acorn from 'acorn';
 
+/**
+ * Provides utilities for analyzing JavaScript Abstract Syntax Trees (AST).
+ */
 export class AstTools {
+  /**
+   * Simplifies an AST node into a minimal representation.
+   * @param {unknown} node - The AST node to simplify.
+   * @returns {unknown} The simplified node object.
+   */
   simplifyNode(node) {
     const simplified = { type: node.type };
     if (node.type === 'Identifier') simplified.name = node.name;
@@ -14,6 +22,13 @@ export class AstTools {
     return simplified;
   }
 
+  /**
+   * Recursively walks the AST to find nodes matching the query.
+   * @param {unknown} node - The current node being visited.
+   * @param {string} query - The node type to search for.
+   * @param {Array<unknown>} results - The accumulator for found nodes.
+   * @param {number} limit - The maximum number of results to find.
+   */
   walk(node, query, results, limit) {
     if (!node || results.length >= limit) return;
 
@@ -39,6 +54,14 @@ export class AstTools {
     });
   }
 
+  /**
+   * Analyzes a file's AST or tokens based on the provided query.
+   * @param {object} options - Analysis options.
+   * @param {string} options.path - Path to the source file.
+   * @param {string} options.query - The AST node type to search for.
+   * @param {number} [options.limit] - Maximum results to return.
+   * @returns {Promise<string>} JSON string containing the analysis results.
+   */
   async analyze({ path: filePath, query, limit = 100 }) {
     try {
       const code = await fs.readFile(filePath, 'utf8');

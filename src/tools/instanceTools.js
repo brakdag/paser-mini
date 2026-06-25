@@ -2,11 +2,21 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import ConfigManager from "./configManager.js";
 
+/**
+ * Provides utilities for managing and launching new system instances.
+ */
 export default class InstanceTools {
   #execPromise = promisify(exec);
 
   #config = new ConfigManager();
 
+  /**
+   * Launches a new agent instance with the specified message and arguments.
+   * @param {object} options - Instance options.
+   * @param {string|null} [options.message] - The initial message for the instance.
+   * @param {string[]} [options.args] - Additional command-line arguments.
+   * @returns {Promise<string>} The result of the instance launch operation.
+   */
   async newAgent({ message = null, args = [] }) {
     try {
       const timeout = this.#config.get("instance_timeout", 300);
@@ -24,3 +34,4 @@ export default class InstanceTools {
     }
   }
 }
+
