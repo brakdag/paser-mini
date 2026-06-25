@@ -4,7 +4,7 @@ To avoid path resolution errors, always remember the following structure:
 
 - **Source Root**: `src_js/`
 - **Core Logic**: `src_js/core/` (ChatManager, ExecutionEngine, etc.)
-- **Infrastructure**: `src_js/infrastructure/` (Database, Adapters)
+- **Infrastructure**: `src_js/infrastructure/` (Adapters)
 - **Tools**: `src_js/tools/` (File tools, Memory tools)
 - **Config**: `src_js/config/`
 

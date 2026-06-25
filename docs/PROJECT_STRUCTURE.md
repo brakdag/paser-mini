@@ -27,7 +27,7 @@ This document provides the definitive map of the Paser Mini codebase. The projec
 │   │   ├── openrouter/        # LLM client & adapter
 │   │   ├── groq/              # LLM client & adapter
 │   │   ├── cohere/            # LLM client & adapter
-│   │   ├── memento/           # Cognitive Graph (SQLite implementation)
+
 │   │   └── nvidia/            # Hardware-specific integrations
 │   ├── tools/                 # The "Hands": Minimalist toolset
 │   │   ├── registry.js        # Tool mapping & discovery
@@ -47,7 +47,7 @@ This document provides the definitive map of the Paser Mini codebase. The projec
 
 1. **Decoupling**: The `TerminalUI` is now a thin orchestrator, delegating rendering, input, and logging to specialized classes to reduce cognitive load.
 2. **Surgicality**: Tools are designed to perform the smallest possible change to minimize token consumption.
-3. **Persistence**: The `memento` infrastructure ensures that distilled insights survive across sessions via the Cognitive Graph.
+3. **Persistence**: The `memoryTools` infrastructure ensures that distilled insights survive across sessions via the `memento.log` file.
 4. **Resilience**: API communication is abstracted into a dedicated communicator to handle retries and recovery without polluting the reasoning loop.
 5. **Scalability**: The `ProviderManager` ensures that new LLM providers can be integrated without modifying the core orchestration logic.
 6. **Formalization**: The `SystemPromptManager` ensures that the agent's identity and operational protocols are constructed through a consistent, verifiable pipeline.

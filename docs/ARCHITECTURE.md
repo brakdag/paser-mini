@@ -26,7 +26,7 @@ This project follows a modular ReAct (Reasoning and Acting) architecture. Below 
 - **`openrouter/adapter.js`**: Abstracts the OpenRouter API, providing access to a wide array of models.
 - **`groq/adapter.js`**: High-performance inference adapter for Llama-3 and Mixtral models.
 - **`cohere/adapter.js`**: Integrates the Cohere Command models via the v1 Chat API.
-- **`memento/`**: Implements the Cognitive Graph using SQLite for persistent, distilled memory.
+
 
 ### 💡 Toolbox (`src/tools/`)
 
@@ -35,6 +35,7 @@ This project follows a modular ReAct (Reasoning and Acting) architecture. Below 
 - **`searchTools.js`**: Wraps system utilities for efficient global searching.
 - **`systemTools.js`**: Integrates `pyright` for static type analysis of the JS/TS codebase.
 - **`instanceTools.js`**: Enables "inception" capabilities, allowing the launching of new independent `paser-mini` instances.
+- **`memoryTools.js`**: Implements the Memento system for persistent, distilled memory using a ranked log file.
 
 ### ↻ Data Flow
 

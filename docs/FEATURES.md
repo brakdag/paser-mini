@@ -13,7 +13,7 @@
     - All operations are restricted to `PROJECT_ROOT` via strict path validation to prevent directory traversal attacks.
 
 4.  **Memento Memory System:**
-    - **Cognitive Graph**: A long-term memory system using a graph-based SQLite database to store core truths (Tattoos) and technical insights (Fractals).
+    - **Memento System**: A long-term memory system using a ranked log file (`memento.log`) to store core truths and technical insights, ensuring persistent knowledge across sessions.
     - **The Mirror Effect**: A boot sequence that allows the agent to synchronize its identity and mission across sessions.
     - **Context Jumping**: A mechanism to distill knowledge and "leap" to a fresh context window without losing state.
     - Detailed guide: [Memento User Guide](memento_user_guide.md)
