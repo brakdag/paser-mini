@@ -22,8 +22,9 @@ export default class WebTools {
   };
 
   /**
-   *
-   * @param query
+   * Searches the web using multiple providers.
+   * @param {string} query - The search query.
+   * @returns {Promise<string>} The search results.
    */
   async searchWeb(query) {
     const encodedQuery = encodeURIComponent(query);
@@ -65,8 +66,9 @@ export default class WebTools {
   }
 
   /**
-   *
-   * @param url
+   * Renders a web page to text.
+   * @param {string} url - The URL to render.
+   * @returns {Promise<string>} The rendered content.
    */
   async renderWeb(url) {
     try {
