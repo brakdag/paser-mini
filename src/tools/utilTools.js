@@ -3,31 +3,53 @@ import { promisify } from 'util';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
-import ConfigManager from "../core/configManager.js";
+import ConfigManager from '../core/configManager.js';
 
 const execPromise = promisify(exec);
 
+/**
+ * Utility tools for system operations and data validation.
+ */
 export default class UtilTools {
+  /**
+   * Validates if a string is a valid JSON.
+   * @param {object} params - The parameters.
+   * @param {string} params.jsonString - The JSON string to validate.
+   * @returns {Promise<string>} Validation result message.
+   */
   async validateJson({ jsonString }) {
     try {
       JSON.parse(jsonString);
-      return "El JSON es valido.";
+      return 'El JSON es valido.';
     } catch (e) {
       return `ERR: JSON invalido: ${e.message}`;
     }
   }
 
+  /**
+   * Updates the agent nickname in the configuration.
+   * @param {object} params - The parameters.
+   * @param {string} params.newNickname - The new nickname to be set.
+   * @returns {Promise<string>} Confirmation message.
+   */
   async setNickname({ newNickname }) {
     try {
       const config = new ConfigManager();
-      const oldNickname = config.get("agent_nickname", "paser_mini");
-      config.save("agent_nickname", newNickname);
+      const oldNickname = config.get('agent_nickname', 'paser_mini');
+      config.save('agent_nickname', newNickname);
       return `*** ${oldNickname} is now known as ${newNickname}`;
     } catch (e) {
       return `ERR: Failed to update nickname: ${e.message}`;
     }
   }
 
+  /**
+   * Processes an image, optionally crops it, and returns it as base64.
+   * @param {object} params - The parameters.
+   * @param {string} params.path - Path to the image file.
+   * @param {number[]} [params.crop] - Optional crop coordinates [left, top, right, bottom].
+   * @returns {Promise<{mime_type: string, data: string, resolution: string}>} Image metadata and base64 data.
+   */
   async seeImage({ path: imagePath, crop }) {
     if (!imagePath) throw new Error("The 'path' parameter is required.");
 
@@ -60,7 +82,7 @@ export default class UtilTools {
       const resolution = resStdout.trim();
 
       return {
-        mime_type: "image/jpeg",
+        mime_type: 'image/jpeg',
         data: base64Data,
         resolution
       };
