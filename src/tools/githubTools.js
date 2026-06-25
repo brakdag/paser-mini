@@ -3,7 +3,7 @@ import axiosRetry from "axios-retry";
 import GitTools from "./gitTools.js";
 
 /**
- *
+ * Tools for interacting with the GitHub API.
  */
 export default class GithubTools {
   #GITHUB_API_URL = "https://api.github.com";
@@ -13,7 +13,7 @@ export default class GithubTools {
   #gitTools;
 
   /**
-   *
+   * Initializes the GitHub API client with retry logic.
    */
   constructor() {
     this.#client = axios.create({
@@ -27,8 +27,9 @@ export default class GithubTools {
       retries: 3,
       retryDelay: axiosRetry.exponentialDelay,
       /**
-       *
-       * @param error
+       * Determines if a request should be retried.
+       * @param {Error} error The error object from the failed request.
+       * @returns {boolean} True if the request should be retried.
        */
       retryCondition: (error) =>
         axiosRetry.isNetworkOrIdempotentRequestError(error) ||
@@ -39,7 +40,9 @@ export default class GithubTools {
   }
 
   /**
-   *
+   * Retrieves the authentication headers using the GITHUB_TOKEN environment variable.
+   * @returns {Promise<{Authorization: string}>} The headers object.
+   * @throws {Error} If GITHUB_TOKEN is not configured.
    */
   async #getHeaders() {
     const token = process.env.GITHUB_TOKEN;
@@ -48,8 +51,9 @@ export default class GithubTools {
   }
 
   /**
-   *
-   * @param repo
+   * Resolves a repository identifier to a standard "owner/repo" format.
+   * @param {string} repo The repository URL or identifier.
+   * @returns {string} The resolved repository name.
    */
   #resolveRepo(repo) {
     const raw = repo || "";
@@ -60,7 +64,8 @@ export default class GithubTools {
   }
 
   /**
-   *
+   * Gets the details of the currently authenticated user.
+   * @returns {Promise<object|string>} The user data or an error message.
    */
   async getAuthenticatedUser() {
     try {
@@ -73,8 +78,9 @@ export default class GithubTools {
   }
 
   /**
-   *
-   * @param repo
+   * Lists issues for a given repository.
+   * @param {string} [repo] The repository identifier. If omitted, the current repo is used.
+   * @returns {Promise<Array|string>} A list of issues or an error message.
    */
   async listIssues(repo) {
     try {
@@ -92,10 +98,11 @@ export default class GithubTools {
   }
 
   /**
-   *
-   * @param title
-   * @param body
-   * @param repo
+   * Creates a new issue in a repository.
+   * @param {string} title The title of the issue.
+   * @param {string} body The body text of the issue.
+   * @param {string} [repo] The repository identifier. If omitted, the current repo is used.
+   * @returns {Promise<string>} A success message or an error message.
    */
   async createIssue(title, body, repo) {
     try {
@@ -115,11 +122,12 @@ export default class GithubTools {
   }
 
   /**
-   *
-   * @param issueNumber
-   * @param repo
-   * @param title
-   * @param body
+   * Edits an existing issue.
+   * @param {number|string} issueNumber The issue number to edit.
+   * @param {string} [repo] The repository identifier. If omitted, the current repo is used.
+   * @param {string} [title] The new title for the issue.
+   * @param {string} [body] The new body for the issue.
+   * @returns {Promise<string>} A success message or an error message.
    */
   async editIssue(issueNumber, repo, title, body) {
     try {
@@ -144,9 +152,10 @@ export default class GithubTools {
   }
 
   /**
-   *
-   * @param issueNumber
-   * @param repo
+   * Closes an existing issue.
+   * @param {number|string} issueNumber The issue number to close.
+   * @param {string} [repo] The repository identifier. If omitted, the current repo is used.
+   * @returns {Promise<string>} A success message or an error message.
    */
   async closeIssue(issueNumber, repo) {
     try {
@@ -166,10 +175,11 @@ export default class GithubTools {
   }
 
   /**
-   *
-   * @param issueNumber
-   * @param body
-   * @param repo
+   * Posts a comment to an issue.
+   * @param {number|string} issueNumber The issue number to comment on.
+   * @param {string} body The content of the comment.
+   * @param {string} [repo] The repository identifier. If omitted, the current repo is used.
+   * @returns {Promise<string>} A success message or an error message.
    */
   async postComment(issueNumber, body, repo) {
     try {
@@ -189,10 +199,11 @@ export default class GithubTools {
   }
 
   /**
-   *
-   * @param issueNumber
-   * @param label
-   * @param repo
+   * Adds a label to an issue.
+   * @param {number|string} issueNumber The issue number to label.
+   * @param {string} label The label to add.
+   * @param {string} [repo] The repository identifier. If omitted, the current repo is used.
+   * @returns {Promise<string>} A success message or an error message.
    */
   async addLabel(issueNumber, label, repo) {
     try {
@@ -212,10 +223,11 @@ export default class GithubTools {
   }
 
   /**
-   *
-   * @param issueNumber
-   * @param label
-   * @param repo
+   * Removes a label from an issue.
+   * @param {number|string} issueNumber The issue number to modify.
+   * @param {string} label The label to remove.
+   * @param {string} [repo] The repository identifier. If omitted, the current repo is used.
+   * @returns {Promise<string>} A success message or an error message.
    */
   async removeLabel(issueNumber, label, repo) {
     try {
@@ -234,9 +246,10 @@ export default class GithubTools {
   }
 
   /**
-   *
-   * @param issueNumber
-   * @param repo
+   * Retrieves comments for a specific issue.
+   * @param {number|string} issueNumber The issue number.
+   * @param {string} [repo] The repository identifier. If omitted, the current repo is used.
+   * @returns {Promise<Array|string>} A list of comments or an error message.
    */
   async getIssueComments(issueNumber, repo) {
     try {
