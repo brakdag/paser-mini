@@ -57,7 +57,7 @@ class ExecutionEngine {
       node: (a) => (a.file_path ? path.basename(a.file_path) : "unknown"),
       arrange: (a) => (a.file_path ? path.basename(a.file_path) : "unknown"),
       update: (a) => (a.file_path ? path.basename(a.file_path) : "unknown"),
-      list: (a) => a.repo || "repo",
+      list: (a) => a.path || "root",
       create: (a) => a.title || "issue",
       edit: (a) => (a.issue_number ? `#${a.issue_number}` : "issue"),
       close: (a) => (a.issue_number ? `#${a.issue_number}` : "issue"),
