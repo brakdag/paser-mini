@@ -25,7 +25,7 @@ class ExecutionEngine {
     this._detailMappers = {
       read: (a) => (a.path ? path.basename(a.path) : "unknown"),
       write: (a) => (a.path ? path.basename(a.path) : "unknown"),
-      rm: (a) => (a.path ? path.basename(a.path) : "unknown"),
+      remove: (a) => (a.path ? path.basename(a.path) : "unknown"),
       ls: (a) => a.path || "root",
       replace: (a) => (a.path ? path.basename(a.path) : "unknown"),
       rename: (a) =>
