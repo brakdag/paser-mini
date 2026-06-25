@@ -13,7 +13,7 @@ export class SystemTools {
     this._chatManager = chatManager;
   }
 
-  async reset({ userMessage }) {
+  async reset(userMessage) {
     if (!this._assistant || !this._chatManager) {
       throw new Error("System context not initialized");
     }
@@ -27,7 +27,7 @@ export class SystemTools {
     }
   }
 
-  async analyzeCode({ path: targetPath = "." }) {
+  async analyzeCode(targetPath) {
     try {
       const { stdout } = await this.#execPromise(
         `npx pyright --outputjson ${targetPath}`,
@@ -43,7 +43,7 @@ export class SystemTools {
     }
   }
 
-  async lintCode({ path: targetPath = "." }) {
+  async lintCode(targetPath) {
     try {
       const { stdout } = await this.#execPromise(
         `npx eslint ${targetPath} --format json`,
@@ -59,10 +59,7 @@ export class SystemTools {
     }
   }
 
-  async generateDocs({
-    path: targetPath = ".",
-    outputDir = "docs/api",
-  }) {
+  async generateDocs(targetPath, outputDir) {
     try {
       if (!fs.existsSync(outputDir)) {
         fs.mkdirSync(outputDir, { recursive: true });
@@ -85,7 +82,7 @@ export class SystemTools {
     }
   }
 
-  async executeBash({ command }) {
+  async executeBash(command) {
     try {
       const { stdout, stderr } = await this.#execPromise(command, {
         cwd: process.cwd(),
@@ -93,7 +90,8 @@ export class SystemTools {
       });
       return stdout || stderr || "Command executed successfully (no output).";
     } catch (e) {
-      if (e.stdout) return `Exit Code ${e.code}:\n${e.stdout}\n${e.stderr || ""}`;
+      if (e.stdout)
+        return `Exit Code ${e.code}:\n${e.stdout}\n${e.stderr || ""}`;
       return `ERR: Bash error: ${e.message}`;
     }
   }
