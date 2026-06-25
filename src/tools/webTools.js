@@ -1,6 +1,9 @@
 import { execSync } from "child_process";
 import axios from "axios";
 
+/**
+ *
+ */
 export default class WebTools {
   #BROWSER_HEADERS = {
     "User-Agent":
@@ -18,6 +21,10 @@ export default class WebTools {
     "Sec-Fetch-User": "?1",
   };
 
+  /**
+   *
+   * @param query
+   */
   async searchWeb(query) {
     const encodedQuery = encodeURIComponent(query);
     const searchUrls = [
@@ -57,6 +64,10 @@ export default class WebTools {
     }
   }
 
+  /**
+   *
+   * @param url
+   */
   async renderWeb(url) {
     try {
       const output = execSync(`elinks -dump ${url}`, {

@@ -68,7 +68,7 @@ class FileTools {
         return "ERR: Content too large";
       const safePath = this.#getSafePath(filepath);
       await fs.mkdir(path.dirname(safePath), { recursive: true });
-      await fs.writeFile(safePath, newContent, "utf8");
+      await fs.writeFile(safePath, content, "utf8");
       return "OK";
     } catch (e) {
       return `ERR: ${e.message}`;
