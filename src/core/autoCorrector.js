@@ -1,49 +1,43 @@
 class AutoCorrector {
-  static KEY_FIX_PATTERN = /([{\\s,])\\s*([a-zA-Z_][a-zA-Z0-9_]*)\\s*:/g;
-
-  static TRAILING_COMMA_PATTERN = /,\\s*([}\]])/g;
+  static KEY_FIX_PATTERN = /([{\s,])\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g;
+  static TRAILING_COMMA_PATTERN = /,\s*([}\]])/g;
+  static SINGLE_QUOTE_PATTERN = /'([^'\\]*(?:\\.[^'\\]*)*)'/g;
 
   static fixJson(content) {
     let fixed = content.trim();
 
-    // 1. Fix newlines (turn raw newlines into \n)
-    fixed = fixed.replace(/\n/g, "\\n");
+    // 1. Convert single quotes to double quotes
+    fixed = fixed.replace(this.SINGLE_QUOTE_PATTERN, '"$1"');
 
-    // 2. Fix invalid backslashes
-    fixed = fixed.replace(/\\(?!(?:["\\/bfnrt]|u[0-9a-fA-F]{4}))/g, "\\\\");
+    // 2. Quote unquoted keys
+    fixed = fixed.replace(this.KEY_FIX_PATTERN, '$1"$2":');
 
-    // 3. Fix quotes and trailing commas
-    fixed = fixed.replace(/^'|'$|'\\s*:\\s*|:\\s*'/g, '"');
-    fixed = fixed.replace(this.KEY_FIX_PATTERN, '$1 "$2":');
-    fixed = fixed.replace(this.TRAILING_COMMA_PATTERN, "$1");
+    // 3. Remove trailing commas
+    fixed = fixed.replace(this.TRAILING_COMMA_PATTERN, '$1');
 
-    // Balance braces/brackets
-    const counts = { "{": 0, "[": 0 };
-    const mapping = { "}": "{", "]": "[" };
+    // 4. Balance braces/brackets using a stack
+    const stack = [];
+    const opening = { '{': '}', '[': ']' };
+    const closing = { '}': '{', ']': '[' };
+    let prefix = "";
 
-    fixed.split("").forEach((char) => {
-      if (char in counts) {
-        counts[char] += 1;
-      } else if (char in mapping) {
-        counts[mapping[char]] -= 1;
+    for (const char of fixed) {
+      if (opening[char]) {
+        stack.push(opening[char]);
+      } else if (closing[char]) {
+        if (stack.length > 0 && stack[stack.length - 1] === char) {
+          stack.pop();
+        } else {
+          prefix = closing[char] + prefix;
+        }
       }
-    });
+    }
 
-    // Append missing closing tags
-    Object.entries(counts).forEach(([openC, count]) => {
-      if (count > 0) {
-        fixed += (openC === "{" ? "}" : "]").repeat(count);
-      }
-    });
+    while (stack.length > 0) {
+      fixed += stack.pop();
+    }
 
-    // Prepend missing opening tags
-    Object.entries(counts).forEach(([openC, count]) => {
-      if (count < 0) {
-        fixed = (openC === "{" ? "{" : "[").repeat(Math.abs(count)) + fixed;
-      }
-    });
-
-    return fixed;
+    return prefix + fixed;
   }
 }
 

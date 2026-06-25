@@ -2,10 +2,22 @@ import { spawn } from "child_process";
 import path from "path";
 import fs from "fs/promises";
 
+/**
+ * Tools for searching files and text within the project.
+ */
 export default class SearchTools {
+  /**
+   * Searches for files matching a glob-like pattern.
+   * @param {string} pattern - The search pattern.
+   * @returns {Promise<string>} JSON string of matching file paths.
+   */
   async searchFilesPatternFixed(pattern) {
     try {
       const results = [];
+      /**
+       * Recursively walks through directories to find matching files.
+       * @param {string} dir - The directory to walk.
+       */
       const walk = async (dir) => {
         const files = await fs.readdir(dir, { withFileTypes: true });
         await Promise.all(
@@ -31,6 +43,11 @@ export default class SearchTools {
     }
   }
 
+  /**
+   * Converts a simple glob pattern to a Regular Expression.
+   * @param {string} glob - The glob pattern.
+   * @returns {RegExp} The resulting regular expression.
+   */
   #globToRegex(glob) {
     let result = "";
     const specialChars = ".+^${}()|[]\\";
@@ -49,6 +66,11 @@ export default class SearchTools {
     return new RegExp(`^${result}$`, "i");
   }
 
+  /**
+   * Searches for a text query globally across the project using grep.
+   * @param {string} query - The text to search for.
+   * @returns {Promise<string>} JSON string of matching lines and files.
+   */
   async searchTextGlobal(query) {
     if (!query || query.trim() === "") return JSON.stringify([]);
 
@@ -68,7 +90,7 @@ export default class SearchTools {
 
       child.stdout.on("data", (data) => {
         stdoutData += data.toString();
-        const currentLines = stdoutData.split("\n").filter(Boolean).length;
+        const currentLines = stdoutData.split("\\n").filter(Boolean).length;
 
         if (currentLines >= 10) {
           child.kill("SIGKILL");
@@ -94,6 +116,12 @@ export default class SearchTools {
     });
   }
 
+  /**
+   * Parses the raw stdout from grep into a structured JSON format.
+   * @param {string} stdout - The raw grep output.
+   * @param {string} rootPath - The root path for relative path calculation.
+   * @returns {string} JSON string of parsed results.
+   */
   #parseGrepOutput(stdout, rootPath) {
     if (!stdout) return JSON.stringify([]);
     const parsedResults = stdout
