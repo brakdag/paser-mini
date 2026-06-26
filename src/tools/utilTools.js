@@ -46,8 +46,8 @@ export default class UtilTools {
 
   /**
    * Processes an image, optionally crops it, and returns it as base64.
-   * @param imagePath
-   * @param crop
+   * @param {string} imagePath - The path to the image file.
+   * @param {number[]} [crop] - Optional crop coordinates as [left, top, right, bottom].
    * @returns {Promise<{mime_type: string, data: string, resolution: string}>} Image metadata and base64 data.
    * @throws {Error} If the image processing fails.
    */
