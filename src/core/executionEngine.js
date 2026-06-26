@@ -1,7 +1,23 @@
 import path from "path";
 import ToolAttemptTracker from "./toolTracker.js";
 
+/**
+ * ExecutionEngine is responsible for the orchestration of tool calls.
+ * It manages tool validation, loop detection, security constraints,
+ * and the actual invocation of tool functions, ensuring that results
+ * are formatted and tracked correctly.
+ */
 class ExecutionEngine {
+  /**
+   * Initializes a new instance of the ExecutionEngine.
+   * @param {object} assistant - The assistant instance managing the conversation.
+   * @param {{[key: string]: (...args: any[]) => Promise<*>}} tools - A map of available tool functions.
+   * @param {object} toolParser - The parser used to handle tool arguments and format responses.
+   * @param {object} ui - The UI interface for tool monitoring and user interaction.
+   * @param {boolean} [instanceMode] - Whether the engine is running in instance mode.
+   * @param {ToolAttemptTracker|null} [tracker] - An optional tracker for tool attempts.
+   * @param {boolean} [pureMode] - If true, tool execution is strictly disabled.
+   */
   constructor(
     assistant,
     tools,
@@ -21,61 +37,101 @@ class ExecutionEngine {
     this.turnCount = 0;
     this.maxTurns = 10000;
     this.stopRequested = false;
-
-    this._detailMappers = {
-      read: (a) => (a.path ? path.basename(a.path) : "unknown"),
-      write: (a) => (a.path ? path.basename(a.path) : "unknown"),
-      remove: (a) => (a.path ? path.basename(a.path) : "unknown"),
-      ls: (a) => a.path || "root",
-      replace: (a) => (a.path ? path.basename(a.path) : "unknown"),
-      rename: (a) =>
-        a.origin && a.destination
-          ? `${path.basename(a.origin)} -> ${path.basename(a.destination)}`
-          : "unknown",
-      copy: (a) =>
-        a.origin && a.destination
-          ? `${path.basename(a.origin)} -> ${path.basename(a.destination)}`
-          : "unknown",
-      concat: (a) => (a.destination ? path.basename(a.destination) : "unknown"),
-      analysis: (a) => (a.path ? path.basename(a.path) : "unknown"),
-      eslint: (a) => (a.path ? path.basename(a.path) : "unknown"),
-      doc: (a) => (a.path ? `Docs: ${path.basename(a.path)}` : "unknown"),
-      execute: (a) => (a.command ? a.command.substring(0, 50) : "bash"),
-      grep: (a) => a.query || "search",
-      glob: (a) => a.pattern || "pattern",
-      valide: (a) => (a.json_string ? `len: ${a.json_string.length}` : "json"),
-      nickname: (a) => a.newNickname || "nickname",
-      push: () => "insight",
-      token: () => "tokens",
-      tree: () => "tree",
-      diff: (a) => (a.path ? path.basename(a.path) : "unknown"),
-      restore: (a) => (a.path ? path.basename(a.path) : "unknown"),
-      difference: () => "all",
-      remote: () => "url",
-      patch: () => "git patch",
-      structure: (a) => (a.file_path ? path.basename(a.file_path) : "unknown"),
-      node: (a) => (a.file_path ? path.basename(a.file_path) : "unknown"),
-      arrange: (a) => (a.file_path ? path.basename(a.file_path) : "unknown"),
-      update: (a) => (a.file_path ? path.basename(a.file_path) : "unknown"),
-      list: (a) => a.path || "root",
-      create: (a) => a.title || "issue",
-      edit: (a) => (a.issue_number ? `#${a.issue_number}` : "issue"),
-      close: (a) => (a.issue_number ? `#${a.issue_number}` : "issue"),
-      post: (a) => (a.issue_number ? `#${a.issue_number}` : "issue"),
-      notify: (a) => (a.message ? a.message.substring(0, 30) : "notify"),
-      scene: (a) => a.scene || "scene",
-      jszip: (a) => (a.filePath ? path.basename(a.filePath) : "zip"),
-      bin: (a) => (a.filePath ? path.basename(a.filePath) : "binary"),
-      search: (a) => a.query || "web",
-      url: (a) => a.url || "url",
-      run: () => "sandbox",
-      img: (a) => (a.path ? path.basename(a.path) : "image"),
-      reset: (a) =>
-        a.user_message ? a.user_message.substring(0, 30) : "reset",
-      real: (a) => a.action || "action",
-    };
   }
 
+  /**
+   * Extracts a human-readable detail string from tool arguments for monitoring purposes.
+   * @param {string} toolName - The name of the tool being executed.
+   * @param {object} args - The arguments passed to the tool.
+   * @returns {string} A descriptive string identifying the target of the tool operation.
+   */
+  _getToolDetail(toolName, args) {
+    switch (toolName) {
+      case "read":
+      case "write":
+      case "remove":
+      case "replace":
+      case "analysis":
+      case "eslint":
+      case "diff":
+      case "restore":
+        return args.path ? path.basename(args.path) : "unknown";
+      case "ls":
+      case "list":
+        return args.path || "root";
+      case "rename":
+      case "copy":
+        return args.origin && args.destination
+          ? `${path.basename(args.origin)} -> ${path.basename(args.destination)}`
+          : "unknown";
+      case "concat":
+        return args.destination ? path.basename(args.destination) : "unknown";
+      case "doc":
+        return args.path ? `Docs: ${path.basename(args.path)}` : "unknown";
+      case "execute":
+        return args.command ? args.command.substring(0, 50) : "bash";
+      case "grep":
+        return args.query || "search";
+      case "glob":
+        return args.pattern || "pattern";
+      case "valide":
+        return args.json_string ? `len: ${args.json_string.length}` : "json";
+      case "nickname":
+        return args.newNickname || "nickname";
+      case "push":
+        return "insight";
+      case "token":
+        return "tokens";
+      case "tree":
+        return "tree";
+      case "difference":
+        return "all";
+      case "remote":
+        return "url";
+      case "patch":
+        return "git patch";
+      case "structure":
+      case "node":
+      case "arrange":
+      case "update":
+        return args.file_path ? path.basename(args.file_path) : "unknown";
+      case "create":
+        return args.title || "issue";
+      case "edit":
+      case "close":
+      case "post":
+        return args.issue_number ? `#${args.issue_number}` : "issue";
+      case "notify":
+        return args.message ? args.message.substring(0, 30) : "notify";
+      case "scene":
+        return args.scene || "scene";
+      case "jszip":
+        return args.filePath ? path.basename(args.filePath) : "zip";
+      case "bin":
+        return args.filePath ? path.basename(args.filePath) : "binary";
+      case "search":
+        return args.query || "web";
+      case "url":
+        return args.url || "url";
+      case "run":
+        return "sandbox";
+      case "img":
+        return args.path ? path.basename(args.path) : "image";
+      case "reset":
+        return args.user_message ? args.user_message.substring(0, 30) : "reset";
+      case "real":
+        return args.action || "action";
+      default:
+        return "no details";
+    }
+  }
+
+  /**
+   * Executes a specific tool call after performing security and validity checks.
+   * @param {string} name - The name of the tool to be executed.
+   * @param {object} args - The arguments passed to the tool.
+   * @returns {Promise<{response: string, result: object|string, success: boolean}>} An object containing the formatted response, the raw result, and the success status.
+   */
   async executeToolCall(name, args) {
     const displayName = name;
     const toolName = name;
@@ -86,21 +142,16 @@ class ExecutionEngine {
 
     try {
       if (this.strictPureMode) {
-        result = "ERR: Pure Mode active. Tool execution is strictly disabled.";
+        result = "Pure Mode active. Tool execution is strictly disabled.";
       } else if (!this.toolTracker.recordAttempt(toolName, args)) {
         result = `Tool loop detected: ${toolName} called too many times.`;
       } else if (toolName === "execute" && !this.ui.bashEnabled) {
-        result =
-          "ERR: Bash access is disabled for security. Please use /enableBash to activate it.";
+        result = 
+          "Bash access is disabled for security. Please use /enableBash to activate it.";
       } else if (!(toolName in this.tools)) {
         result = `Unknown tool: ${toolName}`;
       } else {
-        try {
-          const mapper = this._detailMappers[toolName] ?? (() => "no details");
-          detail = mapper(args);
-        } catch {
-          detail = "error mapping details";
-        }
+        detail = this._getToolDetail(toolName, args);
 
         this.ui.startToolMonitoring(displayName, detail);
         monitoringStarted = true;
@@ -111,11 +162,10 @@ class ExecutionEngine {
         } else {
           result = await toolFunc(args);
         }
-        success =
-          typeof result === "string" ? !result.startsWith("ERR:") : true;
+        success = true;
       }
     } catch (e) {
-      result = `ERR: ${e.message}`;
+      result = e.message;
       success = false;
     }
 
