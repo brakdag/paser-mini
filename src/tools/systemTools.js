@@ -53,9 +53,13 @@ export class SystemTools {
    */
   async analyzeCode(targetPath) {
     try {
-      const { stdout } = await this.#execFilePromise("npx", ["pyright", "--outputjson", targetPath], {
-        timeout: 60000,
-      });
+      const { stdout } = await this.#execFilePromise(
+        "npx",
+        ["pyright", "--outputjson", targetPath],
+        {
+          timeout: 60000,
+        },
+      );
       return stdout.trim() === "" ? "No type or syntax errors found." : stdout;
     } catch (e) {
       if (e.stdout) return e.stdout;
@@ -71,10 +75,16 @@ export class SystemTools {
    */
   async lintCode(targetPath) {
     try {
-      const { stdout } = await this.#execFilePromise("npx", ["eslint", targetPath, "--no-color"], {
-        timeout: 60000,
-      });
-      return (!stdout || stdout.trim() === "[]") ? "No linting issues found." : stdout;
+      const { stdout } = await this.#execFilePromise(
+        "npx",
+        ["eslint", targetPath, "--no-color"],
+        {
+          timeout: 60000,
+        },
+      );
+      return !stdout || stdout.trim() === "[]"
+        ? "No linting issues found."
+        : stdout;
     } catch (e) {
       if (e.stdout) return e.stdout;
       throw new Error(`Linting error: ${e.message}`);
