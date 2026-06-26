@@ -7,15 +7,30 @@ import ConfigManager from "./configManager.js";
 import TurnProcessor from "./turnProcessor.js";
 import ProviderManager from "../infrastructure/providerManager.js";
 
+/**
+ * ChatManager orchestrates the interaction between the user, the AI assistant,
+ * and the tool execution engine. It manages the conversation lifecycle, 
+ * configuration, and turn processing.
+ */
 class ChatManager {
-  constructor(assistant, tools, systemInstruction, ui, instanceMode = false) {
+  /**
+   * Initializes a new instance of the ChatManager.
+   * @param {object} assistant - The AI assistant adapter.
+   * @param {{[key: string]: Function}} tools - The available tools map.
+   * @param {string} systemInstruction - The system prompt/instructions.
+   * @param {object} ui - The user interface handler.
+   * @param {boolean} [instanceMode] - Whether this is a sub-instance of the agent.
+   * @param {ConfigManager|null} [configManager] - Optional injected configuration manager.
+   * @param {ProviderManager|null} [providerManager] - Optional injected provider manager.
+   */
+  constructor(assistant, tools, systemInstruction, ui, instanceMode = false, configManager = null, providerManager = null) {
     this.assistant = assistant;
     this.tools = tools;
     this.systemInstruction = systemInstruction;
     this.ui = ui;
     this.instanceMode = instanceMode;
-    this.configManager = new ConfigManager();
-    this.providerManager = new ProviderManager();
+    this.configManager = configManager || new ConfigManager();
+    this.providerManager = providerManager || new ProviderManager();
     this.temperature = parseFloat(
       this.configManager.get("default_temperature", 0.7),
     );
@@ -63,6 +78,11 @@ class ChatManager {
     this.logOpened = false;
   }
 
+  /**
+   * Saves a configuration value, respecting the instance mode.
+   * @param {string} key - The configuration key.
+   * @param {unknown} value - The value to save.
+   */
   saveConfig(key, value) {
     if (this.instanceMode) {
       this.configManager.config[key] = value;
@@ -71,6 +91,10 @@ class ChatManager {
     this.configManager.save(key, value);
   }
 
+  /**
+   * Updates the rendering mode for the UI and the assistant.
+   * @param {string} mode - The rendering mode (e.g., 'IRC', 'FOUNTAIN').
+   */
   setRenderingMode(mode) {
     this.saveConfig("rendering_mode", mode);
     this.ui.setRenderingMode(mode);
@@ -83,16 +107,33 @@ class ChatManager {
     }
   }
 
+  /**
+   * Placeholder for temperature adjustment logic.
+   */
   setTemperature() {}
 
+  /**
+   * Updates the current active channel.
+   * @param {string} channel - The channel name.
+   */
   setCurrentChannel(channel) {
     this.currentChannel = channel;
   }
 
+  /**
+   * Signals the manager to stop the execution loop.
+   */
   requestExit() {
     this.stopRequested = true;
   }
 
+  /**
+   * Switches the AI provider and migrates the conversation history.
+   * @param {string} providerId - The ID of the new provider.
+   * @param {string} model - The model name to use.
+   * @param {number} temperature - The sampling temperature.
+   * @returns {Promise<void>}
+   */
   async switchProvider(providerId, model, temperature) {
     const oldAssistant = this.assistant;
     let newAssistant;
@@ -141,6 +182,11 @@ class ChatManager {
     logger.info(`Provider switched to ${providerId} | Model: ${model}`);
   }
 
+  /**
+   * Starts the main chat loop and initializes memory/system contexts.
+   * @param {string|null} [initialInput] - Optional initial message to process.
+   * @returns {Promise<void>}
+   */
   async run(initialInput = null) {
     logger.info("Initializing ChatManager.run");
 
@@ -213,14 +259,26 @@ ${welcomeMsg}`;
     }
   }
 
+  /**
+   * Processes a single turn of conversation.
+   * @param {string} userInput - The input provided by the user.
+   * @returns {Promise<unknown>} The result of the turn processing.
+   */
   async processTurn(userInput) {
     return this.turnProcessor.process(userInput);
   }
 
+  /**
+   * Stops the execution of the chat loop.
+   */
   stopExecution() {
     this.stopRequested = true;
   }
 
+  /**
+   * Calculates the current token usage relative to the context window limit.
+   * @returns {string} A formatted string showing current/limit and percentage.
+   */
   getTokenCount() {
     const systemInstruction = this.systemInstruction || "";
     const historyData =
