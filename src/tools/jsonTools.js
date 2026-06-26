@@ -32,10 +32,22 @@ export default class JsonTools {
   }
 
   /**
+   * Loads and parses a JSON file.
+   * @param {string} filePath - Path to the JSON file.
+   * @returns {Promise<unknown>} The parsed JSON data.
+   */
+  async #loadJson(filePath) {
+    const safePath = this.#getSafePath(filePath);
+    const content = await fs.readFile(safePath, "utf8");
+    return JSON.parse(content);
+  }
+
+  /**
    * Retrieves a value from a data object by path.
    * @param {unknown} data - The source data object.
    * @param {Array<string|number>} pathParts - The path segments.
    * @returns {unknown} The retrieved value.
+   * @throws {Error} If a path segment is not found.
    */
   #getByPath(data, pathParts) {
     let current = data;
@@ -55,6 +67,7 @@ export default class JsonTools {
    * @param {unknown} data - The source data object.
    * @param {Array<string|number>} pathParts - The path segments.
    * @param {unknown} value - The value to set.
+   * @throws {Error} If a path segment is not found or the target is not an object.
    */
   #setByPath(data, pathParts, value) {
     let current = data;
@@ -82,35 +95,29 @@ export default class JsonTools {
    * @returns {Promise<string>} JSON string describing the structure.
    */
   async getJsonStructure(filePath, pathStr) {
-    try {
-      const safePath = this.#getSafePath(filePath);
-      const content = await fs.readFile(safePath, "utf8");
-      const data = JSON.parse(content);
-      const parts = this.#parsePath(pathStr);
-      const target = this.#getByPath(data, parts);
+    const data = await this.#loadJson(filePath);
+    const parts = this.#parsePath(pathStr);
+    const target = this.#getByPath(data, parts);
 
-      if (Array.isArray(target)) {
-        return JSON.stringify({
-          type: "array",
-          length: target.length,
-          itemType: target.length > 0 ? typeof target[0] : "unknown",
-        });
-      }
-      if (target !== null && typeof target === "object") {
-        return JSON.stringify({
-          type: "object",
-          keys: Object.keys(target),
-        });
-      }
+    if (Array.isArray(target)) {
       return JSON.stringify({
-        type: typeof target,
-        value: target,
+        type: "array",
+        length: target.length,
+        itemType: target.length > 0 ? typeof target[0] : "unknown",
       });
-    } catch (e) {
-      return `ERR: ${e.message}`;
     }
+    if (target !== null && typeof target === "object") {
+      return JSON.stringify({
+        type: "object",
+        keys: Object.keys(target),
+      });
+    }
+    return JSON.stringify({
+      type: typeof target,
+      value: target,
+    });
   }
-
+  
   /**
    * Retrieves a specific JSON node.
    * @param {string} filePath - Path to the JSON file.
@@ -118,16 +125,10 @@ export default class JsonTools {
    * @returns {Promise<string>} The node content as a JSON string.
    */
   async getJsonNode(filePath, pathStr) {
-    try {
-      const safePath = this.#getSafePath(filePath);
-      const content = await fs.readFile(safePath, "utf8");
-      const data = JSON.parse(content);
-      const parts = this.#parsePath(pathStr);
-      const target = this.#getByPath(data, parts);
-      return JSON.stringify(target, null, 2);
-    } catch (e) {
-      return `ERR: ${e.message}`;
-    }
+    const data = await this.#loadJson(filePath);
+    const parts = this.#parsePath(pathStr);
+    const target = this.#getByPath(data, parts);
+    return JSON.stringify(target, null, 2);
   }
 
   /**
@@ -137,24 +138,18 @@ export default class JsonTools {
    * @returns {Promise<string>} JSON string with array info.
    */
   async getJsonArrayInfo(filePath, pathStr) {
-    try {
-      const safePath = this.#getSafePath(filePath);
-      const content = await fs.readFile(safePath, "utf8");
-      const data = JSON.parse(content);
-      const parts = this.#parsePath(pathStr);
-      const target = this.#getByPath(data, parts);
+    const data = await this.#loadJson(filePath);
+    const parts = this.#parsePath(pathStr);
+    const target = this.#getByPath(data, parts);
 
-      if (!Array.isArray(target)) {
-        return `ERR: Path '${pathStr}' does not point to an array.`;
-      }
-
-      return JSON.stringify({
-        length: target.length,
-        itemType: target.length > 0 ? typeof target[0] : "unknown",
-      });
-    } catch (e) {
-      return `ERR: ${e.message}`;
+    if (!Array.isArray(target)) {
+      throw new Error(`Path '${pathStr}' does not point to an array.`);
     }
+
+    return JSON.stringify({
+      length: target.length,
+      itemType: target.length > 0 ? typeof target[0] : "unknown",
+      });
   }
 
   /**
@@ -162,19 +157,13 @@ export default class JsonTools {
    * @param {string} filePath - Path to the JSON file.
    * @param {string} pathStr - Path to the node.
    * @param {unknown} value - The new value to set.
-   * @returns {Promise<string>} "OK" on success, or an error message.
+   * @returns {Promise<void>} Success is implicit.
    */
   async updateJsonNode(filePath, pathStr, value) {
-    try {
-      const safePath = this.#getSafePath(filePath);
-      const content = await fs.readFile(safePath, "utf8");
-      const data = JSON.parse(content);
-      const parts = this.#parsePath(pathStr);
-      this.#setByPath(data, parts, value);
-      await fs.writeFile(safePath, JSON.stringify(data, null, 2), "utf8");
-      return "OK";
-    } catch (e) {
-      return `ERR: ${e.message}`;
-    }
+    const data = await this.#loadJson(filePath);
+    const parts = this.#parsePath(pathStr);
+    this.#setByPath(data, parts, value);
+    const safePath = this.#getSafePath(filePath);
+    await fs.writeFile(safePath, JSON.stringify(data, null, 2), "utf8");
   }
 }

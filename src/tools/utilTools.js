@@ -1,11 +1,11 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import fs from 'fs/promises';
-import path from 'path';
-import os from 'os';
-import ConfigManager from '../core/configManager.js';
+import { execFile } from "child_process";
+import { promisify } from "util";
+import fs from "fs/promises";
+import path from "path";
+import os from "os";
+import ConfigManager from "../core/configManager.js";
 
-const execPromise = promisify(exec);
+const execFilePromise = promisify(execFile);
 
 /**
  * Utility tools for system operations and data validation.
@@ -16,13 +16,14 @@ export default class UtilTools {
    * @param {object} params - The parameters.
    * @param {string} params.jsonString - The JSON string to validate.
    * @returns {Promise<string>} Validation result message.
+   * @throws {Error} If the JSON is invalid.
    */
   async validateJson({ jsonString }) {
     try {
       JSON.parse(jsonString);
       return 'El JSON es valido.';
     } catch (e) {
-      return `ERR: JSON invalido: ${e.message}`;
+      throw new Error(`JSON invalido: ${e.message}`);
     }
   }
 
@@ -31,6 +32,7 @@ export default class UtilTools {
    * @param {object} params - The parameters.
    * @param {string} params.newNickname - The new nickname to be set.
    * @returns {Promise<string>} Confirmation message.
+   * @throws {Error} If the update fails.
    */
   async setNickname({ newNickname }) {
     try {
@@ -39,7 +41,7 @@ export default class UtilTools {
       config.save('agent_nickname', newNickname);
       return `*** ${oldNickname} is now known as ${newNickname}`;
     } catch (e) {
-      return `ERR: Failed to update nickname: ${e.message}`;
+      throw new Error(`Failed to update nickname: ${e.message}`);
     }
   }
 
@@ -49,6 +51,7 @@ export default class UtilTools {
    * @param {string} params.path - Path to the image file.
    * @param {number[]} [params.crop] - Optional crop coordinates [left, top, right, bottom].
    * @returns {Promise<{mime_type: string, data: string, resolution: string}>} Image metadata and base64 data.
+   * @throws {Error} If the image processing fails.
    */
   async seeImage({ path: imagePath, crop }) {
     if (!imagePath) throw new Error("The 'path' parameter is required.");
@@ -56,8 +59,8 @@ export default class UtilTools {
     const tempFile = path.join(os.tmpdir(), `seeImage_${Date.now()}.jpg`);
 
     try {
-      let command = `convert "${imagePath}" -background white -alpha remove`;
-
+      const args = ["-background", "white", "-alpha", "remove"];
+      
       if (crop) {
         if (!Array.isArray(crop) || crop.length !== 4) {
           throw new Error("The 'crop' parameter must be an array of 4 integers: [left, top, right, bottom].");
@@ -68,17 +71,17 @@ export default class UtilTools {
         if (width <= 0 || height <= 0) {
           throw new Error("Invalid crop dimensions: right must be > left and bottom must be > top.");
         }
-        command += ` -crop ${width}x${height}+${left}+${top} +repage`;
+        args.push("-crop", `${width}x${height}+${left}+${top}`, "+repage");
       }
 
-      command += ` -resize 512x512 -colorspace sRGB -quality 75 "${tempFile}"`;
+      args.push("-resize", "512x512", "-colorspace", "sRGB", "-quality", "75", imagePath, tempFile);
 
-      await execPromise(command);
+      await execFilePromise("convert", args);
 
       const buffer = await fs.readFile(tempFile);
       const base64Data = buffer.toString('base64');
       
-      const { stdout: resStdout } = await execPromise(`identify -format "%wx%h" "${tempFile}"`);
+      const { stdout: resStdout } = await execFilePromise("identify", ["-format", "%wx%h", imagePath]);
       const resolution = resStdout.trim();
 
       return {

@@ -1,6 +1,8 @@
 import fs from "fs/promises";
 
-/** Binary data manipulation tools. */
+/**
+ * Binary data manipulation tools.
+ */
 class BinaryTools {
   #MAGIC_NUMBERS = {
     ZIP: "504b0304",
@@ -20,25 +22,28 @@ class BinaryTools {
    * @param {string} filePath Path to file.
    * @param {number} offset Start offset.
    * @param {number} length Bytes to read.
-   * @returns {Promise<object>} Inspection result.
+   * @returns {Promise<string>} Hex dump output.
    */
   async #inspectBinary(filePath, offset, length) {
     const handle = await fs.open(filePath, "r");
-    const buffer = Buffer.alloc(length);
-    await handle.read(buffer, 0, length, offset);
-    await handle.close();
+    try {
+      const buffer = Buffer.alloc(length);
+      await handle.read(buffer, 0, length, offset);
 
-    let output = "Offset    | Hex                                           | ASCII\n";
-    output += "--------------------------------------------------------------------------\n";
+      let output = "Offset    | Hex                                           | ASCII\n";
+      output += "--------------------------------------------------------------------------\n";
 
-    for (let i = 0; i < buffer.length; i += 16) {
-      const chunk = buffer.slice(i, i + 16);
-      const hex = chunk.toString("hex").match(/.{1,2}/g)?.join(" ") || "";
-      const ascii = chunk.toString("utf8").replace(/[\x20-\x7E]/g, ".");
-      const currentOffset = (offset + i).toString(16).padStart(8, "0");
-      output += `${currentOffset} | ${hex.padEnd(47)} | ${ascii}\n`;
+      for (let i = 0; i < buffer.length; i += 16) {
+        const chunk = buffer.slice(i, i + 16);
+        const hex = chunk.toString("hex").match(/.{1,2}/g)?.join(" ") || "";
+        const ascii = chunk.toString("utf8").replace(/[\x00-\x1F\x7F-\xFF]/g, ".");
+        const currentOffset = (offset + i).toString(16).padStart(8, "0");
+        output += `${currentOffset} | ${hex.padEnd(47)} | ${ascii}\n`;
+      }
+      return output;
+    } finally {
+      await handle.close();
     }
-    return { success: true, data: output };
   }
 
   /**
@@ -48,57 +53,76 @@ class BinaryTools {
    * @param {number} end End offset.
    * @param {number} length Length to extract.
    * @param {string} outputFile Output path.
-   * @returns {Promise<object>} Extraction result.
+   * @returns {Promise<string>} Confirmation message.
    */
   async #extractBinary(filePath, start, end, length, outputFile) {
     const handle = await fs.open(filePath, "r");
-    const readLength = end !== undefined ? end - start : length || 0;
-    if (readLength <= 0) {
+    try {
+      const readLength = end !== undefined ? end - start : length || 0;
+      if (readLength <= 0) {
+        throw new Error("Invalid extraction range");
+      }
+      const buffer = Buffer.alloc(readLength);
+      await handle.read(buffer, 0, readLength, start);
+      await fs.writeFile(outputFile, buffer);
+      return `Extracted ${readLength} bytes to ${outputFile}`;
+    } finally {
       await handle.close();
-      throw new Error("Invalid extraction range");
     }
-    const buffer = Buffer.alloc(readLength);
-    await handle.read(buffer, 0, readLength, start);
-    await handle.close();
-    await fs.writeFile(outputFile, buffer);
-    return { success: true, message: `Extracted ${readLength} bytes to ${outputFile}` };
   }
 
   /**
-   * Search binary pattern.
+   * Search binary pattern using chunked reading to avoid memory overflow.
    * @param {string} filePath Path to file.
    * @param {string} pattern Hex pattern.
-   * @returns {Promise<object>} Search results.
+   * @returns {Promise<{offsets: number[], count: number}>} Search results.
    */
   async #searchBinary(filePath, pattern) {
     const searchBuf = Buffer.from(pattern.replace(/\s+/g, ""), "hex");
-    const buffer = await fs.readFile(filePath);
     const offsets = [];
-    let index = buffer.indexOf(searchBuf);
-    while (index !== -1) {
-      offsets.push(index);
-      index = buffer.indexOf(searchBuf, index + 1);
+    const handle = await fs.open(filePath, "r");
+    
+    try {
+      const bufferSize = 64 * 1024;
+      const buffer = Buffer.alloc(bufferSize);
+      let totalOffset = 0;
+      let bytesRead;
+
+      while ((bytesRead = (await handle.read(buffer, 0, bufferSize, totalOffset)).bytesRead) > 0) {
+        let index = buffer.indexOf(searchBuf, 0);
+        while (index !== -1) {
+          offsets.push(totalOffset + index);
+          index = buffer.indexOf(searchBuf, index + 1);
+        }
+        // Move offset back by pattern length - 1 to catch patterns split across chunks
+        totalOffset += bytesRead - (searchBuf.length > 0 ? searchBuf.length - 1 : 0);
+      }
+    } finally {
+      await handle.close();
     }
-    return { success: true, data: { offsets, count: offsets.length } };
+
+    return { offsets, count: offsets.length };
   }
 
   /**
    * Detect binary file type.
    * @param {string} filePath Path to file.
-   * @returns {Promise<object>} Detection result.
+   * @returns {Promise<{type: string, signature: string|null}>} Detection result.
    */
   async #detectBinary(filePath) {
     const handle = await fs.open(filePath, "r");
-    const buffer = Buffer.alloc(32);
-    await handle.read(buffer, 0, 32, 0);
-    await handle.close();
-    const fileHex = buffer.toString("hex");
-    const entries = Object.entries(this.#MAGIC_NUMBERS);
-    for (let i = 0; i < entries.length; i += 1) {
-      const [type, signature] = entries[i];
-      if (fileHex.startsWith(signature)) return { success: true, data: { type, signature } };
+    try {
+      const buffer = Buffer.alloc(32);
+      await handle.read(buffer, 0, 32, 0);
+      const fileHex = buffer.toString("hex");
+      const entries = Object.entries(this.#MAGIC_NUMBERS);
+      for (const [type, signature] of entries) {
+        if (fileHex.startsWith(signature)) return { type, signature };
+      }
+      return { type: "Unknown", signature: null };
+    } finally {
+      await handle.close();
     }
-    return { success: true, data: { type: "Unknown", signature: null } };
   }
 
   /**
@@ -106,20 +130,20 @@ class BinaryTools {
    * @param {string} hexString Hex string.
    * @param {string} type Data type.
    * @param {string} endianness Endianness (LE/BE).
-   * @returns {object} Conversion result.
+   * @returns {number} Converted value.
    */
   #convertBinary(hexString, type, endianness) {
     const buf = Buffer.from(hexString.replace(/\s+/g, ""), "hex");
     const isLE = endianness === "LE";
     switch (type) {
-      case "Int8": return { success: true, value: buf.readInt8() };
-      case "UInt8": return { success: true, value: buf.readUInt8() };
-      case "Int16": return { success: true, value: isLE ? buf.readInt16LE() : buf.readInt16BE() };
-      case "UInt16": return { success: true, value: isLE ? buf.readUInt16LE() : buf.readUInt16BE() };
-      case "Int32": return { success: true, value: isLE ? buf.readInt32LE() : buf.readInt32BE() };
-      case "UInt32": return { success: true, value: isLE ? buf.readUInt32LE() : buf.readUInt32BE() };
-      case "Float32": return { success: true, value: isLE ? buf.readFloatLE() : buf.readFloatBE() };
-      case "Float64": return { success: true, value: isLE ? buf.readDoubleLE() : buf.readDoubleBE() };
+      case "Int8": return buf.readInt8();
+      case "UInt8": return buf.readUInt8();
+      case "Int16": return isLE ? buf.readInt16LE() : buf.readInt16BE();
+      case "UInt16": return isLE ? buf.readUInt16LE() : buf.readUInt16BE();
+      case "Int32": return isLE ? buf.readInt32LE() : buf.readInt32BE();
+      case "UInt32": return isLE ? buf.readUInt32LE() : buf.readUInt32BE();
+      case "Float32": return isLE ? buf.readFloatLE() : buf.readFloatBE();
+      case "Float64": return isLE ? buf.readDoubleLE() : buf.readDoubleBE();
       default: throw new Error(`Unsupported type: ${type}`);
     }
   }
@@ -127,20 +151,19 @@ class BinaryTools {
   /**
    * Handle hex commands.
    * @param {object} args Command arguments.
-   * @returns {Promise<object>} Command result.
+   * @returns {Promise<any>} Command result.
    */
   async handleHexCommand(args) {
     const { action, filePath, offset = 0, length = 256, end, outputFile, pattern, hexString, type, endianness = "LE" } = args;
-    try {
-      switch (action) {
-        case "inspect": return await this.#inspectBinary(filePath, offset, length);
-        case "extract": return await this.#extractBinary(filePath, offset, end, length, outputFile);
-        case "search": return await this.#searchBinary(filePath, pattern);
-        case "detect": return await this.#detectBinary(filePath);
-        case "convert": return this.#convertBinary(hexString, type, endianness);
-        default: throw new Error(`Unsupported action: ${action}`);
-      }
-    } catch (error) { return { success: false, error: error.message }; }
+
+    switch (action) {
+      case "inspect": return this.#inspectBinary(filePath, offset, length);
+      case "extract": return this.#extractBinary(filePath, offset, end, length, outputFile);
+      case "search": return this.#searchBinary(filePath, pattern);
+      case "detect": return this.#detectBinary(filePath);
+      case "convert": return this.#convertBinary(hexString, type, endianness);
+      default: throw new Error(`Unsupported action: ${action}`);
+    }
   }
 }
 

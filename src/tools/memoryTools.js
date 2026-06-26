@@ -1,17 +1,17 @@
 import MementoManager from "./mementoManager.js";
 
-/** Memory management tools. */
+/**
+ * Memory management tools providing an interface to the memento system.
+ */
 export default class MemoryTools {
   #memento = new MementoManager();
-
   #currentAssistant = null;
-
   #currentChatManager = null;
 
   /**
-   * Set context.
-   * @param {object} assistant Assistant.
-   * @param {object} chatManager ChatManager.
+   * Set the operational context for memory tools.
+   * @param {object} assistant The assistant instance.
+   * @param {object} chatManager The chat manager instance.
    */
   setMemoryContext(assistant, chatManager) {
     this.#currentAssistant = assistant;
@@ -19,41 +19,35 @@ export default class MemoryTools {
   }
 
   /**
-   * Push memory.
-   * @param {object} args Args object.
-   * @param {string} args.data Data to store.
-   * @returns {Promise<string>} Result.
+   * Push a new memory entry into the memento log.
+   * @param {object} options - Memory options.
+   * @param {string} options.data - The data to store.
+   * @returns {Promise<string>} Confirmation message from the memento manager.
+   * @throws {Error} If no data is provided or the storage operation fails.
    */
   async pushMemory({ data }) {
-    try {
-      if (!data) {
-        return "ERR: No value provided for memory.";
-      }
-
-      return await this.#memento.pushMemory(
-        "agent",
-        "general",
-        String(data),
-        null,
-      );
-    } catch (e) {
-      return `ERR: ${e.message}`;
+    if (!data) {
+      throw new Error("No value provided for memory.");
     }
+
+    return this.#memento.pushMemory(
+      "agent",
+      "general",
+      String(data),
+      null,
+    );
   }
 
   /**
-   * Get token count.
-   * @returns {Promise<string>} Result.
+   * Retrieves the current token count from the chat manager.
+   * @returns {Promise<string>} The current token count.
+   * @throws {Error} If the memory context has not been initialized.
    */
   async getTokenCount() {
-    try {
-      if (!this.#currentChatManager) {
-        return "ERR: Memory context not initialized.";
-      }
-
-      return this.#currentChatManager.getTokenCount();
-    } catch (e) {
-      return `ERR: ${e.message}`;
+    if (!this.#currentChatManager) {
+      throw new Error("Memory context not initialized.");
     }
+
+    return this.#currentChatManager.getTokenCount();
   }
 }

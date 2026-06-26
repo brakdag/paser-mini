@@ -1,11 +1,14 @@
 import v8 from "v8";
 import fs from "fs";
+import { pipeline } from "stream/promises";
 
-/** Performance monitoring tools. */
+/**
+ * Performance monitoring tools for system health and memory analysis.
+ */
 export default class PerfTools {
   /**
-   * Get system metrics.
-   * @returns {Promise<string>} JSON metrics.
+   * Get system metrics including memory usage, CPU time, and uptime.
+   * @returns {Promise<string>} JSON string containing the system metrics.
    */
   async metrics() {
     const mem = process.memoryUsage();
@@ -31,27 +34,24 @@ export default class PerfTools {
   }
 
   /**
-   * Create heap snapshot.
-   * @param {string} filepath Output path.
-   * @returns {Promise<string>} Result.
+   * Create a heap snapshot for memory leak analysis.
+   * @param {string} filepath - The output path for the snapshot file.
+   * @returns {Promise<string>} Confirmation message upon successful write.
+   * @throws {Error} If the filepath is missing or the snapshot process fails.
    */
   async snapshot(filepath) {
-    if (!filepath)
-      throw new Error("The 'path' parameter is required for heap snapshots.");
-
-    try {
-      const snapshotStream = v8.getHeapSnapshot();
-      const fileStream = fs.createWriteStream(filepath);
-      snapshotStream.pipe(fileStream);
-
-      return new Promise((resolve, reject) => {
-        fileStream.on("finish", () =>
-          resolve(`Heap snapshot written to ${filepath}`),
-        );
-        fileStream.on("error", reject);
-      });
-    } catch (e) {
-      return `ERR: Snapshot failed: ${e.message}`;
+    if (!filepath) {
+      throw new Error("The 'filepath' parameter is required for heap snapshots.");
     }
+
+    const snapshotStream = v8.getHeapSnapshot();
+    const fileStream = fs.createWriteStream(filepath);
+
+    await pipeline(
+      snapshotStream,
+      fileStream,
+    );
+
+    return `Heap snapshot written to ${filepath}`;
   }
 }

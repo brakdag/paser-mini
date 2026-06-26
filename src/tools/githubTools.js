@@ -7,14 +7,9 @@ import GitTools from "./gitTools.js";
  */
 export default class GithubTools {
   #GITHUB_API_URL = "https://api.github.com";
-
   #client;
-
   #gitTools;
 
-  /**
-   * Initializes the GitHub API client with retry logic.
-   */
   constructor() {
     this.#client = axios.create({
       baseURL: this.#GITHUB_API_URL,
@@ -26,11 +21,6 @@ export default class GithubTools {
     axiosRetry(this.#client, {
       retries: 3,
       retryDelay: axiosRetry.exponentialDelay,
-      /**
-       * Determines if a request should be retried.
-       * @param {Error} error The error object from the failed request.
-       * @returns {boolean} True if the request should be retried.
-       */
       retryCondition: (error) =>
         axiosRetry.isNetworkOrIdempotentRequestError(error) ||
         error.response?.status === 429,
@@ -64,206 +54,161 @@ export default class GithubTools {
   }
 
   /**
+   * Prepares the repository identifier and authentication headers for a request.
+   * @param {string} [repo] The repository identifier.
+   * @returns {Promise<{targetRepo: string, headers: object}>}
+   */
+  async #prepareRequest(repo) {
+    const targetRepo = repo
+      ? this.#resolveRepo(repo)
+      : await this.#gitTools.getCurrentRepo();
+
+    if (!targetRepo) {
+      throw new Error("Could not resolve target repository.");
+    }
+
+    const headers = await this.#getHeaders();
+    return { targetRepo, headers };
+  }
+
+  /**
    * Gets the details of the currently authenticated user.
-   * @returns {Promise<object|string>} The user data or an error message.
+   * @returns {Promise<object>} The user data.
    */
   async getAuthenticatedUser() {
-    try {
-      const headers = await this.#getHeaders();
-      const response = await this.#client.get("/user", { headers });
-      return response.data;
-    } catch (e) {
-      return `ERR: ${e.response?.data?.message || e.message}`;
-    }
+    const headers = await this.#getHeaders();
+    const response = await this.#client.get("/user", { headers });
+    return response.data;
   }
 
   /**
    * Lists issues for a given repository.
-   * @param {string} [repo] The repository identifier. If omitted, the current repo is used.
-   * @returns {Promise<Array|string>} A list of issues or an error message.
+   * @param {string} [repo] The repository identifier.
+   * @returns {Promise<Array>} A list of issues.
    */
   async listIssues(repo) {
-    try {
-      const targetRepo = repo
-        ? this.#resolveRepo(repo)
-        : await this.#gitTools.getCurrentRepo();
-      const headers = await this.#getHeaders();
-      const response = await this.#client.get(`/repos/${targetRepo}/issues`, {
-        headers,
-      });
-      return response.data;
-    } catch (e) {
-      return `ERR: ${e.message}`;
-    }
+    const { targetRepo, headers } = await this.#prepareRequest(repo);
+    const response = await this.#client.get(`/repos/${targetRepo}/issues`, { headers });
+    return response.data;
   }
 
   /**
    * Creates a new issue in a repository.
    * @param {string} title The title of the issue.
    * @param {string} body The body text of the issue.
-   * @param {string} [repo] The repository identifier. If omitted, the current repo is used.
-   * @returns {Promise<string>} A success message or an error message.
+   * @param {string} [repo] The repository identifier.
+   * @returns {Promise<string>} A success message.
    */
   async createIssue(title, body, repo) {
-    try {
-      const targetRepo = repo
-        ? this.#resolveRepo(repo)
-        : await this.#gitTools.getCurrentRepo();
-      const headers = await this.#getHeaders();
-      const response = await this.#client.post(
-        `/repos/${targetRepo}/issues`,
-        { title, body },
-        { headers },
-      );
-      return `Issue #${response.data.number} created successfully.`;
-    } catch (e) {
-      return `ERR: ${e.message}`;
-    }
+    const { targetRepo, headers } = await this.#prepareRequest(repo);
+    const response = await this.#client.post(
+      `/repos/${targetRepo}/issues`,
+      { title, body },
+      { headers },
+    );
+    return `Issue #${response.data.number} created successfully.`;
   }
 
   /**
    * Edits an existing issue.
    * @param {number|string} issueNumber The issue number to edit.
-   * @param {string} [repo] The repository identifier. If omitted, the current repo is used.
+   * @param {string} [repo] The repository identifier.
    * @param {string} [title] The new title for the issue.
    * @param {string} [body] The new body for the issue.
-   * @returns {Promise<string>} A success message or an error message.
+   * @returns {Promise<string>} A success message.
    */
   async editIssue(issueNumber, repo, title, body) {
-    try {
-      const targetRepo = repo
-        ? this.#resolveRepo(repo)
-        : await this.#gitTools.getCurrentRepo();
-      const headers = await this.#getHeaders();
-      const data = {};
-      if (title) data.title = title;
-      if (body) data.body = body;
-      await this.#client.patch(
-        `/repos/${targetRepo}/issues/${issueNumber}`,
-        data,
-        {
-          headers,
-        },
-      );
-      return `Issue #${issueNumber} edited successfully.`;
-    } catch (e) {
-      return `ERR: ${e.message}`;
-    }
+    const { targetRepo, headers } = await this.#prepareRequest(repo);
+    const data = {};
+    if (title) data.title = title;
+    if (body) data.body = body;
+
+    await this.#client.patch(
+      `/repos/${targetRepo}/issues/${issueNumber}`,
+      data,
+      { headers },
+    );
+    return `Issue #${issueNumber} edited successfully.`;
   }
 
   /**
    * Closes an existing issue.
    * @param {number|string} issueNumber The issue number to close.
-   * @param {string} [repo] The repository identifier. If omitted, the current repo is used.
-   * @returns {Promise<string>} A success message or an error message.
+   * @param {string} [repo] The repository identifier.
+   * @returns {Promise<string>} A success message.
    */
   async closeIssue(issueNumber, repo) {
-    try {
-      const targetRepo = repo
-        ? this.#resolveRepo(repo)
-        : await this.#gitTools.getCurrentRepo();
-      const headers = await this.#getHeaders();
-      await this.#client.patch(
-        `/repos/${targetRepo}/issues/${issueNumber}`,
-        { state: "closed" },
-        { headers },
-      );
-      return `Issue #${issueNumber} closed successfully.`;
-    } catch (e) {
-      return `ERR: ${e.message}`;
-    }
+    const { targetRepo, headers } = await this.#prepareRequest(repo);
+    await this.#client.patch(
+      `/repos/${targetRepo}/issues/${issueNumber}`,
+      { state: "closed" },
+      { headers },
+    );
+    return `Issue #${issueNumber} closed successfully.`;
   }
 
   /**
    * Posts a comment to an issue.
    * @param {number|string} issueNumber The issue number to comment on.
    * @param {string} body The content of the comment.
-   * @param {string} [repo] The repository identifier. If omitted, the current repo is used.
-   * @returns {Promise<string>} A success message or an error message.
+   * @param {string} [repo] The repository identifier.
+   * @returns {Promise<string>} A success message.
    */
   async postComment(issueNumber, body, repo) {
-    try {
-      const targetRepo = repo
-        ? this.#resolveRepo(repo)
-        : await this.#gitTools.getCurrentRepo();
-      const headers = await this.#getHeaders();
-      await this.#client.post(
-        `/repos/${targetRepo}/issues/${issueNumber}/comments`,
-        { body },
-        { headers },
-      );
-      return `Comment posted to issue #${issueNumber}.`;
-    } catch (e) {
-      return `ERR: ${e.message}`;
-    }
+    const { targetRepo, headers } = await this.#prepareRequest(repo);
+    await this.#client.post(
+      `/repos/${targetRepo}/issues/${issueNumber}/comments`,
+      { body },
+      { headers },
+    );
+    return `Comment posted to issue #${issueNumber}.`;
   }
 
   /**
    * Adds a label to an issue.
    * @param {number|string} issueNumber The issue number to label.
    * @param {string} label The label to add.
-   * @param {string} [repo] The repository identifier. If omitted, the current repo is used.
-   * @returns {Promise<string>} A success message or an error message.
+   * @param {string} [repo] The repository identifier.
+   * @returns {Promise<string>} A success message.
    */
   async addLabel(issueNumber, label, repo) {
-    try {
-      const targetRepo = repo
-        ? this.#resolveRepo(repo)
-        : await this.#gitTools.getCurrentRepo();
-      const headers = await this.#getHeaders();
-      await this.#client.post(
-        `/repos/${targetRepo}/issues/${issueNumber}/labels`,
-        { labels: [label] },
-        { headers },
-      );
-      return `Label '${label}' added to issue #${issueNumber}.`;
-    } catch (e) {
-      return `ERR: ${e.message}`;
-    }
+    const { targetRepo, headers } = await this.#prepareRequest(repo);
+    await this.#client.post(
+      `/repos/${targetRepo}/issues/${issueNumber}/labels`,
+      { labels: [label] },
+      { headers },
+    );
+    return `Label '${label}' added to issue #${issueNumber}.`;
   }
 
   /**
    * Removes a label from an issue.
    * @param {number|string} issueNumber The issue number to modify.
    * @param {string} label The label to remove.
-   * @param {string} [repo] The repository identifier. If omitted, the current repo is used.
-   * @returns {Promise<string>} A success message or an error message.
+   * @param {string} [repo] The repository identifier.
+   * @returns {Promise<string>} A success message.
    */
   async removeLabel(issueNumber, label, repo) {
-    try {
-      const targetRepo = repo
-        ? this.#resolveRepo(repo)
-        : await this.#gitTools.getCurrentRepo();
-      const headers = await this.#getHeaders();
-      await this.#client.delete(
-        `/repos/${targetRepo}/issues/${issueNumber}/labels/${label}`,
-        { headers },
-      );
-      return `Label '${label}' removed from issue #${issueNumber}.`;
-    } catch (e) {
-      return `ERR: ${e.message}`;
-    }
+    const { targetRepo, headers } = await this.#prepareRequest(repo);
+    await this.#client.delete(
+      `/repos/${targetRepo}/issues/${issueNumber}/labels/${label}`,
+      { headers },
+    );
+    return `Label '${label}' removed from issue #${issueNumber}.`;
   }
 
   /**
    * Retrieves comments for a specific issue.
    * @param {number|string} issueNumber The issue number.
-   * @param {string} [repo] The repository identifier. If omitted, the current repo is used.
-   * @returns {Promise<Array|string>} A list of comments or an error message.
+   * @param {string} [repo] The repository identifier.
+   * @returns {Promise<Array>} A list of comments.
    */
   async getIssueComments(issueNumber, repo) {
-    try {
-      const targetRepo = repo
-        ? this.#resolveRepo(repo)
-        : await this.#gitTools.getCurrentRepo();
-      const headers = await this.#getHeaders();
-      const response = await this.#client.get(
-        `/repos/${targetRepo}/issues/${issueNumber}/comments`,
-        { headers },
-      );
-      return response.data;
-    } catch (e) {
-      return `ERR: ${e.message}`;
-    }
+    const { targetRepo, headers } = await this.#prepareRequest(repo);
+    const response = await this.#client.get(
+      `/repos/${targetRepo}/issues/${issueNumber}/comments`,
+      { headers },
+    );
+    return response.data;
   }
 }

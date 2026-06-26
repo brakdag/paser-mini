@@ -10,37 +10,36 @@ export default class SearchTools {
    * Searches for files matching a glob-like pattern.
    * @param {string} pattern - The search pattern.
    * @returns {Promise<string>} JSON string of matching file paths.
+   * @throws {Error} If the search process fails.
    */
   async searchFilesPatternFixed(pattern) {
-    try {
-      const results = [];
-      /**
-       * Recursively walks through directories to find matching files.
-       * @param {string} dir - The directory to walk.
-       */
-      const walk = async (dir) => {
-        const files = await fs.readdir(dir, { withFileTypes: true });
-        await Promise.all(
-          files.map(async (file) => {
-            if (file.name !== ".git" && file.name !== "node_modules") {
-              const res = path.join(dir, file.name);
-              if (file.isDirectory()) {
-                await walk(res);
-              } else {
-                const regex = this.#globToRegex(pattern);
-                if (regex.test(file.name) || regex.test(res)) {
-                  results.push(res.replace(/^\.\//, ""));
-                }
-              }
+    const results = [];
+    const regex = this.#globToRegex(pattern);
+
+    /**
+     * Recursively walks through directories to find matching files.
+     * @param {string} dir - The directory to walk.
+     */
+    const walk = async (dir) => {
+      const files = await fs.readdir(dir, { withFileTypes: true });
+      await Promise.all(
+        files.map(async (file) => {
+          if (file.name === ".git" || file.name === "node_modules") return;
+
+          const res = path.join(dir, file.name);
+          if (file.isDirectory()) {
+            await walk(res);
+          } else {
+            if (regex.test(file.name) || regex.test(res)) {
+              results.push(res.replace(/^\.\//, ""));
             }
-          }),
-        );
-      };
-      await walk(".");
-      return JSON.stringify(results.slice(0, 10));
-    } catch (e) {
-      return `ERR: Search error: ${e.message}`;
-    }
+          }
+        }),
+      );
+    };
+
+    await walk(".");
+    return JSON.stringify(results.slice(0, 10));
   }
 
   /**
@@ -50,7 +49,7 @@ export default class SearchTools {
    */
   #globToRegex(glob) {
     let result = "";
-    const specialChars = ".+^${}()|[]\\";
+    const specialChars = ".+^${}()|[]\";
     for (let i = 0; i < glob.length; i += 1) {
       const char = glob[i];
       if (char === "*") {
@@ -70,11 +69,12 @@ export default class SearchTools {
    * Searches for a text query globally across the project using grep.
    * @param {string} query - The text to search for.
    * @returns {Promise<string>} JSON string of matching lines and files.
+   * @throws {Error} If the grep process fails unexpectedly.
    */
   async searchTextGlobal(query) {
     if (!query || query.trim() === "") return JSON.stringify([]);
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const rootPath = process.cwd();
       const child = spawn("grep", [
         "-rIn",
@@ -90,7 +90,7 @@ export default class SearchTools {
 
       child.stdout.on("data", (data) => {
         stdoutData += data.toString();
-        const currentLines = stdoutData.split("\\n").filter(Boolean).length;
+        const currentLines = stdoutData.split("\n").filter(Boolean).length;
 
         if (currentLines >= 10) {
           child.kill("SIGKILL");
@@ -98,15 +98,17 @@ export default class SearchTools {
         }
       });
 
-      child.stderr.on("data", (_data) => {
-        // Grep returns 1 if no matches are found, which is not an error
-      });
+      child.on("error", (err) => reject(err));
 
       child.on("close", (code) => {
         if (code === 1) {
           return resolve(JSON.stringify([]));
         }
-        return resolve(this.#parseGrepOutput(stdoutData, rootPath));
+        if (code === 0 || code === null) {
+          return resolve(this.#parseGrepOutput(stdoutData, rootPath));
+        }
+        // Other codes are treated as errors unless they are the 'no match' code
+        reject(new Error(`Grep process exited with code ${code}`));
       });
 
       setTimeout(() => {
@@ -129,9 +131,16 @@ export default class SearchTools {
       .filter((line) => line)
       .slice(0, 10)
       .map((line) => {
-        const parts = line.split(":");
-        const filePath = parts[0];
-        const lineNum = parseInt(parts[1], 10);
+        const firstColonIndex = line.indexOf(":");
+        if (firstColonIndex === -1) return null;
+
+        const filePath = line.substring(0, firstColonIndex);
+        const remaining = line.substring(firstColonIndex + 1);
+        const secondColonIndex = remaining.indexOf(":");
+        
+        if (secondColonIndex === -1) return null;
+
+        const lineNum = parseInt(remaining.substring(0, secondColonIndex), 10);
         return { file: path.relative(rootPath, filePath), line: lineNum };
       })
       .filter(Boolean);

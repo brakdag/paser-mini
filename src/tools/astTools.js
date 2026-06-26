@@ -7,8 +7,8 @@ import * as acorn from 'acorn';
 export class AstTools {
   /**
    * Simplifies an AST node into a minimal representation.
-   * @param {unknown} node - The AST node to simplify.
-   * @returns {unknown} The simplified node object.
+   * @param {object} node - The AST node to simplify.
+   * @returns {object} The simplified node object.
    */
   simplifyNode(node) {
     const simplified = { type: node.type };
@@ -24,9 +24,9 @@ export class AstTools {
 
   /**
    * Recursively walks the AST to find nodes matching the query.
-   * @param {unknown} node - The current node being visited.
+   * @param {object} node - The current node being visited.
    * @param {string} query - The node type to search for.
-   * @param {Array<unknown>} results - The accumulator for found nodes.
+   * @param {Array<object>} results - The accumulator for found nodes.
    * @param {number} limit - The maximum number of results to find.
    */
   walk(node, query, results, limit) {
@@ -55,6 +55,45 @@ export class AstTools {
   }
 
   /**
+   * Fast path analysis using the tokenizer.
+   * @param {string} code - The source code.
+   * @param {string} query - The node type to search for.
+   * @param {number} limit - Maximum results to return.
+   * @returns {object} The analysis results.
+   */
+  #analyzeWithTokenizer(code, query, limit) {
+    const results = [];
+    const tokenizer = acorn.tokenizer(code, { ecmaVersion: 'latest', sourceType: 'module' });
+    let token = tokenizer.getToken();
+
+    while (token.type.label !== 'eof') {
+      if (results.length >= limit) break;
+      if (query === 'Identifier' && token.type.label === 'name') {
+        results.push({ type: 'Identifier', name: token.value });
+      } else if (query === 'Literal' && ['num', 'string', 'regexp', 'true', 'false', 'null'].includes(token.type.label)) {
+        results.push({ type: 'Literal', value: token.value });
+      }
+      token = tokenizer.getToken();
+    }
+
+    return { count: results.length, limit, strategy: 'tokenizer_fast_path', results };
+  }
+
+  /**
+   * Slow path analysis using the full AST parser.
+   * @param {string} code - The source code.
+   * @param {string} query - The node type to search for.
+   * @param {number} limit - Maximum results to return.
+   * @returns {object} The analysis results.
+   */
+  #analyzeWithAST(code, query, limit) {
+    const results = [];
+    const ast = acorn.parse(code, { ecmaVersion: 'latest', sourceType: 'module' });
+    this.walk(ast, query, results, limit);
+    return { count: results.length, limit, strategy: 'ast_slow_path', results };
+  }
+
+  /**
    * Analyzes a file's AST or tokens based on the provided query.
    * @param {object} options - Analysis options.
    * @param {string} options.path - Path to the source file.
@@ -63,32 +102,26 @@ export class AstTools {
    * @returns {Promise<string>} JSON string containing the analysis results.
    */
   async analyze({ path: filePath, query, limit = 100 }) {
-    try {
-      const code = await fs.readFile(filePath, 'utf8');
-      if (!query) return "ERR: Query parameter is required.";
-      const results = [];
-      if (query === 'Identifier' || query === 'Literal') {
-        try {
-          const tokenizer = acorn.tokenizer(code, { ecmaVersion: 'latest', sourceType: 'module' });
-          let token = tokenizer.getToken();
-          while (token.type.label !== 'eof') {
-            if (results.length >= limit) break;
-            if (query === 'Identifier' && token.type.label === 'name') {
-              results.push({ type: 'Identifier', name: token.value });
-            } else if (query === 'Literal' && ['num', 'string', 'regexp', 'true', 'false', 'null'].includes(token.type.label)) {
-              results.push({ type: 'Literal', value: token.value });
-            }
-            token = tokenizer.getToken();
-          }
-          return JSON.stringify({ count: results.length, limit, strategy: "tokenizer_fast_path", results }, null, 2);
-        } catch { /* Fallback to AST */ }
-      }
-      const ast = acorn.parse(code, { ecmaVersion: 'latest', sourceType: 'module' });
-      this.walk(ast, query, results, limit);
-      return JSON.stringify({ count: results.length, limit, strategy: "ast_slow_path", results }, null, 2);
-    } catch (e) {
-      return `ERR: AST Analysis failed: ${e.message}`;
+    if (!query) {
+      throw new Error('Query parameter is required.');
     }
+
+    const code = await fs.readFile(filePath, 'utf8');
+    let resultsData;
+
+    if (query === 'Identifier' || query === 'Literal') {
+      try {
+        resultsData = this.#analyzeWithTokenizer(code, query, limit);
+      } catch {
+        // Fallback to AST if tokenizer fails
+      }
+    }
+
+    if (!resultsData) {
+      resultsData = this.#analyzeWithAST(code, query, limit);
+    }
+
+    return JSON.stringify(resultsData, null, 2);
   }
 }
 

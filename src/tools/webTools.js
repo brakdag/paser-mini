@@ -1,8 +1,9 @@
-import { execSync } from "child_process";
+import { execFile } from "child_process";
+import { promisify } from "util";
 import axios from "axios";
 
 /**
- *
+ * Tools for web interaction, searching, and rendering pages to text.
  */
 export default class WebTools {
   #BROWSER_HEADERS = {
@@ -21,10 +22,13 @@ export default class WebTools {
     "Sec-Fetch-User": "?1",
   };
 
+  #execFilePromise = promisify(execFile);
+
   /**
    * Searches the web using multiple providers.
    * @param {string} query - The search query.
-   * @returns {Promise<string>} The search results.
+   * @returns {Promise<string>} The search results as text.
+   * @throws {Error} If all search methods fail.
    */
   async searchWeb(query) {
     const encodedQuery = encodeURIComponent(query);
@@ -33,15 +37,14 @@ export default class WebTools {
       `https://search.brave.com/search?q=${encodedQuery}`,
     ];
 
-    for (let i = 0; i < searchUrls.length; i += 1) {
-      const url = searchUrls[i];
+    for (const url of searchUrls) {
       try {
         const response = await axios.get(url, {
           headers: this.#BROWSER_HEADERS,
           timeout: 10000,
         });
 
-        const { data } = response;
+        const data = response.data;
         if (
           !data.includes("captcha") &&
           !data.includes("anomaly-modal") &&
@@ -56,29 +59,29 @@ export default class WebTools {
 
     // Final fallback: Use elinks for the primary search engine
     try {
-      return execSync(`elinks -dump ${searchUrls[0]}`, {
-        encoding: "utf8",
+      const { stdout } = await this.#execFilePromise("elinks", ["-dump", searchUrls[0]], {
         timeout: 20000,
       });
+      return stdout;
     } catch (e) {
-      return `ERR: All search methods failed: ${e.message}`;
+      throw new Error(`All search methods failed: ${e.message}`);
     }
   }
 
   /**
-   * Renders a web page to text.
+   * Renders a web page to text using elinks.
    * @param {string} url - The URL to render.
    * @returns {Promise<string>} The rendered content.
+   * @throws {Error} If the rendering process fails.
    */
   async renderWeb(url) {
     try {
-      const output = execSync(`elinks -dump ${url}`, {
-        encoding: "utf8",
+      const { stdout } = await this.#execFilePromise("elinks", ["-dump", url], {
         timeout: 30000,
       });
-      return output;
+      return stdout;
     } catch (e) {
-      return `ERR: Rendering failed: ${e.message}`;
+      throw new Error(`Rendering failed: ${e.message}`);
     }
   }
 }

@@ -1,13 +1,18 @@
-import { exec } from "child_process";
+import { exec, execFile } from "child_process";
 import { promisify } from "util";
-import fs from "fs";
+import fs from "fs/promises";
 import { registerSchemas } from "../core/schemaRegistry.js";
 
 export const SYSTEM_TOOLS_VERSION = "1.0.0";
 
-/** System tools for environment management. */
+/**
+ * System tools for environment management, code analysis, and system control.
+ */
 export class SystemTools {
   #execPromise = promisify(exec);
+  #execFilePromise = promisify(execFile);
+  #assistant = null;
+  #chatManager = null;
 
   /**
    * Sets the assistant and chat manager context.
@@ -15,68 +20,61 @@ export class SystemTools {
    * @param {object} chatManager The chat manager instance.
    */
   setContext(assistant, chatManager) {
-    this._assistant = assistant;
-    this._chatManager = chatManager;
+    this.#assistant = assistant;
+    this.#chatManager = chatManager;
   }
 
   /**
-   * Resets the system context.
+   * Resets the system context to a clean state.
    * @param {string} userMessage The message to start the new session.
-   * @returns {Promise<string>} The result of the reset operation.
+   * @returns {Promise<string>} Confirmation of the reset operation.
+   * @throws {Error} If the system context is not initialized.
    */
   async reset(userMessage) {
-    if (!this._assistant || !this._chatManager) {
+    if (!this.#assistant || !this.#chatManager) {
       throw new Error("System context not initialized");
     }
-    try {
-      this._assistant.hardReset();
-      this._chatManager.ui.inputQueue.push(userMessage);
-      this._chatManager.engine.toolTracker.reset();
-      return `Context reset successfully. New session started with message: "${userMessage}"`;
-    } catch (e) {
-      return `ERR: Reset failed: ${e.message}`;
-    }
+
+    this.#assistant.hardReset();
+    this.#chatManager.ui.inputQueue.push(userMessage);
+    this.#chatManager.engine.toolTracker.reset();
+
+    return `Context reset successfully. New session started with message: "${userMessage}"`;
   }
 
   /**
-   * Analyzes code using pyright.
+   * Analyzes code using pyright for type and syntax errors.
    * @param {string} targetPath Path to the file to analyze.
    * @returns {Promise<string>} The analysis output.
+   * @throws {Error} If the analysis process fails.
    */
   async analyzeCode(targetPath) {
     try {
-      const { stdout } = await this.#execPromise(
-        `npx pyright --outputjson ${targetPath}`,
-        { timeout: 60000 },
-      );
-      if (stdout.trim() === "") {
-        return "No type or syntax errors found.";
-      }
-      return stdout;
+      const { stdout } = await this.#execFilePromise("npx", ["pyright", "--outputjson", targetPath], {
+        timeout: 60000,
+      });
+      return stdout.trim() === "" ? "No type or syntax errors found." : stdout;
     } catch (e) {
       if (e.stdout) return e.stdout;
-      return `ERR: Analysis error: ${e.message}`;
+      throw new Error(`Analysis error: ${e.message}`);
     }
   }
 
   /**
-   * Lints code using eslint.
+   * Lints code using eslint to ensure style and quality standards.
    * @param {string} targetPath Path to the file to lint.
    * @returns {Promise<string>} The linting output.
+   * @throws {Error} If the linting process fails.
    */
   async lintCode(targetPath) {
     try {
-      const { stdout } = await this.#execPromise(
-        `npx eslint ${targetPath} --no-color`,
-        { timeout: 60000 },
-      );
-      if (!stdout || stdout.trim() === "[]") {
-        return "No linting issues found.";
-      }
-      return stdout;
+      const { stdout } = await this.#execFilePromise("npx", ["eslint", targetPath, "--no-color"], {
+        timeout: 60000,
+      });
+      return (!stdout || stdout.trim() === "[]") ? "No linting issues found." : stdout;
     } catch (e) {
       if (e.stdout) return e.stdout;
-      return `ERR: Linting error: ${e.message}`;
+      throw new Error(`Linting error: ${e.message}`);
     }
   }
 
@@ -84,39 +82,32 @@ export class SystemTools {
    * Generates documentation using jsdoc.
    * @param {string} targetPath Path to the file to document.
    * @param {string} outputDir Directory for the generated docs.
-   * @returns {Promise<string>} The result of the generation.
+   * @returns {Promise<string>} Confirmation of the generation.
+   * @throws {Error} If the documentation process fails.
    */
   async generateDocs(targetPath, outputDir) {
-    try {
-      if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir, { recursive: true });
-      }
-      await this.#execPromise(`npx jsdoc ${targetPath} -d ${outputDir}`, {
-        timeout: 60000,
-      });
-      return `Documentation successfully generated in: ${outputDir}`;
-    } catch (e) {
-      return `ERR: Documentation error: ${e.message}`;
-    }
+    await fs.mkdir(outputDir, { recursive: true });
+    await this.#execFilePromise("npx", ["jsdoc", targetPath, "-d", outputDir], {
+      timeout: 60000,
+    });
+    return `Documentation successfully generated in: ${outputDir}`;
   }
 
   /**
-   * Reloads schemas from disk.
-   * @returns {Promise<string>} The result of the reload.
+   * Reloads schemas from disk into the registry.
+   * @returns {Promise<string>} Confirmation of the reload.
+   * @throws {Error} If the reload fails.
    */
   async reloadSchemas() {
-    try {
-      await registerSchemas();
-      return "Schemas successfully reloaded from disk.";
-    } catch (e) {
-      return `ERR: Failed to reload schemas: ${e.message}`;
-    }
+    await registerSchemas();
+    return "Schemas successfully reloaded from disk.";
   }
 
   /**
-   * Executes a bash command.
+   * Executes a bash command in the system shell.
    * @param {string} command The command to execute.
    * @returns {Promise<string>} The command output.
+   * @throws {Error} If the bash command fails.
    */
   async executeBash(command) {
     try {
@@ -126,9 +117,10 @@ export class SystemTools {
       });
       return stdout || stderr || "Command executed successfully (no output).";
     } catch (e) {
-      if (e.stdout)
+      if (e.stdout) {
         return `Exit Code ${e.code}:\n${e.stdout}\n${e.stderr || ""}`;
-      return `ERR: Bash error: ${e.message}`;
+      }
+      throw new Error(`Bash error: ${e.message}`);
     }
   }
 }
