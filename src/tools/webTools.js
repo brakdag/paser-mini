@@ -44,7 +44,7 @@ export default class WebTools {
           timeout: 10000,
         });
 
-        const data = response.data;
+        const {data} = response;
         if (
           !data.includes("captcha") &&
           !data.includes("anomaly-modal") &&

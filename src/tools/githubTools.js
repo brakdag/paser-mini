@@ -7,9 +7,14 @@ import GitTools from "./gitTools.js";
  */
 export default class GithubTools {
   #GITHUB_API_URL = "https://api.github.com";
+
   #client;
+
   #gitTools;
 
+  /**
+   *
+   */
   constructor() {
     this.#client = axios.create({
       baseURL: this.#GITHUB_API_URL,
@@ -21,6 +26,10 @@ export default class GithubTools {
     axiosRetry(this.#client, {
       retries: 3,
       retryDelay: axiosRetry.exponentialDelay,
+      /**
+       *
+       * @param error
+       */
       retryCondition: (error) =>
         axiosRetry.isNetworkOrIdempotentRequestError(error) ||
         error.response?.status === 429,

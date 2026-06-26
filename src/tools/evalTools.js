@@ -57,8 +57,12 @@ class EvalTools {
   };
 
   #trace = [];
+
   #context;
 
+  /**
+   *
+   */
   constructor() {
     this.#context = this.#createContext();
   }
@@ -71,8 +75,20 @@ class EvalTools {
     const sandbox = {
       BrowserFS: this.#BrowserFS,
       console: {
+        /**
+         *
+         * @param {...any} args
+         */
         log: (...args) => this.#log('AI_LOG', args),
+        /**
+         *
+         * @param {...any} args
+         */
         error: (...args) => this.#log('AI_ERR', args),
+        /**
+         *
+         * @param {...any} args
+         */
         warn: (...args) => this.#log('AI_WARN', args),
       },
       window: {},

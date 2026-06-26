@@ -7,6 +7,9 @@ import path from "path";
 class MementoManager {
   #LOG_FILE;
 
+  /**
+   *
+   */
   constructor() {
     this.#LOG_FILE = path.join(process.cwd(), "log", "memento.log");
   }

@@ -10,8 +10,11 @@ export const SYSTEM_TOOLS_VERSION = "1.0.0";
  */
 export class SystemTools {
   #execPromise = promisify(exec);
+
   #execFilePromise = promisify(execFile);
+
   #assistant = null;
+
   #chatManager = null;
 
   /**
