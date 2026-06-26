@@ -48,6 +48,7 @@ class ExecutionEngine {
   _getToolDetail(toolName, args) {
     switch (toolName) {
       case "read":
+      case "tail":
       case "write":
       case "remove":
       case "replace":

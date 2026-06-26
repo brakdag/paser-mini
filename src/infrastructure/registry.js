@@ -69,6 +69,7 @@ export const GITHUB_SYSTEM_INSTRUCTION =
 
 export const AVAILABLE_TOOLS = {
   read: async (...args) => (await getTool("fileTools", "read"))(...args),
+  tail: async (...args) => (await getTool("fileTools", "tail"))(...args),
   write: async (...args) => (await getTool("fileTools", "write"))(...args),
   remove: async (...args) => (await getTool("fileTools", "remove"))(...args),
   mkdir: async (...args) => (await getTool("fileTools", "mkdir"))(...args),

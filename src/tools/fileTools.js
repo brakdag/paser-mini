@@ -85,17 +85,24 @@ class FileTools {
   }
 
   /**
-   * Reads the contents of a file, optionally tailing the last N lines.
+   * Reads the contents of a file.
    * @param {string} filepath The path to the file.
-   * @param {string|number} [tail] Number of lines to tail from the end.
    * @returns {Promise<string>} The file contents.
    */
-  async read(filepath, tail) {
+  async read(filepath) {
     const safePath = this.#getSafePath(filepath);
-    if (tail !== undefined && tail !== null) {
-      return this.#readTail(safePath, tail);
-    }
     return this.#readFull(safePath);
+  }
+
+  /**
+   * Reads the last N lines of a file.
+   * @param {string} filepath The path to the file.
+   * @param {string|number} tail Number of lines to tail from the end.
+   * @returns {Promise<string>} The tailed content.
+   */
+  async tail(filepath, tail) {
+    const safePath = this.#getSafePath(filepath);
+    return this.#readTail(safePath, tail);
   }
 
   /**

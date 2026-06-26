@@ -1,7 +1,12 @@
 [
   [
     "read",
-    "Read file content - use tail to read only the last N lines.",
+    "Read file content.",
+    { "path": "string" }
+  ],
+  [
+    "tail",
+    "Read only the last N lines of a file.",
     { "path": "string", "tail": "number" }
   ],
   [
