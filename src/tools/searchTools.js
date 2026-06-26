@@ -29,10 +29,8 @@ export default class SearchTools {
           const res = path.join(dir, file.name);
           if (file.isDirectory()) {
             await walk(res);
-          } else {
-            if (regex.test(file.name) || regex.test(res)) {
-              results.push(res.replace(/^\.\//, ""));
-            }
+          } else if (regex.test(file.name) || regex.test(res)) {
+            results.push(res.replace(/^\.\//, ""));
           }
         }),
       );
@@ -49,7 +47,7 @@ export default class SearchTools {
    */
   #globToRegex(glob) {
     let result = "";
-    const specialChars = ".+^${}()|[]\";
+    const specialChars = ".+^${}()|[]\"";
     for (let i = 0; i < glob.length; i += 1) {
       const char = glob[i];
       if (char === "*") {
@@ -108,7 +106,7 @@ export default class SearchTools {
           return resolve(this.#parseGrepOutput(stdoutData, rootPath));
         }
         // Other codes are treated as errors unless they are the 'no match' code
-        reject(new Error(`Grep process exited with code ${code}`));
+        return reject(new Error(`Grep process exited with code ${code}`));
       });
 
       setTimeout(() => {

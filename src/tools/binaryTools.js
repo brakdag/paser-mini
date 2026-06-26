@@ -36,7 +36,7 @@ class BinaryTools {
       for (let i = 0; i < buffer.length; i += 16) {
         const chunk = buffer.slice(i, i + 16);
         const hex = chunk.toString("hex").match(/.{1,2}/g)?.join(" ") || "";
-        const ascii = chunk.toString("utf8").replace(/[\x00-\x1F\x7F-\xFF]/g, ".");
+        const ascii = chunk.toString("utf8").replace(/[^\u0020-\u007E]/g, ".");
         const currentOffset = (offset + i).toString(16).padStart(8, "0");
         output += `${currentOffset} | ${hex.padEnd(47)} | ${ascii}\n`;
       }
@@ -86,9 +86,12 @@ class BinaryTools {
       const bufferSize = 64 * 1024;
       const buffer = Buffer.alloc(bufferSize);
       let totalOffset = 0;
-      let bytesRead;
+      let bytesRead = 1;
 
-      while ((bytesRead = (await handle.read(buffer, 0, bufferSize, totalOffset)).bytesRead) > 0) {
+      while (bytesRead > 0) {
+        const readResult = await handle.read(buffer, 0, bufferSize, totalOffset);
+        bytesRead = readResult.bytesRead;
+        if (bytesRead <= 0) break;
         let index = buffer.indexOf(searchBuf, 0);
         while (index !== -1) {
           offsets.push(totalOffset + index);
@@ -116,7 +119,8 @@ class BinaryTools {
       await handle.read(buffer, 0, 32, 0);
       const fileHex = buffer.toString("hex");
       const entries = Object.entries(this.#MAGIC_NUMBERS);
-      for (const [type, signature] of entries) {
+      for (let i = 0; i < entries.length; i += 1) {
+        const [type, signature] = entries[i];
         if (fileHex.startsWith(signature)) return { type, signature };
       }
       return { type: "Unknown", signature: null };
@@ -151,7 +155,7 @@ class BinaryTools {
   /**
    * Handle hex commands.
    * @param {object} args Command arguments.
-   * @returns {Promise<any>} Command result.
+   * @returns {Promise<unknown>} Command result.
    */
   async handleHexCommand(args) {
     const { action, filePath, offset = 0, length = 256, end, outputFile, pattern, hexString, type, endianness = "LE" } = args;

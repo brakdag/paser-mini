@@ -37,7 +37,8 @@ export default class WebTools {
       `https://search.brave.com/search?q=${encodedQuery}`,
     ];
 
-    for (const url of searchUrls) {
+    for (let i = 0; i < searchUrls.length; i += 1) {
+      const url = searchUrls[i];
       try {
         const response = await axios.get(url, {
           headers: this.#BROWSER_HEADERS,

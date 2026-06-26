@@ -35,13 +35,13 @@ class EvalTools {
       if (!resolvedPath.startsWith(this.#ROOT_DIR)) {
         throw new Error(`SECURITY_ERR: Access denied to ${filename}`);
       }
-      return await fs.readFile(resolvedPath, 'utf8');
+      return fs.readFile(resolvedPath, 'utf8');
     },
     /**
      * Lists files in the sandbox root directory.
      * @returns {Promise<string[]>} A list of filenames.
      */
-    list: async () => await fs.readdir(this.#ROOT_DIR),
+    list: async () => fs.readdir(this.#ROOT_DIR),
     /**
      * Deletes a file within the sandbox root.
      * @param {string} filename - The name of the file to delete.
@@ -61,7 +61,7 @@ class EvalTools {
   #context;
 
   /**
-   *
+   * Initializes the EvalTools instance and creates the VM context.
    */
   constructor() {
     this.#context = this.#createContext();
@@ -76,18 +76,21 @@ class EvalTools {
       BrowserFS: this.#BrowserFS,
       console: {
         /**
-         *
-         * @param {...any} args
+         * Logs a message to the AI log.
+         * @param {...unknown} args - The arguments to log.
+         * @returns {void}
          */
         log: (...args) => this.#log('AI_LOG', args),
         /**
-         *
-         * @param {...any} args
+         * Logs an error message to the AI log.
+         * @param {...unknown} args - The arguments to log.
+         * @returns {void}
          */
         error: (...args) => this.#log('AI_ERR', args),
         /**
-         *
-         * @param {...any} args
+         * Logs a warning message to the AI log.
+         * @param {...unknown} args - The arguments to log.
+         * @returns {void}
          */
         warn: (...args) => this.#log('AI_WARN', args),
       },
@@ -112,7 +115,7 @@ class EvalTools {
   /**
    * Executes JavaScript code within the VM context.
    * @param {string} code - The JavaScript code to execute.
-   * @returns {{trace: string[], result: unknown}}
+   * @returns {{trace: string[], result: unknown}} The execution result and trace.
    * @throws {Error} If the code execution fails catastrophically.
    */
   #execute(code) {
@@ -134,7 +137,7 @@ class EvalTools {
    * Public interface to execute JavaScript code.
    * @param {object} options - Execution options.
    * @param {string} options.code - The JavaScript code to execute.
-   * @returns {string} JSON string containing the result and trace.
+   * @returns {string} The JSON string containing the result and trace.
    */
   executeJS({ code }) {
     const output = this.#execute(code);

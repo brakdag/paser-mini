@@ -13,7 +13,7 @@ export default class GithubTools {
   #gitTools;
 
   /**
-   *
+   * Initializes the GithubTools instance and configures the axios client with retry logic.
    */
   constructor() {
     this.#client = axios.create({
@@ -27,8 +27,9 @@ export default class GithubTools {
       retries: 3,
       retryDelay: axiosRetry.exponentialDelay,
       /**
-       *
-       * @param error
+       * Determines if the request should be retried based on the error.
+       * @param {Error} error - The error object encountered during the request.
+       * @returns {boolean} True if the request should be retried.
        */
       retryCondition: (error) =>
         axiosRetry.isNetworkOrIdempotentRequestError(error) ||
@@ -65,7 +66,7 @@ export default class GithubTools {
   /**
    * Prepares the repository identifier and authentication headers for a request.
    * @param {string} [repo] The repository identifier.
-   * @returns {Promise<{targetRepo: string, headers: object}>}
+   * @returns {Promise<{targetRepo: string, headers: object}>} The prepared request data.
    */
   async #prepareRequest(repo) {
     const targetRepo = repo
