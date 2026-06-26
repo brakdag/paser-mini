@@ -34,7 +34,7 @@ This project follows a modular ReAct (Reasoning and Acting) architecture. Below 
 - **`fileTools.js`**: Implements secure file operations (read, write, replace, delete) restricted to the project root.
 - **`searchTools.js`**: Wraps system utilities for efficient global searching.
 - **`systemTools.js`**: Integrates `pyright` for static type analysis of the JS/TS codebase.
-- **`instanceTools.js`**: Enables "inception" capabilities, allowing the launching of new independent `paser-mini` instances.
+
 - **`memoryTools.js`**: Implements the Memento system for persistent, distilled memory using a ranked log file.
 
 ### ↻ Data Flow
