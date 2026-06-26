@@ -1,9 +1,5 @@
 [
-  [
-    "read",
-    "Read file content.",
-    { "path": "string" }
-  ],
+  ["read", "Read file content.", { "path": "string" }],
   [
     "tail",
     "Read only the last N lines of a file.",
@@ -11,14 +7,14 @@
   ],
   [
     "write",
-    "Write content to file - in multiline content use \" for new lines \\n (not backticks) it Returns OK on success after write check ESLint.",
+    "Write content to file - in multiline content use \" for new lines \\n (not backticks)",
     { "path": "string", "content": "string" }
   ],
-  ["remove", "Remove file. Returns OK on success.", { "path": "string" }],
+  ["remove", "Remove file", { "path": "string" }],
   ["list", "List directory contents", { "path": "string" }],
   [
     "replace",
-    "Search and replace string after replace check ESLint",
+    "Search and replace string",
     { "path": "string", "search_text": "string", "replace_text": "string" }
   ],
   ["analysis", "Run static analysis for JS/TS codebase.", { "path": "string" }],
