@@ -21,7 +21,7 @@ export default class UtilTools {
   async validateJson({ jsonString }) {
     try {
       JSON.parse(jsonString);
-      return 'El JSON es valido.';
+      return "El JSON es valido.";
     } catch (e) {
       throw new Error(`JSON invalido: ${e.message}`);
     }
@@ -29,16 +29,15 @@ export default class UtilTools {
 
   /**
    * Updates the agent nickname in the configuration.
-   * @param {object} params - The parameters.
-   * @param {string} params.newNickname - The new nickname to be set.
+   * @param {string} newNickname - The new nickname to be set.
    * @returns {Promise<string>} Confirmation message.
    * @throws {Error} If the update fails.
    */
-  async setNickname({ newNickname }) {
+  async setNickname(newNickname) {
     try {
       const config = new ConfigManager();
-      const oldNickname = config.get('agent_nickname', 'paser_mini');
-      config.save('agent_nickname', newNickname);
+      const oldNickname = config.get("agent_nickname", "paser_mini");
+      config.save("agent_nickname", newNickname);
       return `*** ${oldNickname} is now known as ${newNickname}`;
     } catch (e) {
       throw new Error(`Failed to update nickname: ${e.message}`);
@@ -47,47 +46,63 @@ export default class UtilTools {
 
   /**
    * Processes an image, optionally crops it, and returns it as base64.
-   * @param {object} params - The parameters.
-   * @param {string} params.path - Path to the image file.
-   * @param {number[]} [params.crop] - Optional crop coordinates [left, top, right, bottom].
+   * @param imagePath
+   * @param crop
    * @returns {Promise<{mime_type: string, data: string, resolution: string}>} Image metadata and base64 data.
    * @throws {Error} If the image processing fails.
    */
-  async seeImage({ path: imagePath, crop }) {
+  async seeImage(imagePath, crop) {
     if (!imagePath) throw new Error("The 'path' parameter is required.");
 
     const tempFile = path.join(os.tmpdir(), `seeImage_${Date.now()}.jpg`);
 
     try {
       const args = ["-background", "white", "-alpha", "remove"];
-      
+
       if (crop) {
         if (!Array.isArray(crop) || crop.length !== 4) {
-          throw new Error("The 'crop' parameter must be an array of 4 integers: [left, top, right, bottom].");
+          throw new Error(
+            "The 'crop' parameter must be an array of 4 integers: [left, top, right, bottom].",
+          );
         }
         const [left, top, right, bottom] = crop;
         const width = right - left;
         const height = bottom - top;
         if (width <= 0 || height <= 0) {
-          throw new Error("Invalid crop dimensions: right must be > left and bottom must be > top.");
+          throw new Error(
+            "Invalid crop dimensions: right must be > left and bottom must be > top.",
+          );
         }
         args.push("-crop", `${width}x${height}+${left}+${top}`, "+repage");
       }
 
-      args.push("-resize", "512x512", "-colorspace", "sRGB", "-quality", "75", imagePath, tempFile);
+      args.push(
+        "-resize",
+        "512x512",
+        "-colorspace",
+        "sRGB",
+        "-quality",
+        "75",
+        imagePath,
+        tempFile,
+      );
 
       await execFilePromise("convert", args);
 
       const buffer = await fs.readFile(tempFile);
-      const base64Data = buffer.toString('base64');
-      
-      const { stdout: resStdout } = await execFilePromise("identify", ["-format", "%wx%h", imagePath]);
+      const base64Data = buffer.toString("base64");
+
+      const { stdout: resStdout } = await execFilePromise("identify", [
+        "-format",
+        "%wx%h",
+        imagePath,
+      ]);
       const resolution = resStdout.trim();
 
       return {
-        mime_type: 'image/jpeg',
+        mime_type: "image/jpeg",
         data: base64Data,
-        resolution
+        resolution,
       };
     } catch (error) {
       throw new Error(`Vision Tool Error: ${error.message}`);
