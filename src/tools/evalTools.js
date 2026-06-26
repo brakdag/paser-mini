@@ -1,6 +1,6 @@
-import fs from 'fs/promises';
-import path from 'path';
-import vm from 'vm';
+import fs from "fs/promises";
+import path from "path";
+import vm from "vm";
 
 /**
  * Provides a secure sandbox for executing raw JavaScript code.
@@ -23,7 +23,7 @@ class EvalTools {
       if (!resolvedPath.startsWith(this.#ROOT_DIR)) {
         throw new Error(`SECURITY_ERR: Access denied to ${filename}`);
       }
-      await fs.writeFile(resolvedPath, content, 'utf8');
+      await fs.writeFile(resolvedPath, content, "utf8");
     },
     /**
      * Reads content from a file within the sandbox root.
@@ -35,7 +35,7 @@ class EvalTools {
       if (!resolvedPath.startsWith(this.#ROOT_DIR)) {
         throw new Error(`SECURITY_ERR: Access denied to ${filename}`);
       }
-      return fs.readFile(resolvedPath, 'utf8');
+      return fs.readFile(resolvedPath, "utf8");
     },
     /**
      * Lists files in the sandbox root directory.
@@ -53,7 +53,7 @@ class EvalTools {
         throw new Error(`SECURITY_ERR: Access denied to ${filename}`);
       }
       await fs.unlink(resolvedPath);
-    }
+    },
   };
 
   #trace = [];
@@ -80,22 +80,22 @@ class EvalTools {
          * @param {...unknown} args - The arguments to log.
          * @returns {void}
          */
-        log: (...args) => this.#log('AI_LOG', args),
+        log: (...args) => this.#log("AI_LOG", args),
         /**
          * Logs an error message to the AI log.
          * @param {...unknown} args - The arguments to log.
          * @returns {void}
          */
-        error: (...args) => this.#log('AI_ERR', args),
+        error: (...args) => this.#log("AI_ERR", args),
         /**
          * Logs a warning message to the AI log.
          * @param {...unknown} args - The arguments to log.
          * @returns {void}
          */
-        warn: (...args) => this.#log('AI_WARN', args),
+        warn: (...args) => this.#log("AI_WARN", args),
       },
       window: {},
-      navigator: { userAgent: 'eval()-V8-Surgical-Sandbox/1.0' },
+      navigator: { userAgent: "eval()-V8-Surgical-Sandbox/1.0" },
     };
     return vm.createContext(sandbox);
   }
@@ -107,8 +107,10 @@ class EvalTools {
    */
   #log(type, args) {
     const argsArray = Array.isArray(args) ? args : [args];
-    const msg = argsArray.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ');
-    const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+    const msg = argsArray
+      .map((a) => (typeof a === "object" ? JSON.stringify(a) : a))
+      .join(" ");
+    const timestamp = new Date().toISOString().split("T")[1].split(".")[0];
     this.#trace.push(`[${timestamp}] [${type}] ${msg}`);
   }
 
@@ -125,9 +127,9 @@ class EvalTools {
       // We use runInContext. Note: if the code uses await at top level,
       // it will fail unless wrapped in an async IIFE.
       result = vm.runInContext(code, this.#context, { timeout: 1000 });
-      if (result !== undefined) this.#log('RETURN', JSON.stringify(result));
+      if (result !== undefined) this.#log("RETURN", JSON.stringify(result));
     } catch (err) {
-      this.#log('CRASH', err.message);
+      this.#log("CRASH", err.message);
       throw err; // Propagate the error to the engine
     }
     return { trace: this.#trace, result };
@@ -135,14 +137,18 @@ class EvalTools {
 
   /**
    * Public interface to execute JavaScript code.
-   * @param {object} options - Execution options.
-   * @param {string} options.code - The JavaScript code to execute.
+   * @param {string} code - The JavaScript code to execute.
    * @returns {string} The JSON string containing the result and trace.
    */
-  executeJS({ code }) {
+  executeJS(code) {
     const output = this.#execute(code);
-    return JSON.stringify({ result: output.result, trace: output.trace }, null, 2);
+    return JSON.stringify(
+      { result: output.result, trace: output.trace },
+      null,
+      2,
+    );
   }
 }
 
 export default EvalTools;
+
