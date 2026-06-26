@@ -22,22 +22,16 @@ export default class MemoryTools {
 
   /**
    * Push a new memory entry into the memento log.
-   * @param {object} options - Memory options.
-   * @param {string} options.data - The data to store.
+   * @param {string} data - The data to store.
    * @returns {Promise<string>} Confirmation message from the memento manager.
    * @throws {Error} If no data is provided or the storage operation fails.
    */
-  async pushMemory({ data }) {
+  async pushMemory(data) {
     if (!data) {
       throw new Error("No value provided for memory.");
     }
 
-    return this.#memento.pushMemory(
-      "agent",
-      "general",
-      String(data),
-      null,
-    );
+    return this.#memento.pushMemory("agent", "general", String(data), null);
   }
 
   /**
