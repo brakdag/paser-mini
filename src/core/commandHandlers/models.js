@@ -61,13 +61,14 @@ class ModelCommands {
     const unavailable = [];
     ui.displayInfo("Model Scan: Initializing...");
 
-    await Promise.all(models.map(async (model, i) => {
+    for (let i = 0; i < models.length; i++) {
+      const model = models[i];
       ui.displayInfo(`Model Scan: Checking ${i + 1}/${models.length} -> ${model}`);
       const isAvailable = await chatManager.assistant.checkAvailability(model);
       if (!isAvailable) {
         unavailable.push(model);
       }
-    }));
+    }
 
     chatManager.configManager.save("unavailable_models", unavailable);
     ui.displayInfo(`Model Scan complete. ${unavailable.length} models unavailable.`)

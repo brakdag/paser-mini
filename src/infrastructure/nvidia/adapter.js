@@ -133,13 +133,19 @@ class NvidiaAdapter extends BaseAdapter {
         max_tokens: 1,
       };
 
-      await this.restClient.chatCompletions(payload);
+      // Use a 1-second timeout. If it takes longer, we assume the model is available.
+      await this.restClient.chatCompletions(payload, false, 1000);
       return true;
     } catch (e) {
+      // Axios timeout error (ECONNABORTED) or message containing 'timeout'
+      if (e.code === 'ECONNABORTED' || e.message?.toLowerCase().includes('timeout')) {
+        return true;
+      }
       if (e.response && e.response.status === 404) {
         return false;
       }
-      return true;
+      // Any other immediate error indicates the model is unavailable
+      return false;
     }
   }
 
