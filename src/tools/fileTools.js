@@ -14,8 +14,9 @@ class FileTools {
    */
   #getSafePath(inputPath) {
     const resolved = path.resolve(process.cwd(), inputPath);
-    if (!resolved.startsWith(process.cwd()))
+    if (!resolved.startsWith(process.cwd())) {
       throw new Error("Security Error: Path is outside of project root");
+    }
     return resolved;
   }
 
@@ -61,7 +62,9 @@ class FileTools {
     if (Number.isNaN(numericTail)) {
       throw new Error("tail must be a number");
     }
-    if (numericTail <= 0) return "";
+    if (numericTail <= 0) {
+    return "";
+  }
 
     const stats = await fs.stat(safePath);
     const bufferSize = 64 * 1024;

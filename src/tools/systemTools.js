@@ -93,28 +93,29 @@ export class SystemTools {
 
   /**
    * Generates documentation using jsdoc.
-   * @param {string} targetPath Path to the file to document.
-   * @param {string} outputDir Directory for the generated docs.
+   * @param {string|object} targetPathOrOptions - Path to the file or options object.
+   * @param {string} [outputDir] - Directory for the generated docs.
    * @returns {Promise<string>} Confirmation of the generation.
    * @throws {Error} If the documentation process fails.
    */
-  async generateDocs(arg1, arg2) {
-    let targetPath = arg1;
-    let outputDir = arg2;
+  async generateDocs(targetPathOrOptions, outputDir) {
+    let targetPath = targetPathOrOptions;
+    let finalOutputDir = outputDir;
 
-    if (typeof arg1 === 'object' && arg1 !== null) {
-      targetPath = arg1.targetPath;
-      outputDir = arg1.outputDir;
+    if (typeof targetPathOrOptions === 'object' && targetPathOrOptions !== null) {
+      targetPath = targetPathOrOptions.targetPath;
+      finalOutputDir = targetPathOrOptions.outputDir || outputDir;
     }
 
-    if (!targetPath || !outputDir) {
-      throw new Error(\`Missing required arguments for generateDocs. targetPath: \${targetPath}, outputDir: \${outputDir}\`);
+    if (!targetPath || !finalOutputDir) {
+      throw new Error(`Missing required arguments for generateDocs. targetPath: ${targetPath}, outputDir: ${finalOutputDir}`);
     }
-    await fs.mkdir(outputDir, { recursive: true });
-    await this.#execFilePromise("npx", ["jsdoc", targetPath, "-d", outputDir], {
+
+    await fs.mkdir(finalOutputDir, { recursive: true });
+    await this.#execFilePromise("npx", ["jsdoc", targetPath, "-d", finalOutputDir], {
       timeout: 60000,
     });
-    return `Documentation successfully generated in: ${outputDir}`;
+    return `Documentation successfully generated in: ${finalOutputDir}`;
   }
 
   /**

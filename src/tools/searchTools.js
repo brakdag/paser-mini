@@ -24,7 +24,9 @@ export default class SearchTools {
       const files = await fs.readdir(dir, { withFileTypes: true });
       await Promise.all(
         files.map(async (file) => {
-          if (file.name === ".git" || file.name === "node_modules") return;
+          if (file.name === ".git" || file.name === "node_modules") {
+            return;
+          }
 
           const res = path.join(dir, file.name);
           if (file.isDirectory()) {
@@ -70,7 +72,9 @@ export default class SearchTools {
    * @throws {Error} If the grep process fails unexpectedly.
    */
   async searchTextGlobal(query) {
-    if (!query || query.trim() === "") return JSON.stringify([]);
+    if (!query || query.trim() === "") {
+    return JSON.stringify([]);
+  }
 
     return new Promise((resolve, reject) => {
       const rootPath = process.cwd();
@@ -123,20 +127,26 @@ export default class SearchTools {
    * @returns {string} JSON string of parsed results.
    */
   #parseGrepOutput(stdout, rootPath) {
-    if (!stdout) return JSON.stringify([]);
+    if (!stdout) {
+    return JSON.stringify([]);
+  }
     const parsedResults = stdout
       .split("\n")
       .filter((line) => line)
       .slice(0, 10)
       .map((line) => {
         const firstColonIndex = line.indexOf(":");
-        if (firstColonIndex === -1) return null;
+        if (firstColonIndex === -1) {
+        return null;
+      }
 
         const filePath = line.substring(0, firstColonIndex);
         const remaining = line.substring(firstColonIndex + 1);
         const secondColonIndex = remaining.indexOf(":");
         
-        if (secondColonIndex === -1) return null;
+        if (secondColonIndex === -1) {
+        return null;
+      }
 
         const lineNum = parseInt(remaining.substring(0, secondColonIndex), 10);
         return { file: path.relative(rootPath, filePath), line: lineNum };

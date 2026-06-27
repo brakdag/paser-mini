@@ -49,13 +49,16 @@ class MementoManager {
   async #incrementReferencedRanks(text) {
     try {
       await fs.access(this.#LOG_FILE);
-    } catch {
-      return; // Log file does not exist yet
+    } catch (error) {
+      // Log file does not exist yet, no ranks to increment
+      return;
     }
 
     const refPattern = /#(d+)/g;
     const matches = [...text.matchAll(refPattern)];
-    if (matches.length === 0) return;
+    if (matches.length === 0) {
+    return;
+  }
 
     const referencedIds = matches.map((m) => m[1]);
     const content = await fs.readFile(this.#LOG_FILE, "utf8");
@@ -63,7 +66,9 @@ class MementoManager {
 
     const lines = content.split("\n");
     const updatedLines = lines.map((line) => {
-      if (!line) return line;
+      if (!line) {
+    return line;
+  }
 
       const idMatch = line.match(/^[ID: (d+)]/);
       if (idMatch && referencedIds.includes(idMatch[1])) {
@@ -89,7 +94,8 @@ class MementoManager {
     try {
       const content = await fs.readFile(this.#LOG_FILE, "utf8");
       return content.trim().split("\n").filter(Boolean);
-    } catch {
+    } catch (error) {
+      // Return empty array if log file is missing or unreadable
       return [];
     }
   }

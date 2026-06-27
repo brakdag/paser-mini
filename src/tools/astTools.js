@@ -12,16 +12,23 @@ export class AstTools {
    */
   simplifyNode(node) {
     const simplified = { type: node.type };
-    if (node.type === "Identifier") simplified.name = node.name;
-    if (node.type === "Literal") simplified.value = node.value;
+    if (node.type === "Identifier") {
+      simplified.name = node.name;
+    }
+    if (node.type === "Literal") {
+      simplified.value = node.value;
+    }
     if (node.type === "CallExpression") {
       simplified.callee =
         node.callee.name ||
         (node.callee.property ? node.callee.property.name : "complex");
     }
-    if (node.type === "VariableDeclarator") simplified.id = node.id.name;
-    if (node.type === "FunctionDeclaration")
+    if (node.type === "VariableDeclarator") {
+      simplified.id = node.id.name;
+    }
+    if (node.type === "FunctionDeclaration") {
       simplified.id = node.id ? node.id.name : "anonymous";
+    }
     return simplified;
   }
 
@@ -130,8 +137,8 @@ export class AstTools {
     if (query === "Identifier" || query === "Literal") {
       try {
         resultsData = this.#analyzeWithTokenizer(code, query, limit);
-      } catch {
-        // Fallback to AST if tokenizer fails
+      } catch (error) {
+        // Fallback to AST if tokenizer fails due to syntax errors
       }
     }
 
@@ -144,4 +151,3 @@ export class AstTools {
 }
 
 export default AstTools;
-

@@ -34,7 +34,7 @@ class BinaryTools {
       output += "--------------------------------------------------------------------------\n";
 
       for (let i = 0; i < buffer.length; i += 16) {
-        const chunk = buffer.slice(i, i + 16);
+        const chunk = buffer.subarray(i, i + 16);
         const hex = chunk.toString("hex").match(/.{1,2}/g)?.join(" ") || "";
         const ascii = chunk.toString("utf8").replace(/[^\u0020-\u007E]/g, ".");
         const currentOffset = (offset + i).toString(16).padStart(8, "0");
@@ -154,10 +154,16 @@ class BinaryTools {
 
   /**
    * Handle hex commands.
-   * @param {object} args Command arguments.
+   * @param {string} action The action to perform (inspect, extract, search, detect, convert).
+   * @param {string} filePath Path to the binary file.
+   * @param {number} [offset] Start offset for reading.
+   * @param {number} [length] Number of bytes to read.
+   * @param {number} [end] End offset for extraction.
+   * @param {string} [endianness] Endianness (LE or BE).
+   * @param {object} [options] Additional options (outputFile, pattern, hexString, type).
    * @returns {Promise<unknown>} Command result.
    */
-  async handleHexCommand(action, filePath, offset = 0, length = 256, end, endianness = "LE", options = {}) {
+  async handleHexCommand(action, filePath, offset = 0, length = 256, end = undefined, endianness = "LE", options = {}) {
     const { outputFile, pattern, hexString, type } = options;
 
     switch (action) {

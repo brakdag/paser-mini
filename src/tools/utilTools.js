@@ -13,7 +13,7 @@ const execFilePromise = promisify(execFile);
 export default class UtilTools {
   /**
    * Validates if a string is a valid JSON.
-   * @param {any} arg1 - The JSON string or an object containing jsonString.
+   * @param {string|object} arg1 - The JSON string or an object containing jsonString.
    * @returns {Promise<string>} Validation result message.
    * @throws {Error} If the JSON is invalid.
    */
@@ -58,7 +58,9 @@ export default class UtilTools {
    * @throws {Error} If the image processing fails.
    */
   async seeImage(imagePath, crop) {
-    if (!imagePath) throw new Error("The 'path' parameter is required.");
+    if (!imagePath) {
+    throw new Error("The 'path' parameter is required.");
+  }
 
     const tempFile = path.join(os.tmpdir(), `seeImage_${Date.now()}.jpg`);
 
@@ -115,8 +117,8 @@ export default class UtilTools {
     } finally {
       try {
         await fs.unlink(tempFile);
-      } catch {
-        // Ignore unlink errors
+      } catch (error) {
+        // Ignore unlink errors as the temporary file may have already been removed
       }
     }
   }

@@ -57,7 +57,9 @@ export default class GitTools {
    */
   async applyPatch(p) {
     const patch = typeof p === 'object' ? p.patch : p;
-    if (!patch) throw new Error("Patch content is required.");
+    if (!patch) {
+    throw new Error("Patch content is required.");
+  }
 
     const tempFileName = `git_patch_${Date.now()}.patch`;
     const tempFilePath = path.join(process.cwd(), tempFileName);

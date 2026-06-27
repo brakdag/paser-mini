@@ -53,8 +53,8 @@ export default class WebTools {
         ) {
           return data;
         }
-      } catch {
-        // Silently fail and try next provider
+      } catch (error) {
+        // Silently fail and try next provider to ensure maximum availability
       }
     }
 
