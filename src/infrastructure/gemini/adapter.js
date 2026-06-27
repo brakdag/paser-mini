@@ -8,7 +8,24 @@ import {
   GeminiEmptyResponseError,
 } from "../../core/exceptions.js";
 
+const GEMINI_VARIANTS = [
+  { name: "flash", model: "models/gemini-2.0-flash", temp: 0.5 },
+  { name: "high", model: "models/gemini-2.0-pro-exp-02-05", temp: 0.7 },
+  { name: "pro", model: "models/gemini-1.5-pro", temp: 0.7 },
+];
+
+/**
+ * Adapter for the Google Gemini API, handling communication, rate limiting, and history.
+ * @augments BaseAdapter
+ */
 class GeminiAdapter extends BaseAdapter {
+  /**
+   * Initializes the GeminiAdapter with necessary dependencies and configurations.
+   * @param {object} ui - The UI interface for displaying information.
+   * @param {object} configManager - The configuration manager.
+   * @param {string} [userNickname] - The nickname of the user.
+   * @param {string} [agentNickname] - The nickname of the agent.
+   */
   constructor(
     ui,
     configManager,
@@ -30,9 +47,21 @@ class GeminiAdapter extends BaseAdapter {
       timeout: 600000,
     });
 
+    this._setupRetryLogic();
+  }
+
+  /**
+   * Configures the axios-retry logic for handling recoverable API errors.
+   * @private
+   */
+  _setupRetryLogic() {
     axiosRetry(this.client, {
       retries: 5,
       retryDelay: axiosRetry.exponentialDelay,
+      /**
+       *
+       * @param error
+       */
       retryCondition: (error) => {
         const status = error.response?.status;
         const recoverableStatuses = [429, 500, 502, 503, 504];
@@ -41,6 +70,11 @@ class GeminiAdapter extends BaseAdapter {
           recoverableStatuses.includes(status)
         );
       },
+      /**
+       *
+       * @param retryCount
+       * @param error
+       */
       onRetry: (retryCount, error) => {
         const time = IRCFormatter.getTimestamp();
         const msg = `[${time}] -!- [GeminiAdapter] API Retry ${retryCount}/5 due to: ${error.response?.status || error.message}`;
@@ -55,6 +89,11 @@ class GeminiAdapter extends BaseAdapter {
     });
   }
 
+  /**
+   * Ensures the request rate does not exceed the defined RPM limit.
+   * @private
+   * @returns {Promise<void>}
+   */
   async _applyRateLimit() {
     const minInterval = 60000 / this.rpmLimit;
     const now = Date.now();
@@ -72,38 +111,53 @@ class GeminiAdapter extends BaseAdapter {
     this.lastRequestTime = Date.now();
   }
 
+  /**
+   * Sets the rendering mode for the adapter.
+   * @param {string} mode - The rendering mode to use.
+   */
   setRenderingMode(mode) {
     this.renderingMode = mode;
   }
 
+  /**
+   * Configures the chat session with a specific model, system instruction, and temperature.
+   * @param {string} modelName - The name of the model to use.
+   * @param {string} systemInstruction - The system instruction for the model.
+   * @param {number} [temperature] - The temperature for generation.
+   */
   startChat(modelName, systemInstruction, temperature = 0.7) {
     this.currentModel = modelName || this.currentModel;
     this.systemInstruction = systemInstruction;
     this.temperature = temperature;
   }
 
+  /**
+   * Builds the final payload for the Gemini API request based on conversation history.
+   * @private
+   * @returns {object} The constructed payload.
+   */
   _buildPayload() {
-    const contents = this.history.map((c) => {
-      const role = c.role === "server" ? "user" : c.role;
-      const nickname =
+    const contents = this.history.map((entry) => {
+      const role = entry.role === "server" ? "user" : entry.role;
+      const nickname = 
         role === "user" ? this.ui.userNickname : this.ui.agentNickname;
 
-      const parts = c.parts.map((p) => {
-        if (p && typeof p === "object" && p.inline_data) {
-          return p;
+      const parts = entry.parts.map((part) => {
+        if (part && typeof part === "object" && part.inline_data) {
+          return part;
         }
 
         let textContent;
-        if (typeof p === "object" && p.text) {
-          textContent = p.text;
-        } else if (typeof p === "string") {
-          textContent = p;
+        if (typeof part === "object" && part.text) {
+          textContent = part.text;
+        } else if (typeof part === "string") {
+          textContent = part;
         } else {
-          textContent = JSON.stringify(p);
+          textContent = JSON.stringify(part);
         }
 
         return {
-          text: IRCFormatter.formatMessage(nickname, textContent, c.timestamp),
+          text: IRCFormatter.formatMessage(nickname, textContent, entry.timestamp),
         };
       });
 
@@ -126,6 +180,12 @@ class GeminiAdapter extends BaseAdapter {
     return payload;
   }
 
+  /**
+   * Removes thought/reasoning tags and timestamps from the model response.
+   * @private
+   * @param {string} text - The raw text to filter.
+   * @returns {string} The cleaned text.
+   */
   _filterThoughts(text) {
     if (!text) return "";
     let cleaned = text.replace(/<(thought|reasoning)>[\s\S]*?<\/\1>/gi, "");
@@ -133,17 +193,23 @@ class GeminiAdapter extends BaseAdapter {
     return cleaned.trim();
   }
 
+  /**
+   * Converts various content types into Gemini API compatible parts.
+   * @private
+   * @param {any} content - The content to convert.
+   * @returns {Array<object>} An array of Gemini API parts.
+   */
   _createParts(content) {
     if (Array.isArray(content)) {
-      return content.flatMap((m) => {
-        if (typeof m === "string") return [{ text: m }];
-        if (m && typeof m === "object" && m.mime_type && m.data) {
+      return content.flatMap((item) => {
+        if (typeof item === "string") return [{ text: item }];
+        if (item && typeof item === "object" && item.mime_type && item.data) {
           return [
-            { inline_data: { mime_type: m.mime_type, data: m.data } },
-            { text: `Image resolution: ${m.resolution || "unknown"}` },
+            { inline_data: { mime_type: item.mime_type, data: item.data } },
+            { text: `Image resolution: ${item.resolution || "unknown"}` },
           ];
         }
-        return [{ text: m === undefined ? "" : JSON.stringify(m) }];
+        return [{ text: item === undefined ? "" : JSON.stringify(item) }];
       });
     }
     if (typeof content === "string") {
@@ -163,67 +229,14 @@ class GeminiAdapter extends BaseAdapter {
     return [{ text: content === undefined ? "" : JSON.stringify(content) }];
   }
 
-  async sendMessage(message, role = "user") {
-    await this._applyRateLimit();
-    const timestamp = IRCFormatter.getTimestamp();
-    const parts = this._createParts(message);
-
-    this.history.push({
-      role,
-      parts,
-      timestamp,
-    });
-
-    const payload = this._buildPayload();
-    this.lastPayload = payload;
-    const modelName = this.currentModel.replace(/^models\//, "");
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${this.apiKey}`;
-
-    try {
-      const response = await this.client.post(url, payload);
-      const { data } = response;
-
-      const { candidates } = data;
-      if (!candidates || candidates.length === 0) {
-        throw new GeminiEmptyResponseError(
-          "No response candidates returned (possible safety block).",
-        );
-      }
-
-      const candidate = candidates[0];
-      if (candidate.finishReason === "SAFETY") {
-        throw new GeminiSafetyError("Response blocked by safety filters.");
-      }
-
-      const { content } = candidate;
-      if (!content || !content.parts || content.parts.length === 0) {
-        throw new GeminiEmptyResponseError("No content parts returned.");
-      }
-
-      let textContent = content.parts.map((p) => p.text).join("");
-      textContent = this._filterThoughts(textContent);
-
-      if (textContent) {
-        const msgTimestamp = IRCFormatter.getTimestamp();
-
-        this.history.push({
-          role: "model",
-          parts: [{ text: textContent }],
-          timestamp: msgTimestamp,
-        });
-        return textContent;
-      }
-
-      throw new GeminiEmptyResponseError("Empty response");
-    } catch (e) {
-      const errorMsg = e.response?.data?.error?.message || e.message;
-      const error = new Error(errorMsg);
-      error.name = "APIError";
-      throw error;
-    }
-  }
-
-  injectMessage(role, content, timestamp = null) {
+  /**
+   * Records a message in the conversation history.
+   * @private
+   * @param {string} role - The role of the message sender.
+   * @param {any} content - The content of the message.
+   * @param {string|null} [timestamp] - The timestamp of the message.
+   */
+  _recordMessage(role, content, timestamp = null) {
     const ts = timestamp || IRCFormatter.getTimestamp();
     const parts = this._createParts(content);
 
@@ -234,37 +247,156 @@ class GeminiAdapter extends BaseAdapter {
     });
   }
 
+  /**
+   * Sends a message to the Gemini API and returns the response.
+   * @param {any} message - The message to send.
+   * @param {string} [role] - The role of the sender.
+   * @returns {Promise<string>} The processed response text.
+   * @throws {APIError} If the API request fails.
+   */
+  async sendMessage(message, role = "user") {
+    await this._applyRateLimit();
+    
+    this._recordMessage(role, message);
+
+    try {
+      return await this._executeRequest();
+    } catch (error) {
+      throw this._wrapApiError(error);
+    }
+  }
+
+  /**
+   * Executes the network request to the Gemini API.
+   * @private
+   * @returns {Promise<string>} The processed response text.
+   */
+  async _executeRequest() {
+    const payload = this._buildPayload();
+    this.lastPayload = payload;
+    
+    const modelName = this.currentModel.replace(/^models\//, "");
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${this.apiKey}`;
+
+    const response = await this.client.post(url, payload);
+    return this._processApiResponse(response.data);
+  }
+
+  /**
+   * Processes the raw API response and extracts the text content.
+   * @private
+   * @param {object} data - The raw response data from the API.
+   * @returns {string} The filtered response text.
+   * @throws {GeminiEmptyResponseError|GeminiSafetyError} If the response is invalid or blocked.
+   */
+  _processApiResponse(data) {
+    const { candidates } = data;
+    if (!candidates || candidates.length === 0) {
+      throw new GeminiEmptyResponseError(
+        "No response candidates returned (possible safety block).",
+      );
+    }
+
+    const candidate = candidates[0];
+    if (candidate.finishReason === "SAFETY") {
+      throw new GeminiSafetyError("Response blocked by safety filters.");
+    }
+
+    const { content } = candidate;
+    if (!content || !content.parts || content.parts.length === 0) {
+      throw new GeminiEmptyResponseError("No content parts returned.");
+    }
+
+    let textContent = content.parts.map((p) => p.text).join("");
+    textContent = this._filterThoughts(textContent);
+
+    if (textContent) {
+      this._recordMessage("model", textContent);
+      return textContent;
+    }
+
+    throw new GeminiEmptyResponseError("Empty response");
+  }
+
+  /**
+   * Wraps API errors into a standardized APIError format.
+   * @private
+   * @param {Error} error - The original error.
+   * @returns {Error} The wrapped APIError.
+   */
+  _wrapApiError(error) {
+    const errorMsg = error.response?.data?.error?.message || error.message;
+    const wrappedError = new Error(errorMsg);
+    wrappedError.name = "APIError";
+    return wrappedError;
+  }
+
+  /**
+   * Manually injects a message into the conversation history.
+   * @param {string} role - The role of the message sender.
+   * @param {any} content - The content of the message.
+   * @param {string|null} [timestamp] - The timestamp of the message.
+   */
+  injectMessage(role, content, timestamp = null) {
+    this._recordMessage(role, content, timestamp);
+  }
+
+  /**
+   * Resets the conversation history.
+   * @param {Array|null} [historyOverride] - Optional new history to initialize with.
+   */
   hardReset(historyOverride = null) {
     this.history = historyOverride || [];
   }
 
+  /**
+   * Retrieves the current conversation history.
+   * @returns {Array} The conversation history.
+   */
   getHistory() {
     return this.history;
   }
 
+  /**
+   * Removes the last message from the conversation history.
+   */
   popLastMessage() {
     if (this.history.length > 0) {
       this.history.pop();
     }
   }
 
+  /**
+   * Updates the nicknames for the user and the agent.
+   * @param {string} userNickname - The new user nickname.
+   * @param {string} agentNickname - The new agent nickname.
+   */
   updateNicknames(userNickname, agentNickname) {
     this.userNickname = userNickname;
     this.agentNickname = agentNickname;
   }
 
+  /**
+   * Fetches the list of available models from the Gemini API.
+   * @returns {Promise<string[]>} A list of available model names.
+   */
   async getAvailableModels() {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${this.apiKey}`;
       const response = await this.client.get(url);
       const { data } = response;
       return data.models.map((m) => m.name);
-    } catch (e) {
-      console.error(`Error fetching models: ${e.message}`);
+    } catch (error) {
+      logger.error(`Error fetching models: ${error.message}`);
       return ["models/gemini-2.0-flash", "models/gemini-1.5-flash"];
     }
   }
 
+  /**
+   * Checks if a specific model is available and responsive.
+   * @param {string} modelName - The name of the model to check.
+   * @returns {Promise<boolean>} True if available, false otherwise.
+   */
   async checkAvailability(modelName) {
     try {
       const name = modelName.replace(/^models\//, "");
@@ -272,21 +404,20 @@ class GeminiAdapter extends BaseAdapter {
       const payload = { contents: [{ role: "user", parts: [{ text: "hi" }] }] };
       await this.client.post(url, payload);
       return true;
-    } catch (e) {
-      const status = e.response?.status;
+    } catch (error) {
+      const status = error.response?.status;
       if (status === 404 || status === 400) return false;
       return true;
     }
   }
 
+  /**
+   * Returns the predefined model variants.
+   * @returns {Array<object>} The list of model variants.
+   */
   getVariants() {
-    return [
-      { name: "flash", model: "models/gemini-2.0-flash", temp: 0.5 },
-      { name: "high", model: "models/gemini-2.0-pro-exp-02-05", temp: 0.7 },
-      { name: "pro", model: "models/gemini-1.5-pro", temp: 0.7 },
-    ];
+    return GEMINI_VARIANTS;
   }
 }
 
 export default GeminiAdapter;
-

@@ -14,12 +14,15 @@ class NvidiaRestClient {
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      timeout: 600000,
+      timeout: 60000,
     });
   }
 
   async _applyRateLimit(currentTokens = 1000) {
-    let rpmLimit = Math.max(1, parseInt(this.configManager.get("rpm_limit", 15), 10) || 1);
+    let rpmLimit = Math.max(
+      1,
+      parseInt(this.configManager.get("rpm_limit", 15), 10) || 1,
+    );
     const tpmLimit = parseInt(this.configManager.get("tpm_limit", 15000), 10);
     const autoRpmEnabled = this.configManager.get("auto_rpm_enabled", false);
 
@@ -76,9 +79,8 @@ class NvidiaRestClient {
   }
 
   async close() {
-  // Intentionally empty: no resources to release.
-}
+    // Intentionally empty: no resources to release.
+  }
 }
 
 export default NvidiaRestClient;
-
