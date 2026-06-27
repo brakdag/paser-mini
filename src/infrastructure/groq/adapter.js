@@ -3,7 +3,17 @@ import axiosRetry from "axios-retry";
 import BaseAdapter from "../baseAdapter.js";
 import logger from "../../core/logger.js";
 
+/**
+ *
+ */
 class GroqAdapter extends BaseAdapter {
+  /**
+   *
+   * @param ui
+   * @param configManager
+   * @param userNickname
+   * @param agentNickname
+   */
   constructor(ui, configManager, userNickname = "user", agentNickname = "assistant") {
     super(ui, configManager, userNickname, agentNickname);
     this.apiKey = process.env.GROQ_API_KEY;
@@ -24,6 +34,10 @@ class GroqAdapter extends BaseAdapter {
     axiosRetry(this.client, {
       retries: 5,
       retryDelay: axiosRetry.exponentialDelay,
+      /**
+       *
+       * @param error
+       */
       retryCondition: (error) => {
         const status = error.response?.status;
         const recoverableStatuses = [429, 500, 502, 503, 504];
@@ -32,6 +46,11 @@ class GroqAdapter extends BaseAdapter {
           recoverableStatuses.includes(status)
         );
       },
+      /**
+       *
+       * @param retryCount
+       * @param error
+       */
       onRetry: (retryCount, error) => {
         const time = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
         const msg = `[${time}] -!- [GroqAdapter] API Retry ${retryCount}/5 due to: ${error.response?.status || error.message}`;
@@ -43,6 +62,12 @@ class GroqAdapter extends BaseAdapter {
     });
   }
 
+  /**
+   *
+   * @param modelName
+   * @param systemInstruction
+   * @param temperature
+   */
   startChat(modelName, systemInstruction, temperature = 0.7) {
     this.currentModel = modelName || this.currentModel;
     this.systemInstruction = systemInstruction;
@@ -60,6 +85,11 @@ class GroqAdapter extends BaseAdapter {
     }
   }
 
+  /**
+   *
+   * @param message
+   * @param role
+   */
   async sendMessage(message, role = "user") {
     const timestamp = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
     
@@ -91,6 +121,12 @@ class GroqAdapter extends BaseAdapter {
     }
   }
 
+  /**
+   *
+   * @param role
+   * @param content
+   * @param timestamp
+   */
   injectMessage(role, content, timestamp = null) {
     let apiRole = role;
     if (role === this.userNickname) apiRole = "user";
@@ -118,12 +154,19 @@ class GroqAdapter extends BaseAdapter {
     });
   }
 
+  /**
+   *
+   */
   popLastMessage() {
     if (this.history.length > 0) {
       this.history.pop();
     }
   }
 
+  /**
+   *
+   * @param historyOverride
+   */
   hardReset(historyOverride = null) {
     this.history = historyOverride || [];
     if (this.systemInstruction) {
@@ -132,10 +175,16 @@ class GroqAdapter extends BaseAdapter {
     logger.info("[GroqAdapter] History hard reset");
   }
 
+  /**
+   *
+   */
   getHistory() {
     return this.history;
   }
 
+  /**
+   *
+   */
   async getAvailableModels() {
     try {
       const response = await this.client.get("/models");
@@ -146,6 +195,10 @@ class GroqAdapter extends BaseAdapter {
     }
   }
 
+  /**
+   *
+   * @param modelName
+   */
   async checkAvailability(modelName) {
     try {
       await this.client.post("/chat/completions", {

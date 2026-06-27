@@ -1,16 +1,37 @@
 import logger from "../../core/logger.js";
 
+/**
+ *
+ */
 class NvidiaRetryHandler {
+  /**
+   *
+   * @param maxRetries
+   * @param callback
+   */
   constructor(maxRetries = 5000, callback = null) {
     this.maxRetries = maxRetries;
     this.callback = callback;
   }
 
+  /**
+   *
+   * @param callback
+   */
   setCallback(callback) {
     this.callback = callback;
   }
 
+  /**
+   *
+   * @param func
+   * @param {...any} args
+   */
   async execute(func, ...args) {
+    /**
+     *
+     * @param retries
+     */
     const run = async (retries) => {
       try {
         return await func(...args);

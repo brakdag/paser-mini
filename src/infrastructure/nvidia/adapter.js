@@ -4,7 +4,17 @@ import NvidiaRestClient from "./restClient.js";
 import logger from "../../core/logger.js";
 import BaseAdapter from "../baseAdapter.js";
 
+/**
+ *
+ */
 class NvidiaAdapter extends BaseAdapter {
+  /**
+   *
+   * @param ui
+   * @param configManager
+   * @param userNickname
+   * @param agentNickname
+   */
   constructor(
     ui,
     configManager,
@@ -20,6 +30,12 @@ class NvidiaAdapter extends BaseAdapter {
     this.lastPayload = null;
   }
 
+  /**
+   *
+   * @param modelName
+   * @param systemInstruction
+   * @param temperature
+   */
   startChat(modelName, systemInstruction, temperature = 0.7) {
     this.currentModel = modelName || this.currentModel;
     this.systemInstruction = systemInstruction;
@@ -30,6 +46,10 @@ class NvidiaAdapter extends BaseAdapter {
     });
   }
 
+  /**
+   *
+   * @param text
+   */
   _filterThoughts(text) {
     if (!text) return "";
     let cleaned = text.replace(/<(thought|reasoning)>[\s\S]*?<\/\1>/gi, "");
@@ -37,6 +57,11 @@ class NvidiaAdapter extends BaseAdapter {
     return cleaned.trim();
   }
 
+  /**
+   *
+   * @param message
+   * @param role
+   */
   async sendMessage(message, role = "user") {
     this.state.addMessage(role, message);
 
@@ -85,32 +110,60 @@ class NvidiaAdapter extends BaseAdapter {
     }
   }
 
+  /**
+   *
+   * @param role
+   * @param content
+   * @param timestamp
+   */
   injectMessage(role, content, timestamp = null) {
     this.state.addMessage(role, content, timestamp);
   }
 
+  /**
+   *
+   * @param mode
+   */
   setRenderingMode(mode) {
     this.state.setRenderingMode(mode);
   }
 
+  /**
+   *
+   * @param historyOverride
+   */
   hardReset(historyOverride = null) {
     this.state.hardReset(historyOverride);
     logger.info("NvidiaAdapter: State hard reset");
   }
 
+  /**
+   *
+   */
   getHistory() {
     return this.state.getRawHistory();
   }
 
+  /**
+   *
+   */
   popLastMessage() {
     this.state.popLastMessage();
   }
 
+  /**
+   *
+   * @param userNickname
+   * @param agentNickname
+   */
   updateNicknames(userNickname, agentNickname) {
     this.state.userNickname = userNickname;
     this.state.agentNickname = agentNickname;
   }
 
+  /**
+   *
+   */
   async getAvailableModels() {
     try {
       const data = await this.restClient.get("models");
@@ -125,6 +178,10 @@ class NvidiaAdapter extends BaseAdapter {
     }
   }
 
+  /**
+   *
+   * @param modelName
+   */
   async checkAvailability(modelName) {
     try {
       const payload = {
@@ -149,6 +206,10 @@ class NvidiaAdapter extends BaseAdapter {
     }
   }
 
+  /**
+   *
+   * @param contents
+   */
   countTokens(contents) {
     const totalChars = contents.reduce(
       (acc, msg) => acc + (msg.text?.length || 0),
@@ -157,6 +218,9 @@ class NvidiaAdapter extends BaseAdapter {
     return Math.floor(totalChars / 4);
   }
 
+  /**
+   *
+   */
   async close() {
     // No resources to clean up for NvidiaAdapter
   }

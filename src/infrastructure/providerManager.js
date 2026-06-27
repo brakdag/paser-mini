@@ -1,4 +1,10 @@
+/**
+ *
+ */
 class ProviderManager {
+  /**
+   *
+   */
   constructor() {
     this.providers = {
       GEMINI: {
@@ -29,6 +35,9 @@ class ProviderManager {
     };
   }
 
+  /**
+   *
+   */
   getProviders() {
     return Object.entries(this.providers).map(([id, info]) => ({
       id,
@@ -36,6 +45,14 @@ class ProviderManager {
     }));
   }
 
+  /**
+   *
+   * @param providerId
+   * @param ui
+   * @param configManager
+   * @param userNickname
+   * @param agentNickname
+   */
   async createAdapter(providerId, ui, configManager, userNickname, agentNickname) {
     const provider = this.providers[providerId];
     if (!provider) {

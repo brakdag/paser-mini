@@ -1,7 +1,14 @@
 import axios from "axios";
 import logger from "../../core/logger.js";
 
+/**
+ *
+ */
 class NvidiaRestClient {
+  /**
+   *
+   * @param configManager
+   */
   constructor(configManager) {
     this.apiKey = process.env.NVIDIA_API_KEY;
     this.baseUrl = "https://integrate.api.nvidia.com/v1";
@@ -18,6 +25,10 @@ class NvidiaRestClient {
     });
   }
 
+  /**
+   *
+   * @param currentTokens
+   */
   async _applyRateLimit(currentTokens = 1000) {
     let rpmLimit = Math.max(
       1,
@@ -52,6 +63,11 @@ class NvidiaRestClient {
     this.lastRequestTime = Date.now();
   }
 
+  /**
+   *
+   * @param payload
+   * @param stream
+   */
   async chatCompletions(payload, stream = false) {
     const url = "/chat/completions";
     const requestPayload = { ...payload, stream };
@@ -72,12 +88,19 @@ class NvidiaRestClient {
     return response.data;
   }
 
+  /**
+   *
+   * @param endpoint
+   */
   async get(endpoint) {
     await this._applyRateLimit();
     const response = await this.client.get(`/${endpoint}`);
     return response.data;
   }
 
+  /**
+   *
+   */
   async close() {
     // Intentionally empty: no resources to release.
   }
