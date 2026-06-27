@@ -157,8 +157,8 @@ class BinaryTools {
    * @param {object} args Command arguments.
    * @returns {Promise<unknown>} Command result.
    */
-  async handleHexCommand(args) {
-    const { action, filePath, offset = 0, length = 256, end, outputFile, pattern, hexString, type, endianness = "LE" } = args;
+  async handleHexCommand(action, filePath, offset = 0, length = 256, end, endianness = "LE", options = {}) {
+    const { outputFile, pattern, hexString, type } = options;
 
     switch (action) {
       case "inspect": return this.#inspectBinary(filePath, offset, length);

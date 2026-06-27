@@ -59,12 +59,13 @@ export default class GitTools {
     const patch = typeof p === 'object' ? p.patch : p;
     if (!patch) throw new Error("Patch content is required.");
 
-    const tempFileName = `.temp_${Date.now()}_patch.patch`;
+    const tempFileName = `git_patch_${Date.now()}.patch`;
     const tempFilePath = path.join(process.cwd(), tempFileName);
 
     try {
       await fs.writeFile(tempFilePath, patch, "utf8");
-      return this.#run(["apply", tempFileName]);
+      await fs.access(tempFilePath);
+      return this.#run(["apply", tempFilePath]);
     } catch (e) {
       throw new Error(`Patch application failed: ${e.message}`);
     } finally {

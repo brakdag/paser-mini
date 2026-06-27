@@ -79,7 +79,8 @@ async function main() {
   chatManager.configManager = configManager;
   chatManager.providerManager = providerManager;
 
-  const memoryToolsInstance = new MemoryTools();
+  const { getToolInstance } = await import("./infrastructure/registry.js");
+  const memoryToolsInstance = await getToolInstance("memoryTools");
   memoryToolsInstance.setMemoryContext(assistant, chatManager);
   await chatManager.run(options.message);
 }

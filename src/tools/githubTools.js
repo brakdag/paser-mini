@@ -166,12 +166,20 @@ export default class GithubTools {
    */
   async postComment(issueNumber, body, repo) {
     const { targetRepo, headers } = await this.#prepareRequest(repo);
+
+    const cleanIssueNumber = String(issueNumber).replace(/\D/g, '');
+    if (!cleanIssueNumber) throw new Error("Invalid issue number provided.");
+
+    if (!body || typeof body !== 'string' || body.trim() === '') {
+      throw new Error("Comment body must be a non-empty string.");
+    }
+
     await this.#client.post(
-      `/repos/${targetRepo}/issues/${issueNumber}/comments`,
-      { body },
+      `/repos/${targetRepo}/issues/${cleanIssueNumber}/comments`,
+      { body: body.trim() },
       { headers },
     );
-    return `Comment posted to issue #${issueNumber}.`;
+    return `Comment posted to issue #${cleanIssueNumber}.`;
   }
 
   /**

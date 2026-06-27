@@ -24,11 +24,11 @@ export default class JsonTools {
    * @returns {Array<string|number>} The parsed path segments.
    */
   #parsePath(pathStr) {
-    const normalized = pathStr.replace(/[(d+)]/g, ".$1");
+    const normalized = pathStr.replace(/\((\d+)\)/g, ".$1");
     return normalized
       .split(".")
       .filter((p) => p)
-      .map((p) => (typeof p === "string" && /\d+/.test(p) ? parseInt(p, 10) : p));
+      .map((p) => (typeof p === "string" && /^\d+$/.test(p) ? parseInt(p, 10) : p));
   }
 
   /**

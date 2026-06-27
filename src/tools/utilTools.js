@@ -13,12 +13,18 @@ const execFilePromise = promisify(execFile);
 export default class UtilTools {
   /**
    * Validates if a string is a valid JSON.
-   * @param {object} params - The parameters.
-   * @param {string} params.jsonString - The JSON string to validate.
+   * @param {any} arg1 - The JSON string or an object containing jsonString.
    * @returns {Promise<string>} Validation result message.
    * @throws {Error} If the JSON is invalid.
    */
-  async validateJson({ jsonString }) {
+  async validateJson(arg1) {
+    let jsonString = arg1;
+    if (typeof arg1 === 'object' && arg1 !== null) {
+      jsonString = arg1.jsonString;
+    }
+    if (!jsonString) {
+      throw new Error("Missing required argument: jsonString");
+    }
     try {
       JSON.parse(jsonString);
       return "El JSON es valido.";

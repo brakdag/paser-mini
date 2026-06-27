@@ -98,7 +98,18 @@ export class SystemTools {
    * @returns {Promise<string>} Confirmation of the generation.
    * @throws {Error} If the documentation process fails.
    */
-  async generateDocs(targetPath, outputDir) {
+  async generateDocs(arg1, arg2) {
+    let targetPath = arg1;
+    let outputDir = arg2;
+
+    if (typeof arg1 === 'object' && arg1 !== null) {
+      targetPath = arg1.targetPath;
+      outputDir = arg1.outputDir;
+    }
+
+    if (!targetPath || !outputDir) {
+      throw new Error(\`Missing required arguments for generateDocs. targetPath: \${targetPath}, outputDir: \${outputDir}\`);
+    }
     await fs.mkdir(outputDir, { recursive: true });
     await this.#execFilePromise("npx", ["jsdoc", targetPath, "-d", outputDir], {
       timeout: 60000,

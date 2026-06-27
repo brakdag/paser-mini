@@ -34,25 +34,15 @@
 - [x] restore (OK)
 - [x] execute (OK)
 - [x] run (OK)
-
-## Not Working Tools
-- [x] doc (FAIL: Type Error)
-- [x] valide (FAIL: Undefined Arg)
-- [x] token (FAIL: Context Not Init)
-- [x] structure (FAIL: Undefined Arg)
-- [x] node (FAIL: Undefined Arg)
-- [x] arrange (FAIL: Undefined Arg)
-- [x] update (FAIL: Undefined Arg)
-- [x] post (FAIL: HTTP 422)
-- [ ] patch (Not Tested)
-- [x] scene (FAIL: Undefined Arg)
-- [ ] bin (Not Tested)
-- [x] ast (FAIL: Undefined Arg)
-
-## Checking Tools
-- analysis
-- eslint
-- valide
-- metrics
-- ast
-- diff
+- [x] doc (OK)
+- [x] token (OK)
+- [x] valide (OK)
+- [x] structure (OK)
+- [x] ast (OK)
+- [x] node (OK)
+- [x] arrange (OK)
+- [x] update (OK)
+- [x] scene (OK)
+- [x] post (OK)
+- [x] patch (OK)
+- [x] bin (OK)

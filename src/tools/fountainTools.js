@@ -4,12 +4,14 @@
 class FountainTools {
   /**
    * Inserts a formatted scene into a Fountain screenplay.
-   * @param {object} options - Injection options.
-   * @param {string} options.scene - The scene heading to insert.
-   * @param {string} options.action - The action text to insert.
+   * @param {string} scene - The scene heading to insert.
+   * @param {string} action - The action text to insert.
    * @returns {Promise<{type: string, content: string}>} The formatted injection object.
    */
-  async insertSceneFountain({ scene, action }) {
+  async insertSceneFountain(scene, action) {
+    if (!scene || !action) {
+      throw new Error("FountainTools: Missing required arguments 'scene' or 'action'.");
+    }
     const formattedScene = scene.toUpperCase();
     const content = `* SCENE: ${formattedScene}\n${action}`;
     return {
