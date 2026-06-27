@@ -59,8 +59,9 @@ class GeminiAdapter extends BaseAdapter {
       retries: 5,
       retryDelay: axiosRetry.exponentialDelay,
       /**
-       *
-       * @param error
+       * Determines if a request should be retried.
+       * @param {Error} error - The error encountered during the request.
+       * @returns {boolean} True if the request should be retried.
        */
       retryCondition: (error) => {
         const status = error.response?.status;
@@ -71,9 +72,9 @@ class GeminiAdapter extends BaseAdapter {
         );
       },
       /**
-       *
-       * @param retryCount
-       * @param error
+       * Callback executed on each retry attempt.
+       * @param {number} retryCount - The current retry attempt number.
+       * @param {Error} error - The error that triggered the retry.
        */
       onRetry: (retryCount, error) => {
         const time = IRCFormatter.getTimestamp();
@@ -196,7 +197,7 @@ class GeminiAdapter extends BaseAdapter {
   /**
    * Converts various content types into Gemini API compatible parts.
    * @private
-   * @param {any} content - The content to convert.
+   * @param {string|Array|object} content - The content to convert.
    * @returns {Array<object>} An array of Gemini API parts.
    */
   _createParts(content) {
@@ -233,7 +234,7 @@ class GeminiAdapter extends BaseAdapter {
    * Records a message in the conversation history.
    * @private
    * @param {string} role - The role of the message sender.
-   * @param {any} content - The content of the message.
+   * @param {string|Array|object} content - The content of the message.
    * @param {string|null} [timestamp] - The timestamp of the message.
    */
   _recordMessage(role, content, timestamp = null) {
@@ -249,10 +250,10 @@ class GeminiAdapter extends BaseAdapter {
 
   /**
    * Sends a message to the Gemini API and returns the response.
-   * @param {any} message - The message to send.
+   * @param {string|Array|object} message - The message to send.
    * @param {string} [role] - The role of the sender.
    * @returns {Promise<string>} The processed response text.
-   * @throws {APIError} If the API request fails.
+   * @throws {Error} If the API request fails.
    */
   async sendMessage(message, role = "user") {
     await this._applyRateLimit();
@@ -334,7 +335,7 @@ class GeminiAdapter extends BaseAdapter {
   /**
    * Manually injects a message into the conversation history.
    * @param {string} role - The role of the message sender.
-   * @param {any} content - The content of the message.
+   * @param {string|Array|object} content - The content of the message.
    * @param {string|null} [timestamp] - The timestamp of the message.
    */
   injectMessage(role, content, timestamp = null) {
