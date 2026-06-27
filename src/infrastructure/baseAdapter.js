@@ -1,4 +1,14 @@
+/**
+ * Base class for AI adapters. This class is abstract and cannot be instantiated directly.
+ */
 export default class BaseAdapter {
+  /**
+   * @param {object} ui - The UI interface.
+   * @param {object} configManager - The configuration manager.
+   * @param {string} [userNickname] - The user's nickname.
+   * @param {string} [agentNickname] - The agent's nickname.
+   * @throws {Error} If instantiated directly.
+   */
   constructor(
     ui,
     configManager,
@@ -16,39 +26,88 @@ export default class BaseAdapter {
     this.agentNickname = agentNickname;
   }
 
-  async sendMessage(message, _role = "user") {
+  /**
+   * Sends a message to the AI provider.
+   * @param {string|object|Array} _message - The message content to send.
+   * @param {string} [_role] - The role of the sender.
+   * @returns {Promise<string>} The response text from the AI.
+   * @throws {Error} If the method is not implemented by the subclass.
+   */
+  async sendMessage(_message, _role = "user") {
     throw new Error("Method 'sendMessage()' must be implemented.");
   }
 
-  startChat(_modelName, systemInstruction, _temperature = 0.7) {
+  /**
+   * Initializes or updates the chat session parameters.
+   * @param {string} _modelName - The name of the model to use.
+   * @param {string} _systemInstruction - The system prompt/preamble.
+   * @param {number} [_temperature] - The sampling temperature.
+   * @throws {Error} If the method is not implemented by the subclass.
+   */
+  startChat(_modelName, _systemInstruction, _temperature = 0.7) {
     throw new Error("Method 'startChat()' must be implemented.");
   }
 
-  injectMessage(_role, content, _timestamp = null) {
+  /**
+   * Normalizes and injects a message into the chat history.
+   * @param {string} _role - The role of the message sender.
+   * @param {string|object|Array} _content - The content of the message.
+   * @param {string|null} [_timestamp] - The timestamp of the message.
+   * @throws {Error} If the method is not implemented by the subclass.
+   */
+  injectMessage(_role, _content, _timestamp = null) {
     throw new Error("Method 'injectMessage()' must be implemented.");
   }
 
+  /**
+   * Removes the last message from the chat history.
+   * @throws {Error} If the method is not implemented by the subclass.
+   */
   popLastMessage() {
     throw new Error("Method 'popLastMessage()' must be implemented.");
   }
 
+  /**
+   * Retrieves the current chat history. Subclasses should return an Array.
+   * @throws {Error} If the method is not implemented by the subclass.
+   */
   getHistory() {
     throw new Error("Method 'getHistory()' must be implemented.");
   }
 
+  /**
+   * Updates the nicknames for the user and the agent.
+   * @param {string} userNickname - The new nickname for the user.
+   * @param {string} agentNickname - The new nickname for the agent.
+   */
   updateNicknames(userNickname, agentNickname) {
     this.userNickname = userNickname;
     this.agentNickname = agentNickname;
   }
 
+  /**
+   * Fetches the list of available models from the AI provider.
+   * @returns {Promise<string[]>} A list of model names.
+   * @throws {Error} If the method is not implemented by the subclass.
+   */
   async getAvailableModels() {
     throw new Error("Method 'getAvailableModels()' must be implemented.");
   }
 
+  /**
+   * Checks if a specific model is available and responding.
+   * @param {string} _modelName - The name of the model to check.
+   * @returns {Promise<boolean>} True if available, false otherwise.
+   * @throws {Error} If the method is not implemented by the subclass.
+   */
   async checkAvailability(_modelName) {
     throw new Error("Method 'checkAvailability()' must be implemented.");
   }
 
+  /**
+   * Returns the available variants for this adapter.
+   * @returns {Array} A list of variants.
+   */
   getVariants() {
     return [];
   }
