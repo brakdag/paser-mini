@@ -63,29 +63,28 @@ export default class JsonTools {
   }
 
   /**
-   * Sets a value in a data object by path.
+   * Sets a value in a data object by path immutably.
    * @param {unknown} data - The source data object.
    * @param {Array<string|number>} pathParts - The path segments.
    * @param {unknown} value - The value to set.
-   * @throws {Error} If a path segment is not found or the target is not an object.
+   * @returns {unknown} A new object with the value set.
+   * @throws {Error} If a path segment is not found.
    */
-  #setByPath(data, pathParts, value) {
-    let current = data;
-    for (let i = 0; i < pathParts.length - 1; i += 1) {
-      const part = pathParts[i];
-      if (current && typeof current === "object" && part in current) {
-        current = current[part];
-      } else {
-        throw new Error(`Path segment '${part}' not found.`);
-      }
+  #setByPathImmutable(data, pathParts, value) {
+    if (pathParts.length === 0) return value;
+
+    const [first, ...rest] = pathParts;
+    const cloned = Array.isArray(data) ? [...data] : { ...data };
+
+    if (data && typeof data === "object" && first in data) {
+      cloned[first] = this.#setByPathImmutable(data[first], rest, value);
+    } else if (pathParts.length === 1) {
+      cloned[first] = value;
+    } else {
+      throw new Error(`Path segment '${first}' not found.`);
     }
 
-    const lastPart = pathParts[pathParts.length - 1];
-    if (current && typeof current === "object") {
-      current[lastPart] = value;
-    } else {
-      throw new TypeError("Cannot set value at specified path.");
-    }
+    return cloned;
   }
 
   /**
@@ -162,8 +161,9 @@ export default class JsonTools {
   async updateJsonNode(filePath, pathStr, value) {
     const data = await this.#loadJson(filePath);
     const parts = this.#parsePath(pathStr);
-    this.#setByPath(data, parts, value);
+    const updatedData = this.#setByPathImmutable(data, parts, value);
     const safePath = this.#getSafePath(filePath);
-    await fs.writeFile(safePath, JSON.stringify(data, null, 2), "utf8");
+    await fs.writeFile(safePath, JSON.stringify(updatedData, null, 2), "utf8");
   }
 }
+

@@ -36,7 +36,7 @@ class BinaryTools {
       for (let i = 0; i < buffer.length; i += 16) {
         const chunk = buffer.subarray(i, i + 16);
         const hex = chunk.toString("hex").match(/.{1,2}/g)?.join(" ") || "";
-        const ascii = chunk.toString("utf8").replace(/[^\u0020-\u007E]/g, ".");
+        const ascii = chunk.toString("utf8").replace(/[\u0020-\u007E]/g, ".");
         const currentOffset = (offset + i).toString(16).padStart(8, "0");
         output += `${currentOffset} | ${hex.padEnd(47)} | ${ascii}\n`;
       }
@@ -97,7 +97,6 @@ class BinaryTools {
           offsets.push(totalOffset + index);
           index = buffer.indexOf(searchBuf, index + 1);
         }
-        // Move offset back by pattern length - 1 to catch patterns split across chunks
         totalOffset += bytesRead - (searchBuf.length > 0 ? searchBuf.length - 1 : 0);
       }
     } finally {
@@ -164,8 +163,10 @@ class BinaryTools {
    * @returns {Promise<unknown>} Command result.
    */
   async handleHexCommand(action, filePath, offset = 0, length = 256, end = undefined, endianness = "LE", options = {}) {
-    const { outputFile, pattern, hexString, type } = options;
+    return this.#executeHexCommand({ action, filePath, offset, length, end, endianness, ...options });
+  }
 
+  async #executeHexCommand({ action, filePath, offset, length, end, endianness, outputFile, pattern, hexString, type }) {
     switch (action) {
       case "inspect": return this.#inspectBinary(filePath, offset, length);
       case "extract": return this.#extractBinary(filePath, offset, end, length, outputFile);

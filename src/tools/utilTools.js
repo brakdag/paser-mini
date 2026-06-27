@@ -58,54 +58,14 @@ export default class UtilTools {
    * @throws {Error} If the image processing fails.
    */
   async seeImage(imagePath, crop) {
-    if (!imagePath) {
-    throw new Error("The 'path' parameter is required.");
-  }
+    if (!imagePath) throw new Error("The 'path' parameter is required.");
 
     const tempFile = path.join(os.tmpdir(), `seeImage_${Date.now()}.jpg`);
 
     try {
-      const args = ["-background", "white", "-alpha", "remove"];
-
-      if (crop) {
-        if (!Array.isArray(crop) || crop.length !== 4) {
-          throw new Error(
-            "The 'crop' parameter must be an array of 4 integers: [left, top, right, bottom].",
-          );
-        }
-        const [left, top, right, bottom] = crop;
-        const width = right - left;
-        const height = bottom - top;
-        if (width <= 0 || height <= 0) {
-          throw new Error(
-            "Invalid crop dimensions: right must be > left and bottom must be > top.",
-          );
-        }
-        args.push("-crop", `${width}x${height}+${left}+${top}`, "+repage");
-      }
-
-      args.push(
-        "-resize",
-        "512x512",
-        "-colorspace",
-        "sRGB",
-        "-quality",
-        "75",
-        imagePath,
-        tempFile,
-      );
-
-      await execFilePromise("convert", args);
-
-      const buffer = await fs.readFile(tempFile);
-      const base64Data = buffer.toString("base64");
-
-      const { stdout: resStdout } = await execFilePromise("identify", [
-        "-format",
-        "%wx%h",
-        imagePath,
-      ]);
-      const resolution = resStdout.trim();
+      await this.#processImage(imagePath, tempFile, crop);
+      const base64Data = (await fs.readFile(tempFile)).toString("base64");
+      const resolution = await this.#getImageResolution(imagePath);
 
       return {
         mime_type: "image/jpeg",
@@ -115,11 +75,40 @@ export default class UtilTools {
     } catch (error) {
       throw new Error(`Vision Tool Error: ${error.message}`);
     } finally {
-      try {
-        await fs.unlink(tempFile);
-      } catch (error) {
-        // Ignore unlink errors as the temporary file may have already been removed
+      await this.#cleanupTempFile(tempFile);
+    }
+  }
+
+  async #processImage(imagePath, tempFile, crop) {
+    const args = ["-background", "white", "-alpha", "remove"];
+
+    if (crop) {
+      if (!Array.isArray(crop) || crop.length !== 4) {
+        throw new Error("The 'crop' parameter must be an array of 4 integers: [left, top, right, bottom].");
       }
+      const [left, top, right, bottom] = crop;
+      const width = right - left;
+      const height = bottom - top;
+      if (width <= 0 || height <= 0) {
+        throw new Error("Invalid crop dimensions: right must be > left and bottom must be > top.");
+      }
+      args.push("-crop", `${width}x${height}+${left}+${top}`, "+repage");
+    }
+
+    args.push("-resize", "512x512", "-colorspace", "sRGB", "-quality", "75", imagePath, tempFile);
+    await execFilePromise("convert", args);
+  }
+
+  async #getImageResolution(imagePath) {
+    const { stdout } = await execFilePromise("identify", ["-format", "%wx%h", imagePath]);
+    return stdout.trim();
+  }
+
+  async #cleanupTempFile(filePath) {
+    try {
+      await fs.unlink(filePath);
+    } catch {
+      // Silent failure for cleanup
     }
   }
 }
