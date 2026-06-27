@@ -166,6 +166,21 @@ class BinaryTools {
     return this.#executeHexCommand({ action, filePath, offset, length, end, endianness, ...options });
   }
 
+  /**
+   * Internal executor for binary commands.
+   * @param {object} params - Command parameters.
+   * @param {string} params.action - The action to perform.
+   * @param {string} params.filePath - Path to the binary file.
+   * @param {number} params.offset - Start offset.
+   * @param {number} params.length - Number of bytes to read.
+   * @param {number} [params.end] - End offset for extraction.
+   * @param {string} params.endianness - Endianness (LE/BE).
+   * @param {string} [params.outputFile] - Output file path.
+   * @param {string} [params.pattern] - Hex pattern to search.
+   * @param {string} [params.hexString] - Hex string to convert.
+   * @param {string} [params.type] - Data type for conversion.
+   * @returns {Promise<unknown>} Command result.
+   */
   async #executeHexCommand({ action, filePath, offset, length, end, endianness, outputFile, pattern, hexString, type }) {
     switch (action) {
       case "inspect": return this.#inspectBinary(filePath, offset, length);

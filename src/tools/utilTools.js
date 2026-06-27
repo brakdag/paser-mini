@@ -79,6 +79,13 @@ export default class UtilTools {
     }
   }
 
+  /**
+   * Internal method to process image using ImageMagick.
+   * @param {string} imagePath - Path to source image.
+   * @param {string} tempFile - Path to temporary output file.
+   * @param {number[]} [crop] - Optional crop coordinates.
+   * @returns {Promise<void>}
+   */
   async #processImage(imagePath, tempFile, crop) {
     const args = ["-background", "white", "-alpha", "remove"];
 
@@ -99,11 +106,21 @@ export default class UtilTools {
     await execFilePromise("convert", args);
   }
 
+  /**
+   * Internal method to get image resolution using ImageMagick.
+   * @param {string} imagePath - Path to image.
+   * @returns {Promise<string>} Resolution string (WxH).
+   */
   async #getImageResolution(imagePath) {
     const { stdout } = await execFilePromise("identify", ["-format", "%wx%h", imagePath]);
     return stdout.trim();
   }
 
+  /**
+   * Internal method to remove temporary files.
+   * @param {string} filePath - Path to file to remove.
+   * @returns {Promise<void>}
+   */
   async #cleanupTempFile(filePath) {
     try {
       await fs.unlink(filePath);
