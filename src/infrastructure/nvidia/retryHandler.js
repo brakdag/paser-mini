@@ -3,40 +3,74 @@ import logger from "../../core/logger.js";
 const DEFAULT_BACKOFF_MS = 1000;
 const RETRYABLE_SERVER_ERRORS = [500, 502, 503, 504];
 
+/**
+ * Handles request retries with exponential backoff for Nvidia API.
+ */
 class NvidiaRetryHandler {
+  /**
+   * @param {number} maxRetries - Maximum number of retry attempts before failing.
+   * @param {((msg: string) => void)|null} callback - Optional callback for retry notifications.
+   */
   constructor(maxRetries = 5000, callback = null) {
     this.maxRetries = maxRetries;
     this.callback = callback;
   }
 
+  /**
+   * Sets the notification callback.
+   * @param {(msg: string) => void} callback - The callback function to invoke on retry.
+   */
   setCallback(callback) {
     this.callback = callback;
   }
 
+  /**
+   * Executes a function with retry logic.
+   * @param { (...args: any[]) => Promise<any> } func - The asynchronous function to execute.
+   * @param {...any} args - Arguments to be passed to the function.
+   * @returns {Promise<any>} The result of the function execution.
+   */
   async execute(func, ...args) {
-    const run = async (retries) => {
-      try {
-        return await func(...args);
-      } catch (e) {
-        const status = e.response?.status;
-        if (retries >= this.maxRetries) throw e;
-
-        const { delay, msg } = this._calculateRetryStrategy(e, status, retries);
-
-        if (delay === null) throw e;
-
-        logger.warn(msg);
-        if (this.callback) this.callback(msg);
-
-        await new Promise((resolve) => setTimeout(resolve, delay));
-        return run(retries + 1);
-      }
-    };
-    return run(0);
+    return this._runRetryLoop(func, args, 0);
   }
 
+  /**
+   * Internal recursive loop for handling retries.
+   * @param { (...args: any[]) => Promise<any> } func - The function to execute.
+   * @param {any[]} args - The arguments for the function.
+   * @param {number} retries - The current retry attempt count.
+   * @returns {Promise<any>} The result of the function execution.
+   */
+  async _runRetryLoop(func, args, retries) {
+    try {
+      return await func(...args);
+    } catch (e) {
+      const status = e.response?.status;
+      if (retries >= this.maxRetries) throw e;
+
+      const { delay, msg } = this._calculateRetryStrategy(e, status, retries);
+
+      if (delay === null) throw e;
+
+      logger.warn(msg);
+      if (this.callback) this.callback(msg);
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, delay);
+      });
+      return this._runRetryLoop(func, args, retries + 1);
+    }
+  }
+
+  /**
+   * Determines the delay and message based on the error status.
+   * @param {Error} error - The error object encountered.
+   * @param {number|undefined} status - The HTTP status code of the error.
+   * @param {number} retries - The current retry attempt count.
+   * @returns {{delay: number|null, msg: string}} The calculated delay and notification message.
+   */
   _calculateRetryStrategy(error, status, retries) {
-    let delay = Math.pow(2, retries) * DEFAULT_BACKOFF_MS;
+    let delay = (2 ** retries) * DEFAULT_BACKOFF_MS;
     let msg = `Unexpected error ${error.message}. Retrying in ${delay / 1000}s...`;
 
     if (status === 429) {
