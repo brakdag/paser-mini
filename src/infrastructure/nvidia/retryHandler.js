@@ -8,10 +8,11 @@ const RETRYABLE_SERVER_ERRORS = [500, 502, 503, 504];
  */
 class NvidiaRetryHandler {
   /**
+   * @template ReturnT
    * @param {number} maxRetries - Maximum number of retry attempts before failing.
-   * @param {((msg: string) => void)|null} callback - Optional callback for retry notifications.
+   * @param {(msg: string) => void} [callback] - Optional callback for retry notifications.
    */
-  constructor(maxRetries = 5000, callback = null) {
+  constructor(maxRetries = 5000, callback = undefined) {
     this.maxRetries = maxRetries;
     this.callback = callback;
   }
@@ -26,9 +27,10 @@ class NvidiaRetryHandler {
 
   /**
    * Executes a function with retry logic.
-   * @param { (...args: any[]) => Promise<any> } func - The asynchronous function to execute.
-   * @param {...any} args - Arguments to be passed to the function.
-   * @returns {Promise<any>} The result of the function execution.
+   * @template ReturnT
+   * @param {( ...args: unknown[] ) => Promise<ReturnT>} func - The asynchronous function to execute.
+   * @param {...unknown} args - Arguments to be passed to the function.
+   * @returns {Promise<ReturnT>} The result of the function execution.
    */
   async execute(func, ...args) {
     return this._runRetryLoop(func, args, 0);
@@ -36,10 +38,11 @@ class NvidiaRetryHandler {
 
   /**
    * Internal recursive loop for handling retries.
-   * @param { (...args: any[]) => Promise<any> } func - The function to execute.
-   * @param {any[]} args - The arguments for the function.
+   * @template ReturnT
+   * @param {( ...args: unknown[] ) => Promise<ReturnT>} func - The function to execute.
+   * @param {unknown[]} args - The arguments for the function.
    * @param {number} retries - The current retry attempt count.
-   * @returns {Promise<any>} The result of the function execution.
+   * @returns {Promise<ReturnT>} The result of the function execution.
    */
   async _runRetryLoop(func, args, retries) {
     try {

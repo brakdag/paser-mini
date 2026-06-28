@@ -4,6 +4,9 @@ import NvidiaRestClient from "./restClient.js";
 import logger from "../../core/logger.js";
 import BaseAdapter from "../baseAdapter.js";
 
+const DEFAULT_MODEL = "meta/llama-3.1-405b-instruct";
+const DEFAULT_TEMPERATURE = 0.7;
+
 /**
  * Adapter for integrating Nvidia AI models into the system.
  */
@@ -23,9 +26,9 @@ class NvidiaAdapter extends BaseAdapter {
     super(ui, configManager, userNickname, agentNickname);
     this.state = new ConversationState(userNickname, agentNickname);
     this.restClient = new NvidiaRestClient(configManager);
-    this.currentModel = "meta/llama-3.1-405b-instruct";
+    this.currentModel = DEFAULT_MODEL;
     this.systemInstruction = "";
-    this.temperature = 0.7;
+    this.temperature = DEFAULT_TEMPERATURE;
     this.lastPayload = null;
   }
 
@@ -35,7 +38,7 @@ class NvidiaAdapter extends BaseAdapter {
    * @param {string} systemInstruction - The system-level prompt for the model.
    * @param {number} temperature - The sampling temperature for response randomness.
    */
-  startChat(modelName, systemInstruction, temperature = 0.7) {
+  startChat(modelName, systemInstruction, temperature = DEFAULT_TEMPERATURE) {
     this.currentModel = modelName || this.currentModel;
     this.systemInstruction = systemInstruction;
     this.temperature = temperature;
@@ -78,8 +81,8 @@ class NvidiaAdapter extends BaseAdapter {
       this.systemInstruction,
       this.temperature,
     );
-    payload.model = this.currentModel;
-    return payload;
+    return { ...payload, model: this.currentModel };
+    
   }
 
   /**
