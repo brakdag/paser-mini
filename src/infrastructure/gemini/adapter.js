@@ -140,7 +140,7 @@ class GeminiAdapter extends BaseAdapter {
   _buildPayload() {
     const contents = this.history.map((entry) => {
       const role = entry.role === "server" ? "user" : entry.role;
-      const nickname = 
+      const nickname =
         role === "user" ? this.ui.userNickname : this.ui.agentNickname;
 
       const parts = entry.parts.map((part) => {
@@ -158,7 +158,11 @@ class GeminiAdapter extends BaseAdapter {
         }
 
         return {
-          text: IRCFormatter.formatMessage(nickname, textContent, entry.timestamp),
+          text: IRCFormatter.formatMessage(
+            nickname,
+            textContent,
+            entry.timestamp,
+          ),
         };
       });
 
@@ -169,6 +173,8 @@ class GeminiAdapter extends BaseAdapter {
       contents,
       generationConfig: {
         temperature: this.temperature,
+        top_p: 0.95,
+        top_k: 64,
       },
     };
 
@@ -257,7 +263,7 @@ class GeminiAdapter extends BaseAdapter {
    */
   async sendMessage(message, role = "user") {
     await this._applyRateLimit();
-    
+
     this._recordMessage(role, message);
 
     try {
@@ -275,7 +281,7 @@ class GeminiAdapter extends BaseAdapter {
   async _executeRequest() {
     const payload = this._buildPayload();
     this.lastPayload = payload;
-    
+
     const modelName = this.currentModel.replace(/^models\//, "");
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${this.apiKey}`;
 
@@ -422,3 +428,4 @@ class GeminiAdapter extends BaseAdapter {
 }
 
 export default GeminiAdapter;
+
