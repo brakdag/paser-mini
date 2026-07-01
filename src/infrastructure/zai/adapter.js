@@ -156,6 +156,13 @@ class ZaiAdapter extends BaseAdapter {
 
   /**
    * Prepares the payload for the Z.AI /chat/completions endpoint.
+   *
+   * Prepends the system instruction as the leading {role:"system"} message
+   * (OpenAI/Z.AI convention), matching the NVIDIA adapter pattern. This is
+   * done at payload-build time rather than stored in history, so history
+   * stays conversation-only and the instruction is always fresh from
+   * startChat(). Idempotent: skips injection if history already leads with
+   * a system message (e.g. after hardReset).
    * @private
    * @returns {object} The formatted payload.
    */
@@ -164,6 +171,11 @@ class ZaiAdapter extends BaseAdapter {
       role: msg.role,
       content: msg.content,
     }));
+
+    const hasSystem = messages.length > 0 && messages[0].role === "system";
+    if (this.systemInstruction && !hasSystem) {
+      messages.unshift({ role: "system", content: this.systemInstruction });
+    }
 
     return {
       model: this.currentModel,
