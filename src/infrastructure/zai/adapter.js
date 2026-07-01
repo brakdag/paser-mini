@@ -15,7 +15,12 @@ class ZaiAdapter extends BaseAdapter {
    * @param {string} [userNickname] - The nickname of the user.
    * @param {string} [agentNickname] - The nickname of the agent.
    */
-  constructor(ui, configManager, userNickname = "user", agentNickname = "assistant") {
+  constructor(
+    ui,
+    configManager,
+    userNickname = "user",
+    agentNickname = "assistant",
+  ) {
     super(ui, configManager, userNickname, agentNickname);
     this.apiKey = process.env.ZAI_API_KEY;
     this.history = [];
@@ -23,7 +28,43 @@ class ZaiAdapter extends BaseAdapter {
     this.systemInstruction = null;
     this.temperature = 0.7;
 
+    this.baseURL = this._resolveBaseUrl();
     this._configureClient();
+  }
+
+  /**
+   * Resolves the API base URL for Z.AI.
+   *
+   * Precedence (highest first):
+   *  1. ZAI_BASE_URL env var (full override, e.g. for proxies/custom deployments).
+   *  2. zai_base_url config key.
+   *  3. Coding-plan endpoint if the zai_coding_plan config flag (or
+   *     ZAI_CODING_PLAN env var) is truthy -> https://api.z.ai/api/coding/paas/v4
+   *  4. Standard pay-per-use endpoint -> https://api.z.ai/api/paas/v4
+   *
+   * The Coding Plan subscription can ONLY be consumed through its dedicated
+   * endpoint; using the standard endpoint with a Coding Plan key returns 429.
+   *
+   * @private
+   * @returns {string} The resolved base URL.
+   */
+  _resolveBaseUrl() {
+    const STANDARD = "https://api.z.ai/api/paas/v4";
+    const CODING = "https://api.z.ai/api/coding/paas/v4";
+
+    if (process.env.ZAI_BASE_URL) return process.env.ZAI_BASE_URL.trim();
+
+    const configUrl = this.configManager?.get?.("zai_base_url");
+    if (configUrl && typeof configUrl === "string") return configUrl.trim();
+
+    const codingFlag =
+      process.env.ZAI_CODING_PLAN ||
+      this.configManager?.get?.("zai_coding_plan");
+    if (codingFlag === true || codingFlag === "true" || codingFlag === "1") {
+      return CODING;
+    }
+
+    return STANDARD;
   }
 
   /**
@@ -32,10 +73,10 @@ class ZaiAdapter extends BaseAdapter {
    */
   _configureClient() {
     this.client = axios.create({
-      baseURL: "https://api.z.ai/api/paas/v4",
+      baseURL: this.baseURL,
       timeout: 600000,
       headers: {
-        "Authorization": `Bearer ${this.apiKey}`,
+        Authorization: `Bearer ${this.apiKey}`,
         "Content-Type": "application/json",
       },
     });
@@ -56,7 +97,9 @@ class ZaiAdapter extends BaseAdapter {
         const msg = `[${time}] -!- [ZaiAdapter] API Retry ${retryCount}/5 due to: ${error.response?.status || error.message}`;
         logger.warn(msg);
         if (this.ui && this.ui.displayInfo) {
-          this.ui.displayInfo(`Reintentando Z.AI... (${retryCount}/5) | Error: ${error.response?.status || error.message}`);
+          this.ui.displayInfo(
+            `Reintentando Z.AI... (${retryCount}/5) | Error: ${error.response?.status || error.message}`,
+          );
         }
       },
     });
@@ -72,7 +115,9 @@ class ZaiAdapter extends BaseAdapter {
     this.currentModel = modelName || this.currentModel;
     this.systemInstruction = systemInstruction;
     this.temperature = temperature;
-    logger.info(`[ZaiAdapter] startChat initialized. Model: ${this.currentModel}`);
+    logger.info(
+      `[ZaiAdapter] startChat initialized. Model: ${this.currentModel} | Endpoint: ${this.baseURL}`,
+    );
   }
 
   /**
@@ -89,7 +134,9 @@ class ZaiAdapter extends BaseAdapter {
     const payload = this._preparePayload();
 
     try {
-      logger.info(`[ZaiAdapter] Requesting: ${this.client.defaults.baseURL}/chat/completions`);
+      logger.info(
+        `[ZaiAdapter] Requesting: ${this.client.defaults.baseURL}/chat/completions`,
+      );
       const response = await this.client.post("/chat/completions", payload);
       return this._handleResponse(response);
     } catch (error) {
@@ -103,9 +150,9 @@ class ZaiAdapter extends BaseAdapter {
    * @returns {object} The formatted payload.
    */
   _preparePayload() {
-    const messages = this.history.map(msg => ({
+    const messages = this.history.map((msg) => ({
       role: msg.role,
-      content: msg.content
+      content: msg.content,
     }));
 
     return {
@@ -193,14 +240,21 @@ class ZaiAdapter extends BaseAdapter {
    */
   _normalizeContent(content, role) {
     let finalContent = content;
-    if (content && typeof content === 'object' && content.mime_type && content.data) {
+    if (
+      content &&
+      typeof content === "object" &&
+      content.mime_type &&
+      content.data
+    ) {
       finalContent = `[Image Data: ${content.mime_type}]`;
     } else if (Array.isArray(content)) {
       finalContent = content.join("\n");
     }
 
-    if (typeof finalContent === 'string' && role === 'assistant') {
-      finalContent = finalContent.replace(/<thought>[\s\S]*?<\/thought>/gi, '').trim();
+    if (typeof finalContent === "string" && role === "assistant") {
+      finalContent = finalContent
+        .replace(/<thought>[\s\S]*?<\/thought>/gi, "")
+        .trim();
     }
     return finalContent;
   }
