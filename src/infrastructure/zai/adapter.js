@@ -3,6 +3,15 @@ import axiosRetry from "axios-retry";
 import BaseAdapter from "../baseAdapter.js";
 import logger from "../../core/logger.js";
 import IRCFormatter from "../../utils/ircFormatter.js";
+import HistoryManager from "./historyManager.js";
+import { parseBooleanFlag } from "./utils.js";
+import {
+  DEFAULT_MODELS,
+  HTTP_TIMEOUT,
+  MAX_RETRIES,
+  MAX_TOKENS,
+  RECOVERABLE_STATUS_CODES,
+} from "./constants.js";
 
 /**
  * Adapter for the Z.AI API, providing chat capabilities and history management.
@@ -10,41 +19,33 @@ import IRCFormatter from "../../utils/ircFormatter.js";
  */
 class ZaiAdapter extends BaseAdapter {
   /**
-   * @param {object} ui - The UI interface for displaying information.
-   * @param {object} configManager - The configuration manager.
-   * @param {string} [userNickname] - The nickname of the user.
-   * @param {string} [agentNickname] - The nickname of the agent.
+   * @param {object} config - Configuration object.
+   * @param {object} config.ui - The UI interface for displaying information.
+   * @param {object} config.configManager - The configuration manager.
+   * @param {string} [config.userNickname] - The nickname of the user.
+   * @param {string} [config.agentNickname] - The nickname of the agent.
+   * @param {object} [config.httpClient] - The HTTP client to use.
    */
-  constructor(
+  constructor({
     ui,
     configManager,
     userNickname = "user",
     agentNickname = "assistant",
-  ) {
-    super(ui, configManager, userNickname, agentNickname);
+    httpClient = axios,
+  }) {
+    super({ ui, configManager, userNickname, agentNickname });
     this.apiKey = process.env.ZAI_API_KEY;
-    this.history = [];
     this.currentModel = "glm-5.2";
     this.systemInstruction = null;
     this.temperature = 0.7;
 
+    this.historyManager = new HistoryManager(userNickname, agentNickname);
     this.baseURL = this._resolveBaseUrl();
-    this._configureClient();
+    this._configureClient(httpClient);
   }
 
   /**
-   * Resolves the API base URL for Z.AI.
-   *
-   * Precedence (highest first):
-   *  1. ZAI_BASE_URL env var (full override, e.g. for proxies/custom deployments).
-   *  2. zai_base_url config key.
-   *  3. Coding-plan endpoint if the zai_coding_plan config flag (or
-   *     ZAI_CODING_PLAN env var) is truthy -> https://api.z.ai/api/coding/paas/v4
-   *  4. Standard pay-per-use endpoint -> https://api.z.ai/api/paas/v4
-   *
-   * The Coding Plan subscription can ONLY be consumed through its dedicated
-   * endpoint; using the standard endpoint with a Coding Plan key returns 429.
-   *
+   * Resolves the API base URL for Z.AI based on config or env vars.
    * @private
    * @returns {string} The resolved base URL.
    */
@@ -60,9 +61,7 @@ class ZaiAdapter extends BaseAdapter {
     const codingFlag =
       process.env.ZAI_CODING_PLAN ||
       this.configManager?.get?.("zai_coding_plan");
-    if (codingFlag === true || codingFlag === "true" || codingFlag === "1") {
-      return CODING;
-    }
+    if (parseBooleanFlag(codingFlag)) return CODING;
 
     return STANDARD;
   }
@@ -70,11 +69,12 @@ class ZaiAdapter extends BaseAdapter {
   /**
    * Configures the axios client with base URL, timeout, headers, and retry logic.
    * @private
+   * @param {object} httpClient - The axios instance to configure.
    */
-  _configureClient() {
-    this.client = axios.create({
+  _configureClient(httpClient) {
+    this.client = httpClient.create({
       baseURL: this.baseURL,
-      timeout: 600000,
+      timeout: HTTP_TIMEOUT,
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
         "Content-Type": "application/json",
@@ -82,23 +82,33 @@ class ZaiAdapter extends BaseAdapter {
     });
 
     axiosRetry(this.client, {
-      retries: 5,
+      retries: MAX_RETRIES,
       retryDelay: axiosRetry.exponentialDelay,
+      /**
+       * Determines if a request should be retried based on the error.
+       * @param {Error} error - The error object.
+       * @returns {boolean} True if the request should be retried.
+       */
       retryCondition: (error) => {
         const status = error.response?.status;
-        const recoverableStatuses = [429, 500, 502, 503, 504];
         return (
           axiosRetry.isNetworkOrIdempotentRequestError(error) ||
-          recoverableStatuses.includes(status)
+          RECOVERABLE_STATUS_CODES.includes(status)
         );
       },
+      /**
+       * Logs retry attempts and notifies the UI.
+       * @param {number} retryCount - The current retry attempt number.
+       * @param {Error} error - The error that caused the retry.
+       */
       onRetry: (retryCount, error) => {
         const time = IRCFormatter.getTimestamp();
-        const msg = `[${time}] -!- [ZaiAdapter] API Retry ${retryCount}/5 due to: ${error.response?.status || error.message}`;
+        const errorMsg = error.response?.status || error.message;
+        const msg = `[${time}] -!- [ZaiAdapter] API Retry ${retryCount}/${MAX_RETRIES} due to: ${errorMsg}`;
         logger.warn(msg);
         if (this.ui && this.ui.displayInfo) {
           this.ui.displayInfo(
-            `Reintentando Z.AI... (${retryCount}/5) | Error: ${error.response?.status || error.message}`,
+            `Reintentando Z.AI... (${retryCount}/${MAX_RETRIES}) | Error: ${errorMsg}`,
           );
         }
       },
@@ -121,7 +131,7 @@ class ZaiAdapter extends BaseAdapter {
   }
 
   /**
-   * Sends a message to the Z.AI API and returns the response text.
+   * Sends a message to the Z.AI API and records the interaction in history.
    * @param {string|object|Array} message - The message content to send.
    * @param {string} [role] - The role of the sender.
    * @returns {Promise<string>} The response text from the AI.
@@ -150,20 +160,20 @@ class ZaiAdapter extends BaseAdapter {
    * @returns {object} The formatted payload.
    */
   _preparePayload() {
-    const messages = this.history.map((msg) => ({
+    const messages = this.getHistory().map((msg) => ({
       role: msg.role,
       content: msg.content,
     }));
 
     return {
       model: this.currentModel,
-      messages: messages,
+      messages,
       temperature: this.temperature,
       thinking: {
         type: "enabled",
       },
       reasoning_effort: "max",
-      max_tokens: 4096,
+      max_tokens: MAX_TOKENS,
       stream: false,
     };
   }
@@ -207,65 +217,14 @@ class ZaiAdapter extends BaseAdapter {
    * @param {string|null} [timestamp] - The timestamp of the message.
    */
   injectMessage(role, content, timestamp = null) {
-    const apiRole = this._normalizeRole(role);
-    const finalContent = this._normalizeContent(content, apiRole);
-
-    this.history.push({
-      role: apiRole,
-      content: finalContent,
-      timestamp: timestamp || IRCFormatter.getTimestamp(),
-    });
-  }
-
-  /**
-   * Maps internal roles to Z.AI API roles.
-   * @param {string} role - The internal role name.
-   * @private
-   * @returns {string} The normalized API role.
-   */
-  _normalizeRole(role) {
-    if (role === this.userNickname) return "user";
-    if (role === this.agentNickname) return "assistant";
-    if (role === "server") return "user";
-    if (role === "system") return "system";
-    return role;
-  }
-
-  /**
-   * Sanitizes and formats message content based on type and role.
-   * @param {string|object|Array} content - The raw content.
-   * @param {string} role - The normalized API role.
-   * @private
-   * @returns {string} The formatted string content.
-   */
-  _normalizeContent(content, role) {
-    let finalContent = content;
-    if (
-      content &&
-      typeof content === "object" &&
-      content.mime_type &&
-      content.data
-    ) {
-      finalContent = `[Image Data: ${content.mime_type}]`;
-    } else if (Array.isArray(content)) {
-      finalContent = content.join("\n");
-    }
-
-    if (typeof finalContent === "string" && role === "assistant") {
-      finalContent = finalContent
-        .replace(/<thought>[\s\S]*?<\/thought>/gi, "")
-        .trim();
-    }
-    return finalContent;
+    this.historyManager.injectMessage(role, content, timestamp);
   }
 
   /**
    * Removes the last message from the chat history.
    */
   popLastMessage() {
-    if (this.history.length > 0) {
-      this.history.pop();
-    }
+    this.historyManager.popLastMessage();
   }
 
   /**
@@ -273,7 +232,7 @@ class ZaiAdapter extends BaseAdapter {
    * @param {Array|null} [historyOverride] - The new history to set.
    */
   hardReset(historyOverride = null) {
-    this.history = historyOverride || [];
+    this.historyManager.hardReset(historyOverride);
     if (this.systemInstruction) {
       this.injectMessage("system", this.systemInstruction);
     }
@@ -285,7 +244,7 @@ class ZaiAdapter extends BaseAdapter {
    * @returns {Array} The history array.
    */
   getHistory() {
-    return this.history;
+    return this.historyManager.getHistory();
   }
 
   /**
@@ -298,7 +257,7 @@ class ZaiAdapter extends BaseAdapter {
       return response.data.data.map((m) => m.id);
     } catch (error) {
       logger.error(`[ZaiAdapter] Error fetching models: ${error.message}`);
-      return ["glm-5.2", "glm-5.1", "glm-5", "glm-5-turbo"];
+      return DEFAULT_MODELS;
     }
   }
 
@@ -318,7 +277,10 @@ class ZaiAdapter extends BaseAdapter {
     } catch (error) {
       const status = error.response?.status;
       if (status === 404 || status === 400) return false;
-      return true;
+      logger.warn(
+        `[ZaiAdapter] Availability check failed for ${modelName}: ${error.message}`,
+      );
+      throw error; // Fail explicitly on unknown errors
     }
   }
 }

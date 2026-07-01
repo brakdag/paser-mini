@@ -76,12 +76,12 @@ class ProviderManager {
     }
 
     const { default: AdapterClass } = await import(provider.path);
-    const adapter = new AdapterClass(
+    const adapter = new AdapterClass({
       ui,
       configManager,
       userNickname,
       agentNickname,
-    );
+    });
     adapter.providerId = providerId;
     return adapter;
   }

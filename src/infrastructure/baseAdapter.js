@@ -3,18 +3,19 @@
  */
 export default class BaseAdapter {
   /**
-   * @param {object} ui - The UI interface.
-   * @param {object} configManager - The configuration manager.
-   * @param {string} [userNickname] - The user's nickname.
-   * @param {string} [agentNickname] - The agent's nickname.
+   * @param {object} config - Configuration object for the adapter.
+   * @param {object} config.ui - The UI interface.
+   * @param {object} config.configManager - The configuration manager.
+   * @param {string} [config.userNickname] - The user's nickname.
+   * @param {string} [config.agentNickname] - The agent's nickname.
    * @throws {Error} If instantiated directly.
    */
-  constructor(
+  constructor({
     ui,
     configManager,
     userNickname = "user",
     agentNickname = "assistant",
-  ) {
+  }) {
     if (this.constructor === BaseAdapter) {
       throw new Error(
         "BaseAdapter is an abstract class and cannot be instantiated directly.",
