@@ -34,6 +34,11 @@ class ProviderManager {
       defaultModel: "command-r-plus",
       path: "../infrastructure/cohere/adapter.js",
     },
+    ZAI: {
+      name: "Z.AI",
+      defaultModel: "glm-5.2",
+      path: "../infrastructure/zai/adapter.js",
+    },
   };
 
   /**
