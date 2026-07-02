@@ -73,11 +73,41 @@ class TerminalRenderer {
   }
 
   /**
+   * Wraps a single string of text to fit within a specified width.
+   * @param {string} text - The text to wrap.
+   * @param {number} width - The maximum width in characters.
+   * @returns {string[]} An array of wrapped lines.
+   */
+  _wrapCellText(text, width) {
+    if (text.length <= width) return [text];
+    const words = text.split(/\s+/);
+    const lines = [];
+    let currentLine = "";
+    words.forEach((word) => {
+      if (word.length > width) {
+        if (currentLine) lines.push(currentLine);
+        for (let i = 0; i < word.length; i += width) {
+          lines.push(word.substring(i, i + width));
+        }
+        currentLine = "";
+      } else if ((currentLine + (currentLine ? " " : "") + word).length <= width) {
+        currentLine += (currentLine ? " " : "") + word;
+      } else {
+        lines.push(currentLine);
+        currentLine = word;
+      }
+    });
+    if (currentLine) lines.push(currentLine);
+    return lines;
+  }
+
+  /**
    * Renders a markdown-style table into a formatted terminal table.
+   * Uses Unicode box-drawing characters and enforces a maximum width of 120 chars.
    * @param {string} tableText - The raw table text to render.
    * @returns {string} The formatted table string.
    */
-  renderTable(tableText) {
+  renderTable(tableText) { 
     const lines = tableText.trim().split("\n");
     if (lines.length < 2) return tableText;
 
@@ -100,26 +130,73 @@ class TerminalRenderer {
 
     if (dataRows.length === 0) return tableText;
 
-    const colWidths = [];
+    const numCols = dataRows[0].length;
+    const MAX_TOTAL_WIDTH = 120;
+    const MIN_COL_WIDTH = 5;
+    const padding = 1;
+    const borderOverhead = numCols + 1;
+    const availableWidth = MAX_TOTAL_WIDTH - borderOverhead - (numCols * padding * 2);
+
+    // Calculate natural widths based on content
+    const naturalWidths = new Array(numCols).fill(MIN_COL_WIDTH);
     dataRows.forEach((row) => {
       row.forEach((cell, i) => {
-        colWidths[i] = Math.max(colWidths[i] || 0, cell.length);
+        naturalWidths[i] = Math.max(naturalWidths[i] || 0, cell.length);
       });
     });
 
-    let output = "";
-    const separator = `+${colWidths.map((w) => "-".repeat(w + 2)).join("+")}+`;
+    // If natural widths fit within max, use them
+    const totalNatural = naturalWidths.reduce((a, b) => a + b, 0);
+    let colWidths;
+    if (totalNatural <= availableWidth) {
+      colWidths = naturalWidths;
+    } else {
+      // Distribute width proportionally, prioritizing columns with more content
+      const totalUnits = naturalWidths.reduce((a, b) => a + b, 0);
+      colWidths = naturalWidths.map((w) =>
+        Math.max(MIN_COL_WIDTH, Math.floor((w / totalUnits) * availableWidth))
+      );
+      // Distribute any remaining space left by rounding
+      let remaining = availableWidth - colWidths.reduce((a, b) => a + b, 0);
+      let i = 0;
+      while (remaining > 0) {
+        colWidths[i % numCols] += 1;
+        remaining -= 1;
+        i += 1;
+      }
+    }
 
-    output += `${separator}\n`;
-    dataRows.forEach((row, rowIndex) => {
-      const line = `| ${row
-        .map((cell, i) => cell.padEnd(colWidths[i]))
-        .join(" | ")} |`;
-      output += `${chalk.white(line)}\n`;
-      if (rowIndex === 0) output += `${separator}\n`;
+    // Pre-wrap all cells
+    const wrappedRows = dataRows.map((row) =>
+      row.map((cell, i) => this._wrapCellText(cell, colWidths[i]))
+    );
+
+    // Determine row heights (max lines per row)
+    const rowHeights = wrappedRows.map((row) =>
+      Math.max(...row.map((cells) => cells.length))
+    );
+
+    const makeSeparator = (left, mid, right, fill) =>
+      left + colWidths.map((w) => fill.repeat(w + padding * 2)).join(mid) + right;
+
+    const topBorder = makeSeparator("┌", "┬", "┐", "─");
+    const midBorder = makeSeparator("├", "┼", "┤", "─");
+    const bottomBorder = makeSeparator("└", "┴", "┘", "─");
+
+    let output = `${topBorder}\n`;
+
+    wrappedRows.forEach((row, rowIndex) => {
+      for (let lineIdx = 0; lineIdx < rowHeights[rowIndex]; lineIdx++) {
+        const cells = row.map((cellLines, colIdx) => {
+          const line = cellLines[lineIdx] || "";
+          return ` ${line.padEnd(colWidths[colIdx])} `;
+        });
+        output += `│${cells.join("│")}│\n`;
+      }
+      if (rowIndex === 0) output += `${midBorder}\n`;
     });
-    output += separator;
 
+    output += bottomBorder;
     return `\n${output}\n`;
   }
 
