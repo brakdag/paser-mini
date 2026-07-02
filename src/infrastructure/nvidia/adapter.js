@@ -244,9 +244,11 @@ class NvidiaAdapter extends BaseAdapter {
    * @param {Array} contents - The list of messages for token estimation.
    * @returns {number} The estimated token count.
    */
-  countTokens(contents) {
-    const totalChars = contents.reduce((acc, msg) => acc + (msg.text?.length || 0), 0);
-    return Math.floor(totalChars / 4);
+  countTokens(systemInstruction, history) {
+    const systemChars = systemInstruction?.length || 0;
+    const historyChars = history.reduce((acc, msg) => acc + (msg.text?.length || 0), 0);
+    // Llama-3 heuristic: ~3.5 characters per token for mixed content
+    return Math.ceil((systemChars + historyChars) / 3.5);
   }
 }
 

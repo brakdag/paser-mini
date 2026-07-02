@@ -286,15 +286,18 @@ ${welcomeMsg}`;
    */
   getTokenCount() {
     const systemInstruction = this.systemInstruction || "";
-    const historyData =
-      typeof this.assistant.history === "string"
-        ? this.assistant.history
-        : JSON.stringify(this.assistant.history || []);
+    const history = this.assistant.getHistory ? this.assistant.getHistory() : [];
+    
+    let count;
+    if (typeof this.assistant.countTokens === "function") {
+      count = this.assistant.countTokens(systemInstruction, history);
+    } else {
+      // Fallback: count only text content to avoid JSON overhead
+      const historyChars = history.reduce((acc, msg) => acc + (msg.text?.length || 0), 0);
+      count = Math.ceil((systemInstruction.length + historyChars) / 4);
+    }
 
-    const totalLength = systemInstruction.length + historyData.length;
-    const count = Math.ceil(totalLength / 4);
     const limit = this.contextWindowLimit || 250000;
-
     const percentage = (count / limit) * 100;
     return `${count}/${limit}(${percentage.toFixed(1)}%)`;
   }
