@@ -1,5 +1,8 @@
 import fs from "fs";
-import { generateSystemInstruction, AVAILABLE_TOOLS } from "../infrastructure/registry.js";
+import {
+  generateSystemInstruction,
+  AVAILABLE_TOOLS,
+} from "../infrastructure/registry.js";
 
 /**
  *
@@ -34,10 +37,14 @@ class SystemPromptManager {
           try {
             const availableList = JSON.parse(toolsMatch[1]);
             filteredTools = Object.fromEntries(
-              Object.entries(AVAILABLE_TOOLS).filter(([name]) => availableList.includes(name))
+              Object.entries(AVAILABLE_TOOLS).filter(([name]) =>
+                availableList.includes(name),
+              ),
             );
           } catch (e) {
-            console.warn(`Warning: Could not parse TOOLS_AVAILABLE array in ${options.fileSystemInstruction}: ${e.message}`);
+            console.warn(
+              `Warning: Could not parse TOOLS_AVAILABLE array in ${options.fileSystemInstruction}: ${e.message}`,
+            );
           }
         }
       } catch (e) {
@@ -46,12 +53,13 @@ class SystemPromptManager {
     }
 
     // 2. Determine Base Instruction
-    const baseInstr = options.systemInstruction 
-      || generateSystemInstruction(Object.keys(filteredTools));
+    const baseInstr =
+      options.systemInstruction ||
+      generateSystemInstruction(Object.keys(filteredTools));
 
     // 3. Aggregate Final Prompt
     const finalInstruction = injection
-      ? `IDENTITY AND PERSONA:\n${injection}\n\nCORE OPERATIONAL PROTOCOLS:\n${baseInstr}`
+      ? `PERSON AND ROLE:\n${injection}\n\nCORE OPERATIONAL PROTOCOLS:\n${baseInstr}`
       : baseInstr;
 
     return {
@@ -62,3 +70,4 @@ class SystemPromptManager {
 }
 
 export default SystemPromptManager;
+
