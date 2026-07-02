@@ -79,7 +79,7 @@ class NvidiaRestClient {
    * @param {boolean} stream - Whether to stream the response.
    * @returns {Promise<object>} The API response data.
    */
-  async chatCompletions(payload, stream = false) {
+  async chatCompletions(payload, stream = false, timeout = 600000) {
     const url = "/chat/completions";
     const requestPayload = { ...payload, stream };
 
@@ -89,7 +89,7 @@ class NvidiaRestClient {
       throw new Error("Streaming not yet implemented in JS RestClient");
     }
 
-    const response = await this.client.post(url, requestPayload);
+    const response = await this.client.post(url, requestPayload, { timeout });
     return response.data;
   }
 

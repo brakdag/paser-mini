@@ -17,13 +17,13 @@ class NvidiaAdapter extends BaseAdapter {
    * @param {string} userNickname - The identifier for the human user.
    * @param {string} agentNickname - The identifier for the AI agent.
    */
-  constructor(
+  constructor({
     ui,
     configManager,
     userNickname = "user",
     agentNickname = "assistant",
-  ) {
-    super(ui, configManager, userNickname, agentNickname);
+  }) {
+    super({ ui, configManager, userNickname, agentNickname });
     this.state = new ConversationState(userNickname, agentNickname);
     this.restClient = new NvidiaRestClient(configManager);
     this.currentModel = DEFAULT_MODEL;
@@ -200,10 +200,13 @@ class NvidiaAdapter extends BaseAdapter {
     try {
       const data = await this.restClient.get("models");
       const models = data.data?.map((m) => m.id) || [];
+      if (models.length === 0) throw new Error("Empty model list from API");
       logger.info("NvidiaAdapter: Models fetched", { count: models.length });
       return models;
     } catch (e) {
-      logger.error("NvidiaAdapter: Error fetching models", { error: e.message });
+      const errMsg = `[NvidiaAdapter Error] No se pudo obtener la lista de modelos de NVIDIA: ${e.response?.status || ""} - ${e.message}`;
+      logger.error(errMsg);
+      console.error(errMsg);
       return [];
     }
   }
@@ -220,12 +223,18 @@ class NvidiaAdapter extends BaseAdapter {
         messages: [{ role: "user", content: "hi" }],
         max_tokens: 1,
       };
-      await this.restClient.chatCompletions(payload, false, 1000);
+      await this.restClient.chatCompletions(payload, false, 15000);
       return true;
     } catch (e) {
+      if (e.response?.status === 404 || e.response?.data?.detail?.code === 404) {
+        logger.warn(`NvidiaAdapter: Model not found (404) - ${modelName}`);
+        return false;
+      }
       if (e.code === 'ECONNABORTED' || e.message?.toLowerCase().includes('timeout')) {
+        logger.warn(`NvidiaAdapter: Model check timed out, assuming available - ${modelName}`);
         return true;
       }
+      logger.error(`NvidiaAdapter: Model check failed for ${modelName}`, { error: e.message });
       return false;
     }
   }

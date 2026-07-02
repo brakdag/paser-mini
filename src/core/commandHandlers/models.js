@@ -10,30 +10,25 @@ class ModelCommands {
    * @returns {Promise<boolean>} True if the operation succeeded.
    */
   static async handleModels(chatManager, ui, parts) {
-    const models = await chatManager.assistant.getAvailableModels();
+    const allModels = await chatManager.assistant.getAvailableModels();
     const unavailable = chatManager.configManager.get("unavailable_models", []);
+    const models = allModels.filter((m) => !unavailable.includes(m));
 
     if (parts.length === 1) {
       const header = "| ID | Model | ID | Model |\n|---|---|---|---|\n";
       const rows = [];
       for (let i = 0; i < models.length; i += 2) {
-        let m1 = models[i];
-        if (unavailable.includes(m1)) {
-          m1 = `~~${m1}~~`;
-        }
+        const m1 = models[i];
         let m2 = "";
         let idx2 = "";
         if (i + 1 < models.length) {
           m2 = models[i + 1];
-          if (unavailable.includes(m2)) {
-            m2 = `~~${m2}~~`;
-          }
           idx2 = (i + 1).toString();
         }
         rows.push(`| ${i} | ${m1} | ${idx2} | ${m2} |`);
       }
       ui.displayMessage(
-        `Available models (~~ = unavailable):\n\n${header}${rows.join("\n")}`,
+        `Available models:\n\n${header}${rows.join("\n")}`,
       );
       return true;
     }
