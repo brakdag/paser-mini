@@ -194,7 +194,7 @@ class ChatManager {
     this.assistant.startChat(model, this.systemInstruction, this.temperature);
 
     try {
-      const { getToolInstance } = await import("../tools/registry.js");
+      const { getToolInstance } = await import("../infrastructure/registry.js");
       const memoryTools = await getToolInstance("memoryTools");
       memoryTools.setMemoryContext(this.assistant, this);
       const systemTools = await getToolInstance("systemTools");
