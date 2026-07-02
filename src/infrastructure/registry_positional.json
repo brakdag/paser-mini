@@ -1,83 +1,71 @@
 [
-  ["read", "Read file content.", { "path": "string" }],
+  ["read", "Read file content", { "path": "string" }],
   [
     "tail",
-    "Read only the last N lines of a file.",
+    "Read last N lines of a file",
     { "path": "string", "tail": "number" }
   ],
   ["write", "Write content to file", { "path": "string", "content": "string" }],
   ["remove", "Remove file", { "path": "string" }],
-  ["list", "List directory contents", { "path": "string" }],
+  ["list", "List directory", { "path": "string" }],
   [
     "replace",
     "Search and replace string",
     { "path": "string", "search_text": "string", "replace_text": "string" }
   ],
-  ["analysis", "Run static analysis for JS/TS codebase.", { "path": "string" }],
-  ["eslint", "Run ESLint analysis", { "path": "string" }],
+  ["analysis", "Run static analysis for JS/TS codebase", { "path": "string" }],
+  ["eslint", "Run ESLint", { "path": "string" }],
   [
     "doc",
     "Generate HTML documentation using JSDoc",
     { "path": "string", "outputDir": "string" }
   ],
-  [
-    "execute",
-    "Execute a bash command in the project root",
-    { "command": "string" }
-  ],
-  ["grep", "Search string in all files", { "query": "string", "path": "string" }],
+  ["execute", "Execute a bash", { "command": "string" }],
+  ["grep", "Search string in path", { "query": "string", "path": "string" }],
   ["glob", "Search files by pattern", { "pattern": "string" }],
   [
     "rename",
-    "Move/Rename path.",
+    "Move or rename path",
     { "origin": "string", "destination": "string" }
   ],
-  [
-    "copy",
-    "Copy file from origin to destination.",
-    { "origin": "string", "destination": "string" }
-  ],
+  ["copy", "Copy file", { "origin": "string", "destination": "string" }],
   [
     "valide",
     "Validates if a string is a valid JSON",
     { "json_string": "string" }
   ],
-  [
-    "nickname",
-    "Changes the agent display nickname",
-    { "newNickname": "string" }
-  ],
-  ["push", "Stores in memento.log.", "string"],
-  ["token", "Returns the current token count.", {}],
-  ["tree", "Get the project file tree", {}],
+  ["nickname", "Changes nickname", { "newNickname": "string" }],
+  ["push", "Stores in memento.log", "string"],
+  ["token", "Current token count", {}],
+  ["tree", "Get the repository file tree", {}],
   ["diff", "Show differences of a file using git diff", { "path": "string" }],
   ["restore", "Restore a file using git restore", { "path": "string" }],
   [
     "concat",
-    "Concatenates source file to destination file.",
+    "Concatenates source file to destination file",
     { "destination": "string", "source": "string" }
   ],
   [
     "structure",
-    "Returns keys and structure of a JSON node.",
+    "Returns keys and structure of a JSON node",
     { "file_path": "string", "path": "string" }
   ],
   [
     "node",
-    "Retrieves content of a specific JSON node.",
+    "Retrieves content of a specific JSON node",
     { "file_path": "string", "path": "string" }
   ],
   [
     "arrange",
-    "Returns length and item type of a JSON array.",
+    "Returns length and item type of a JSON array",
     { "file_path": "string", "path": "string" }
   ],
   [
     "update",
-    "Updates a specific JSON node.",
+    "Updates a specific JSON node",
     { "file_path": "string", "path": "string", "value": "any" }
   ],
-  ["issues", "List issues in a GitHub repository", { "repo": "string" }],
+  ["issues", "List issues in GitHub", { "repo": "string" }],
   [
     "create",
     "Create a new GitHub issue",
@@ -96,12 +84,16 @@
   ["close", "Close an issue", { "issue_number": "integer", "repo": "string" }],
   [
     "post",
-    "Post a comment to a GitHub issue.",
+    "Post a comment to a GitHub issue",
     { "issue_number": "integer", "body": "string", "repo": "string" }
   ],
-  ["remote", "Get the current GitHub repository name", {}],
+  ["remote", "Get the current Git repository name", {}],
   ["patch", "Apply a git patch", { "patch": "string" }],
-  ["notify", "Sends a notification to the user", { "message": "string" }],
+  [
+    "notify",
+    "Sends a non stop notification to the user",
+    { "message": "string" }
+  ],
   [
     "scene",
     "Insert a Fountain scene",
@@ -120,12 +112,12 @@
       "endianness": "string"
     }
   ],
-  ["search", "Search the web using DuckDuckGo Lite.", { "query": "string" }],
-  ["url", "Render a webpage to text using elinks.", { "url": "string" }],
-  ["run", "Execute raw JavaScript in a secure sandbox.", { "code": "string" }],
+  ["search", "Search the web using DuckDuckGo", { "query": "string" }],
+  ["url", "Render webpage using elinks", { "url": "string" }],
+  ["run", "Execute raw JavaScript in a secure sandbox", { "code": "string" }],
   ["img", "Visualizes an image.", { "path": "string" }],
-  ["ast", "Analyze JavaScript AST.", { "path": "string", "query": "string" }],
-  ["metrics", "Get current process memory and CPU usage.", {}],
+  ["ast", "Analyze JavaScript AST", { "path": "string", "query": "string" }],
+  ["metrics", "Get current process memory and CPU usage", {}],
   ["snapshot", "Create a V8 heap snapshot", { "path": "string" }],
   ["reset", "Resets the conversation context", { "user_message": "string" }]
 ]
