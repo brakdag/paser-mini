@@ -41,90 +41,61 @@ class ExecutionEngine {
 
   /**
    * Extracts a human-readable detail string from tool arguments for monitoring purposes.
+   * Uses a scalable extractor map to comply with the Open/Closed Principle.
    * @param {string} toolName - The name of the tool being executed.
    * @param {object} args - The arguments passed to the tool.
    * @returns {string} A descriptive string identifying the target of the tool operation.
    */
   _getToolDetail(toolName, args) {
-    switch (toolName) {
-      case "read":
-      case "tail":
-      case "write":
-      case "remove":
-      case "replace":
-      case "analysis":
-      case "eslint":
-      case "diff":
-      case "restore":
-        return args.path ? path.basename(args.path) : "unknown";
-      case "ls":
-      case "list":
-        return args.path || "root";
-      case "rename":
-      case "copy":
-        return args.origin && args.destination
-          ? `${path.basename(args.origin)} -> ${path.basename(args.destination)}`
-          : "unknown";
-      case "concat":
-        return args.destination ? path.basename(args.destination) : "unknown";
-      case "doc":
-        return args.path ? `Docs: ${path.basename(args.path)}` : "unknown";
-      case "execute":
-        return args.command ? args.command.substring(0, 50) : "bash";
-      case "grep":
-        return args.query || "search";
-      case "glob":
-        return args.pattern || "pattern";
-      case "valide":
-        return args.json_string ? `len: ${args.json_string.length}` : "json";
-      case "nickname":
-        return args.newNickname || "nickname";
-      case "push":
-        return "insight";
-      case "token":
-        return "tokens";
-      case "tree":
-        return "tree";
-      case "difference":
-        return "all";
-      case "remote":
-        return "url";
-      case "patch":
-        return "git patch";
-      case "structure":
-      case "node":
-      case "arrange":
-      case "update":
-        return args.file_path ? path.basename(args.file_path) : "unknown";
-      case "create":
-        return args.title || "issue";
-      case "edit":
-      case "close":
-      case "post":
-        return args.issue_number ? `#${args.issue_number}` : "issue";
-      case "notify":
-        return args.message ? args.message.substring(0, 30) : "notify";
-      case "scene":
-        return args.scene || "scene";
-      case "jszip":
-        return args.filePath ? path.basename(args.filePath) : "zip";
-      case "bin":
-        return args.filePath ? path.basename(args.filePath) : "binary";
-      case "search":
-        return args.query || "web";
-      case "url":
-        return args.url || "url";
-      case "run":
-        return "sandbox";
-      case "img":
-        return args.path ? path.basename(args.path) : "image";
-      case "reset":
-        return args.user_message ? args.user_message.substring(0, 30) : "reset";
-      case "real":
-        return args.action || "action";
-      default:
-        return "no details";
-    }
+    const extractors = {
+      read: () => args.path ? path.basename(args.path) : "unknown",
+      tail: () => args.path ? path.basename(args.path) : "unknown",
+      write: () => args.path ? path.basename(args.path) : "unknown",
+      remove: () => args.path ? path.basename(args.path) : "unknown",
+      replace: () => args.path ? path.basename(args.path) : "unknown",
+      analysis: () => args.path ? path.basename(args.path) : "unknown",
+      eslint: () => args.path ? path.basename(args.path) : "unknown",
+      diff: () => args.path ? path.basename(args.path) : "unknown",
+      restore: () => args.path ? path.basename(args.path) : "unknown",
+      ls: () => args.path || "root",
+      list: () => args.path || "root",
+      rename: () => args.origin && args.destination ? `${path.basename(args.origin)} -> ${path.basename(args.destination)}` : "unknown",
+      copy: () => args.origin && args.destination ? `${path.basename(args.origin)} -> ${path.basename(args.destination)}` : "unknown",
+      concat: () => args.destination ? path.basename(args.destination) : "unknown",
+      doc: () => args.path ? `Docs: ${path.basename(args.path)}` : "unknown",
+      execute: () => args.command ? args.command.substring(0, 50) : "bash",
+      grep: () => args.query || "search",
+      glob: () => args.pattern || "pattern",
+      valide: () => args.json_string ? `len: ${args.json_string.length}` : "json",
+      nickname: () => args.newNickname || "nickname",
+      push: () => "insight",
+      token: () => "tokens",
+      tree: () => "tree",
+      difference: () => "all",
+      remote: () => "url",
+      patch: () => "git patch",
+      structure: () => args.file_path ? path.basename(args.file_path) : "unknown",
+      node: () => args.file_path ? path.basename(args.file_path) : "unknown",
+      arrange: () => args.file_path ? path.basename(args.file_path) : "unknown",
+      update: () => args.file_path ? path.basename(args.file_path) : "unknown",
+      create: () => args.title || "issue",
+      edit: () => args.issue_number ? `#${args.issue_number}` : "issue",
+      close: () => args.issue_number ? `#${args.issue_number}` : "issue",
+      post: () => args.issue_number ? `#${args.issue_number}` : "issue",
+      notify: () => args.message ? args.message.substring(0, 30) : "notify",
+      scene: () => args.scene || "scene",
+      jszip: () => args.filePath ? path.basename(args.filePath) : "zip",
+      bin: () => args.filePath ? path.basename(args.filePath) : "binary",
+      search: () => args.query || "web",
+      url: () => args.url || "url",
+      run: () => "sandbox",
+      img: () => args.path ? path.basename(args.path) : "image",
+      reset: () => args.user_message ? args.user_message.substring(0, 30) : "reset",
+      real: () => args.action || "action",
+    };
+
+    const extractor = extractors[toolName];
+    return extractor ? extractor() : "no details";
   }
 
   /**

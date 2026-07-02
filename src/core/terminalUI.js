@@ -152,7 +152,7 @@ class TerminalUI {
     const spinner = this.activeSpinners.get(name);
     if (spinner) spinner.stop();
     this.displayToolStatus(name, success, detail);
-    if (spinner) this.activeSpinners.delete(spinner);
+    if (spinner) this.activeSpinners.delete(name);
   }
 
   stopAllMonitoring() {
