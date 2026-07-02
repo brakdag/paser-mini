@@ -112,7 +112,7 @@
       "endianness": "string"
     }
   ],
-  ["search", "Search the web using DuckDuckGo", { "query": "string" }],
+  ["search", "Search using DuckDuckGo", { "query": "string" }],
   ["url", "Render webpage using elinks", { "url": "string" }],
   ["run", "Execute raw JavaScript in a secure sandbox", { "code": "string" }],
   ["img", "Visualizes an image.", { "path": "string" }],
