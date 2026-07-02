@@ -1,6 +1,16 @@
 import chalk from "chalk";
 
+/**
+ * Handles the rendering of text, tables, and panels to the terminal with specific formatting.
+ */
 class TerminalRenderer {
+  /**
+   * Wraps text to fit within a specified column range.
+   * @param {string} text - The text to be wrapped.
+   * @param {number} start - The starting column position.
+   * @param {number} end - The ending column position.
+   * @returns {string} The wrapped text formatted with leading spaces.
+   */
   _wrapText(text, start, end) {
     const width = end - start;
     const words = text.split(/\s+/);
@@ -20,6 +30,12 @@ class TerminalRenderer {
     return lines.map((line) => " ".repeat(start) + line).join("\n");
   }
 
+  /**
+   * Renders text according to Fountain screenplay formatting rules.
+   * @param {string} nickname - The nickname of the character or "system".
+   * @param {string} text - The text to render.
+   * @returns {string} The formatted Fountain output.
+   */
   renderFountain(nickname, text) {
     const trimmedText = text.trim();
     let output = "";
@@ -32,7 +48,7 @@ class TerminalRenderer {
         output = `\n${sceneText}\n`;
       } else {
         const cleanText = trimmedText.replace(
-          /^(\* ACTION:\s*|\*\*\*|---|-!-)\s*|\s*\*$/g,
+          /^(\* ACTION:\s*|\*\*\*|---|--!-)\s*|\s*\*$/g,
           "",
         );
         output = this._wrapText(cleanText, 0, 75);
@@ -56,6 +72,11 @@ class TerminalRenderer {
     return output;
   }
 
+  /**
+   * Renders a markdown-style table into a formatted terminal table.
+   * @param {string} tableText - The raw table text to render.
+   * @returns {string} The formatted table string.
+   */
   renderTable(tableText) {
     const lines = tableText.trim().split("\n");
     if (lines.length < 2) return tableText;
@@ -102,6 +123,11 @@ class TerminalRenderer {
     return `\n${output}\n`;
   }
 
+  /**
+   * Formats markdown text, including tables and code blocks, for terminal display.
+   * @param {string} text - The markdown text to format.
+   * @returns {string} The formatted text with ANSI colors.
+   */
   formatMarkdown(text) {
     if (!text) return "";
     let formatted = text;
@@ -125,6 +151,13 @@ class TerminalRenderer {
     return formatted;
   }
 
+  /**
+   * Renders a titled panel with a message and optional styling.
+   * @param {string} title - The title of the panel.
+   * @param {string} message - The message to display inside the panel.
+   * @param {string} [style] - The style of the panel (e.g., "warning", "none").
+   * @returns {string} The rendered panel string.
+   */
   renderPanel(title, message, style = "none") {
     const border = "\u2500".repeat(title.length + 4);
     const panelColor = style === "warning" ? chalk.yellow : chalk.blue;

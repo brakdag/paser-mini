@@ -1,8 +1,18 @@
+/**
+ * Provides utility methods to correct and sanitize JSON-like strings.
+ */
 class AutoCorrector {
   static KEY_FIX_PATTERN = /([{\s,])\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g;
-  static TRAILING_COMMA_PATTERN = /,\s*([}\]])/g;
-  static SINGLE_QUOTE_PATTERN = /'([^'\\]*(?:\\.[^'\\]*)*)'/g;
 
+  static TRAILING_COMMA_PATTERN = /,\s*([}\]])/g;
+
+  static SINGLE_QUOTE_PATTERN = /'([^'\\ ]*(?:\\.[^'\\ ]*)*)'/g;
+
+  /**
+   * Attempts to fix common JSON formatting errors such as unquoted keys, single quotes, and trailing commas.
+   * @param {string} content - The JSON-like string to be corrected.
+   * @returns {string} The corrected JSON string.
+   */
   static fixJson(content) {
     let fixed = content.trim();
 
@@ -21,7 +31,8 @@ class AutoCorrector {
     const closing = { '}': '{', ']': '[' };
     let prefix = "";
 
-    for (const char of fixed) {
+    for (let i = 0; i < fixed.length; i += 1) {
+      const char = fixed[i];
       if (opening[char]) {
         stack.push(opening[char]);
       } else if (closing[char]) {

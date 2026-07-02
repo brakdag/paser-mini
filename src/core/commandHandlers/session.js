@@ -1,6 +1,17 @@
 import fs from "fs/promises";
 
+/**
+ * Handles session-related commands, including history rewriting, 
+ * history compaction, and payload saving.
+ */
 class SessionCommands {
+  /**
+   * Removes the last interaction from history and reprompts the model with a new message.
+   * @param {object} chatManager The chat manager instance.
+   * @param {object} ui The terminal UI instance.
+   * @param {string} newMessage The new message to send after rewriting.
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
   static async handleRewrite(chatManager, ui, newMessage) {
     const history = chatManager.assistant.getHistory();
     if (history.length >= 2) {
@@ -15,11 +26,24 @@ class SessionCommands {
     return true;
   }
 
+  /**
+   * Compacts the conversation history into an IRC log to save context window space.
+   * @param {object} chatManager The chat manager instance.
+   * @param {object} ui The terminal UI instance.
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
   static async handleCompact(chatManager, ui) {
     ui.displayInfo("Compacting history into IRC log...");
     return chatManager.compactHistory();
   }
 
+  /**
+   * Saves the last request payload to a JSON file for debugging purposes.
+   * @param {object} chatManager The chat manager instance.
+   * @param {object} ui The terminal UI instance.
+   * @param {string} filename The filename to save the payload to.
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
   static async handleSavePayload(chatManager, ui, filename) {
     const { lastPayload } = chatManager.assistant;
     if (!lastPayload) {

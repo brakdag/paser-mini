@@ -16,7 +16,7 @@ class ChatManager {
   /**
    * Initializes a new instance of the ChatManager.
    * @param {object} assistant - The AI assistant adapter.
-   * @param {{[key: string]: Function}} tools - The available tools map.
+   * @param {{[key: string]: (...args: unknown[]) => unknown}} tools - The available tools map.
    * @param {string} systemInstruction - The system prompt/instructions.
    * @param {object} ui - The user interface handler.
    * @param {boolean} [instanceMode] - Whether this is a sub-instance of the agent.

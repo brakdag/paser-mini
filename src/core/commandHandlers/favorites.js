@@ -1,4 +1,14 @@
+/**
+ * Handles commands for managing and loading favorite AI models.
+ */
 class FavoriteCommands {
+  /**
+   * Handles the /fav command, allowing users to list, add, remove, or load favorite models.
+   * @param {object} chatManager The chat manager instance.
+   * @param {object} ui The terminal UI instance.
+   * @param {string[]} parts The command arguments split into an array.
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
   static async handleFav(chatManager, ui, parts) {
     const favorites = chatManager.configManager.get("favorites", []);
 

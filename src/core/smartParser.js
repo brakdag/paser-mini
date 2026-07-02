@@ -23,8 +23,9 @@ class SmartToolParser {
     const regPath = path.join(__dirname, "../infrastructure/registry_positional.json");
     this.positionalRegistry = JSON.parse(fs.readFileSync(regPath, "utf8"));
     /**
-     *
-     * @param name
+     * Checks if a tool is positional.
+     * @param {string} name - The tool name.
+     * @returns {boolean} True if positional.
      */
     this.isPositional = (name) => !!this.toolMap[name];
     this.toolMap = Object.fromEntries(
@@ -33,8 +34,9 @@ class SmartToolParser {
   }
 
   /**
-   *
-   * @param val
+   * Casts a value.
+   * @param {string} val - The value.
+   * @returns {unknown} The casted value.
    */
   _castValue(val) {
     if (!val) return null;
@@ -63,9 +65,10 @@ class SmartToolParser {
   }
 
   /**
-   *
-   * @param node
-   * @param rawContent
+   * Evaluates an AST node.
+   * @param {object} node - The AST node.
+   * @param {string} rawContent - The raw content string.
+   * @returns {unknown} The evaluated value.
    */
   _evaluateAST(node, rawContent) {
     if (node.type === "Literal") return node.value;
@@ -74,18 +77,19 @@ class SmartToolParser {
     }
     if (node.type === "ObjectExpression") {
       const obj = {};
-      for (const prop of node.properties) {
-        let key = prop.key.type === "Identifier" ? prop.key.name : prop.key.value;
+      node.properties.forEach((prop) => {
+        const key = prop.key.type === "Identifier" ? prop.key.name : prop.key.value;
         obj[key] = this._evaluateAST(prop.value, rawContent);
-      }
+      });
       return obj;
     }
     return this._castValue(rawContent.substring(node.start, node.end));
   }
 
   /**
-   *
-   * @param rawContent
+   * Parses a call.
+   * @param {string} rawContent - The raw content.
+   * @returns {object} The parsed result.
    */
   parseCall(rawContent) {
     try {
@@ -104,7 +108,7 @@ class SmartToolParser {
         return { data: null, error: "Invalid function name" };
       }
 
-      const name = callExpr.callee.name;
+      const {name} = callExpr.callee;
       const args = callExpr.arguments.map((arg) =>
         this._evaluateAST(arg, rawContent),
       );
@@ -135,8 +139,9 @@ class SmartToolParser {
   }
 
   /**
-   *
-   * @param text
+   * Extracts tool calls.
+   * @param {string} text - The input text.
+   * @returns {Array<object>} The tool calls.
    */
   extractToolCalls(text) {
     const results = [];
@@ -153,9 +158,10 @@ class SmartToolParser {
   }
 
   /**
-   *
-   * @param context
-   * @param data
+   * Formats a tool response.
+   * @param {string} context - The context string.
+   * @param {unknown} data - The tool data.
+   * @returns {string} The formatted string.
    */
   formatToolResponse(context, data) {
     const header = context ? `[${context}]` : "[no details]";
@@ -164,8 +170,9 @@ class SmartToolParser {
   }
 
   /**
-   *
-   * @param text
+   * Cleans a response.
+   * @param {string} text - The text to clean.
+   * @returns {string} The cleaned text.
    */
   cleanResponse(text) {
     if (!text) return "";

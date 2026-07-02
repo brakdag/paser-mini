@@ -1,25 +1,33 @@
 import fs from "fs";
 import ValidationResult from "./validationResult.js";
 
+/**
+ * Validates tool arguments against registered Zod schemas to ensure type safety and structural integrity.
+ */
 class SchemaValidator {
+  /**
+   * Initializes the SchemaValidator with an empty registry of schemas.
+   * @returns {void}
+   */
   constructor() {
     this.schemas = new Map();
   }
 
   /**
-   * Registers a Zod schema for a specific tool
-   * @param {string} toolName
-   * @param {import('zod').ZodSchema} schema
+   * Registers a Zod schema for a specific tool.
+   * @param {string} toolName - The unique identifier of the tool.
+   * @param {import('zod').ZodSchema} schema - The Zod schema used for validation.
+   * @returns {void}
    */
   registerSchema(toolName, schema) {
     this.schemas.set(toolName, schema);
   }
 
   /**
-   * Validates tool arguments
-   * @param {string} toolName
-   * @param {any} args
-   * @returns {ValidationResult}
+   * Validates tool arguments against the registered schema for the given tool.
+   * @param {string} toolName - The name of the tool whose arguments are being validated.
+   * @param {unknown} args - The arguments to validate.
+   * @returns {ValidationResult} An object containing the validation status, any error messages, and the parsed data.
    */
   validate(toolName, args) {
     const schema = this.schemas.get(toolName);
@@ -58,6 +66,5 @@ class SchemaValidator {
     return new ValidationResult(true, [], result.data);
   }
 }
-
 
 export default SchemaValidator;

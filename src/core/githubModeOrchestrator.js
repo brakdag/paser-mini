@@ -3,7 +3,16 @@ import GitHubUI from "./githubUI.js";
 import ChatManager from "./chatManager.js";
 import GeminiAdapter from "../infrastructure/gemini/adapter.js";
 
+/**
+ * Orchestrates the AI's interaction with GitHub issues, monitoring for specific hashtags
+ * and processing issues using the ChatManager.
+ */
 class GitHubModeOrchestrator {
+  /**
+   * Initializes the GitHubModeOrchestrator.
+   * @param {string} systemInstruction - The system prompt/instructions for the AI assistant.
+   * @param {object} tools - The map of available tools for the AI to use.
+   */
   constructor(systemInstruction, tools) {
     this.systemInstruction = systemInstruction;
     this.tools = tools;
@@ -12,6 +21,10 @@ class GitHubModeOrchestrator {
     this.botLogin = null;
   }
 
+  /**
+   * Scans GitHub issues for the trigger hashtag and processes any that are not already being handled.
+   * @returns {Promise<void>}
+   */
   async run() {
     if (!this.botLogin) {
       const userData = await githubTools.get_authenticated_user();
@@ -30,6 +43,12 @@ class GitHubModeOrchestrator {
     }, Promise.resolve());
   }
 
+  /**
+   * Processes a single GitHub issue by adding a processing label, initializing a chat session,
+   * and removing the label upon completion.
+   * @param {object} issue - The GitHub issue object to process.
+   * @returns {Promise<void>}
+   */
   async processIssue(issue) {
     const { number: issueNumber, body: issueBody = "" } = issue;
     await githubTools.add_label({
@@ -56,6 +75,5 @@ class GitHubModeOrchestrator {
     }
   }
 }
-
 
 export default GitHubModeOrchestrator;

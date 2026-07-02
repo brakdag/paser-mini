@@ -1,4 +1,14 @@
+/**
+ * Handles AI-related commands such as connecting to providers and injecting messages.
+ */
 class AICommands {
+  /**
+   * Injects a message into the chat history and displays it in the UI.
+   * @param {object} chatManager The chat manager instance.
+   * @param {object} ui The terminal UI instance.
+   * @param {string} message The message to inject.
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
   static async handlePaim(chatManager, ui, message) {
     const content =
       ui.renderingMode === "FOUNTAIN"
@@ -9,6 +19,12 @@ class AICommands {
     return true;
   }
 
+  /**
+   * Handles the provider connection process, allowing the user to select a provider from a menu.
+   * @param {object} chatManager The chat manager instance.
+   * @param {object} ui The terminal UI instance.
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
   static async handleConnect(chatManager, ui) {
     const providers = chatManager.providerManager.getProviders();
     let menu = "Select Provider:\n";

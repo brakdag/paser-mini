@@ -1,6 +1,15 @@
 import logger from "./logger.js";
 
+/**
+ * Utility class for extracting thought blocks from AI responses.
+ */
 class ThoughtExtractor {
+  /**
+   * Extracts thoughts from the AI response and displays them via the UI.
+   * @param {string} response The AI response text.
+   * @param {object} ui The UI instance for displaying thoughts.
+   * @returns {string} The response text with thoughts removed.
+   */
   static extract(response, ui) {
     const thoughtRegex = /<thought>([\s\S]*?)<\/thought>/i;
     const match = response.match(thoughtRegex);
@@ -24,4 +33,3 @@ class ThoughtExtractor {
 }
 
 export default ThoughtExtractor;
-

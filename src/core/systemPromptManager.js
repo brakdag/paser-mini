@@ -1,11 +1,14 @@
 import fs from "fs";
 import { generateSystemInstruction, AVAILABLE_TOOLS } from "../infrastructure/registry.js";
 
+/**
+ *
+ */
 class SystemPromptManager {
   /**
    * Constructs the final system prompt and filters tools based on CLI options.
-   * @param {Object} options - The parsed CLI options from commander.
-   * @returns {{ systemInstruction: string, filteredTools: Object }}
+   * @param {object} options - The parsed CLI options from commander.
+   * @returns {{systemInstruction: string, filteredTools: object}} An object containing the final system instruction and the filtered tools.
    */
   buildPrompt(options) {
     if (options.noSystemInstruction) {

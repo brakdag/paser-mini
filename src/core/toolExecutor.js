@@ -1,6 +1,18 @@
 import { UserInterruptException } from "./exceptions.js";
 
+/**
+ * Handles the execution of tool calls and manages their interaction with the system.
+ */
 class ToolExecutor {
+  /**
+   * Executes a set of tool calls and handles their results.
+   * @param {Array} toolCalls The list of tool calls to execute.
+   * @param {object} engine The execution engine.
+   * @param {object} ui The UI instance.
+   * @param {object} assistant The assistant instance.
+   * @param {object} parser The parser instance.
+   * @returns {Promise<{results: Array, errorCount: number, terminate: boolean}>} The execution results.
+   */
   static async execute(toolCalls, engine, ui, assistant, parser) {
     const toolResults = [];
     let errorCount = 0;
@@ -51,4 +63,3 @@ class ToolExecutor {
 }
 
 export default ToolExecutor;
-

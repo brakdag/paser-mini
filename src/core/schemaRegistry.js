@@ -3,6 +3,9 @@ import SCHEMAS from "./schemas.js";
 
 const validator = new SchemaValidator();
 
+/**
+ *
+ */
 async function registerSchemas() {
   try {
     Object.entries(SCHEMAS).forEach(([toolName, schema]) => {

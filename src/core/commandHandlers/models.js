@@ -1,4 +1,14 @@
+/**
+ * Handles commands for managing AI models, including selection, availability checks, and variant switching.
+ */
 class ModelCommands {
+  /**
+   * Lists available models or changes the current model and temperature.
+   * @param {object} chatManager The chat manager instance.
+   * @param {object} ui The terminal UI instance.
+   * @param {string[]} parts The command arguments split into an array.
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
   static async handleModels(chatManager, ui, parts) {
     const models = await chatManager.assistant.getAvailableModels();
     const unavailable = chatManager.configManager.get("unavailable_models", []);
@@ -49,9 +59,13 @@ class ModelCommands {
     return true;
   }
 
+  /**
+   * Scans all available models to check their current availability and updates the unavailable list.
+   * @param {object} chatManager The chat manager instance.
+   * @param {object} ui The terminal UI instance.
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
   static async handleModelsCheck(chatManager, ui) {
-
-
     const models = await chatManager.assistant.getAvailableModels();
     if (models.length === 0) {
       ui.displayError("No models found to check.");
@@ -61,7 +75,7 @@ class ModelCommands {
     const unavailable = [];
     ui.displayInfo("Model Scan: Initializing...");
 
-    for (let i = 0; i < models.length; i++) {
+    for (let i = 0; i < models.length; i += 1) {
       const model = models[i];
       ui.displayInfo(`Model Scan: Checking ${i + 1}/${models.length} -> ${model}`);
       const isAvailable = await chatManager.assistant.checkAvailability(model);
@@ -71,7 +85,7 @@ class ModelCommands {
     }
 
     chatManager.configManager.save("unavailable_models", unavailable);
-    ui.displayInfo(`Model Scan complete. ${unavailable.length} models unavailable.`)
+    ui.displayInfo(`Model Scan complete. ${unavailable.length} models unavailable.`);
     ui.displayInfo(
       `Diagnostic finished. Updated unavailable_models list (${unavailable.length} entries).`,
     );
@@ -79,6 +93,13 @@ class ModelCommands {
     return true;
   }
 
+  /**
+   * Lists available model variants or switches to a specific variant.
+   * @param {object} chatManager The chatManager instance.
+   * @param {object} ui The terminal UI instance.
+   * @param {string[]} parts The command arguments split into an array.
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
   static async handleVariants(chatManager, ui, parts) {
     const variants = chatManager.assistant.getVariants();
     if (variants.length === 0) {

@@ -1,6 +1,15 @@
 import MemoryTools from "../../tools/memoryTools.js";
 
+/**
+ * Handles configuration-related commands, providing visibility into the current system settings.
+ */
 class ConfigCommands {
+  /**
+   * Displays the current system configuration, including provider, model, and resource limits.
+   * @param {object} chatManager The chat manager instance.
+   * @param {object} ui The terminal UI instance.
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
   static async handleConfig(chatManager, ui) {
     const memoryTools = new MemoryTools();
     memoryTools.setMemoryContext(chatManager.assistant, chatManager);

@@ -9,11 +9,18 @@ const MAX_TOOL_ITERATIONS = 50;
 const MAX_CONSECUTIVE_ERRORS = 5;
 
 /**
- * Processes turns.
+ * Orchestrates the processing of a single turn, including input handling, 
+ * tool execution loops, and repetition detection.
  */
 class TurnProcessor {
   /**
-   * Constructor.
+   * Initializes the TurnProcessor with necessary system components.
+   * @param {object} assistant The assistant instance managing conversation state.
+   * @param {object} tools The tools registry.
+   * @param {object} parser The smart parser for tool call extraction.
+   * @param {object} engine The execution engine for tool calls.
+   * @param {object} ui The terminal user interface instance.
+   * @param {object} repetitionDetector The detector for identifying repetitive AI responses.
    */
   constructor(assistant, tools, parser, engine, ui, repetitionDetector) {
     this.assistant = assistant;
@@ -27,7 +34,10 @@ class TurnProcessor {
   }
 
   /**
-   * Process input.
+   * Processes the user input through the full turn cycle: input processing, 
+   * initial request, tool execution loop, and final response cleaning.
+   * @param {string} userInput The raw input provided by the user.
+   * @returns {Promise<void>} A promise that resolves when the turn is complete.
    */
   async process(userInput) {
     this.engine.toolTracker.reset();
@@ -91,7 +101,9 @@ class TurnProcessor {
   }
 
   /**
-   * Send initial request.
+   * Sends the initial processed input to the API and handles safety/empty response errors.
+   * @param {string} processedInput The input to send to the API.
+   * @returns {Promise<string>} The response from the API.
    */
   async #sendInitialRequest(processedInput) {
     try {
@@ -107,7 +119,9 @@ class TurnProcessor {
   }
 
   /**
-   * Handle repetition.
+   * Handles detected repetitions by notifying the user and requesting a rephrase from the model.
+   * @param {string} repetitionCheck The detected repetition string or indicator.
+   * @returns {Promise<string>} The API response after reporting the repetition.
    */
   async #handleRepetition(repetitionCheck) {
     this.ui.displayChatMessage('system', `-!- Repetition detected: ${repetitionCheck}`);
@@ -116,7 +130,9 @@ class TurnProcessor {
   }
 
   /**
-   * Build payload.
+   * Constructs the results payload to be sent back to the model after tool execution.
+   * @param {Array} toolResults The results of the tool executions.
+   * @returns {string|Array} The formatted payload for the API.
    */
   #buildResultsPayload(toolResults) {
     if (this.ui.renderingMode === 'FOUNTAIN') {
@@ -130,10 +146,10 @@ class TurnProcessor {
     return mapped.every((item) => typeof item === 'string') ? mapped.join(sep) : mapped;
   }
 
-// removed debris
-
   /**
-   * Send results.
+   * Sends the tool results payload to the API and handles potential model errors.
+   * @param {string|Array} resultsPayload The payload containing tool execution results.
+   * @returns {Promise<string>} The API response after receiving tool results.
    */
   async #sendToolResults(resultsPayload) {
     try {
