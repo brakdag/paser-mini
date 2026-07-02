@@ -292,8 +292,10 @@ ${welcomeMsg}`;
     if (typeof this.assistant.countTokens === "function") {
       count = this.assistant.countTokens(systemInstruction, history);
     } else {
-      // Fallback: count only text content to avoid JSON overhead
-      const historyChars = history.reduce((acc, msg) => acc + (msg.text?.length || 0), 0);
+      const historyChars = history.reduce((acc, msg) => {
+        const content = msg.content || msg.text || "";
+        return acc + (typeof content === "string" ? content.length : JSON.stringify(content).length);
+      }, 0);
       count = Math.ceil((systemInstruction.length + historyChars) / 4);
     }
 

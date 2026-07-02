@@ -3,97 +3,156 @@ import axiosRetry from "axios-retry";
 import BaseAdapter from "../baseAdapter.js";
 import logger from "../../core/logger.js";
 
+const TIMESTAMP_FORMAT = "en-GB";
+const TIMESTAMP_OPTIONS = { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false };
+const RECOVERABLE_STATUSES = [429, 500, 502, 503, 504];
+const MAX_RETRIES = 5;
+const REQUEST_TIMEOUT = 600000;
+const BASE_URL = "https://api.groq.com/openai/v1";
+const DEFAULT_MODEL = "llama3-8b-8192";
+const DEFAULT_TEMPERATURE = 0.7;
+const CHARS_PER_TOKEN = 3.5;
+
 /**
- *
+ * Generates a timestamp string in HH:MM:SS format.
+ * @returns {string} The formatted timestamp.
+ */
+function getTimestamp() {
+  return new Date().toLocaleTimeString(TIMESTAMP_FORMAT, TIMESTAMP_OPTIONS);
+}
+
+/**
+ * Normalizes the role of a message sender to the API-compatible role.
+ * @param {string} role - The original role.
+ * @param {string} userNickname - The user's nickname.
+ * @param {string} agentNickname - The agent's nickname.
+ * @returns {string} The normalized role.
+ */
+function normalizeRole(role, userNickname, agentNickname) {
+  if (role === userNickname) return "user";
+  if (role === agentNickname || role === "model") return "assistant";
+  if (role === "server") return "user";
+  return role;
+}
+
+/**
+ * Normalizes message content for the API, handling objects, arrays, and thought filtering.
+ * @param {string|object|Array} content - The raw content.
+ * @param {string} apiRole - The normalized API role.
+ * @returns {string|Array} The normalized content.
+ */
+function normalizeContent(content, apiRole) {
+  let finalContent = content;
+
+  if (content && typeof content === "object" && content.mime_type && content.data) {
+    finalContent = [
+      { type: "text", text: `Image resolution: ${content.resolution || "unknown"}` },
+      { type: "image_url", image_url: { url: `data:${content.mime_type};base64,${content.data}` } },
+    ];
+  } else if (Array.isArray(content)) {
+    finalContent = content.join("\n");
+  }
+
+  if (typeof finalContent === "string" && apiRole === "assistant") {
+    finalContent = finalContent.replace(/<thought>[\s\S]*?<\/thought>/gi, "").trim();
+  }
+
+  return finalContent;
+}
+
+/**
+ * Adapter for integrating Groq AI models into the system.
  */
 class GroqAdapter extends BaseAdapter {
   /**
-   *
-   * @param ui
-   * @param configManager
-   * @param userNickname
-   * @param agentNickname
+   * Initializes the Groq adapter with API client and retry logic.
+   * @param {object} params - The constructor parameters.
+   * @param {object} params.ui - The UI interface.
+   * @param {object} params.configManager - The configuration manager.
+   * @param {string} [params.userNickname] - The user's nickname.
+   * @param {string} [params.agentNickname] - The agent's nickname.
    */
-  constructor(ui, configManager, userNickname = "user", agentNickname = "assistant") {
-    super(ui, configManager, userNickname, agentNickname);
+  constructor({ ui, configManager, userNickname = "user", agentNickname = "assistant" }) {
+    super({ ui, configManager, userNickname, agentNickname });
     this.apiKey = process.env.GROQ_API_KEY;
     this.history = [];
-    this.currentModel = "llama3-8b-8192";
+    this.currentModel = DEFAULT_MODEL;
     this.systemInstruction = null;
-    this.temperature = 0.7;
+    this.temperature = DEFAULT_TEMPERATURE;
 
     this.client = axios.create({
-      baseURL: "https://api.groq.com/openai/v1",
-      timeout: 600000,
+      baseURL: BASE_URL,
+      timeout: REQUEST_TIMEOUT,
       headers: {
-        "Authorization": `Bearer ${this.apiKey}`,
+        Authorization: `Bearer ${this.apiKey}`,
         "Content-Type": "application/json",
       },
     });
 
     axiosRetry(this.client, {
-      retries: 5,
+      retries: MAX_RETRIES,
       retryDelay: axiosRetry.exponentialDelay,
       /**
-       *
-       * @param error
+       * Determines if a request should be retried based on the error.
+       * @param {Error} error - The caught error object.
+       * @returns {boolean} True if the request should be retried.
        */
       retryCondition: (error) => {
         const status = error.response?.status;
-        const recoverableStatuses = [429, 500, 502, 503, 504];
         return (
           axiosRetry.isNetworkOrIdempotentRequestError(error) ||
-          recoverableStatuses.includes(status)
+          RECOVERABLE_STATUSES.includes(status)
         );
       },
       /**
-       *
-       * @param retryCount
-       * @param error
+       * Logs retry attempts and notifies the UI.
+       * @param {number} retryCount - The current retry attempt number.
+       * @param {Error} error - The error that triggered the retry.
        */
       onRetry: (retryCount, error) => {
-        const time = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
-        const msg = `[${time}] -!- [GroqAdapter] API Retry ${retryCount}/5 due to: ${error.response?.status || error.message}`;
-        logger.warn(msg);
+        const time = getTimestamp();
+        const status = error.response?.status || error.message;
+        logger.warn(`[${time}] -!- [GroqAdapter] API Retry ${retryCount}/${MAX_RETRIES} due to: ${status}`);
         if (this.ui && this.ui.displayInfo) {
-          this.ui.displayInfo(`Reintentando Groq... (${retryCount}/5) | Error: ${error.response?.status || error.message}`);
+          this.ui.displayInfo(`Reintentando Groq... (${retryCount}/${MAX_RETRIES}) | Error: ${status}`);
         }
       },
     });
   }
 
   /**
-   *
-   * @param modelName
-   * @param systemInstruction
-   * @param temperature
+   * Configures the chat session with model, system instruction, and temperature.
+   * @param {string} modelName - The model identifier.
+   * @param {string} systemInstruction - The system-level prompt.
+   * @param {number} [temperature] - The sampling temperature.
    */
-  startChat(modelName, systemInstruction, temperature = 0.7) {
+  startChat(modelName, systemInstruction, temperature = DEFAULT_TEMPERATURE) {
     this.currentModel = modelName || this.currentModel;
     this.systemInstruction = systemInstruction;
     this.temperature = temperature;
-    if (this.systemInstruction) {
-      if (this.history.length > 0 && this.history[0].role === "system") {
-        this.history[0].content = this.systemInstruction;
-      } else {
-        this.history.unshift({
-          role: "system",
-          content: this.systemInstruction,
-          timestamp: new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }),
-        });
-      }
+
+    if (!this.systemInstruction) return;
+
+    if (this.history.length > 0 && this.history[0].role === "system") {
+      this.history[0].content = this.systemInstruction;
+    } else {
+      this.history.unshift({
+        role: "system",
+        content: this.systemInstruction,
+        timestamp: getTimestamp(),
+      });
     }
   }
 
   /**
-   *
-   * @param message
-   * @param role
+   * Sends a message to the Groq API and returns the response.
+   * @param {string} message - The message content to send.
+   * @param {string} [role] - The role of the sender.
+   * @returns {Promise<string>} The response text from the API.
+   * @throws {Error} If the response is empty or the request fails.
    */
   async sendMessage(message, role = "user") {
-    const timestamp = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
-    
-    this.injectMessage(role, message, timestamp);
+    this.injectMessage(role, message, getTimestamp());
 
     const payload = {
       model: this.currentModel,
@@ -106,56 +165,39 @@ class GroqAdapter extends BaseAdapter {
       const response = await this.client.post("/chat/completions", payload);
       const textContent = response.data.choices[0].message.content;
 
-      if (textContent) {
-        const msgTimestamp = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
-        this.injectMessage("assistant", textContent, msgTimestamp);
-        return textContent;
+      if (!textContent) {
+        throw new Error("Empty response from Groq");
       }
 
-      throw new Error("Empty response from Groq");
-    } catch (e) {
-      const errorMsg = e.response?.data?.error?.message || e.message;
-      const error = new Error(errorMsg);
-      error.name = "APIError";
-      throw error;
+      this.injectMessage("assistant", textContent, getTimestamp());
+      return textContent;
+    } catch (error) {
+      const errorMsg = error.response?.data?.error?.message || error.message;
+      const apiError = new Error(errorMsg);
+      apiError.name = "APIError";
+      throw apiError;
     }
   }
 
   /**
-   *
-   * @param role
-   * @param content
-   * @param timestamp
+   * Injects a message into the conversation history with normalized role and content.
+   * @param {string} role - The role of the message sender.
+   * @param {string|object|Array} content - The message content.
+   * @param {string|null} [timestamp] - The message timestamp.
    */
   injectMessage(role, content, timestamp = null) {
-    let apiRole = role;
-    if (role === this.userNickname) apiRole = "user";
-    if (role === this.agentNickname || role === "model") apiRole = "assistant";
-    if (role === "server") apiRole = "user";
-
-    let finalContent = content;
-    if (content && typeof content === 'object' && content.mime_type && content.data) {
-      finalContent = [
-        { type: "text", text: `Image resolution: ${content.resolution || 'unknown'}` },
-        { type: "image_url", image_url: { url: `data:${content.mime_type};base64,${content.data}` } }
-      ];
-    } else if (Array.isArray(content)) {
-      finalContent = content.join("\n");
-    }
-
-    if (typeof finalContent === 'string' && apiRole === 'assistant') {
-      finalContent = finalContent.replace(/<thought>[\s\S]*?<\/thought>/gi, '').trim();
-    }
+    const apiRole = normalizeRole(role, this.userNickname, this.agentNickname);
+    const finalContent = normalizeContent(content, apiRole);
 
     this.history.push({
       role: apiRole,
       content: finalContent,
-      timestamp: timestamp || new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }),
+      timestamp: timestamp || getTimestamp(),
     });
   }
 
   /**
-   *
+   * Removes the last message from the conversation history.
    */
   popLastMessage() {
     if (this.history.length > 0) {
@@ -164,8 +206,8 @@ class GroqAdapter extends BaseAdapter {
   }
 
   /**
-   *
-   * @param historyOverride
+   * Resets the conversation history, optionally applying a new history.
+   * @param {Array|null} [historyOverride] - The new history to apply.
    */
   hardReset(historyOverride = null) {
     this.history = historyOverride || [];
@@ -176,28 +218,46 @@ class GroqAdapter extends BaseAdapter {
   }
 
   /**
-   *
+   * Retrieves the current conversation history.
+   * @returns {Array} The conversation history.
    */
   getHistory() {
     return this.history;
   }
 
   /**
-   *
+   * Estimates the token count based on character length heuristic.
+   * @param {string} systemInstruction - The system instruction text.
+   * @param {Array} history - The conversation history.
+   * @returns {number} The estimated token count.
+   */
+  countTokens(systemInstruction, history) {
+    const systemChars = systemInstruction?.length || 0;
+    const historyChars = history.reduce((acc, msg) => {
+      const content = msg.content || msg.text || "";
+      return acc + (typeof content === "string" ? content.length : JSON.stringify(content).length);
+    }, 0);
+    return Math.ceil((systemChars + historyChars) / CHARS_PER_TOKEN);
+  }
+
+  /**
+   * Fetches the list of available models from the Groq API.
+   * @returns {Promise<string[]>} A list of available model identifiers.
    */
   async getAvailableModels() {
     try {
       const response = await this.client.get("/models");
       return response.data.data.map((m) => m.id).sort();
-    } catch (e) {
-      console.error(`[GroqAdapter] Error fetching models: ${e.message}`);
+    } catch (error) {
+      logger.error(`[GroqAdapter] Error fetching models: ${error.message}`);
       return ["llama3-8b-8192", "llama3-70b-8192", "mixtral-8x7b-32768"];
     }
   }
 
   /**
-   *
-   * @param modelName
+   * Checks if a specific model is available and responsive.
+   * @param {string} modelName - The model identifier to check.
+   * @returns {Promise<boolean>} True if available, false otherwise.
    */
   async checkAvailability(modelName) {
     try {
@@ -207,10 +267,13 @@ class GroqAdapter extends BaseAdapter {
         max_tokens: 1,
       });
       return true;
-    } catch (e) {
-      const status = e.response?.status;
-      if (status === 404 || status === 400) return false;
-      return true;
+    } catch (error) {
+      const status = error.response?.status;
+      if (status === 404 || status === 400) {
+        return false;
+      }
+      logger.warn(`[GroqAdapter] Model check failed for ${modelName}: ${error.message}`);
+      return false;
     }
   }
 }
