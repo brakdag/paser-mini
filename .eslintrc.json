@@ -1,0 +1,7 @@
+{
+  "extends": ["eslint:recommended", "plugin:jsdoc/recommended"],
+  "plugins": ["jsdoc"],
+  "rules": {
+    "jsdoc/check-alignment": "off"
+  }
+}
