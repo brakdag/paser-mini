@@ -25,7 +25,7 @@
     "Execute a bash command in the project root",
     { "command": "string" }
   ],
-  ["grep", "Search string in all files", { "query": "string" }],
+  ["grep", "Search string in all files", { "query": "string", "path": "string" }],
   ["glob", "Search files by pattern", { "pattern": "string" }],
   [
     "rename",

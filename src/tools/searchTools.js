@@ -68,24 +68,26 @@ export default class SearchTools {
   /**
    * Searches for a text query globally across the project using grep.
    * @param {string} query - The text to search for.
+   * @param {string} searchPath - The path to search in.
    * @returns {Promise<string>} JSON string of matching lines and files.
    * @throws {Error} If the grep process fails unexpectedly.
    */
-  async searchTextGlobal(query) {
+  async searchText(query, searchPath = ".") {
     if (!query || query.trim() === "") {
-    return JSON.stringify([]);
-  }
+      return JSON.stringify([]);
+    }
 
     return new Promise((resolve, reject) => {
       const rootPath = process.cwd();
+      const targetPath = path.resolve(rootPath, searchPath);
       const child = spawn("grep", [
-        "-rIn",
+        "-rInH",
         "--exclude-dir=.git",
         "--exclude-dir=node_modules",
         "--exclude-dir=log",
         "--",
         query,
-        rootPath,
+        targetPath,
       ]);
 
       let stdoutData = "";
@@ -109,7 +111,6 @@ export default class SearchTools {
         if (code === 0 || code === null) {
           return resolve(this.#parseGrepOutput(stdoutData, rootPath));
         }
-        // Other codes are treated as errors unless they are the 'no match' code
         return reject(new Error(`Grep process exited with code ${code}`));
       });
 
@@ -128,28 +129,31 @@ export default class SearchTools {
    */
   #parseGrepOutput(stdout, rootPath) {
     if (!stdout) {
-    return JSON.stringify([]);
-  }
+      return JSON.stringify([]);
+    }
     const parsedResults = stdout
       .split("\n")
       .filter((line) => line)
       .slice(0, 10)
       .map((line) => {
-        const firstColonIndex = line.indexOf(":");
-        if (firstColonIndex === -1) {
-        return null;
-      }
+        const parts = line.split(":");
+        if (parts.length < 3) {
+          return null;
+        }
 
-        const filePath = line.substring(0, firstColonIndex);
-        const remaining = line.substring(firstColonIndex + 1);
-        const secondColonIndex = remaining.indexOf(":");
-        
-        if (secondColonIndex === -1) {
-        return null;
-      }
+        const filePath = parts[0];
+        const lineNum = parseInt(parts[1], 10);
+        const content = parts.slice(2).join(":");
 
-        const lineNum = parseInt(remaining.substring(0, secondColonIndex), 10);
-        return { file: path.relative(rootPath, filePath), line: lineNum };
+        if (isNaN(lineNum)) {
+          return null;
+        }
+
+        return { 
+          file: path.relative(rootPath, filePath), 
+          line: lineNum, 
+          content: content.trim() 
+        };
       })
       .filter(Boolean);
     return JSON.stringify(parsedResults);

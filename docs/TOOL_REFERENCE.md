@@ -28,7 +28,7 @@ This document provides a comprehensive specification of all tools available to t
 | `analysis` | Static analysis for JS/TS errors. | `path` (str) |
 | `eslint` | Runs ESLint analysis. | `path` (str) |
 | `doc` | Generates HTML docs via JSDoc. | `path` (str), `outputDir` (str) |
-| `grep` | Global string search across all files. | `query` (str) |
+| `grep` | String search across files (scoped or global). | `query` (str), `path` (str, optional) |
 | `glob` | Finds files matching a pattern. | `pattern` (str) |
 | `ast` | Structural AST analysis. | `path` (str), `query` (str) |
 

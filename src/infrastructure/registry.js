@@ -134,7 +134,7 @@ export const AVAILABLE_TOOLS = {
    * @param {...any} args
    */
   grep: async (...args) =>
-    (await getTool("searchTools", "searchTextGlobal"))(...args),
+    (await getTool("searchTools", "searchText"))(...args),
   /**
    *
    * @param {...any} args

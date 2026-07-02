@@ -27,7 +27,7 @@ const SCHEMAS = {
   eval: z.object({ code: z.string() }).strict(),
   execute: z.object({ command: z.string() }),
   glob: z.object({ pattern: z.string() }).strict(),
-  grep: z.object({ query: z.string() }).strict(),
+  grep: z.object({ query: z.string(), path: z.string().optional() }).strict(),
   img: z.object({ path: z.string(), crop: z.array(z.number()).length(4).optional() }).strict(),
   issues: z.object({ repo: z.string().optional() }).strict(),
   list: z.object({ path: z.string() }).strict(),

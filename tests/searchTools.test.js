@@ -6,7 +6,7 @@ const searchTools = new SearchTools();
 
 describe("searchTools", () => {
   it("should return empty array for empty query", async () => {
-    const result = await searchTools.searchTextGlobal({ query: "" });
+    const result = await searchTools.searchText({ query: "" });
     assert.strictEqual(result, "[]");
   });
 });
