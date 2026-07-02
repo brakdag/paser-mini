@@ -19,6 +19,11 @@ class ProviderManager {
       defaultModel: "meta/llama-3.1-405b-instruct",
       path: "../infrastructure/nvidia/adapter.js",
     },
+    NVIDIA_MINIMAX: {
+      name: "NVIDIA MiniMax M3",
+      defaultModel: "minimaxai/minimax-m3",
+      path: "../infrastructure/nvidia-minimax/adapter.js",
+    },
     OPENROUTER: {
       name: "OpenRouter",
       defaultModel: "openai/gpt-4o",
