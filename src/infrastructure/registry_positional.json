@@ -5,11 +5,7 @@
     "Read only the last N lines of a file.",
     { "path": "string", "tail": "number" }
   ],
-  [
-    "write",
-    "Write content to file - in multiline content use \" for new lines \\n (not backticks)",
-    { "path": "string", "content": "string" }
-  ],
+  ["write", "Write content to file", { "path": "string", "content": "string" }],
   ["remove", "Remove file", { "path": "string" }],
   ["list", "List directory contents", { "path": "string" }],
   [

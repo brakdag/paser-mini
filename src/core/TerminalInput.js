@@ -11,6 +11,7 @@ class TerminalInput {
     this.rl = null;
     this.inputQueue = [];
     this.inputResolver = null;
+    this.commandHandler = null;
   }
 
   /**
@@ -25,16 +26,22 @@ class TerminalInput {
       terminal: true,
     });
 
-    this.rl.on("line", (line) => {
+    this.rl.on("line", async (line) => {
       const trimmed = line.trim();
-      if (trimmed) {
-        if (this.inputResolver) {
-          const resolve = this.inputResolver;
-          this.inputResolver = null;
-          resolve(trimmed);
-        } else {
-          this.inputQueue.push(trimmed);
-        }
+      if (!trimmed) return;
+
+      // Intercept non-blocking commands before they enter the queue
+      if (this.commandHandler && this.commandHandler.isNonBlocking(trimmed)) {
+        await this.commandHandler.handle(trimmed);
+        return;
+      }
+
+      if (this.inputResolver) {
+        const resolve = this.inputResolver;
+        this.inputResolver = null;
+        resolve(trimmed);
+      } else {
+        this.inputQueue.push(trimmed);
       }
     });
   }

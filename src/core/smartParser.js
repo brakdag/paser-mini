@@ -72,6 +72,19 @@ class SmartToolParser {
    */
   _evaluateAST(node, rawContent) {
     if (node.type === "Literal") return node.value;
+    if (node.type === "TemplateLiteral") {
+      let result = "";
+      for (let i = 0; i < node.quasis.length; i++) {
+        result += node.quasis[i].value.cooked;
+        if (node.expressions[i]) {
+          result += `\${${rawContent.substring(
+            node.expressions[i].start,
+            node.expressions[i].end,
+          )}}`;
+        }
+      }
+      return result;
+    }
     if (node.type === "ArrayExpression") {
       return node.elements.map((e) => this._evaluateAST(e, rawContent));
     }

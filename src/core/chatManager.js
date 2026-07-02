@@ -61,6 +61,7 @@ class ChatManager {
       this.systemInstruction === "",
     );
     this.commandHandler = new CommandHandler(this, ui);
+    this.ui.setCommandHandler(this.commandHandler);
     this.repetitionDetector = new RepetitionDetector();
     this.turnProcessor = new TurnProcessor(
       assistant,

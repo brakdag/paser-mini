@@ -33,6 +33,14 @@ class TerminalUI {
   }
 
   /**
+   * Injects the command handler to allow non-blocking command execution.
+   * @param {object} handler The command handler instance.
+   */
+  setCommandHandler(handler) {
+    input.commandHandler = handler;
+  }
+
+  /**
    * Sets the rendering mode for the UI.
    * @param {string} mode The rendering mode to set (e.g., 'IRC', 'FOUNTAIN', 'CLEAN').
    */

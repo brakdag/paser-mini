@@ -227,6 +227,16 @@ class CommandHandler {
   }
 
   /**
+   * Checks if a command is non-blocking and can be executed without interrupting the agent turn.
+   * @param {string} input - The raw input from the user.
+   * @returns {boolean} True if the command is non-blocking.
+   */
+  isNonBlocking(input) {
+    const lowerInput = input.trim().toLowerCase();
+    return ["/config", "/token"].includes(lowerInput);
+  }
+
+  /**
    * Processes the user input to determine if it is a command and executes it.
    * @param {string} userInput - The raw input from the user.
    * @returns {Promise<boolean|void>} True if a command was handled, false if it should be treated as a message.
