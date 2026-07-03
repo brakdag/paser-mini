@@ -46,6 +46,7 @@ const COMMAND_MAP = {
   "/fountain": InterfaceCommands.handleFountain,
   "/irc": InterfaceCommands.handleIRC,
   "/clean": InterfaceCommands.handleClean,
+  "/true": InterfaceCommands.handleTrue,
   /**
    * Displays the help menu.
    * @param {unknown} _ - Unused chat manager instance.

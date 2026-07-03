@@ -72,6 +72,7 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
    */
   async sendMessage(message, role = "user") {
     this.state.addMessage(role, message);
+    const historyLengthBefore = this.state.getRawHistory().length;
 
     const payload = this._preparePayload();
     this.lastPayload = payload;
@@ -80,7 +81,8 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
      * Executes the API request with retry logic.
      * @returns {Promise<string>} The processed response text.
      */
-    return this.retryHandler.execute(async () => {
+    try {
+      return await this.retryHandler.execute(async () => {
       try {
         const data = await this.restClient.chatCompletions(payload, false, M3_TIMEOUT);
         return this._handleResponse(data);
@@ -101,6 +103,12 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
         }
       }
     });
+    } catch (error) {
+      if (this.state.getRawHistory().length === historyLengthBefore) {
+        this.state.popLastMessage();
+      }
+      throw error;
+    }
   }
 
   /**
@@ -122,7 +130,7 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
       const text = typeof m.text === "string" ? m.text : JSON.stringify(m.text);
       messages.push({
         role: m.role === "model" ? "assistant" : m.role,
-        content: text,
+        content: this.formatTextForPayload(m.role, text, m.timestamp),
       });
     });
 
@@ -246,6 +254,7 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
    * @param {string} mode - The rendering mode for the state.
    */
   setRenderingMode(mode) {
+    super.setRenderingMode(mode);
     this.state.setRenderingMode(mode);
   }
 

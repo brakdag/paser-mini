@@ -80,6 +80,10 @@ class ChatManager {
     logger.setAgentNickname(this.ui.agentNickname);
     this.ui.userNickname = this.configManager.get("user_nickname", "user");
     this.setRenderingMode(this.configManager.get("rendering_mode", "IRC"));
+    this.immersionMode = this.configManager.get("immersion_mode", false);
+    if (this.assistant && this.assistant.setImmersionMode) {
+      this.assistant.setImmersionMode(this.immersionMode);
+    }
     this.stopRequested = false;
     this.logOpened = false;
   }
@@ -110,6 +114,18 @@ class ChatManager {
       } else if (this.assistant.state?.setRenderingMode) {
         this.assistant.state.setRenderingMode(mode);
       }
+    }
+  }
+
+  /**
+   * Toggles the Immersion Mode (raw formatting in API payloads).
+   * @param {boolean} active - True to enable, false to disable.
+   */
+  setImmersionMode(active) {
+    this.immersionMode = active;
+    this.saveConfig("immersion_mode", active);
+    if (this.assistant && this.assistant.setImmersionMode) {
+      this.assistant.setImmersionMode(active);
     }
   }
 
@@ -174,6 +190,12 @@ class ChatManager {
     this.assistant = newAssistant;
     this.assistant.startChat(model, this.systemInstruction, temperature);
 
+    // Propagate current rendering and immersion states to the new adapter
+    this.setRenderingMode(this.configManager.get("rendering_mode", "IRC"));
+    if (this.immersionMode) {
+      this.assistant.setImmersionMode(true);
+    }
+
     // Synchronize references
     if (this.turnProcessor) {
       this.turnProcessor.assistant = newAssistant;
@@ -237,8 +259,7 @@ ${welcomeMsg}`;
             const logMsg = this.ui.getLogOpenedString();
             this.ui.displayChatMessage("system", logMsg);
             this.logOpened = true;
-            const formattedLog = this.ui.formatSystemMessage(logMsg);
-            this.assistant.injectMessage("server", formattedLog);
+            this.assistant.injectMessage("server", logMsg);
           }
 
           const handled = await this.commandHandler.handle(input);

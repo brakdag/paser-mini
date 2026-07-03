@@ -40,6 +40,21 @@ class InterfaceCommands {
   }
 
   /**
+   * Toggles the Immersion Mode (raw formatting in payloads).
+   * @param {object} chatManager The chat manager instance.
+   * @param {object} ui The terminal UI instance.
+   * @returns {boolean} True if the operation succeeded.
+   */
+  static handleTrue(chatManager, ui) {
+    const newState = !chatManager.immersionMode;
+    chatManager.setImmersionMode(newState);
+    ui.displayInfo(
+      `Immersion Mode (Raw Payloads) ${newState ? "enabled" : "disabled"}.`,
+    );
+    return true;
+  }
+
+  /**
    * Changes the current channel topic and notifies the system.
    * @param {object} chatManager The chat manager instance.
    * @param {object} ui The terminal UI instance.
@@ -96,7 +111,7 @@ class InterfaceCommands {
   static async handleAction(chatManager, ui, actionText) {
     const actionContent = `* ACTION: ${actionText} *`;
     ui.displayChatMessage("system", actionContent);
-    chatManager.assistant.injectMessage("server", ui.formatChatMessage("system", actionContent));
+    chatManager.assistant.injectMessage("server", actionContent);
     return true;
   }
 
@@ -144,7 +159,7 @@ class InterfaceCommands {
       }
       const systemMsg = `Joined channel ${channel}. Mode: ${modeDesc}`;
       ui.displaySystemMessage(systemMsg);
-      chatManager.assistant.injectMessage("server", ui.formatSystemMessage(systemMsg));
+      chatManager.assistant.injectMessage("server", systemMsg);
     }
     return true;
   }

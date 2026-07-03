@@ -57,6 +57,7 @@ class NvidiaAdapter extends BaseAdapter {
    */
   async sendMessage(message, role = "user") {
     this.state.addMessage(role, message);
+    const historyLengthBefore = this.state.getRawHistory().length;
 
     const payload = this._preparePayload();
     this.lastPayload = payload;
@@ -65,7 +66,8 @@ class NvidiaAdapter extends BaseAdapter {
      * Executes the API request with retry logic.
      * @returns {Promise<string>} The processed response text.
      */
-    return this.retryHandler.execute(async () => {
+    try {
+      return await this.retryHandler.execute(async () => {
       try {
         const data = await this.restClient.chatCompletions(payload);
         return this._handleResponse(data);
@@ -86,6 +88,12 @@ class NvidiaAdapter extends BaseAdapter {
         }
       }
     });
+    } catch (error) {
+      if (this.state.getRawHistory().length === historyLengthBefore) {
+        this.state.popLastMessage();
+      }
+      throw error;
+    }
   }
 
   /**
@@ -96,7 +104,7 @@ class NvidiaAdapter extends BaseAdapter {
     const history = this.state.getRawHistory();
     const processedHistory = history.map((m) => ({
       ...m,
-      text: typeof m.text === 'string' ? m.text : JSON.stringify(m.text),
+      text: this.formatTextForPayload(m.role, typeof m.text === 'string' ? m.text : JSON.stringify(m.text), m.timestamp),
     }));
 
     const payload = PayloadMapper.toNvidia(
@@ -105,7 +113,6 @@ class NvidiaAdapter extends BaseAdapter {
       this.temperature,
     );
     return { ...payload, model: this.currentModel };
-    
   }
 
   /**
@@ -168,6 +175,7 @@ class NvidiaAdapter extends BaseAdapter {
    * @param {string} mode - The rendering mode for the state.
    */
   setRenderingMode(mode) {
+    super.setRenderingMode(mode);
     this.state.setRenderingMode(mode);
   }
 

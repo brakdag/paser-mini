@@ -167,11 +167,13 @@ class ZaiAdapter extends BaseAdapter {
   async sendMessage(message, role = "user") {
     const timestamp = IRCFormatter.getTimestamp();
     this.injectMessage(role, message, timestamp);
+    const historyLengthBefore = this.getHistory().length;
 
     const payload = this._preparePayload();
     this.lastPayload = payload;
     let lastError = null;
 
+    try {
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt += 1) {
       try {
         logger.info(
@@ -204,6 +206,12 @@ class ZaiAdapter extends BaseAdapter {
     }
 
     throw this._handleApiError(lastError || new Error("Max retries reached with empty response."));
+    } catch (error) {
+      if (this.getHistory().length === historyLengthBefore) {
+        this.popLastMessage();
+      }
+      throw error;
+    }
   }
 
   /**
@@ -221,7 +229,7 @@ class ZaiAdapter extends BaseAdapter {
   _preparePayload() {
     const messages = this.getHistory().map((msg) => ({
       role: msg.role,
-      content: msg.content,
+      content: this.formatTextForPayload(msg.role, msg.content, msg.timestamp),
     }));
 
     const hasSystem = messages.length > 0 && messages[0].role === "system";

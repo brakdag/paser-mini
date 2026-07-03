@@ -1,9 +1,6 @@
 import axios from "axios";
 import logger from "../../core/logger.js";
 import BaseAdapter from "../baseAdapter.js";
-import IRCFormat from "../../formats/IRCFormat.js";
-import CleanFormat from "../../formats/CleanFormat.js";
-import FountainFormat from "../../formats/FountainFormat.js";
 import IRCFormatter from "../../utils/ircFormatter.js";
 import RetryHandler from "../../utils/retryHandler.js";
 import {
@@ -49,9 +46,6 @@ class GeminiAdapter extends BaseAdapter {
     this.client = axios.create({
       timeout: 600000,
     });
-    this.ircFormatter = new IRCFormat();
-    this.cleanFormatter = new CleanFormat();
-    this.fountainFormatter = new FountainFormat();
     this.retryHandler = new RetryHandler();
     this.recoverableErrors = [
       "Empty response from Gemini",
@@ -111,8 +105,6 @@ class GeminiAdapter extends BaseAdapter {
   _buildPayload() {
     const contents = this.history.map((entry) => {
       const role = entry.role === "server" ? "user" : entry.role;
-      const nickname =
-        role === "user" ? this.ui.userNickname : this.ui.agentNickname;
 
       const parts = entry.parts.map((part) => {
         if (part && typeof part === "object" && part.inline_data) {
@@ -128,24 +120,11 @@ class GeminiAdapter extends BaseAdapter {
           textContent = JSON.stringify(part);
         }
 
-        let formattedText;
-        if (this.renderingMode === "IRC") {
-          formattedText = this.ircFormatter.formatMessage(
-            nickname,
-            textContent,
-            entry.timestamp,
-          );
-        } else if (this.renderingMode === "FOUNTAIN") {
-          formattedText = this.fountainFormatter.formatMessage(
-            nickname,
-            textContent,
-          );
-        } else {
-          formattedText = this.cleanFormatter.formatMessage(
-            nickname,
-            textContent,
-          );
-        }
+        const formattedText = this.formatTextForPayload(
+          role,
+          textContent,
+          entry.timestamp,
+        );
 
         return {
           text: formattedText,
@@ -250,25 +229,27 @@ class GeminiAdapter extends BaseAdapter {
   async sendMessage(message, role = "user") {
     await this._applyRateLimit();
     this._recordMessage(role, message);
+    const historyLengthBefore = this.history.length;
 
     /**
      * Executes the API request with retry logic.
      * @returns {Promise<string>} The processed response text.
      */
-    return this.retryHandler.execute(async () => {
-      try {
-        const payload = this._buildPayload();
-        this.lastPayload = payload;
+    try {
+      return await this.retryHandler.execute(async () => {
+        try {
+          const payload = this._buildPayload();
+          this.lastPayload = payload;
 
-        const modelName = this.currentModel.replace(/^models\//, "");
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${this.apiKey}`;
+          const modelName = this.currentModel.replace(/^models\//, "");
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${this.apiKey}`;
 
-        const response = await this.client.post(url, payload);
-        return this._processApiResponse(response.data);
-      } catch (error) {
-        throw this._wrapApiError(error);
-      }
-    }, {
+          const response = await this.client.post(url, payload);
+          return this._processApiResponse(response.data);
+        } catch (error) {
+          throw this._wrapApiError(error);
+        }
+      }, {
       recoverableErrors: this.recoverableErrors,
       /**
        * @param {number} attempt - The current attempt number.
@@ -282,6 +263,12 @@ class GeminiAdapter extends BaseAdapter {
         }
       }
     });
+    } catch (error) {
+      if (this.history.length === historyLengthBefore) {
+        this.popLastMessage();
+      }
+      throw error;
+    }
   }
 
   /**

@@ -74,6 +74,7 @@ class OpenRouterAdapter extends BaseAdapter {
   async sendMessage(message, role = "user") {
     const timestamp = IRCFormatter.getTimestamp();
     this.injectMessage(role, message, timestamp);
+    const historyLengthBefore = this.history.length;
 
     const payload = this._preparePayload();
 
@@ -81,7 +82,8 @@ class OpenRouterAdapter extends BaseAdapter {
      * Executes the API request with retry logic.
      * @returns {Promise<string>} The response text.
      */
-    return this.retryHandler.execute(async () => {
+    try {
+      return await this.retryHandler.execute(async () => {
       try {
         logger.info(`[OpenRouterAdapter] Requesting: ${this.client.defaults.baseURL}/chat/completions`);
         logger.info(`[OpenRouterAdapter] Payload: ${JSON.stringify(payload)}`);
@@ -105,6 +107,12 @@ class OpenRouterAdapter extends BaseAdapter {
         }
       }
     });
+    } catch (error) {
+      if (this.history.length === historyLengthBefore) {
+        this.popLastMessage();
+      }
+      throw error;
+    }
   }
 
   /**
@@ -115,7 +123,10 @@ class OpenRouterAdapter extends BaseAdapter {
   _preparePayload() {
     return {
       model: this.currentModel,
-      messages: this.history.map(({ role: msgRole, content }) => ({ role: msgRole, content })),
+      messages: this.history.map(({ role: msgRole, content, timestamp }) => ({
+        role: msgRole,
+        content: this.formatTextForPayload(msgRole, content, timestamp)
+      })),
       temperature: this.temperature,
     };
   }

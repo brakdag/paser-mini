@@ -66,6 +66,7 @@ class CohereAdapter extends BaseAdapter {
   async sendMessage(message, role = "user") {
     const timestamp = IRCFormatter.getTimestamp();
     this.injectMessage(role, message, timestamp);
+    const historyLengthBefore = this.history.length;
 
     const lastMessage = this.history.pop();
     const payload = this._preparePayload(lastMessage);
@@ -75,7 +76,8 @@ class CohereAdapter extends BaseAdapter {
      * Executes the API request with retry logic.
      * @returns {Promise<string>} The response text.
      */
-    return this.retryHandler.execute(async () => {
+    try {
+      return await this.retryHandler.execute(async () => {
       try {
         logger.info(`[CohereAdapter] Requesting: ${this.client.defaults.baseURL}/chat`);
         logger.info(`[CohereAdapter] Payload: ${JSON.stringify(payload)}`);
@@ -99,6 +101,12 @@ class CohereAdapter extends BaseAdapter {
         }
       }
     });
+    } catch (error) {
+      if (this.history.length === historyLengthBefore) {
+        this.popLastMessage();
+      }
+      throw error;
+    }
   }
 
   /**
@@ -112,12 +120,12 @@ class CohereAdapter extends BaseAdapter {
       .filter(msg => msg.role !== 'system')
       .map(msg => ({
         role: msg.role === 'user' ? 'USER' : 'CHATBOT',
-        message: msg.content
+        message: this.formatTextForPayload(msg.role, msg.content, msg.timestamp)
       }));
 
     return {
       model: this.currentModel,
-      message: lastMessage.content,
+      message: this.formatTextForPayload(lastMessage.role, lastMessage.content, lastMessage.timestamp),
       chat_history: chatHistory,
       preamble: this.systemInstruction,
       temperature: this.temperature,

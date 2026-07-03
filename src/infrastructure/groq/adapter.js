@@ -123,10 +123,14 @@ class GroqAdapter extends BaseAdapter {
    */
   async sendMessage(message, role = "user") {
     this.injectMessage(role, message, getTimestamp());
+    const historyLengthBefore = this.history.length;
 
     const payload = {
       model: this.currentModel,
-      messages: this.history.map(({ role: msgRole, content }) => ({ role: msgRole, content })),
+      messages: this.history.map(({ role: msgRole, content, timestamp }) => ({
+        role: msgRole,
+        content: this.formatTextForPayload(msgRole, content, timestamp)
+      })),
       temperature: this.temperature,
     };
     this.lastPayload = payload;
@@ -135,7 +139,8 @@ class GroqAdapter extends BaseAdapter {
      * Executes the API request with retry logic.
      * @returns {Promise<string>} The response text.
      */
-    return this.retryHandler.execute(async () => {
+    try {
+      return await this.retryHandler.execute(async () => {
       try {
         const response = await this.client.post("/chat/completions", payload);
         const textContent = response.data.choices[0].message.content;
@@ -166,6 +171,12 @@ class GroqAdapter extends BaseAdapter {
         }
       }
     });
+    } catch (error) {
+      if (this.history.length === historyLengthBefore) {
+        this.popLastMessage();
+      }
+      throw error;
+    }
   }
 
   /**

@@ -1,3 +1,7 @@
+import IRCFormat from "../formats/IRCFormat.js";
+import CleanFormat from "../formats/CleanFormat.js";
+import FountainFormat from "../formats/FountainFormat.js";
+
 /**
  * Base class for AI adapters. This class is abstract and cannot be instantiated directly.
  */
@@ -25,6 +29,62 @@ export default class BaseAdapter {
     this.configManager = configManager;
     this.userNickname = userNickname;
     this.agentNickname = agentNickname;
+    this.ircFormatter = new IRCFormat();
+    this.cleanFormatter = new CleanFormat();
+    this.fountainFormatter = new FountainFormat();
+    this.renderingMode = "IRC";
+    this.immersionMode = false;
+  }
+
+  /**
+   * Formats text for the API payload based on the current Immersion Mode.
+   * @param {string} role - The role of the sender ('user' or 'model'/'assistant').
+   * @param {string} text - The raw text content.
+   * @param {string|null} [timestamp] - Optional timestamp.
+   * @returns {string} The formatted text.
+   */
+  formatTextForPayload(role, text, timestamp = null) {
+    if (!this.immersionMode || this.renderingMode === "CLEAN") {
+      return text;
+    }
+
+    let normalizedRole = role;
+    if (role === "assistant" || role === "model") normalizedRole = "model";
+    else if (role === "server") normalizedRole = "system";
+
+    let nickname;
+    if (normalizedRole === "user") {
+      nickname = this.ui.userNickname;
+    } else if (normalizedRole === "system") {
+      nickname = "system";
+    } else {
+      nickname = this.ui.agentNickname;
+    }
+
+    if (this.renderingMode === "IRC") {
+      return this.ircFormatter.formatMessage(nickname, text, timestamp);
+    }
+    if (this.renderingMode === "FOUNTAIN") {
+      return this.fountainFormatter.formatMessage(nickname, text);
+    }
+
+    return text;
+  }
+
+  /**
+   * Sets the rendering mode for the adapter.
+   * @param {string} mode - The rendering mode ('IRC', 'FOUNTAIN', 'CLEAN').
+   */
+  setRenderingMode(mode) {
+    this.renderingMode = mode;
+  }
+
+  /**
+   * Enables or disables the Immersion Mode (raw formatting in payloads).
+   * @param {boolean} active - True to enable, false to disable.
+   */
+  setImmersionMode(active) {
+    this.immersionMode = active;
   }
 
   /**
