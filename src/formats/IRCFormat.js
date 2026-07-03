@@ -11,8 +11,8 @@ class IRCFormat extends FormatPlugin {
    * @param {string} text - The message text.
    * @returns {string} The formatted IRC message.
    */
-  formatMessage(nickname, text) {
-    return IRCFormatter.formatMessage(nickname, text);
+  formatMessage(nickname, text, timestamp = null) {
+    return IRCFormatter.formatMessage(nickname, text, timestamp);
   }
 
   /**

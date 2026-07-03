@@ -1,6 +1,9 @@
 import axios from "axios";
 import logger from "../../core/logger.js";
 import BaseAdapter from "../baseAdapter.js";
+import IRCFormat from "../../formats/IRCFormat.js";
+import CleanFormat from "../../formats/CleanFormat.js";
+import FountainFormat from "../../formats/FountainFormat.js";
 import IRCFormatter from "../../utils/ircFormatter.js";
 import RetryHandler from "../../utils/retryHandler.js";
 import {
@@ -46,6 +49,9 @@ class GeminiAdapter extends BaseAdapter {
     this.client = axios.create({
       timeout: 600000,
     });
+    this.ircFormatter = new IRCFormat();
+    this.cleanFormatter = new CleanFormat();
+    this.fountainFormatter = new FountainFormat();
     this.retryHandler = new RetryHandler();
     this.recoverableErrors = [
       "Empty response from Gemini",
@@ -122,12 +128,27 @@ class GeminiAdapter extends BaseAdapter {
           textContent = JSON.stringify(part);
         }
 
-        return {
-          text: IRCFormatter.formatMessage(
+        let formattedText;
+        if (this.renderingMode === "IRC") {
+          formattedText = this.ircFormatter.formatMessage(
             nickname,
             textContent,
             entry.timestamp,
-          ),
+          );
+        } else if (this.renderingMode === "FOUNTAIN") {
+          formattedText = this.fountainFormatter.formatMessage(
+            nickname,
+            textContent,
+          );
+        } else {
+          formattedText = this.cleanFormatter.formatMessage(
+            nickname,
+            textContent,
+          );
+        }
+
+        return {
+          text: formattedText,
         };
       });
 
