@@ -1,29 +1,8 @@
-import fs from "fs/promises";
-
 /**
  * Handles interface-related commands, including rendering modes, 
  * user identity, and channel management.
  */
 class InterfaceCommands {
-  /**
-   * Reads a file from the disk and inserts its content as a user message.
-   * @param {object} chatManager The chat manager instance.
-   * @param {object} ui The terminal UI instance.
-   * @param {string} filename The path to the file to be read.
-   * @returns {Promise<boolean>} True if the operation succeeded.
-   */
-  static async handleInsertFile(chatManager, ui, filename) {
-    try {
-      const content = await fs.readFile(filename, "utf8");
-      ui.displayChatMessage(ui.userNickname, content);
-      await chatManager.processTurn(content);
-      return true;
-    } catch (error) {
-      ui.displayError(`Could not read file ${filename}: ${error.message}`);
-      return true;
-    }
-  }
-
   /**
    * Sets the rendering mode to Fountain (Screenplay).
    * @param {object} chatManager The chat manager instance.
@@ -205,12 +184,9 @@ class InterfaceCommands {
       "/topic <text> - Change the channel topic\n" +
       "/nick <name> - Change the agent's nickname\n" +
       "/me <action> - Perform an action (roleplay)\n" +
-      "/compact    - Compact history into IRC log and reset context\n" +
       "/action <txt> - Perform a narrative action (full-width)\n" +
-      "/kick       - Kick agent: Nuclear reset, wipes all session memory\n" +
       "/paim <msg>  - Simulate AI response (Pishin AI Message)\n" +
       "/join <#ch> - Change channel and mode (#charla, #work)\n" +
-      "/insertFile <file> - Insert file content as user input\n" +
       "/s [file]   - Save last request payload to JSON\n" +
       "/q, /quit, /exit - Exit application\n";
     ui.displayMessage(helpText);

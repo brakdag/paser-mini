@@ -1,8 +1,8 @@
 import fs from "fs/promises";
 
 /**
- * Handles session-related commands, including history rewriting, 
- * history compaction, and payload saving.
+ * Handles session-related commands, including history rewriting 
+ * and payload saving.
  */
 class SessionCommands {
   /**
@@ -24,17 +24,6 @@ class SessionCommands {
       ui.displayError("No interaction to remove.");
     }
     return true;
-  }
-
-  /**
-   * Compacts the conversation history into an IRC log to save context window space.
-   * @param {object} chatManager The chat manager instance.
-   * @param {object} ui The terminal UI instance.
-   * @returns {Promise<boolean>} True if the operation succeeded.
-   */
-  static async handleCompact(chatManager, ui) {
-    ui.displayInfo("Compacting history into IRC log...");
-    return chatManager.compactHistory();
   }
 
   /**

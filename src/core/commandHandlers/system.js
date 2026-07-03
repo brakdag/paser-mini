@@ -36,20 +36,6 @@ class SystemCommands {
   }
 
   /**
-   * Kicks the agent by wiping the session and clearing the log.
-   * @param {object} chatManager The chat manager instance.
-   * @param {object} ui The terminal UI instance.
-   * @returns {Promise<boolean>} True if the operation succeeded.
-   */
-  static async handleKick(chatManager, ui) {
-    ui.displaySystemMessage("*** Agent kicked. Session wiped. Restarting...");
-    chatManager.assistant.hardReset();
-    ui.clearLog();
-    ui.displayLogOpened();
-    return true;
-  }
-
-  /**
    * Enables bash access and notifies the assistant of the new capability.
    * @param {object} chatManager The chat manager instance.
    * @param {object} ui The terminal UI instance.

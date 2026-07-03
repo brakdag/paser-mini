@@ -42,9 +42,7 @@ const COMMAND_MAP = {
    * @returns {void}
    */
   "/clear": (_, ui) => SystemCommands.handleClear(ui),
-  "/kick": SystemCommands.handleKick,
   "/enablebash": SystemCommands.handleEnableBash,
-  "/compact": SessionCommands.handleCompact,
   "/fountain": InterfaceCommands.handleFountain,
   "/irc": InterfaceCommands.handleIRC,
   "/clean": InterfaceCommands.handleClean,
@@ -153,15 +151,6 @@ const PREFIX_COMMANDS = {
    */
   "/join ": (cm, ui, input) =>
     InterfaceCommands.handleJoin(cm, ui, input.slice(6).trim()),
-  /**
-   * Inserts a file's content into the chat.
-   * @param {import("./chatManager.js").default} cm - The chat manager instance.
-   * @param {object} ui - The UI instance.
-   * @param {string} input - The raw input string.
-   * @returns {void}
-   */
-  "/insertfile ": (cm, ui, input) =>
-    InterfaceCommands.handleInsertFile(cm, ui, input.slice(12).trim()),
   /**
    * Invokes the Paimal AI assistant.
    * @param {import("./chatManager.js").default} cm - The chat manager instance.
