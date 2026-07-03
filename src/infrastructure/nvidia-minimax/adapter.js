@@ -1,5 +1,6 @@
 import ConversationState from "../conversationState.js";
 import NvidiaRestClient from "../nvidia/restClient.js";
+import NvidiaRetryHandler from "../nvidia/retryHandler.js";
 import logger from "../../core/logger.js";
 import BaseAdapter from "../baseAdapter.js";
 
@@ -34,6 +35,7 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
     super({ ui, configManager, userNickname, agentNickname });
     this.state = new ConversationState(userNickname, agentNickname);
     this.restClient = new NvidiaRestClient(configManager);
+    this.retryHandler = new NvidiaRetryHandler(5000, undefined, this.restClient);
     this.currentModel = DEFAULT_MODEL;
     this.systemInstruction = "";
     this.temperature = DEFAULT_TEMPERATURE;
@@ -119,7 +121,10 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
       model: this.currentModel,
       messageCount: payload.messages.length,
     });
-    return this.restClient.chatCompletions(payload, false, M3_TIMEOUT);
+    return this.retryHandler.execute(
+      (p) => this.restClient.chatCompletions(p, false, M3_TIMEOUT),
+      payload
+    );
   }
 
   /**
