@@ -1,8 +1,8 @@
 import ConversationState from "../conversationState.js";
 import NvidiaRestClient from "../nvidia/restClient.js";
-import NvidiaRetryHandler from "../nvidia/retryHandler.js";
 import logger from "../../core/logger.js";
 import BaseAdapter from "../baseAdapter.js";
+import RetryHandler from "../../utils/retryHandler.js";
 
 const DEFAULT_MODEL = "minimaxai/minimax-m3";
 const DEFAULT_TEMPERATURE = 0.3;
@@ -35,12 +35,17 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
     super({ ui, configManager, userNickname, agentNickname });
     this.state = new ConversationState(userNickname, agentNickname);
     this.restClient = new NvidiaRestClient(configManager);
-    this.retryHandler = new NvidiaRetryHandler(5000, undefined, this.restClient);
     this.currentModel = DEFAULT_MODEL;
     this.systemInstruction = "";
     this.temperature = DEFAULT_TEMPERATURE;
     this.lastPayload = null;
     this.lastReasoning = null;
+    this.retryHandler = new RetryHandler();
+    this.recoverableErrors = [
+      "NVIDIA M3 endpoint returned an empty or degraded response.",
+      "ETIMEDOUT",
+      "ECONNRESET",
+    ];
   }
 
   /**
@@ -71,12 +76,31 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
     const payload = this._preparePayload();
     this.lastPayload = payload;
 
-    try {
-      const data = await this._executeRequest(payload);
-      return this._handleResponse(data);
-    } catch (e) {
-      return this._handleError(e);
-    }
+    /**
+     * Executes the API request with retry logic.
+     * @returns {Promise<string>} The processed response text.
+     */
+    return this.retryHandler.execute(async () => {
+      try {
+        const data = await this.restClient.chatCompletions(payload, false, M3_TIMEOUT);
+        return this._handleResponse(data);
+      } catch (e) {
+        throw this._handleError(e);
+      }
+    }, {
+      recoverableErrors: this.recoverableErrors,
+      /**
+       * @param {number} attempt - The current attempt number.
+       * @param {Error} error - The error that triggered the retry.
+       * @param {string} formattedDelay - The formatted delay string.
+       */
+      onRetry: (attempt, error, formattedDelay) => {
+        logger.warn(`[NvidiaMiniMaxAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`);
+        if (this.ui && this.ui.displayInfo) {
+          this.ui.displayInfo(`Reintentando NVIDIA M3 en ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`);
+        }
+      }
+    });
   }
 
   /**
@@ -109,22 +133,6 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
       stream: false, // Forzar no-stream hasta que el endpoint se estabilice
       max_tokens: 8192, // El M3 requiere un limite explicito para evitar respuestas truncadas
     };
-  }
-
-  /**
-   * Executes the network request via the REST client with extended timeout.
-   * @param {object} payload - The request payload to be sent.
-   * @returns {Promise<object>} The raw API response data.
-   */
-  async _executeRequest(payload) {
-    logger.debug("NvidiaMiniMaxAdapter: Sending request", {
-      model: this.currentModel,
-      messageCount: payload.messages.length,
-    });
-    return this.retryHandler.execute(
-      (p) => this.restClient.chatCompletions(p, false, M3_TIMEOUT),
-      payload
-    );
   }
 
   /**

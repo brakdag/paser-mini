@@ -1,8 +1,8 @@
 import axios from "axios";
-import axiosRetry from "axios-retry";
 import logger from "../../core/logger.js";
 import BaseAdapter from "../baseAdapter.js";
 import IRCFormatter from "../../utils/ircFormatter.js";
+import RetryHandler from "../../utils/retryHandler.js";
 import {
   GeminiSafetyError,
   GeminiEmptyResponseError,
@@ -46,48 +46,13 @@ class GeminiAdapter extends BaseAdapter {
     this.client = axios.create({
       timeout: 600000,
     });
-
-    this._setupRetryLogic();
-  }
-
-  /**
-   * Configures the axios-retry logic for handling recoverable API errors.
-   * @private
-   */
-  _setupRetryLogic() {
-    axiosRetry(this.client, {
-      retries: 5,
-      retryDelay: axiosRetry.exponentialDelay,
-      /**
-       * Determines if a request should be retried.
-       * @param {Error} error - The error encountered during the request.
-       * @returns {boolean} True if the request should be retried.
-       */
-      retryCondition: (error) => {
-        const status = error.response?.status;
-        const recoverableStatuses = [429, 500, 502, 503, 504];
-        return (
-          axiosRetry.isNetworkOrIdempotentRequestError(error) ||
-          recoverableStatuses.includes(status)
-        );
-      },
-      /**
-       * Callback executed on each retry attempt.
-       * @param {number} retryCount - The current retry attempt number.
-       * @param {Error} error - The error that triggered the retry.
-       */
-      onRetry: (retryCount, error) => {
-        const time = IRCFormatter.getTimestamp();
-        const msg = `[${time}] -!- [GeminiAdapter] API Retry ${retryCount}/5 due to: ${error.response?.status || error.message}`;
-        logger.warn(msg);
-        if (this.ui && this.ui.displayInfo) {
-          const status = error.response?.status || error.message;
-          this.ui.displayInfo(
-            `Reintentando conexión... (${retryCount}/5) | Error: ${status}`,
-          );
-        }
-      },
-    });
+    this.retryHandler = new RetryHandler();
+    this.recoverableErrors = [
+      "Empty response from Gemini",
+      "No response candidates returned",
+      "No content parts returned",
+      "Response blocked by safety filters.",
+    ];
   }
 
   /**
@@ -263,30 +228,39 @@ class GeminiAdapter extends BaseAdapter {
    */
   async sendMessage(message, role = "user") {
     await this._applyRateLimit();
-
     this._recordMessage(role, message);
 
-    try {
-      return await this._executeRequest();
-    } catch (error) {
-      throw this._wrapApiError(error);
-    }
-  }
+    /**
+     * Executes the API request with retry logic.
+     * @returns {Promise<string>} The processed response text.
+     */
+    return this.retryHandler.execute(async () => {
+      try {
+        const payload = this._buildPayload();
+        this.lastPayload = payload;
 
-  /**
-   * Executes the network request to the Gemini API.
-   * @private
-   * @returns {Promise<string>} The processed response text.
-   */
-  async _executeRequest() {
-    const payload = this._buildPayload();
-    this.lastPayload = payload;
+        const modelName = this.currentModel.replace(/^models\//, "");
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${this.apiKey}`;
 
-    const modelName = this.currentModel.replace(/^models\//, "");
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${this.apiKey}`;
-
-    const response = await this.client.post(url, payload);
-    return this._processApiResponse(response.data);
+        const response = await this.client.post(url, payload);
+        return this._processApiResponse(response.data);
+      } catch (error) {
+        throw this._wrapApiError(error);
+      }
+    }, {
+      recoverableErrors: this.recoverableErrors,
+      /**
+       * @param {number} attempt - The current attempt number.
+       * @param {Error} error - The error that triggered the retry.
+       * @param {string} formattedDelay - The formatted delay string.
+       */
+      onRetry: (attempt, error, formattedDelay) => {
+        logger.warn(`[GeminiAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`);
+        if (this.ui && this.ui.displayInfo) {
+          this.ui.displayInfo(`Reintentando Gemini en ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`);
+        }
+      }
+    });
   }
 
   /**
@@ -428,4 +402,3 @@ class GeminiAdapter extends BaseAdapter {
 }
 
 export default GeminiAdapter;
-

@@ -237,10 +237,7 @@ ${welcomeMsg}`;
             const logMsg = this.ui.getLogOpenedString();
             this.ui.displayChatMessage("system", logMsg);
             this.logOpened = true;
-            const formattedLog =
-              this.ui.renderingMode === "FOUNTAIN"
-                ? this.ui._renderFountain("system", logMsg)
-                : logMsg;
+            const formattedLog = this.ui.formatSystemMessage(logMsg);
             this.assistant.injectMessage("server", formattedLog);
           }
 

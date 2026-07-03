@@ -1,8 +1,8 @@
 import axios from "axios";
-import axiosRetry from "axios-retry";
 import BaseAdapter from "../baseAdapter.js";
 import logger from "../../core/logger.js";
 import IRCFormatter from "../../utils/ircFormatter.js";
+import RetryHandler from "../../utils/retryHandler.js";
 
 /**
  * Adapter for the OpenRouter AI API, providing chat capabilities and history management.
@@ -24,10 +24,12 @@ class OpenRouterAdapter extends BaseAdapter {
     this.temperature = 0.7;
 
     this._configureClient();
+    this.retryHandler = new RetryHandler();
+    this.recoverableErrors = ["Empty response from OpenRouter"];
   }
 
   /**
-   * Configures the axios client with base URL, timeout, headers, and retry logic.
+   * Configures the axios client with base URL, timeout, and headers.
    * @private
    */
   _configureClient() {
@@ -39,37 +41,6 @@ class OpenRouterAdapter extends BaseAdapter {
         "HTTP-Referer": "https://paser-mini.local",
         "X-Title": "Paser Mini",
         "Content-Type": "application/json",
-      },
-    });
-
-    axiosRetry(this.client, {
-      retries: 5,
-      retryDelay: axiosRetry.exponentialDelay,
-      /**
-       * Determines if a request should be retried.
-       * @param {Error} error - The error object.
-       * @returns {boolean} True if the request should be retried.
-       */
-      retryCondition: (error) => {
-        const status = error.response?.status;
-        const recoverableStatuses = [429, 500, 502, 503, 504];
-        return (
-          axiosRetry.isNetworkOrIdempotentRequestError(error) ||
-          recoverableStatuses.includes(status)
-        );
-      },
-      /**
-       * Callback executed on each retry attempt.
-       * @param {number} retryCount - The current retry count.
-       * @param {Error} error - The error that triggered the retry.
-       */
-      onRetry: (retryCount, error) => {
-        const time = IRCFormatter.getTimestamp();
-        const msg = `[${time}] -!- [OpenRouterAdapter] API Retry ${retryCount}/5 due to: ${error.response?.status || error.message}`;
-        logger.warn(msg);
-        if (this.ui && this.ui.displayInfo) {
-          this.ui.displayInfo(`Reintentando OpenRouter... (${retryCount}/5) | Error: ${error.response?.status || error.message}`);
-        }
       },
     });
   }
@@ -106,15 +77,34 @@ class OpenRouterAdapter extends BaseAdapter {
 
     const payload = this._preparePayload();
 
-    try {
-      logger.info(`[OpenRouterAdapter] Requesting: ${this.client.defaults.baseURL}/chat/completions`);
-      logger.info(`[OpenRouterAdapter] Payload: ${JSON.stringify(payload)}`);
+    /**
+     * Executes the API request with retry logic.
+     * @returns {Promise<string>} The response text.
+     */
+    return this.retryHandler.execute(async () => {
+      try {
+        logger.info(`[OpenRouterAdapter] Requesting: ${this.client.defaults.baseURL}/chat/completions`);
+        logger.info(`[OpenRouterAdapter] Payload: ${JSON.stringify(payload)}`);
 
-      const response = await this.client.post("/chat/completions", payload);
-      return this._handleResponse(response);
-    } catch (error) {
-      throw this._handleApiError(error);
-    }
+        const response = await this.client.post("/chat/completions", payload);
+        return this._handleResponse(response);
+      } catch (error) {
+        throw this._handleApiError(error);
+      }
+    }, {
+      recoverableErrors: this.recoverableErrors,
+      /**
+       * @param {number} attempt - The current attempt number.
+       * @param {Error} error - The error that triggered the retry.
+       * @param {string} formattedDelay - The formatted delay string.
+       */
+      onRetry: (attempt, error, formattedDelay) => {
+        logger.warn(`[OpenRouterAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`);
+        if (this.ui && this.ui.displayInfo) {
+          this.ui.displayInfo(`Reintentando OpenRouter en ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`);
+        }
+      }
+    });
   }
 
   /**

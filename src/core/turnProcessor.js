@@ -1,7 +1,6 @@
 import logger from './logger.js';
 import { GeminiSafetyError, GeminiEmptyResponseError } from './exceptions.js';
 import ApiCommunicator from './ApiCommunicator.js';
-import FountainAdapter from './FountainAdapter.js';
 import ThoughtExtractor from './thoughtExtractor.js';
 import ToolExecutor from './toolExecutor.js';
 
@@ -30,7 +29,6 @@ class TurnProcessor {
     this.ui = ui;
     this.repetitionDetector = repetitionDetector;
     this.api = new ApiCommunicator(assistant, ui);
-    this.fountain = new FountainAdapter(assistant, ui);
   }
 
   /**
@@ -44,16 +42,7 @@ class TurnProcessor {
     if (!userInput) return;
     logger.info('Starting processTurn', { userInput });
 
-    let processedInput = userInput;
-    if (this.ui.renderingMode === 'FOUNTAIN') {
-      processedInput = this.fountain.processInput(userInput);
-    }
-
-    let currentResponse = await this.#sendInitialRequest(processedInput);
-
-    if (this.ui.renderingMode === 'FOUNTAIN') {
-      await this.fountain.processResponse(currentResponse);
-    }
+    let currentResponse = await this.#sendInitialRequest(userInput);
 
     let turnComplete = false;
     let iterations = 0;
@@ -77,14 +66,11 @@ class TurnProcessor {
           consecutiveErrors += executionResult.errorCount;
 
           if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
-            currentResponse = await this.api.send(`CRITICAL ERROR: Too many consecutive parsing failures. Stop using tools.`, 'user');
+            currentResponse = await this.api.send('CRITICAL ERROR: Too many consecutive parsing failures. Stop using tools.', 'user');
             consecutiveErrors = 0;
           } else {
             const resultsPayload = this.#buildResultsPayload(executionResult.results);
             currentResponse = await this.#sendToolResults(resultsPayload);
-            if (this.ui.renderingMode === 'FOUNTAIN') {
-              await this.fountain.processResponse(currentResponse);
-            }
           }
         }
       }
@@ -135,9 +121,6 @@ class TurnProcessor {
    * @returns {string|Array} The formatted payload for the API.
    */
   #buildResultsPayload(toolResults) {
-    if (this.ui.renderingMode === 'FOUNTAIN') {
-      return this.fountain.formatToolResults(toolResults.map((r) => r.response));
-    }
     const mapped = toolResults.map((r) => {
       if (typeof r === 'string') return r;
       return r.result && r.result.mime_type ? r.result : r.response;

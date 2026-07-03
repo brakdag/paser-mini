@@ -9,6 +9,7 @@ import {
   DEFAULT_MODELS,
   HTTP_TIMEOUT,
   MAX_RETRIES,
+  MAX_RETRY_DELAY,
   MAX_TOKENS,
   RECOVERABLE_STATUS_CODES,
 } from "./constants.js";
@@ -131,6 +132,32 @@ class ZaiAdapter extends BaseAdapter {
   }
 
   /**
+   * Formats milliseconds into a human-readable string (e.g., "2.5h", "45m").
+   * @param {number} ms - Milliseconds.
+   * @returns {string} Formatted time string.
+   * @private
+   */
+  _formatDelay(ms) {
+    const seconds = Math.floor(ms / 1000);
+    const hours = seconds / 3600;
+    if (hours >= 1) return `${hours.toFixed(1)}h`;
+    const minutes = seconds / 60;
+    if (minutes >= 1) return `${minutes.toFixed(0)}m`;
+    return `${seconds}s`;
+  }
+
+  /**
+   * Calculates the exponential backoff delay with a maximum cap.
+   * @param {number} attempt - The current attempt number (1-indexed).
+   * @returns {number} Delay in milliseconds.
+   * @private
+   */
+  _getExponentialDelay(attempt) {
+    const delay = 2 ** attempt * 1000;
+    return Math.min(delay, MAX_RETRY_DELAY);
+  }
+
+  /**
    * Sends a message to the Z.AI API and records the interaction in history.
    * @param {string|object|Array} message - The message content to send.
    * @param {string} [role] - The role of the sender.
@@ -142,16 +169,40 @@ class ZaiAdapter extends BaseAdapter {
     this.injectMessage(role, message, timestamp);
 
     const payload = this._preparePayload();
+    let lastError = null;
 
-    try {
-      logger.info(
-        `[ZaiAdapter] Requesting: ${this.client.defaults.baseURL}/chat/completions`,
-      );
-      const response = await this.client.post("/chat/completions", payload);
-      return this._handleResponse(response);
-    } catch (error) {
-      throw this._handleApiError(error);
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt += 1) {
+      try {
+        logger.info(
+          `[ZaiAdapter] Requesting (Attempt ${attempt}/${MAX_RETRIES}): ${this.client.defaults.baseURL}/chat/completions`,
+        );
+        const response = await this.client.post("/chat/completions", payload);
+        return this._handleResponse(response);
+      } catch (error) {
+        lastError = error;
+        const isEmptyResponseError = error.message === "Empty response from Z.AI";
+
+        if (!isEmptyResponseError) {
+          throw this._handleApiError(error);
+        }
+
+        const delay = this._getExponentialDelay(attempt);
+        const formattedDelay = this._formatDelay(delay);
+        logger.warn(
+          `[ZaiAdapter] Empty response received. Retrying in ${formattedDelay}... (Attempt ${attempt}/${MAX_RETRIES})`,
+        );
+        if (this.ui && this.ui.displayInfo) {
+          this.ui.displayInfo(
+            `Empty response from Z.AI. Retrying in ${formattedDelay}... (${attempt}/${MAX_RETRIES})`,
+          );
+        }
+        await new Promise((resolve) => {
+          setTimeout(resolve, delay);
+        });
+      }
     }
+
+    throw this._handleApiError(lastError || new Error("Max retries reached with empty response."));
   }
 
   /**

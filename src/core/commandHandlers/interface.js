@@ -94,18 +94,9 @@ class InterfaceCommands {
    * @returns {Promise<boolean>} True if the operation succeeded.
    */
   static async handleAction(chatManager, ui, actionText) {
-    if (ui.renderingMode === "FOUNTAIN") {
-      ui.displaySystemMessage(actionText);
-      const formatted = ui._renderFountain(
-        "system",
-        `* ACTION: ${actionText} *`,
-      );
-      chatManager.assistant.injectMessage("server", formatted);
-    } else {
-      const formattedAction = `*** [Action]: ${actionText}`;
-      ui.displaySystemMessage(formattedAction);
-      chatManager.assistant.injectMessage("server", formattedAction);
-    }
+    const actionContent = `* ACTION: ${actionText} *`;
+    ui.displayChatMessage("system", actionContent);
+    chatManager.assistant.injectMessage("server", ui.formatChatMessage("system", actionContent));
     return true;
   }
 
@@ -153,11 +144,7 @@ class InterfaceCommands {
       }
       const systemMsg = `Joined channel ${channel}. Mode: ${modeDesc}`;
       ui.displaySystemMessage(systemMsg);
-      const content = 
-        ui.renderingMode === "FOUNTAIN"
-          ? ui._renderFountain("system", systemMsg)
-          : systemMsg;
-      chatManager.assistant.injectMessage("server", content);
+      chatManager.assistant.injectMessage("server", ui.formatSystemMessage(systemMsg));
     }
     return true;
   }

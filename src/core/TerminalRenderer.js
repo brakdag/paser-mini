@@ -186,48 +186,6 @@ class TerminalRenderer {
   }
 
   /**
-   * Renders text according to Fountain screenplay formatting rules.
-   * @param {string} nickname - The nickname of the character or "system".
-   * @param {string} text - The text to render.
-   * @returns {string} The formatted Fountain output.
-   */
-  renderFountain(nickname, text) {
-    const trimmedText = text.trim();
-    let output = "";
-
-    if (nickname === "system") {
-      if (trimmedText.startsWith("* SCENE:")) {
-        const sceneText = trimmedText
-          .replace(/^\* SCENE:\s*|\s*\*$/g, "")
-          .toUpperCase();
-        output = `\n${sceneText}\n`;
-      } else {
-        const cleanText = trimmedText.replace(
-          /^(\* ACTION:\s*|\*\*\*|---|--!-)\s*|\s*\*$/g,
-          "",
-        );
-        output = this._wrapText(cleanText, 0, 75);
-      }
-    } else if (nickname === "dialogue") {
-      if (trimmedText.startsWith("*")) {
-        const cleanText = trimmedText.replace(/^\*\s*|\s*\*$/g, "");
-        output += this._wrapText(`(${cleanText})`, 31, 60);
-      } else {
-        output += this._wrapText(trimmedText, 25, 60);
-      }
-    } else {
-      output += `${" ".repeat(37) + nickname.toUpperCase()}\n`;
-      if (trimmedText.startsWith("*")) {
-        const cleanText = trimmedText.replace(/^\*\s*|\s*\*$/g, "");
-        output += this._wrapText(`(${cleanText})`, 31, 60);
-      } else {
-        output += this._wrapText(trimmedText, 25, 60);
-      }
-    }
-    return output;
-  }
-
-  /**
    * Wraps a single string of text to fit within a specified width.
    * @param {string} text - The text to wrap.
    * @param {number} width - The maximum width in characters.

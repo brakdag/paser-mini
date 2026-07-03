@@ -4,7 +4,9 @@ import ora from "ora";
 import renderer from "./TerminalRenderer.js";
 import input from "./TerminalInput.js";
 import sessionLogger from "./SessionLogger.js";
-import IRCFormatter from "../utils/ircFormatter.js";
+import IRCFormat from "../formats/IRCFormat.js";
+import CleanFormat from "../formats/CleanFormat.js";
+import FountainFormat from "../formats/FountainFormat.js";
 
 /**
  * Manages the terminal user interface, including message display, 
@@ -29,6 +31,12 @@ class TerminalUI {
     this.userNickname = "user";
     this.renderingMode = "IRC";
 
+    this.formatPlugins = {
+      IRC: new IRCFormat(),
+      CLEAN: new CleanFormat(),
+      FOUNTAIN: new FountainFormat(),
+    };
+    this.activePlugin = this.formatPlugins.IRC;
     this.bashEnabled = false;
   }
 
@@ -46,6 +54,7 @@ class TerminalUI {
    */
   setRenderingMode(mode) {
     this.renderingMode = mode;
+    this.activePlugin = this.formatPlugins[mode] || this.formatPlugins.IRC;
   }
 
   /**
@@ -79,51 +88,35 @@ class TerminalUI {
   }
 
   /**
+   * Formats a chat message using the active plugin.
+   * @param {string} nickname The nickname of the sender.
+   * @param {string} text The message text.
+   * @returns {string} The formatted message string.
+   */
+  formatChatMessage(nickname, text) {
+    return this.activePlugin.formatMessage(nickname, text);
+  }
+
+  /**
+   * Formats a system message using the active plugin.
+   * @param {string} text The system message text.
+   * @returns {string} The formatted system message string.
+   */
+  formatSystemMessage(text) {
+    return this.activePlugin.formatSystem(text);
+  }
+
+  /**
    * Displays a chat message in the terminal and logs it.
    * @param {string} nickname The nickname of the sender.
    * @param {string} text The message text.
    */
   displayChatMessage(nickname, text) {
     input.clearCurrentLine();
-    const trimmedText = text.trim();
-
-    if (this.renderingMode === "FOUNTAIN") {
-      const fountainText = renderer.renderFountain(nickname, trimmedText);
-      const renderedText = renderer.formatMarkdown(fountainText);
-      process.stdout.write(`${renderedText}\n`);
-      this.writeToLog(renderedText);
-      return;
-    }
-
-    if (this.renderingMode === "CLEAN") {
-      const renderedText = renderer.formatMarkdown(trimmedText);
-      process.stdout.write(`${renderedText}\n`);
-      this.writeToLog(IRCFormatter.formatMessage(nickname, trimmedText));
-      return;
-    }
-
-    const renderedText = renderer.formatMarkdown(trimmedText);
-
-    if (
-      trimmedText.startsWith("---") ||
-      trimmedText.startsWith("***") ||
-      trimmedText.startsWith("-!-")
-    ) {
-      const formatted = `[${IRCFormatter.getTimestamp()}] ${trimmedText}`;
-      process.stdout.write(
-        `${chalk.white(`[${IRCFormatter.getTimestamp()}]`)} ${renderedText}\n`,
-      );
-      this.writeToLog(formatted);
-    } else {
-      const formatted = IRCFormatter.formatMessage(nickname, trimmedText);
-      const terminalMsg = IRCFormatter.formatTerminalMessage(
-        nickname,
-        renderedText,
-        this.agentNickname,
-      );
-      process.stdout.write(`${terminalMsg}\n`);
-      this.writeToLog(formatted);
-    }
+    const formattedText = this.activePlugin.formatMessage(nickname, text.trim());
+    const renderedText = renderer.formatMarkdown(formattedText);
+    process.stdout.write(`${renderedText}\n`);
+    this.writeToLog(formattedText);
   }
 
   /**
@@ -150,7 +143,7 @@ class TerminalUI {
   displayInfo(text) {
     input.clearCurrentLine();
     process.stdout.write(`${chalk.blue("\u2139 ") + chalk.cyan(text)}\n`);
-    this.writeToLog(IRCFormatter.formatSystemMessage("INFO", text));
+    this.writeToLog(this.activePlugin.formatSystem(`INFO: ${text}`));
   }
 
   /**
@@ -160,7 +153,7 @@ class TerminalUI {
   displayError(text) {
     input.clearCurrentLine();
     process.stdout.write(`${chalk.red("\u2716 ") + chalk.red.bold(text)}\n`);
-    this.writeToLog(IRCFormatter.formatSystemMessage("ERROR", text));
+    this.writeToLog(this.activePlugin.formatSystem(`ERROR: ${text}`));
   }
 
   /**
@@ -217,21 +210,14 @@ class TerminalUI {
     const statusIcon = success ? "✓" : "✗";
     const statusColor = success ? chalk.green : chalk.red;
 
-    const timestamp = IRCFormatter.getTimestamp();
-    const prefix = `[${timestamp}] <${nameColor(this.agentNickname)}>`;
+    const prefix = `<${nameColor(this.agentNickname)}>`;
     const finalMsg = `${prefix} * ${name} (${detail}) ${statusColor(statusIcon)}`;
     console.log(finalMsg);
 
     const plainStatus = success ? "✓" : "✗";
-    const plainPrefix = `[${timestamp}] <${this.agentNickname}>`;
-    if (this.renderingMode === "FOUNTAIN") {
-      const cleanToolLog = `${name} (${detail}) ${plainStatus}`;
-      this.writeToLog(
-        renderer.renderFountain("system", `* ACTION: ${cleanToolLog}`),
-      );
-    } else {
-      this.writeToLog(`${plainPrefix} * ${name} (${detail}) ${plainStatus}`);
-    }
+    this.writeToLog(
+      this.activePlugin.formatAction(this.agentNickname, `${name} (${detail}) ${plainStatus}`),
+    );
   }
 
   /**

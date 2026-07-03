@@ -1,9 +1,9 @@
 import ConversationState from "../conversationState.js";
 import PayloadMapper from "../payloadMapper.js";
 import NvidiaRestClient from "./restClient.js";
-import NvidiaRetryHandler from "./retryHandler.js";
 import logger from "../../core/logger.js";
 import BaseAdapter from "../baseAdapter.js";
+import RetryHandler from "../../utils/retryHandler.js";
 
 const DEFAULT_MODEL = "meta/llama-3.1-405b-instruct";
 const DEFAULT_TEMPERATURE = 0.7;
@@ -28,11 +28,12 @@ class NvidiaAdapter extends BaseAdapter {
     super({ ui, configManager, userNickname, agentNickname });
     this.state = new ConversationState(userNickname, agentNickname);
     this.restClient = new NvidiaRestClient(configManager);
-    this.retryHandler = new NvidiaRetryHandler(5000, undefined, this.restClient);
     this.currentModel = DEFAULT_MODEL;
     this.systemInstruction = "";
     this.temperature = DEFAULT_TEMPERATURE;
     this.lastPayload = null;
+    this.retryHandler = new RetryHandler();
+    this.recoverableErrors = ["Empty response from NVIDIA", "ETIMEDOUT", "ECONNRESET"];
   }
 
   /**
@@ -60,12 +61,31 @@ class NvidiaAdapter extends BaseAdapter {
     const payload = this._preparePayload();
     this.lastPayload = payload;
 
-    try {
-      const data = await this._executeRequest(payload);
-      return this._handleResponse(data);
-    } catch (e) {
-      return this._handleError(e);
-    }
+    /**
+     * Executes the API request with retry logic.
+     * @returns {Promise<string>} The processed response text.
+     */
+    return this.retryHandler.execute(async () => {
+      try {
+        const data = await this.restClient.chatCompletions(payload);
+        return this._handleResponse(data);
+      } catch (e) {
+        throw this._handleError(e);
+      }
+    }, {
+      recoverableErrors: this.recoverableErrors,
+      /**
+       * @param {number} attempt - The current attempt number.
+       * @param {Error} error - The error that triggered the retry.
+       * @param {string} formattedDelay - The formatted delay string.
+       */
+      onRetry: (attempt, error, formattedDelay) => {
+        logger.warn(`[NvidiaAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`);
+        if (this.ui && this.ui.displayInfo) {
+          this.ui.displayInfo(`Reintentando NVIDIA en ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`);
+        }
+      }
+    });
   }
 
   /**
@@ -89,19 +109,6 @@ class NvidiaAdapter extends BaseAdapter {
   }
 
   /**
-   * Executes the network request via the REST client.
-   * @param {object} payload - The request payload to be sent.
-   * @returns {Promise<object>} The raw API response data.
-   */
-  async _executeRequest(payload) {
-    logger.debug("NvidiaAdapter: Sending request", { model: this.currentModel, payload });
-    return this.retryHandler.execute(
-      (p) => this.restClient.chatCompletions(p),
-      payload
-    );
-  }
-
-  /**
    * Processes the API response and updates state.
    * @param {object} data - The raw response data from the API.
    * @returns {string} The filtered response content.
@@ -112,7 +119,7 @@ class NvidiaAdapter extends BaseAdapter {
 
     if (!content) {
       logger.warn("NvidiaAdapter: Empty response received");
-      return "Error: Empty response from NVIDIA";
+      throw new Error("Empty response from NVIDIA");
     }
 
     logger.info("NvidiaAdapter: Response received", { length: content.length });

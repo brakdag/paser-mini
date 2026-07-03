@@ -10,10 +10,7 @@ class AICommands {
    * @returns {Promise<boolean>} True if the operation succeeded.
    */
   static async handlePaim(chatManager, ui, message) {
-    const content =
-      ui.renderingMode === "FOUNTAIN"
-        ? ui._renderFountain(ui.agentNickname, message)
-        : message;
+    const content = ui.formatChatMessage(ui.agentNickname, message);
     chatManager.assistant.injectMessage("model", content);
     ui.displayChatMessage(ui.agentNickname, message);
     return true;

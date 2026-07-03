@@ -1,13 +1,10 @@
 import axios from "axios";
-import axiosRetry from "axios-retry";
 import BaseAdapter from "../baseAdapter.js";
 import logger from "../../core/logger.js";
+import RetryHandler from "../../utils/retryHandler.js";
 
 const TIMESTAMP_FORMAT = "en-GB";
 const TIMESTAMP_OPTIONS = { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false };
-const RECOVERABLE_STATUSES = [429, 500, 502, 503, 504];
-const MAX_RETRIES = 5;
-const REQUEST_TIMEOUT = 600000;
 const BASE_URL = "https://api.groq.com/openai/v1";
 const DEFAULT_MODEL = "llama3-8b-8192";
 const DEFAULT_TEMPERATURE = 0.7;
@@ -82,42 +79,15 @@ class GroqAdapter extends BaseAdapter {
 
     this.client = axios.create({
       baseURL: BASE_URL,
-      timeout: REQUEST_TIMEOUT,
+      timeout: 600000,
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
         "Content-Type": "application/json",
       },
     });
 
-    axiosRetry(this.client, {
-      retries: MAX_RETRIES,
-      retryDelay: axiosRetry.exponentialDelay,
-      /**
-       * Determines if a request should be retried based on the error.
-       * @param {Error} error - The caught error object.
-       * @returns {boolean} True if the request should be retried.
-       */
-      retryCondition: (error) => {
-        const status = error.response?.status;
-        return (
-          axiosRetry.isNetworkOrIdempotentRequestError(error) ||
-          RECOVERABLE_STATUSES.includes(status)
-        );
-      },
-      /**
-       * Logs retry attempts and notifies the UI.
-       * @param {number} retryCount - The current retry attempt number.
-       * @param {Error} error - The error that triggered the retry.
-       */
-      onRetry: (retryCount, error) => {
-        const time = getTimestamp();
-        const status = error.response?.status || error.message;
-        logger.warn(`[${time}] -!- [GroqAdapter] API Retry ${retryCount}/${MAX_RETRIES} due to: ${status}`);
-        if (this.ui && this.ui.displayInfo) {
-          this.ui.displayInfo(`Reintentando Groq... (${retryCount}/${MAX_RETRIES}) | Error: ${status}`);
-        }
-      },
-    });
+    this.retryHandler = new RetryHandler();
+    this.recoverableErrors = ["Empty response from Groq"];
   }
 
   /**
@@ -161,22 +131,41 @@ class GroqAdapter extends BaseAdapter {
     };
     this.lastPayload = payload;
 
-    try {
-      const response = await this.client.post("/chat/completions", payload);
-      const textContent = response.data.choices[0].message.content;
+    /**
+     * Executes the API request with retry logic.
+     * @returns {Promise<string>} The response text.
+     */
+    return this.retryHandler.execute(async () => {
+      try {
+        const response = await this.client.post("/chat/completions", payload);
+        const textContent = response.data.choices[0].message.content;
 
-      if (!textContent) {
-        throw new Error("Empty response from Groq");
+        if (!textContent) {
+          throw new Error("Empty response from Groq");
+        }
+
+        this.injectMessage("assistant", textContent, getTimestamp());
+        return textContent;
+      } catch (error) {
+        const errorMsg = error.response?.data?.error?.message || error.message;
+        const apiError = new Error(errorMsg);
+        apiError.name = "APIError";
+        throw apiError;
       }
-
-      this.injectMessage("assistant", textContent, getTimestamp());
-      return textContent;
-    } catch (error) {
-      const errorMsg = error.response?.data?.error?.message || error.message;
-      const apiError = new Error(errorMsg);
-      apiError.name = "APIError";
-      throw apiError;
-    }
+    }, {
+      recoverableErrors: this.recoverableErrors,
+      /**
+       * @param {number} attempt - The current attempt number.
+       * @param {Error} error - The error that triggered the retry.
+       * @param {string} formattedDelay - The formatted delay string.
+       */
+      onRetry: (attempt, error, formattedDelay) => {
+        logger.warn(`[GroqAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`);
+        if (this.ui && this.ui.displayInfo) {
+          this.ui.displayInfo(`Reintentando Groq en ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`);
+        }
+      }
+    });
   }
 
   /**

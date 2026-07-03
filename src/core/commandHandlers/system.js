@@ -46,10 +46,7 @@ class SystemCommands {
     ui.displayInfo("Bash access enabled. You can now use executeBash.");
     const bashInstruction = 
       "SYSTEM UPDATE: Bash access has been enabled. You now have access to the tool `executeBash(command: string)`, which allows you to execute shell commands in the project root.";
-    const content = 
-      ui.renderingMode === "FOUNTAIN"
-        ? ui._renderFountain("system", bashInstruction)
-        : bashInstruction;
+    const content = ui.formatSystemMessage(bashInstruction);
     chatManager.assistant.injectMessage("server", content);
     return true;
   }

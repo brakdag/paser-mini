@@ -1,5 +1,6 @@
 export const DEFAULT_MODELS = ["glm-5.2", "glm-5.1", "glm-5", "glm-5-turbo"];
 export const HTTP_TIMEOUT = 600000;
-export const MAX_RETRIES = 5;
-export const MAX_TOKENS = 4096;
+export const MAX_RETRIES = 15;
+export const MAX_RETRY_DELAY = 28800000; // 8 hours in ms
+export const MAX_TOKENS = 8192;
 export const RECOVERABLE_STATUS_CODES = [429, 500, 502, 503, 504];
