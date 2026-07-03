@@ -15,15 +15,16 @@ import ProviderManager from "../infrastructure/providerManager.js";
 class ChatManager {
   /**
    * Initializes a new instance of the ChatManager.
-   * @param {object} assistant - The AI assistant adapter.
-   * @param {{[key: string]: (...args: unknown[]) => unknown}} tools - The available tools map.
-   * @param {string} systemInstruction - The system prompt/instructions.
-   * @param {object} ui - The user interface handler.
-   * @param {boolean} [instanceMode] - Whether this is a sub-instance of the agent.
-   * @param {ConfigManager|null} [configManager] - Optional injected configuration manager.
-   * @param {ProviderManager|null} [providerManager] - Optional injected provider manager.
+   * @param {object} params - The constructor parameters.
+   * @param {object} params.assistant - The AI assistant adapter.
+   * @param {{[key: string]: (...args: unknown[]) => unknown}} params.tools - The available tools map.
+   * @param {string} params.systemInstruction - The system prompt/instructions.
+   * @param {object} params.ui - The user interface handler.
+   * @param {boolean} [params.instanceMode] - Whether this is a sub-instance of the agent.
+   * @param {ConfigManager|null} [params.configManager] - Optional injected configuration manager.
+   * @param {ProviderManager|null} [params.providerManager] - Optional injected provider manager.
    */
-  constructor(assistant, tools, systemInstruction, ui, instanceMode = false, configManager = null, providerManager = null) {
+  constructor({ assistant, tools, systemInstruction, ui, instanceMode = false, configManager = null, providerManager = null }) {
     this.assistant = assistant;
     this.tools = tools;
     this.systemInstruction = systemInstruction;
@@ -113,9 +114,12 @@ class ChatManager {
   }
 
   /**
-   * Placeholder for temperature adjustment logic.
+   * Updates the rendering mode for the UI and the assistant.
+   * @param {number} temp - The sampling temperature.
    */
-  setTemperature() {}
+  setTemperature(temp) {
+    this.temperature = parseFloat(temp);
+  }
 
   /**
    * Updates the current active channel.
@@ -144,13 +148,13 @@ class ChatManager {
     let newAssistant;
 
     try {
-      newAssistant = await this.providerManager.createAdapter(
+      newAssistant = await this.providerManager.createAdapter({
         providerId,
-        this.ui,
-        this.configManager,
-        this.ui.userNickname,
-        this.ui.agentNickname,
-      );
+        ui: this.ui,
+        configManager: this.configManager,
+        userNickname: this.ui.userNickname,
+        agentNickname: this.ui.agentNickname,
+      });
     } catch (e) {
       this.ui.displayError(`Failed to switch provider: ${e.message}`);
       return;

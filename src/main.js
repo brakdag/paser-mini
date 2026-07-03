@@ -64,20 +64,20 @@ async function main() {
   const userNick = configManager.get("user_nickname", "user");
   const agentNick = configManager.get("agent_nickname", "assistant");
 
-  const assistant = await providerManager.createAdapter(
+  const assistant = await providerManager.createAdapter({
     providerId,
     ui,
     configManager,
-    userNick,
-    agentNick,
-  );
+    userNickname: userNick,
+    agentNickname: agentNick,
+  });
 
-  const chatManager = new ChatManager(
+  const chatManager = new ChatManager({
     assistant,
-    filteredTools,
+    tools: filteredTools,
     systemInstruction,
     ui,
-  );
+  });
 
   chatManager.configManager = configManager;
   chatManager.providerManager = providerManager;

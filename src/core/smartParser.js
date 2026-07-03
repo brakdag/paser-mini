@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import * as acorn from "acorn";
+import logger from "./logger.js";
 import AutoCorrector from "./autoCorrector.js";
 import validator from "./schemaRegistry.js";
 
@@ -58,8 +59,8 @@ class SmartToolParser {
         return JSON.parse(trimmed.replace(/'/g, '"'));
       if (trimmed.startsWith("{") && trimmed.endsWith("}"))
         return JSON.parse(trimmed.replace(/'/g, '"'));
-    } catch {
-      /* empty */
+    } catch (e) {
+      logger.error(`JSON Parse Error in _castValue: ${e.message}`);
     }
     return trimmed;
   }
@@ -157,17 +158,12 @@ class SmartToolParser {
    * @returns {Array<object>} The tool calls.
    */
   extractToolCalls(text) {
-    const results = [];
-    let match;
-    SmartToolParser.TOOL_PATTERN.lastIndex = 0;
-    match = SmartToolParser.TOOL_PATTERN.exec(text);
-    while (match !== null) {
+    const matches = Array.from(text.matchAll(SmartToolParser.TOOL_PATTERN));
+    return matches.map((match) => {
       const content = match[1].trim();
       const { data, error } = this.parseCall(content);
-      results.push({ data, content, error });
-      match = SmartToolParser.TOOL_PATTERN.exec(text);
-    }
-    return results;
+      return { data, content, error };
+    });
   }
 
   /**

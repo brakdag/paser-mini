@@ -66,15 +66,16 @@ class ProviderManager {
 
   /**
    * Dynamically creates an instance of the requested provider adapter.
-   * @param {string} providerId - The unique identifier of the provider (e.g., 'COHERE').
-   * @param {object} ui - The UI interface for the adapter.
-   * @param {object} configManager - The configuration manager for the adapter.
-   * @param {string} userNickname - The nickname of the user.
-   * @param {string} agentNickname - The nickname of the agent.
+   * @param {object} params - The parameters for the adapter.
+   * @param {string} params.providerId - The unique identifier of the provider (e.g., 'COHERE').
+   * @param {object} params.ui - The UI interface for the adapter.
+   * @param {object} params.configManager - The configuration manager for the adapter.
+   * @param {string} params.userNickname - The nickname of the user.
+   * @param {string} params.agentNickname - The nickname of the agent.
    * @returns {Promise<object>} The instantiated adapter instance.
    * @throws {Error} If the providerId is not supported.
    */
-  async createAdapter(providerId, ui, configManager, userNickname, agentNickname) {
+  async createAdapter({ providerId, ui, configManager, userNickname, agentNickname }) {
     const provider = this.providers[providerId];
     if (!provider) {
       throw new Error(`Unsupported provider: ${providerId}`);

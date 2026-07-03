@@ -1,3 +1,5 @@
+import logger from "./logger.js";
+
 /**
  * Tracks tool call attempts to detect and prevent infinite loops.
  */
@@ -8,7 +10,6 @@ class ToolAttemptTracker {
   constructor() {
     this.attempts = new Map();
     this.maxAttempts = 100;
-    this.errors = 0;
   }
 
   /**
@@ -45,10 +46,14 @@ class ToolAttemptTracker {
   }
 
   /**
-   * Increments the global error counter.
+   * Logs a failure for a specific tool call.
+   * @param {string} name The name of the tool.
+   * @param {object} args The arguments used in the call.
    */
-  recordFailure() {
-    this.errors += 1;
+  recordFailure(name, args) {
+    const argKey = JSON.stringify(args);
+    const key = `${name}:${argKey}`;
+    logger.warn(`Tool execution failed for ${key}`);
   }
 }
 
