@@ -169,6 +169,7 @@ class ZaiAdapter extends BaseAdapter {
     this.injectMessage(role, message, timestamp);
 
     const payload = this._preparePayload();
+    this.lastPayload = payload;
     let lastError = null;
 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt += 1) {
