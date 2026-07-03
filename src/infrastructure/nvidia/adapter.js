@@ -1,6 +1,7 @@
 import ConversationState from "../conversationState.js";
 import PayloadMapper from "../payloadMapper.js";
 import NvidiaRestClient from "./restClient.js";
+import NvidiaRetryHandler from "./retryHandler.js";
 import logger from "../../core/logger.js";
 import BaseAdapter from "../baseAdapter.js";
 
@@ -26,6 +27,7 @@ class NvidiaAdapter extends BaseAdapter {
     super({ ui, configManager, userNickname, agentNickname });
     this.state = new ConversationState(userNickname, agentNickname);
     this.restClient = new NvidiaRestClient(configManager);
+    this.retryHandler = new NvidiaRetryHandler(5000, undefined, this.restClient);
     this.currentModel = DEFAULT_MODEL;
     this.systemInstruction = "";
     this.temperature = DEFAULT_TEMPERATURE;
@@ -92,7 +94,10 @@ class NvidiaAdapter extends BaseAdapter {
    */
   async _executeRequest(payload) {
     logger.debug("NvidiaAdapter: Sending request", { model: this.currentModel, payload });
-    return this.restClient.chatCompletions(payload);
+    return this.retryHandler.execute(
+      (p) => this.restClient.chatCompletions(p),
+      payload
+    );
   }
 
   /**

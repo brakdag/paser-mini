@@ -11,10 +11,12 @@ class NvidiaRetryHandler {
    * @template ReturnT
    * @param {number} maxRetries - Maximum number of retry attempts before failing.
    * @param {(msg: string) => void} [callback] - Optional callback for retry notifications.
+   * @param {object|null} [rateLimiter] - Optional rate limiter with applyRateLimit(tokens) method.
    */
-  constructor(maxRetries = 5000, callback = undefined) {
+  constructor(maxRetries = 5000, callback = undefined, rateLimiter = null) {
     this.maxRetries = maxRetries;
     this.callback = callback;
+    this.rateLimiter = rateLimiter;
   }
 
   /**
@@ -61,6 +63,11 @@ class NvidiaRetryHandler {
       await new Promise((resolve) => {
         setTimeout(resolve, delay);
       });
+
+      if (this.rateLimiter && typeof this.rateLimiter.applyRateLimit === 'function') {
+        await this.rateLimiter.applyRateLimit();
+      }
+
       return this._runRetryLoop(func, args, retries + 1);
     }
   }

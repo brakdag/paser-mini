@@ -29,7 +29,7 @@ class NvidiaRestClient {
    * @param {number} currentTokens - The estimated token count of the current request.
    * @returns {Promise<void>} A promise that resolves when the rate limit wait is over.
    */
-  async _applyRateLimit(currentTokens = 1000) {
+  async applyRateLimit(currentTokens = 1000) {
     const rpmLimit = this._calculateRpmLimit(currentTokens);
     const minInterval = 60000 / rpmLimit;
     const elapsed = Date.now() - this.lastRequestTime;
@@ -54,7 +54,7 @@ class NvidiaRestClient {
     const tpmLimit = parseInt(this.configManager.get("tpm_limit", 15000), 10);
     const autoRpmEnabled = this.configManager.get("auto_rpm_enabled", false);
 
-    if (autoRpmEnabled) {
+    if (autoRpmEnabled && tpmLimit > 0) {
       rpmLimit = Math.max(1, Math.floor(tpmLimit / Math.max(currentTokens, 1000)));
       logger.debug(`Nvidia Auto-RPM: Adjusted limit to ${rpmLimit} based on tokens`);
     }
@@ -83,7 +83,7 @@ class NvidiaRestClient {
     const url = "/chat/completions";
     const requestPayload = { ...payload, stream };
 
-    await this._applyRateLimit(this._estimateTokens(requestPayload.messages));
+    await this.applyRateLimit(this._estimateTokens(requestPayload.messages));
 
     if (stream) {
       throw new Error("Streaming not yet implemented in JS RestClient");
@@ -99,7 +99,7 @@ class NvidiaRestClient {
    * @returns {Promise<object>} The API response data.
    */
   async get(endpoint) {
-    await this._applyRateLimit();
+    await this.applyRateLimit();
     const response = await this.client.get(`/${endpoint}`);
     return response.data;
   }
