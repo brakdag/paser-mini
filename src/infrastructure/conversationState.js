@@ -1,13 +1,12 @@
 import IRCFormatter from "../utils/ircFormatter.js";
 
 /**
- *
+ * Manages the conversation history and rendering state.
  */
 class ConversationState {
   /**
-   *
-   * @param userNickname
-   * @param agentNickname
+   * @param {string} userNickname - The identifier for the human user.
+   * @param {string} agentNickname - The identifier for the AI agent.
    */
   constructor(userNickname = "user", agentNickname = "assistant") {
     this.userNickname = userNickname;
@@ -17,18 +16,17 @@ class ConversationState {
   }
 
   /**
-   *
-   * @param mode
+   * @param {string} mode - The rendering mode to set.
    */
   setRenderingMode(mode) {
     this.renderingMode = mode;
   }
 
   /**
-   *
-   * @param role
-   * @param text
-   * @param timestamp
+   * @param {string} role - The role of the message sender.
+   * @param {string} text - The message text content.
+   * @param {number|null} [timestamp] - Optional timestamp override.
+   * @returns {string} The formatted message string.
    */
   _formatMessage(role, text, timestamp = null) {
     if (this.renderingMode === "FOUNTAIN") return text;
@@ -46,10 +44,10 @@ class ConversationState {
   }
 
   /**
-   *
-   * @param role
-   * @param text
-   * @param timestamp
+   * @param {string} role - The role of the message sender.
+   * @param {string} text - The message text content.
+   * @param {number|null} [timestamp] - Optional timestamp override.
+   * @returns {string} The formatted message string.
    */
   addMessage(role, text, timestamp = null) {
     const normalizedRole =
@@ -68,22 +66,21 @@ class ConversationState {
   }
 
   /**
-   *
-   * @param historyOverride
+   * @param {Array|null} [historyOverride] - Optional history to apply during reset.
    */
   hardReset(historyOverride = null) {
     this.history = historyOverride || [];
   }
 
   /**
-   *
+   * Removes the last message from the history.
    */
   popLastMessage() {
     if (this.history.length > 0) this.history.pop();
   }
 
   /**
-   *
+   * @returns {Array} The current raw message history.
    */
   getRawHistory() {
     return this.history;

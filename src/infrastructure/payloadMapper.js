@@ -3,11 +3,12 @@
  */
 class PayloadMapper {
   /**
-   * Maps neutral history to Gemini API format
+   * Maps neutral history to Gemini API format.
    * Gemini expects: { contents: [ { role: 'user'|'model', parts: [ { text: '...' } ] } ] }
-   * @param history
-   * @param systemInstruction
-   * @param temperature
+   * @param {Array<object>} history - The conversation history array.
+   * @param {string} systemInstruction - The system-level prompt.
+   * @param {number} temperature - The sampling temperature.
+   * @returns {object} The Gemini-formatted payload.
    */
   static toGemini(history, systemInstruction, temperature) {
     const contents = history.map((m) => ({
@@ -32,11 +33,12 @@ class PayloadMapper {
   }
 
   /**
-   * Maps neutral history to NVIDIA/OpenAI format
+   * Maps neutral history to NVIDIA/OpenAI format.
    * NVIDIA expects: { messages: [ { role: 'system'|'user'|'assistant', content: '...' } ] }
-   * @param history
-   * @param systemInstruction
-   * @param temperature
+   * @param {Array<object>} history - The conversation history array.
+   * @param {string} systemInstruction - The system-level prompt.
+   * @param {number} temperature - The sampling temperature.
+   * @returns {object} The NVIDIA-formatted payload.
    */
   static toNvidia(history, systemInstruction, temperature) {
     const messages = [];

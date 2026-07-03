@@ -74,7 +74,7 @@ class SmartToolParser {
     if (node.type === "Literal") return node.value;
     if (node.type === "TemplateLiteral") {
       let result = "";
-      for (let i = 0; i < node.quasis.length; i++) {
+      for (let i = 0; i < node.quasis.length; i += 1) {
         result += node.quasis[i].value.cooked;
         if (node.expressions[i]) {
           result += `\${${rawContent.substring(

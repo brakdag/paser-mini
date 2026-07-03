@@ -1,9 +1,12 @@
 import chalk from "chalk";
 
+/**
+ * Utility class for formatting messages in IRC-style format.
+ */
 class IRCFormatter {
   /**
    * Generates a timestamp in [HH:mm] format.
-   * @returns {string}
+   * @returns {string} The formatted timestamp string.
    */
   static getTimestamp() {
     return new Date().toLocaleTimeString("en-GB", {
@@ -14,10 +17,10 @@ class IRCFormatter {
 
   /**
    * Formats a message into the standard IRC string.
-   * @param {string} nickname
-   * @param {string} text
-   * @param {string} [timestamp] - Optional override for the timestamp
-   * @returns {string}
+   * @param {string} nickname - The nickname of the message sender.
+   * @param {string} text - The message content.
+   * @param {string} [timestamp] - Optional override for the timestamp.
+   * @returns {string} The formatted IRC message string.
    */
   static formatMessage(nickname, text, timestamp = null) {
     const ts = timestamp || this.getTimestamp();
@@ -29,10 +32,10 @@ class IRCFormatter {
 
   /**
    * Formats a system/info message.
-   * @param {string} type - 'INFO', 'ERROR', etc.
-   * @param {string} text
-   * @param {string} [timestamp]
-   * @returns {string}
+   * @param {string} type - The message type (e.g. 'INFO', 'ERROR').
+   * @param {string} text - The message content.
+   * @param {string} [timestamp] - Optional override for the timestamp.
+   * @returns {string} The formatted system message string.
    */
   static formatSystemMessage(type, text, timestamp = null) {
     const ts = timestamp || this.getTimestamp();
@@ -41,11 +44,11 @@ class IRCFormatter {
 
   /**
    * Formats a message for terminal output with colors.
-   * @param {string} nickname
-   * @param {string} text
-   * @param {string} agentNickname
-   * @param {string} [timestamp]
-   * @returns {string}
+   * @param {string} nickname - The nickname of the message sender.
+   * @param {string} text - The message content.
+   * @param {string} agentNickname - The nickname of the AI agent.
+   * @param {string} [timestamp] - Optional override for the timestamp.
+   * @returns {string} The formatted terminal message string with colors.
    */
   static formatTerminalMessage(
     nickname,

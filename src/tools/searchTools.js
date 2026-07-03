@@ -145,7 +145,7 @@ export default class SearchTools {
         const lineNum = parseInt(parts[1], 10);
         const content = parts.slice(2).join(":");
 
-        if (isNaN(lineNum)) {
+        if (Number.isNaN(lineNum)) {
           return null;
         }
 

@@ -77,6 +77,7 @@ class NvidiaRestClient {
    * Sends a chat completion request.
    * @param {object} payload - The request payload containing model and messages.
    * @param {boolean} stream - Whether to stream the response.
+   * @param {number} [timeout] - Optional request timeout in milliseconds.
    * @returns {Promise<object>} The API response data.
    */
   async chatCompletions(payload, stream = false, timeout = 600000) {

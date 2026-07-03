@@ -69,249 +69,297 @@ export const GITHUB_SYSTEM_INSTRUCTION =
 
 export const AVAILABLE_TOOLS = {
   /**
-   *
-   * @param {...any} args
+   * Reads file content.
+   * @param {...unknown} args - Arguments passed to the file tool.
+   * @returns {Promise<unknown>} The file content.
    */
   read: async (...args) => (await getTool("fileTools", "read"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Reads the last N lines of a file.
+   * @param {...unknown} args - Arguments passed to the file tool.
+   * @returns {Promise<unknown>} The tail content.
    */
   tail: async (...args) => (await getTool("fileTools", "tail"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Writes content to a file.
+   * @param {...unknown} args - Arguments passed to the file tool.
+   * @returns {Promise<unknown>} The write result.
    */
   write: async (...args) => (await getTool("fileTools", "write"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Removes a file.
+   * @param {...unknown} args - Arguments passed to the file tool.
+   * @returns {Promise<unknown>} The removal result.
    */
   remove: async (...args) => (await getTool("fileTools", "remove"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Creates a directory.
+   * @param {...unknown} args - Arguments passed to the file tool.
+   * @returns {Promise<unknown>} The mkdir result.
    */
   mkdir: async (...args) => (await getTool("fileTools", "mkdir"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Reloads the schema registry.
+   * @param {...unknown} args - Arguments passed to the system tool.
+   * @returns {Promise<unknown>} The reload result.
    */
   reloadSchemas: async (...args) =>
     (await getTool("systemTools", "reloadSchemas"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Analyzes code structure.
+   * @param {...unknown} args - Arguments passed to the system tool.
+   * @returns {Promise<unknown>} The analysis result.
    */
   analysis: async (...args) => (await getTool("systemTools", "analyzeCode"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Lists directory contents.
+   * @param {...unknown} args - Arguments passed to the file tool.
+   * @returns {Promise<unknown>} The directory listing.
    */
   list: async (...args) => (await getTool("fileTools", "list"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Replaces text in a file.
+   * @param {...unknown} args - Arguments passed to the file tool.
+   * @returns {Promise<unknown>} The replace result.
    */
   replace: async (...args) => (await getTool("fileTools", "replace"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Runs ESLint on a file.
+   * @param {...unknown} args - Arguments passed to the system tool.
+   * @returns {Promise<unknown>} The lint result.
    */
   eslint: async (...args) => (await getTool("systemTools", "lintCode"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Generates documentation.
+   * @param {...unknown} args - Arguments passed to the system tool.
+   * @returns {Promise<unknown>} The generated docs.
    */
   doc: async (...args) => (await getTool("systemTools", "generateDocs"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Executes a bash command.
+   * @param {...unknown} args - Arguments passed to the system tool.
+   * @returns {Promise<unknown>} The execution result.
    */
   execute: async (...args) => (await getTool("systemTools", "executeBash"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Searches for text in files.
+   * @param {...unknown} args - Arguments passed to the search tool.
+   * @returns {Promise<unknown>} The search results.
    */
   grep: async (...args) =>
     (await getTool("searchTools", "searchText"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Searches for files matching a pattern.
+   * @param {...unknown} args - Arguments passed to the search tool.
+   * @returns {Promise<unknown>} The matching file paths.
    */
   glob: async (...args) =>
     (await getTool("searchTools", "searchFilesPatternFixed"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Renames or moves a file.
+   * @param {...unknown} args - Arguments passed to the file tool.
+   * @returns {Promise<unknown>} The rename result.
    */
   rename: async (...args) => (await getTool("fileTools", "rename"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Copies a file.
+   * @param {...unknown} args - Arguments passed to the file tool.
+   * @returns {Promise<unknown>} The copy result.
    */
   copy: async (...args) => (await getTool("fileTools", "copy"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Gets git tracked files.
+   * @param {...unknown} args - Arguments passed to the git tool.
+   * @returns {Promise<unknown>} The tracked files list.
    */
   tree: async (...args) => (await getTool("gitTools", "getTrackedFiles"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Validates a JSON string.
+   * @param {...unknown} args - Arguments passed to the util tool.
+   * @returns {Promise<unknown>} The validation result.
    */
   valide: async (...args) => (await getTool("utilTools", "validateJson"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Sets the agent nickname.
+   * @param {...unknown} args - Arguments passed to the util tool.
+   * @returns {Promise<unknown>} The nickname change result.
    */
   nickname: async (...args) => (await getTool("utilTools", "setNickname"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Pushes data to memory.
+   * @param {...unknown} args - Arguments passed to the memory tool.
+   * @returns {Promise<unknown>} The push result.
    */
   push: async (...args) => (await getTool("memoryTools", "pushMemory"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Gets the token count.
+   * @param {...unknown} args - Arguments passed to the memory tool.
+   * @returns {Promise<unknown>} The token count.
    */
   token: async (...args) => (await getTool("memoryTools", "getTokenCount"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Gets the git diff.
+   * @param {...unknown} args - Arguments passed to the git tool.
+   * @returns {Promise<unknown>} The diff output.
    */
   diff: async (...args) => (await getTool("gitTools", "gitDiffAll"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Restores a file via git.
+   * @param {...unknown} args - Arguments passed to the git tool.
+   * @returns {Promise<unknown>} The restore result.
    */
   restore: async (...args) => (await getTool("gitTools", "restoreFile"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Concatenates files.
+   * @param {...unknown} args - Arguments passed to the file tool.
+   * @returns {Promise<unknown>} The concat result.
    */
   concat: async (...args) => (await getTool("fileTools", "concat"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Gets the structure of a JSON file.
+   * @param {...unknown} args - Arguments passed to the json tool.
+   * @returns {Promise<unknown>} The JSON structure.
    */
   structure: async (...args) =>
     (await getTool("jsonTools", "getJsonStructure"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Gets a node from a JSON file.
+   * @param {...unknown} args - Arguments passed to the json tool.
+   * @returns {Promise<unknown>} The JSON node.
    */
   node: async (...args) => (await getTool("jsonTools", "getJsonNode"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Gets array info from a JSON file.
+   * @param {...unknown} args - Arguments passed to the json tool.
+   * @returns {Promise<unknown>} The JSON array info.
    */
   arrange: async (...args) =>
     (await getTool("jsonTools", "getJsonArrayInfo"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Updates a node in a JSON file.
+   * @param {...unknown} args - Arguments passed to the json tool.
+   * @returns {Promise<unknown>} The update result.
    */
   update: async (...args) => (await getTool("jsonTools", "updateJsonNode"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Lists GitHub issues.
+   * @param {...unknown} args - Arguments passed to the github tool.
+   * @returns {Promise<unknown>} The issues list.
    */
   issues: async (...args) => (await getTool("githubTools", "listIssues"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Creates a GitHub issue.
+   * @param {...unknown} args - Arguments passed to the github tool.
+   * @returns {Promise<unknown>} The creation result.
    */
   create: async (...args) => (await getTool("githubTools", "createIssue"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Edits a GitHub issue.
+   * @param {...unknown} args - Arguments passed to the github tool.
+   * @returns {Promise<unknown>} The edit result.
    */
   edit: async (...args) => (await getTool("githubTools", "editIssue"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Closes a GitHub issue.
+   * @param {...unknown} args - Arguments passed to the github tool.
+   * @returns {Promise<unknown>} The close result.
    */
   close: async (...args) => (await getTool("githubTools", "closeIssue"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Posts a comment on a GitHub issue.
+   * @param {...unknown} args - Arguments passed to the github tool.
+   * @returns {Promise<unknown>} The post result.
    */
   post: async (...args) => (await getTool("githubTools", "postComment"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Gets the current git remote.
+   * @param {...unknown} args - Arguments passed to the git tool.
+   * @returns {Promise<unknown>} The remote info.
    */
   remote: async (...args) => (await getTool("gitTools", "getCurrentRepo"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Applies a git patch.
+   * @param {...unknown} args - Arguments passed to the git tool.
+   * @returns {Promise<unknown>} The patch result.
    */
   patch: async (...args) => (await getTool("gitTools", "applyPatch"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Sends a notification to the user.
+   * @param {...unknown} args - Arguments passed to the notification tool.
+   * @returns {Promise<unknown>} The notification result.
    */
   notify: async (...args) =>
     (await getTool("notificationTools", "notifyUser"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Inserts a scene in Fountain format.
+   * @param {...unknown} args - Arguments passed to the fountain tool.
+   * @returns {Promise<unknown>} The scene insertion result.
    */
   scene: async (...args) =>
     (await getTool("fountainTools", "insertSceneFountain"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Lists the contents of a zip file.
+   * @param {...unknown} args - Arguments passed to the zip tool.
+   * @returns {Promise<unknown>} The zip contents listing.
    */
   zip: async (...args) => (await getTool("zipTools", "listContents"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Handles a hex/binary command.
+   * @param {...unknown} args - Arguments passed to the binary tool.
+   * @returns {Promise<unknown>} The hex command result.
    */
   bin: async (...args) => (await getTool("binaryTools", "handleHexCommand"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Searches the web.
+   * @param {...unknown} args - Arguments passed to the web tool.
+   * @returns {Promise<unknown>} The search results.
    */
   search: async (...args) => (await getTool("webTools", "searchWeb"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Renders a webpage.
+   * @param {...unknown} args - Arguments passed to the web tool.
+   * @returns {Promise<unknown>} The rendered webpage.
    */
   url: async (...args) => (await getTool("webTools", "renderWeb"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Executes JavaScript code.
+   * @param {...unknown} args - Arguments passed to the eval tool.
+   * @returns {Promise<unknown>} The execution result.
    */
   run: async (...args) => (await getTool("evalTools", "executeJS"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Analyzes code AST.
+   * @param {...unknown} args - Arguments passed to the ast tool.
+   * @returns {Promise<unknown>} The AST analysis.
    */
   ast: async (...args) => (await getTool("astTools", "analyze"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Gets performance metrics.
+   * @param {...unknown} args - Arguments passed to the perf tool.
+   * @returns {Promise<unknown>} The metrics data.
    */
   metrics: async (...args) => (await getTool("perfTools", "metrics"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Takes a performance snapshot.
+   * @param {...unknown} args - Arguments passed to the perf tool.
+   * @returns {Promise<unknown>} The snapshot data.
    */
   snapshot: async (...args) => (await getTool("perfTools", "snapshot"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Analyzes an image.
+   * @param {...unknown} args - Arguments passed to the util tool.
+   * @returns {Promise<unknown>} The image analysis.
    */
   img: async (...args) => (await getTool("utilTools", "seeImage"))(...args),
   /**
-   *
-   * @param {...any} args
+   * Resets the system state.
+   * @param {...unknown} args - Arguments passed to the system tool.
+   * @returns {Promise<unknown>} The reset result.
    */
   reset: async (...args) => (await getTool("systemTools", "reset"))(...args),
   /**
-   *
+   * Purges the tool cache.
+   * @returns {Promise<string>} The purge confirmation.
    */
   reloadTools: async () => {
     toolCache = {};

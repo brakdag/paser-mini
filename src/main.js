@@ -5,8 +5,11 @@ import ChatManager from "./core/chatManager.js";
 import ConfigManager from "./core/configManager.js";
 import ProviderManager from "./infrastructure/providerManager.js";
 import SystemPromptManager from "./core/systemPromptManager.js";
-import MemoryTools from "./tools/memoryTools.js";
-
+/**
+ * Main entry point for the paser-mini application.
+ * Initializes the CLI, configuration, and chat manager.
+ * @returns {Promise<void>}
+ */
 async function main() {
   const program = new Command();
 

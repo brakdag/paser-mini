@@ -13,10 +13,11 @@ const DEFAULT_TEMPERATURE = 0.7;
  */
 class NvidiaAdapter extends BaseAdapter {
   /**
-   * @param {object} ui - The user interface handler.
-   * @param {object} configManager - The system configuration manager.
-   * @param {string} userNickname - The identifier for the human user.
-   * @param {string} agentNickname - The identifier for the AI agent.
+   * @param {object} params - Constructor parameters.
+   * @param {object} params.ui - The user interface handler.
+   * @param {object} params.configManager - The system configuration manager.
+   * @param {string} [params.userNickname] - The identifier for the human user.
+   * @param {string} [params.agentNickname] - The identifier for the AI agent.
    */
   constructor({
     ui,
@@ -246,7 +247,8 @@ class NvidiaAdapter extends BaseAdapter {
 
   /**
    * Estimates token count based on character length.
-   * @param {Array} contents - The list of messages for token estimation.
+   * @param {string} systemInstruction - The system prompt text.
+   * @param {Array} history - The message history array.
    * @returns {number} The estimated token count.
    */
   countTokens(systemInstruction, history) {
