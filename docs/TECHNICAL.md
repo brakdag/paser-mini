@@ -35,17 +35,14 @@ paser-mini
 
 ### Command Line Arguments
 
-| Argument                      | Short  | Description                                           |
-| :---------------------------- | :----- | :---------------------------------------------------- |
-| `--version`                   | `-v`   | Show version information                              |
-| `--unit_tests`                | `-ut`  | Run the internal unit test suite                      |
-| `--system_instruction`        | `-si`  | Provide custom system instructions to the agent       |
-| `--inject_system_instruction` | `-isi` | Inject instruction at the start of system prompt      |
-| `--file_system_instruction`   | `-fsi` | Path to file for system instruction injection         |
-| `--message`                   | `-m`   | Send an initial message in one-shot mode              |
-| `--input`                     | `-i`   | Input text to process in one-shot mode                |
-| `--instance-mode`             | `-im`  | Run in instance mode (read-only config, no recursion) |
-| `--debug`                     | `-d`   | Enable debug logging                                  |
+| Argument                      | Short  | Description                                                             |
+| :---------------------------- | :----- | :---------------------------------------------------------------------- |
+| `--message`                   | `-m`   | Initial message to send                                                 |
+| `--system-instruction`        | `-si`  | Provide custom system instructions to the agent                         |
+| `--inject-system-instruction` | `-isi` | Inject instruction at the start of system prompt                        |
+| `--file-system-instruction`   | `-fsi` | Path to file for system instruction injection                           |
+| `--no-system-instruction`     | `-nsi` | Run without system instructions                                         |
+| `--github-mode`               |        | Run in GitHub mode: process issues with #ai-assistance                  |
 
 **Example (One-shot mode):**
 

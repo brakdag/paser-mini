@@ -1,33 +1,33 @@
-# Smart JSON Parser: Technical Documentation
+# Smart Tool Parser: Technical Documentation
 
 ## 1. Parser Architecture
 
-The system utilizes a unified parser (`SmartToolParser`) that replaces multiple attempts of `JSON.parse` and fallback evaluations with a single-pass workflow featuring schema validation.
+The system utilizes a unified parser (`SmartToolParser`) that safely extracts and evaluates tool calls from LLM outputs using Abstract Syntax Tree (AST) analysis, discarding brittle string preprocessing.
 
 ### Key Components
 
-- **SmartToolParser**: Central parser with string preprocessing (cleaning comments, quotes, etc.).
-- **SchemaValidator**: Validation engine based on JSON schemas located in `src_js/core/commandHandlers/schemas/`.
-- **AutoCorrector**: Fixes common errors (single quotes, trailing commas, malformed unicode).
-- **ValidationResult**: Response structure detailing field-level errors.
+- **SmartToolParser**: Central parser using `acorn` for AST evaluation. Extracts tool calls enclosed within the special delimiters.
+- **Schema Registry**: Validation engine based on JSON schemas defined in `src/core/schemas.js`.
+- **AutoCorrector**: Auxiliary module for potential response fixing (unused in the main AST path but available for fallback).
 
 ## 2. Execution Flow
 
-1. **Preprocessing**: Cleaning problematic characters.
-2. **Parsing**: Single attempt using `JSON.parse` with automatic correction if it fails.
-3. **Schema Validation**: Verification of types, ranges, and required fields according to the tool's schema.
-4. **Normalization**: Adjustment of the data structure for the execution engine.
+1. **Extraction**: The parser uses a global regular expression to find all blocks wrapped in the tool call delimiters.
+2. **AST Evaluation**: Each extracted block is parsed using `acorn.parse()`. This safely interprets the JavaScript-like syntax without executing it.
+3. **Argument Casting**: The AST nodes are traversed and evaluated into real JavaScript types (strings, numbers, booleans, arrays, objects).
+4. **Schema Validation**: The parsed arguments are validated against the tool's defined schema in `SchemaRegistry`.
+5. **Normalization**: The final arguments object is constructed and passed to the `ExecutionEngine`.
 
 ## 3. Tool Schemas
 
-Schemas are located in `src_js/core/commandHandlers/schemas/`. Each tool has a `.js` file (exporting a JSON object) that defines:
+Schemas are centrally located in `src/core/schemas.js`. Each schema defines:
 
-- `required`: Mandatory fields.
-- `properties`: Data types and constraints (e.g., `maxLength`, `pattern`).
+- **required**: Mandatory fields.
+- **properties**: Data types and constraints (e.g., `type`, `description`).
 
 ## 4. Operational Benefits
 
-- **Efficiency**: 75% reduction in token consumption by avoiding retries.
-- **Speed**: 70% faster by eliminating multiple fallbacks.
-- **Clarity**: Field-specific errors instead of generic failures.
-- **Security**: Strict type validation preventing malformed data injection into tools.
+- **Robustness**: AST parsing is immune to unescaped quotes or minor syntax quirks that break `JSON.parse`.
+- **Efficiency**: Single-pass extraction and evaluation reduces overhead.
+- **Clarity**: The AST provides precise boundary detection for arguments.
+- **Security**: Strict validation ensures only correctly typed data reaches the tools.

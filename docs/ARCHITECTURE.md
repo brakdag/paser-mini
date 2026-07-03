@@ -15,7 +15,9 @@ This project follows a modular ReAct (Reasoning and Acting) architecture. Below 
 - **`TerminalRenderer.js`**: Pure rendering logic. Handles Markdown, Tables, and Fountain layouts.
 - **`TerminalInput.js`**: Manages the terminal input stream and user confirmations.
 - **`SessionLogger.js`**: Handles the writing of session and history logs to disk.
-- **`commandHandler.js`**: Implements the internal command system (e.g., `/models`, `/s`, `/t`) to modify agent state without affecting the chat history.
+- **`commandHandler.js`**: Implements the internal command system (e.g., `/models`, `/s`, `/fav`) to modify agent state without affecting the chat history.
+- **`smartParser.js`**: The Smart Tool Parser. It extracts tool calls from LLM responses using AST evaluation and regex matching, casting arguments to their correct types.
+- **`executionEngine.js`**: The tool execution orchestrator. Validates tool calls, prevents infinite loops via `ToolAttemptTracker`, and enforces security constraints before invoking tool functions.
 - **`configManager.js`**: Handles the persistence of user preferences in `config/config.json`.
 
 ### 💠 Infrastructure (`src/infrastructure/`)
