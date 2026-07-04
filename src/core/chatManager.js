@@ -274,7 +274,7 @@ ${welcomeMsg}`;
           logger.info("Turn interrupted by user input");
           this.ui.displayInfo("Agent interrupted. Processing new request...");
         } else if (e.name === "APIError") {
-          const statusCode = e.response?.status || "UNKNOWN";
+          const statusCode = e.response?.status || e.code || e.name;
           this.ui.displayError(
             `AI connection error (${statusCode}): ${e.message}. The session remains active; please try again in a moment.`,
           );

@@ -29,15 +29,15 @@ class ApiCommunicator {
       if (attempt >= this.maxRetries) throw error;
 
       const httpStatus = error.response?.status;
-      const networkErrors = ['ECONNABORTED', 'ETIMEDOUT', 'ECONNRESET', 'ERR_NETWORK'];
+      const networkErrors = ['ECONNABORTED', 'ETIMEDOUT', 'ECONNRESET', 'ERR_NETWORK', 'ENOTFOUND', 'EAI_AGAIN', 'EHOSTUNREACH', 'ENETUNREACH', 'ECONNREFUSED', 'EPIPE'];
       const isNetworkError = error.code && networkErrors.includes(error.code);
       const isServerError = httpStatus && [429, 500, 502, 503, 504].includes(httpStatus);
 
-      // Reintentar si es error de red, error de servidor (500s) o si la respuesta no existe (caída de red total)
-      const isRetryable = isNetworkError || isServerError || !error.response;
+      // Solo reintentar si es un error de red conocido o un error de servidor (500s)
+      const isRetryable = isNetworkError || isServerError;
       if (!isRetryable) throw error;
 
-      const statusCode = httpStatus || error.code || (error.name === "ServiceDegradedError" ? 503 : "UNKNOWN");
+      const statusCode = httpStatus || error.code || (error.name === "ServiceDegradedError" ? 503 : error.message);
       const delay = this.baseDelay * 2 ** (attempt - 1);
       this.ui.displayError(
         `API Error ${statusCode}: Retrying in ${delay}ms... (Attempt ${attempt}/${this.maxRetries})`,
