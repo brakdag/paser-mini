@@ -317,6 +317,8 @@ class GeminiAdapter extends BaseAdapter {
     const errorMsg = error.response?.data?.error?.message || error.message;
     const wrappedError = new Error(errorMsg);
     wrappedError.name = "APIError";
+    wrappedError.response = error.response;
+    wrappedError.code = error.code;
     return wrappedError;
   }
 

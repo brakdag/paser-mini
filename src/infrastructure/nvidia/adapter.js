@@ -145,6 +145,8 @@ class NvidiaAdapter extends BaseAdapter {
 
     const error = new Error(errorMsg);
     error.name = "APIError";
+    error.response = e.response;
+    error.code = e.code;
     throw error;
   }
 
