@@ -59,8 +59,11 @@ class TerminalUI {
 
   /**
    * Enables or disables bash mode.
+   * @param {boolean} enabled The bash enablement state.
    */
-  setBashEnabled() {}
+  setBashEnabled(enabled) {
+    this.bashEnabled = enabled;
+  }
 
   /**
    * Sets the nickname for the user.
