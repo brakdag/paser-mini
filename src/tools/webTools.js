@@ -5,6 +5,7 @@ import fs from "fs/promises";
 import path from "path";
 
 const ROOT_DIR = process.cwd();
+const FETCH_SIZE_LIMIT = 100 * 1024; // 100KB limit, matching read tool standards
 
 /**
  * Tools for web interaction, searching, and rendering pages to text.
@@ -128,6 +129,23 @@ export default class WebTools {
       timeout: 15000,
       responseType: "text",
     });
-    return response.data;
+
+    const data = response.data;
+    const size = Buffer.byteLength(data, "utf8");
+
+    if (size > FETCH_SIZE_LIMIT) {
+      const contentType = response.headers['content-type'] || 'text/plain';
+      let ext = 'txt';
+      if (contentType.includes('application/json')) ext = 'json';
+      else if (contentType.includes('text/html')) ext = 'html';
+      else if (contentType.includes('application/xml') || contentType.includes('text/xml')) ext = 'xml';
+
+      const tempFileName = `fetch_tmp_${Date.now()}.${ext}`;
+      const tempFilePath = path.resolve(ROOT_DIR, tempFileName);
+      await fs.writeFile(tempFilePath, data, "utf8");
+      return `Response size (${size} bytes) exceeds context limit. Content saved to: ${tempFileName}`;
+    }
+
+    return data;
   }
 }
