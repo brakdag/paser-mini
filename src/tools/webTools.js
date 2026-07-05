@@ -108,13 +108,23 @@ export default class WebTools {
    * Fetches a URL and returns the raw HTML/text.
    * Uses fetch_headers from config.json if available.
    * @param {string} url - The URL to fetch.
+   * @param {string | object} [customHeaders] - Custom HTTP headers (JSON string or object) to add or override defaults.
    * @returns {Promise<string>} The raw HTML/text content.
-   * @throws {Error} If the fetch fails.
+   * @throws {Error} If the fetch fails or if customHeaders is invalid JSON.
    */
-  async fetchRaw(url) {
-    const headers = await this.#getFetchHeaders();
+  async fetchRaw(url, customHeaders = "{}") {
+    let parsedHeaders = {};
+    try {
+      parsedHeaders = typeof customHeaders === "string" 
+        ? JSON.parse(customHeaders || "{}") 
+        : customHeaders;
+    } catch {
+      throw new Error("Invalid JSON format for headers.");
+    }
+
+    const configHeaders = await this.#getFetchHeaders();
     const response = await axios.get(url, {
-      headers: { ...this.#BROWSER_HEADERS, ...headers },
+      headers: { ...this.#BROWSER_HEADERS, ...configHeaders, ...parsedHeaders },
       timeout: 15000,
       responseType: "text",
     });

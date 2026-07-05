@@ -114,7 +114,7 @@
   ],
   ["search", "Search using DuckDuckGo", { "query": "string" }],
   ["url", "Render webpage using elinks", { "url": "string" }],
-  ["fetch", "Fetch raw HTML from URL", { "url": "string" }],
+  ["fetch", "Fetch raw HTML from URL", { "url": "string", "headers": "json string" }],
   ["run", "Execute raw JavaScript in a secure sandbox", { "code": "string" }],
   ["img", "Visualizes an image.", { "path": "string" }],
   ["ast", "Analyze JavaScript AST", { "path": "string", "query": "string" }],
