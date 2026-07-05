@@ -37,7 +37,7 @@ class SystemPromptManager {
           injection = fs.readFileSync(filePath, "utf8");
 
           // Parse TOOLS_AVAILABLE from the persona log to filter available tools
-          const toolsMatch = injection.match(/TOOLS_AVAILABLEs*=s*([.*?])/s);
+          const toolsMatch = injection.match(/TOOLS_AVAILABLE\s*=\s*(\[.*?\])/s);
           if (toolsMatch) {
             try {
               const availableList = JSON.parse(toolsMatch[1]);
