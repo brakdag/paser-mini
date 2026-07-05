@@ -11,134 +11,134 @@ class TerminalRenderer {
    */
   _symbolMap = {
     // Arrows
-    "$\\rightarrow$": "\u2192",
-    "$\\leftarrow$": "\u2190",
-    "$\\Rightarrow$": "\u21D2",
-    "$\\Leftarrow$": "\u21D0",
-    "$\\leftrightarrow$": "\u2194",
-    "$\\Leftrightarrow$": "\u21D4",
-    "$\\mapsto$": "\u21A6",
-    "$\\uparrow$": "\u2191",
-    "$\\downarrow$": "\u2193",
-    "$\\Uparrow$": "\u21D1",
-    "$\\Downarrow$": "\u21D3",
-    "$\\updownarrow$": "\u2195",
-    "$\\Updownarrow$": "\u21D5",
+    "$\\rightarrow$": "→",
+    "$\\leftarrow$": "←",
+    "$\\Rightarrow$": "⇒",
+    "$\\Leftarrow$": "⇐",
+    "$\\leftrightarrow$": "↔",
+    "$\\Leftrightarrow$": "⇔",
+    "$\\mapsto$": "↦",
+    "$\\uparrow$": "↑",
+    "$\\downarrow$": "↓",
+    "$\\Uparrow$": "⇑",
+    "$\\Downarrow$": "⇓",
+    "$\\updownarrow$": "↕",
+    "$\\Updownarrow$": "⇕",
     // Set theory
-    "$\\in$": "\u2208",
-    "$\\notin$": "\u2209",
-    "$\\subset$": "\u2282",
-    "$\\supset$": "\u2283",
-    "$\\subseteq$": "\u2286",
-    "$\\supseteq$": "\u2287",
-    "$\\cup$": "\u222A",
-    "$\\cap$": "\u2229",
-    "$\\emptyset$": "\u2205",
-    "$\\varnothing$": "\u2205",
+    "$\\in$": "∈",
+    "$\\notin$": "∉",
+    "$\\subset$": "⊂",
+    "$\\supset$": "⊃",
+    "$\\subseteq$": "⊆",
+    "$\\supseteq$": "⊇",
+    "$\\cup$": "∪",
+    "$\\cap$": "∩",
+    "$\\emptyset$": "∅",
+    "$\\varnothing$": "∅",
     // Logic
-    "$\\forall$": "\u2200",
-    "$\\exists$": "\u2203",
-    "$\\nexists$": "\u2204",
-    "$\\neg$": "\u00AC",
-    "$\\land$": "\u2227",
-    "$\\lor$": "\u2228",
-    "$\\oplus$": "\u2295",
-    "$\\otimes$": "\u2297",
+    "$\\forall$": "∀",
+    "$\\exists$": "∃",
+    "$\\nexists$": "∄",
+    "$\\neg$": "¬",
+    "$\\land$": "∧",
+    "$\\lor$": "∨",
+    "$\\oplus$": "⊕",
+    "$\\otimes$": "⊗",
     // Relations
-    "$\\leq$": "\u2264",
-    "$\\geq$": "\u2265",
-    "$\\neq$": "\u2260",
-    "$\\approx$": "\u2248",
-    "$\\equiv$": "\u2261",
-    "$\\sim$": "\u223C",
-    "$\\cong$": "\u2245",
-    "$\\propto$": "\u221D",
+    "$\\leq$": "≤",
+    "$\\geq$": "≥",
+    "$\\neq$": "≠",
+    "$\\approx$": "≈",
+    "$\\equiv$": "≡",
+    "$\\sim$": "∼",
+    "$\\cong$": "≅",
+    "$\\propto$": "∝",
     // Calculus / Algebra
-    "$\\infty$": "\u221E",
-    "$\\partial$": "\u2202",
-    "$\\nabla$": "\u2207",
-    "$\\sum$": "\u03A3",
-    "$\\prod$": "\u03A0",
-    "$\\int$": "\u222B",
-    "$\\oint$": "\u222E",
-    "$\\pm$": "\u00B1",
-    "$\\mp$": "\u2213",
-    "$\\times$": "\u00D7",
-    "$\\div$": "\u00F7",
-    "$\\cdot$": "\u00B7",
+    "$\\infty$": "∞",
+    "$\\partial$": "∂",
+    "$\\nabla$": "∇",
+    "$\\sum$": "Σ",
+    "$\\prod$": "Π",
+    "$\\int$": "∫",
+    "$\\oint$": "∮",
+    "$\\pm$": "±",
+    "$\\mp$": "∓",
+    "$\\times$": "×",
+    "$\\div$": "÷",
+    "$\\cdot$": "·",
     // Ellipsis
-    "$\\cdots$": "\u22EF",
-    "$\\ldots$": "\u2026",
-    "$\\vdots$": "\u22EE",
-    "$\\ddots$": "\u22F1",
+    "$\\cdots$": "⋯",
+    "$\\ldots$": "…",
+    "$\\vdots$": "⋮",
+    "$\\ddots$": "⋱",
     // Greek lowercase
-    "$\\alpha$": "\u03B1",
-    "$\\beta$": "\u03B2",
-    "$\\gamma$": "\u03B3",
-    "$\\delta$": "\u03B4",
-    "$\\epsilon$": "\u03B5",
-    "$\\varepsilon$": "\u03F5",
-    "$\\zeta$": "\u03B6",
-    "$\\eta$": "\u03B7",
-    "$\\theta$": "\u03B8",
-    "$\\vartheta$": "\u03D1",
-    "$\\iota$": "\u03B9",
-    "$\\kappa$": "\u03BA",
-    "$\\lambda$": "\u03BB",
-    "$\\mu$": "\u03BC",
-    "$\\nu$": "\u03BD",
-    "$\\xi$": "\u03BE",
-    "$\\pi$": "\u03C0",
-    "$\\varpi$": "\u03D6",
-    "$\\rho$": "\u03C1",
-    "$\\varrho$": "\u03F1",
-    "$\\sigma$": "\u03C3",
-    "$\\varsigma$": "\u03C2",
-    "$\\tau$": "\u03C4",
-    "$\\upsilon$": "\u03C5",
-    "$\\phi$": "\u03C6",
-    "$\\varphi$": "\u03D5",
-    "$\\chi$": "\u03C7",
-    "$\\psi$": "\u03C8",
-    "$\\omega$": "\u03C9",
+    "$\\alpha$": "α",
+    "$\\beta$": "β",
+    "$\\gamma$": "γ",
+    "$\\delta$": "δ",
+    "$\\epsilon$": "ε",
+    "$\\varepsilon$": "ϵ",
+    "$\\zeta$": "ζ",
+    "$\\eta$": "η",
+    "$\\theta$": "θ",
+    "$\\vartheta$": "ϑ",
+    "$\\iota$": "ι",
+    "$\\kappa$": "κ",
+    "$\\lambda$": "λ",
+    "$\\mu$": "μ",
+    "$\\nu$": "ν",
+    "$\\xi$": "ξ",
+    "$\\pi$": "π",
+    "$\\varpi$": "ϖ",
+    "$\\rho$": "ρ",
+    "$\\varrho$": "ϱ",
+    "$\\sigma$": "σ",
+    "$\\varsigma$": "ς",
+    "$\\tau$": "τ",
+    "$\\upsilon$": "υ",
+    "$\\phi$": "φ",
+    "$\\varphi$": "ϕ",
+    "$\\chi$": "χ",
+    "$\\psi$": "ψ",
+    "$\\omega$": "ω",
     // Greek uppercase
-    "$\\Gamma$": "\u0393",
-    "$\\Delta$": "\u0394",
-    "$\\Theta$": "\u0398",
-    "$\\Lambda$": "\u039B",
-    "$\\Xi$": "\u039E",
-    "$\\Pi$": "\u03A0",
-    "$\\Sigma$": "\u03A3",
-    "$\\Upsilon$": "\u03A5",
-    "$\\Phi$": "\u03A6",
-    "$\\Psi$": "\u03A8",
-    "$\\Omega$": "\u03A9",
+    "$\\Gamma$": "Γ",
+    "$\\Delta$": "Δ",
+    "$\\Theta$": "Θ",
+    "$\\Lambda$": "Λ",
+    "$\\Xi$": "Ξ",
+    "$\\Pi$": "Π",
+    "$\\Sigma$": "Σ",
+    "$\\Upsilon$": "Υ",
+    "$\\Phi$": "Φ",
+    "$\\Psi$": "Ψ",
+    "$\\Omega$": "Ω",
     // Special
-    "$\\hbar$": "\u210F",
-    "$\\ell$": "\u2113",
-    "$\\Re$": "\u211C",
-    "$\\Im$": "\u2111",
-    "$\\aleph$": "\u2135",
+    "$\\hbar$": "ℏ",
+    "$\\ell$": "ℓ",
+    "$\\Re$": "ℜ",
+    "$\\Im$": "ℑ",
+    "$\\aleph$": "ℵ",
     // Nerd Font glyphs
-    "[calendar]": "\uF00ED",
-    "[clock]": "\uF43A",
-    "[folder]": "\uF07C",
-    "[file]": "\uF15B",
-    "[code]": "\uF121",
-    "[terminal]": "\uF07B",
-    "[check]": "\uF00C",
-    "[cross]": "\uF00D",
-    "[warning]": "\uF071",
-    "[info]": "\uF05A",
-    "[gear]": "\uF013",
-    "[bolt]": "\uF0E7",
-    "[book]": "\uF02D",
-    "[pen]": "\uF303",
-    "[bug]": "\uF188",
-    "[star]": "\uF005",
-    "[heart]": "\uF004",
-    "[fire]": "\uF06D",
-    "[rocket]": "\uF135",
+    "[calendar]": "D",
+    "[clock]": "",
+    "[folder]": "",
+    "[file]": "",
+    "[code]": "",
+    "[terminal]": "",
+    "[check]": "",
+    "[cross]": "",
+    "[warning]": "",
+    "[info]": "",
+    "[gear]": "",
+    "[bolt]": "",
+    "[book]": "",
+    "[pen]": "",
+    "[bug]": "",
+    "[star]": "",
+    "[heart]": "",
+    "[fire]": "",
+    "[rocket]": "",
   };
 
   /**
@@ -150,7 +150,7 @@ class TerminalRenderer {
   _translateSymbols(text) {
     let result = text;
     // Replace $\sqrt{...}$ → √...
-    result = result.replace(/\$\\sqrt\{([^}]+)\}\$/g, "\u221A$1");
+    result = result.replace(/\$\\sqrt\{([^}]+)\}\$/g, "√$1");
     // Replace all mapped symbols
     Object.entries(this._symbolMap).forEach(([latex, unicode]) => {
       const escapedKey = latex.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -186,25 +186,97 @@ class TerminalRenderer {
   }
 
   /**
-   * Wraps a single string of text to fit within a specified width.
+   * Calculates the visual display width of a string, accounting for
+   * wide characters (CJK, fullwidth) and zero-width characters
+   * (combining marks, variation selectors, ZWJ).
+   * @param {string} text - The text to measure.
+   * @returns {number} The visual width in terminal columns.
+   */
+  _visualWidth(text) {
+    let width = 0;
+    // eslint-disable-next-line no-control-regex
+    const cleanText = text.replace(/\u001B\[[0-9;]*m/g, "");
+    const chars = Array.from(cleanText);
+    for (let i = 0; i < chars.length; i += 1) {
+      const code = chars[i].codePointAt(0);
+      // Zero-width: combining marks, variation selectors, ZWJ, soft hyphen
+      const isZeroWidth =
+        (code >= 0x0300 && code <= 0x036F) ||
+        code === 0x200D ||
+        (code >= 0xFE00 && code <= 0xFE0F) ||
+        code === 0x00AD;
+
+      // Wide: CJK, Hangul, fullwidth forms, etc.
+      const isWide =
+        (code >= 0x1100 && code <= 0x115F) ||
+        (code >= 0x2E80 && code <= 0x303E) ||
+        (code >= 0x3041 && code <= 0x33FF) ||
+        (code >= 0x3400 && code <= 0x4DBF) ||
+        (code >= 0x4E00 && code <= 0x9FFF) ||
+        (code >= 0xA000 && code <= 0xA4CF) ||
+        (code >= 0xAC00 && code <= 0xD7A3) ||
+        (code >= 0xF900 && code <= 0xFAFF) ||
+        (code >= 0xFE30 && code <= 0xFE4F) ||
+        (code >= 0xFF00 && code <= 0xFF60) ||
+        (code >= 0xFFE0 && code <= 0xFFE6) ||
+        (code >= 0x20000 && code <= 0x2FFFD) ||
+        (code >= 0x30000 && code <= 0x3FFFD);
+
+      if (isZeroWidth) {
+        // eslint-disable-next-line no-continue
+        continue;
+      } else if (isWide) {
+        width += 2;
+      } else {
+        width += 1;
+      }
+    }
+    return width;
+  }
+
+  /**
+   * Pads a string to a specified visual width with trailing spaces.
+   * Unlike String.prototype.padEnd, this accounts for wide characters.
+   * @param {string} text - The text to pad.
+   * @param {number} width - The target visual width.
+   * @returns {string} The padded string.
+   */
+  _padToWidth(text, width) {
+    const current = this._visualWidth(text);
+    if (current >= width) return text;
+    return text + " ".repeat(width - current);
+  }
+
+  /**
+   * Wraps a single string of text to fit within a specified visual width.
    * @param {string} text - The text to wrap.
-   * @param {number} width - The maximum width in characters.
+   * @param {number} width - The maximum visual width in terminal columns.
    * @returns {string[]} An array of wrapped lines.
    */
   _wrapCellText(text, width) {
-    if (text.length <= width) return [text];
+    if (this._visualWidth(text) <= width) return [text];
     const words = text.split(/\s+/);
     const lines = [];
     let currentLine = "";
     words.forEach((word) => {
-      if (word.length > width) {
+      if (this._visualWidth(word) > width) {
         if (currentLine) lines.push(currentLine);
-        for (let i = 0; i < word.length; i += width) {
-          lines.push(word.substring(i, i + width));
+        // Hard-break long words by visual width, char by char
+        let chunk = "";
+        const wordChars = Array.from(word);
+        for (let i = 0; i < wordChars.length; i += 1) {
+          const ch = wordChars[i];
+          if (this._visualWidth(chunk + ch) > width) {
+            lines.push(chunk);
+            chunk = ch;
+          } else {
+            chunk += ch;
+          }
         }
+        if (chunk) lines.push(chunk);
         currentLine = "";
       } else if (
-        (currentLine + (currentLine ? " " : "") + word).length <= width
+        this._visualWidth(currentLine + (currentLine ? " " : "") + word) <= width
       ) {
         currentLine += (currentLine ? " " : "") + word;
       } else {
@@ -257,7 +329,7 @@ class TerminalRenderer {
     const naturalWidths = new Array(numCols).fill(MIN_COL_WIDTH);
     dataRows.forEach((row) => {
       row.forEach((cell, i) => {
-        naturalWidths[i] = Math.max(naturalWidths[i] || 0, cell.length);
+        naturalWidths[i] = Math.max(naturalWidths[i] || 0, this._visualWidth(cell));
       });
     });
 
@@ -292,23 +364,9 @@ class TerminalRenderer {
       Math.max(...row.map((cells) => cells.length)),
     );
 
-  /**
-   * Builds a separator line using Unicode box-drawing characters.
-   * @private
-   * @param {string} left - Left border character.
-   * @param {string} mid - Middle border character.
-   * @param {string} right - Right border character.
-   * @param {string} fill - Fill character for column width.
-   * @returns {string} The constructed separator line.
-   */
-  const makeSeparator = (left, mid, right, fill) =>
-      left +
-      colWidths.map((w) => fill.repeat(w + padding * 2)).join(mid) +
-      right;
-
-    const topBorder = makeSeparator("\u250C", "\u252C", "\u2510", "\u2500");
-    const midBorder = makeSeparator("\u251C", "\u253C", "\u2524", "\u2500");
-    const bottomBorder = makeSeparator("\u2514", "\u2534", "\u2518", "\u2500");
+    const topBorder = `┌${colWidths.map((w) => "─".repeat(w + padding * 2)).join("┬")}┐`;
+    const midBorder = `├${colWidths.map((w) => "─".repeat(w + padding * 2)).join("┼")}┤`;
+    const bottomBorder = `└${colWidths.map((w) => "─".repeat(w + padding * 2)).join("┴")}┘`;
 
     let output = `${topBorder}\n`;
 
@@ -316,9 +374,9 @@ class TerminalRenderer {
       for (let lineIdx = 0; lineIdx < rowHeights[rowIndex]; lineIdx += 1) {
         const cells = row.map((cellLines, colIdx) => {
           const line = cellLines[lineIdx] || "";
-          return ` ${line.padEnd(colWidths[colIdx])} `;
+          return ` ${this._padToWidth(line, colWidths[colIdx])} `;
         });
-        output += `\u2502${cells.join("\u2502")}\u2502\n`;
+        output += `│${cells.join("│")}│\n`;
       }
       if (rowIndex === 0) output += `${midBorder}\n`;
     });
@@ -336,10 +394,8 @@ class TerminalRenderer {
   formatMarkdown(text) {
     if (!text) return "";
     let formatted = this._translateSymbols(text);
-    const tableRegex = /((?:^\s*\|.*\n?)+)/gm;
-    formatted = formatted.replace(tableRegex, (match) =>
-      this.renderTable(match),
-    );
+
+    // Apply block and inline formatting BEFORE tables so tables can correctly calculate visual widths
     formatted = formatted.replace(
       /```([\s\S]*?)```/g,
       (_, code) => `\n${chalk.blueBright(code.trim())}\n`,
@@ -353,6 +409,11 @@ class TerminalRenderer {
     formatted = formatted.replace(/\*(.*?)\*/g, (_, content) =>
       chalk.italic(content),
     );
+
+    const tableRegex = /((?:^\s*\|.*\n?)+)/gm;
+    formatted = formatted.replace(tableRegex, (match) =>
+      this.renderTable(match),
+    );
     return formatted;
   }
 
@@ -364,13 +425,15 @@ class TerminalRenderer {
    * @returns {string} The rendered panel string.
    */
   renderPanel(title, message, style = "none") {
-    const border = "\u2500".repeat(title.length + 4);
+    const border = "─".repeat(this._visualWidth(title) + 4);
     const panelColor = style === "warning" ? chalk.yellow : chalk.blue;
-    let output = `\n${panelColor(`\u250C${border}\u2510`)}\n`;
-    output += `${panelColor("\u2502")} ${chalk.bold(title)} ${panelColor(" ".repeat(border.length - title.length - 2))} ${panelColor("\u2502")}\n`;
-    output += `${panelColor(`\u251C${"\u2500".repeat(border.length)}\u2524`)}\n`;
-    output += `${panelColor("\u2502")} ${message} ${panelColor(" ".repeat(Math.max(0, border.length - message.length - 2)))} ${panelColor("\u2502")}\n`;
-    output += `${panelColor(`\u2514${border}\u2518`)}\n\n`;
+    let output = `\n${panelColor(`┌${border}┐`)}\n`;
+    const paddedTitle = this._padToWidth(title, this._visualWidth(title));
+    const paddedMsg = this._padToWidth(message, this._visualWidth(message));
+    output += `${panelColor("│")} ${chalk.bold(paddedTitle)} ${panelColor(" ".repeat(border.length - this._visualWidth(title) - 2))} ${panelColor("│")}\n`;
+    output += `${panelColor(`├${"─".repeat(border.length)}┤`)}\n`;
+    output += `${panelColor("│")} ${paddedMsg} ${panelColor(" ".repeat(Math.max(0, border.length - this._visualWidth(message) - 2)))} ${panelColor("│")}\n`;
+    output += `${panelColor(`└${border}┘`)}\n\n`;
     return output;
   }
 }
