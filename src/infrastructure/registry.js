@@ -322,6 +322,12 @@ export const AVAILABLE_TOOLS = {
    */
   url: async (...args) => (await getTool("webTools", "renderWeb"))(...args),
   /**
+   * Fetches raw HTML from a URL.
+   * @param {...unknown} args - Arguments passed to the web tool.
+   * @returns {Promise<unknown>} The raw HTML content.
+   */
+  fetch: async (...args) => (await getTool("webTools", "fetchRaw"))(...args),
+  /**
    * Executes JavaScript code.
    * @param {...unknown} args - Arguments passed to the eval tool.
    * @returns {Promise<unknown>} The execution result.

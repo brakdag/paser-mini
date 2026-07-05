@@ -1,6 +1,10 @@
 import { execFile } from "child_process";
 import { promisify } from "util";
 import axios from "axios";
+import fs from "fs/promises";
+import path from "path";
+
+const ROOT_DIR = process.cwd();
 
 /**
  * Tools for web interaction, searching, and rendering pages to text.
@@ -23,6 +27,20 @@ export default class WebTools {
   };
 
   #execFilePromise = promisify(execFile);
+
+  /**
+   * Reads fetch headers from config.json.
+   * @returns {Promise<object>} The fetch headers.
+   */
+  async #getFetchHeaders() {
+    try {
+      const configPath = path.resolve(ROOT_DIR, "config/config.json");
+      const config = JSON.parse(await fs.readFile(configPath, "utf8"));
+      return config.fetch_headers || {};
+    } catch {
+      return {};
+    }
+  }
 
   /**
    * Searches the web using multiple providers.
@@ -84,5 +102,22 @@ export default class WebTools {
     } catch (e) {
       throw new Error(`Rendering failed: ${e.message}`);
     }
+  }
+
+  /**
+   * Fetches a URL and returns the raw HTML/text.
+   * Uses fetch_headers from config.json if available.
+   * @param {string} url - The URL to fetch.
+   * @returns {Promise<string>} The raw HTML/text content.
+   * @throws {Error} If the fetch fails.
+   */
+  async fetchRaw(url) {
+    const headers = await this.#getFetchHeaders();
+    const response = await axios.get(url, {
+      headers: { ...this.#BROWSER_HEADERS, ...headers },
+      timeout: 15000,
+      responseType: "text",
+    });
+    return response.data;
   }
 }

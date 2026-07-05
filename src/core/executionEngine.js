@@ -47,6 +47,7 @@ const TOOL_DETAIL_EXTRACTORS = {
   bin: (args) => args.filePath ? path.basename(args.filePath) : "binary",
   search: (args) => args.query || "web",
   url: (args) => args.url || "url",
+  fetch: (args) => args.url || "url",
   run: () => "sandbox",
   img: (args) => args.path ? path.basename(args.path) : "image",
   reset: (args) => args.user_message ? args.user_message.substring(0, 30) : "reset",
