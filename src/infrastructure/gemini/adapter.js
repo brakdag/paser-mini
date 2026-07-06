@@ -368,6 +368,28 @@ class GeminiAdapter extends BaseAdapter {
   }
 
   /**
+   * Estimates the token count based on character length heuristic.
+   * Accounts for the 'parts' array structure specific to the Gemini API.
+   * @param {string} systemInstruction - The system instruction text.
+   * @param {Array} history - The conversation history.
+   * @returns {number} The estimated token count.
+   */
+  countTokens(systemInstruction, history) {
+    const CHARS_PER_TOKEN = 3.5;
+    const systemChars = systemInstruction?.length || 0;
+    const historyChars = history.reduce((acc, msg) => {
+      const partsLength = (msg.parts || []).reduce((partAcc, part) => {
+        if (typeof part.text === "string") {
+          return partAcc + part.text.length;
+        }
+        return partAcc;
+      }, 0);
+      return acc + partsLength;
+    }, 0);
+    return Math.ceil((systemChars + historyChars) / CHARS_PER_TOKEN);
+  }
+
+  /**
    * Fetches the list of available models from the Gemini API.
    * @returns {Promise<string[]>} A list of available model names.
    */
