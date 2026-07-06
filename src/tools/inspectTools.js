@@ -25,6 +25,15 @@ export default class InspectTools {
        * Checks if the prompt is in the buffer.
        */
       const check = () => {
+        if (!this.#inspectProcess) {
+          clearInterval(interval);
+          clearTimeout(timeout);
+          const output = this.#buffer;
+          this.#buffer = "";
+          resolve(output.trim());
+          return;
+        }
+
         const idx = this.#buffer.indexOf(PROMPT);
         if (idx !== -1) {
           clearInterval(interval);
@@ -59,9 +68,12 @@ export default class InspectTools {
     let p = path;
     let c = command;
 
-    // If session active and only one arg provided, treat it as command
-    if (p && !c && this.#inspectProcess) {
-      c = p;
+    // If session active, treat first arg as command if no command given,
+    // or ignore path if both are provided (session already running)
+    if (this.#inspectProcess) {
+      if (!c) {
+        c = p;
+      }
       p = undefined;
     }
 
@@ -85,16 +97,30 @@ export default class InspectTools {
         throw err;
       });
 
-      this.#inspectProcess.on("close", () => {
+      this.#inspectProcess.on("close", (_code) => {
+        if (this.#inspectProcess) {
+          this.#inspectProcess.kill();
+          this.#inspectProcess.stdout.removeAllListeners();
+          this.#inspectProcess.stderr.removeAllListeners();
+          this.#inspectProcess.stdin.destroy();
+        }
         this.#inspectProcess = null;
         this.#buffer = "";
       });
 
-      await this.#waitForPrompt();
+      const startupOutput = await this.#waitForPrompt();
+
+      if (!this.#inspectProcess) {
+        return `Process exited during startup.\nOutput:\n${startupOutput}`;
+      }
 
       if (c) {
         this.#inspectProcess.stdin.write(`${c}\n`);
-        return this.#waitForPrompt();
+        const output = await this.#waitForPrompt();
+        if (!this.#inspectProcess) {
+          return `${output}\n\n[Process terminated]`;
+        }
+        return output;
       }
 
       return "Inspect session started.";
@@ -122,7 +148,11 @@ export default class InspectTools {
         throw new Error("Inspect process has terminated. Start a new session with a 'path'.");
       }
       this.#inspectProcess.stdin.write(`${c}\n`);
-      return this.#waitForPrompt();
+      const output = await this.#waitForPrompt();
+      if (!this.#inspectProcess) {
+        return `${output}\n\n[Process terminated]`;
+      }
+      return output;
     }
 
     throw new Error("Either 'path' to start or 'command' to interact must be provided.");
