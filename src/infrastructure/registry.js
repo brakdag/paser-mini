@@ -22,6 +22,7 @@ const MODULE_MAP = {
   evalTools: "../tools/evalTools.js",
   astTools: "../tools/astTools.js",
   perfTools: "../tools/perfTools.js",
+  inspectTools: "../tools/inspectTools.js",
 };
 
 let toolCache = {};
@@ -357,6 +358,7 @@ export const AVAILABLE_TOOLS = {
    * @returns {Promise<unknown>} The image analysis.
    */
   img: async (...args) => (await getTool("utilTools", "seeImage"))(...args),
+  inspect: async (...args) => (await getTool("inspectTools", "inspect"))(...args),
   /**
    * Resets the system state.
    * @param {...unknown} args - Arguments passed to the system tool.

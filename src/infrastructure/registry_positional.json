@@ -117,6 +117,7 @@
   ["fetch", "Fetch raw HTML from URL", { "url": "string", "headers": "json string" }],
   ["run", "Execute raw JavaScript in a secure sandbox", { "code": "string" }],
   ["img", "Visualizes an image.", { "path": "string" }],
+  ["inspect", "Debug NodeJS code using built-in inspect repl", { "path": "string", "command": "string" }],
   ["ast", "Analyze JavaScript AST", { "path": "string", "query": "string" }],
   ["metrics", "Get current process memory and CPU usage", {}],
   ["snapshot", "Create a V8 heap snapshot", { "path": "string" }],

@@ -52,6 +52,7 @@ const TOOL_DETAIL_EXTRACTORS = {
   img: (args) => args.path ? path.basename(args.path) : "image",
   reset: (args) => args.user_message ? args.user_message.substring(0, 30) : "reset",
   real: (args) => args.action || "action",
+  inspect: (args) => args.path ? path.basename(args.path) : args.command ? args.command.substring(0, 50) : "inspect",
 };
 /* eslint-enable jsdoc/require-jsdoc */
 
