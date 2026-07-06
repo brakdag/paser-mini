@@ -18,43 +18,46 @@ export default class InspectTools {
    */
   #waitForPrompt() {
     return new Promise((resolve) => {
+      let resolved = false;
       let interval;
       let timeout;
 
       /**
-       * Checks if the prompt is in the buffer.
+       * Resolves the promise with the given output.
+       * @param {string} output - The output to resolve with.
+       * @param {boolean} isTimeout - Whether this is a timeout resolution.
+       */
+      const done = (output, isTimeout = false) => {
+        if (resolved) return;
+        resolved = true;
+        clearInterval(interval);
+        clearTimeout(timeout);
+        this.#buffer = "";
+        resolve(output.trim() || (isTimeout ? "Timeout: No prompt received." : ""));
+      };
+
+      /**
+       * Checks if the prompt is in the buffer or process has terminated.
        */
       const check = () => {
-        if (!this.#inspectProcess) {
-          clearInterval(interval);
-          clearTimeout(timeout);
-          const output = this.#buffer;
-          this.#buffer = "";
-          resolve(output.trim());
-          return;
-        }
+        if (resolved) return;
 
         const idx = this.#buffer.indexOf(PROMPT);
         if (idx !== -1) {
-          clearInterval(interval);
-          clearTimeout(timeout);
           const output = this.#buffer.substring(0, idx);
           this.#buffer = this.#buffer.substring(idx + PROMPT.length);
-          resolve(output.trim());
+          done(output);
+          return;
+        }
+
+        if (!this.#inspectProcess) {
+          done(this.#buffer);
         }
       };
 
       interval = setInterval(check, POLL_INTERVAL_MS);
 
-      /**
-       * Fallback timeout handler.
-       */
-      timeout = setTimeout(() => {
-        clearInterval(interval);
-        const output = this.#buffer;
-        this.#buffer = "";
-        resolve(output.trim() || "Timeout: No prompt received.");
-      }, TIMEOUT_MS);
+      timeout = setTimeout(() => done(this.#buffer, true), TIMEOUT_MS);
     });
   }
 
@@ -104,8 +107,8 @@ export default class InspectTools {
           this.#inspectProcess.stderr.removeAllListeners();
           this.#inspectProcess.stdin.destroy();
         }
+        // Preserve buffer for waitForPrompt to capture error output
         this.#inspectProcess = null;
-        this.#buffer = "";
       });
 
       const startupOutput = await this.#waitForPrompt();
@@ -115,6 +118,9 @@ export default class InspectTools {
       }
 
       if (c) {
+        // Allow the debugger to stabilize in paused state after break-on-start
+        await new Promise((r) => { setTimeout(r, 200); });
+        this.#buffer = "";
         this.#inspectProcess.stdin.write(`${c}\n`);
         const output = await this.#waitForPrompt();
         if (!this.#inspectProcess) {
@@ -147,6 +153,7 @@ export default class InspectTools {
         this.#buffer = "";
         throw new Error("Inspect process has terminated. Start a new session with a 'path'.");
       }
+      this.#buffer = "";
       this.#inspectProcess.stdin.write(`${c}\n`);
       const output = await this.#waitForPrompt();
       if (!this.#inspectProcess) {
