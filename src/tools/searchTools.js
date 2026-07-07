@@ -49,7 +49,7 @@ export default class SearchTools {
    */
   #globToRegex(glob) {
     let result = "";
-    const specialChars = ".+^${}()|[]\"";
+    const specialChars = '.+^${}()|[]"';
     for (let i = 0; i < glob.length; i += 1) {
       const char = glob[i];
       if (char === "*") {
@@ -95,7 +95,7 @@ export default class SearchTools {
 
       child.stdout.on("data", (data) => {
         stdoutData += data.toString();
-        
+
         // Abort if output exceeds max size
         if (Buffer.byteLength(stdoutData, "utf8") > MAX_STDOUT_SIZE) {
           child.kill("SIGKILL");
@@ -105,7 +105,7 @@ export default class SearchTools {
 
         const currentLines = stdoutData.split("\n").filter(Boolean).length;
 
-        if (currentLines >= 10) {
+        if (currentLines >= 50) {
           child.kill("SIGKILL");
           resolve(this.#parseGrepOutput(stdoutData, rootPath));
         }
@@ -140,9 +140,9 @@ export default class SearchTools {
     if (!stdout) {
       return JSON.stringify([]);
     }
-    
+
     const MAX_RESULT_LENGTH = 1000; // 1KB limit per matched line content
-    
+
     const parsedResults = stdout
       .split("\n")
       .filter((line) => line)
@@ -161,18 +161,20 @@ export default class SearchTools {
           return null;
         }
 
-        const truncatedContent = content.length > MAX_RESULT_LENGTH 
-          ? `${content.substring(0, MAX_RESULT_LENGTH)}... (truncated)` 
-          : content.trim();
+        const truncatedContent =
+          content.length > MAX_RESULT_LENGTH
+            ? `${content.substring(0, MAX_RESULT_LENGTH)}... (truncated)`
+            : content.trim();
 
-        return { 
-          file: path.relative(rootPath, filePath), 
-          line: lineNum, 
-          content: truncatedContent
+        return {
+          file: path.relative(rootPath, filePath),
+          line: lineNum,
+          content: truncatedContent,
         };
       })
       .filter(Boolean);
-      
+
     return JSON.stringify(parsedResults);
   }
 }
+
