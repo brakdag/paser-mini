@@ -24,6 +24,11 @@ class ProviderManager {
       defaultModel: "minimaxai/minimax-m3",
       path: "../infrastructure/nvidia-minimax/adapter.js",
     },
+    HUGGINGFACE: {
+      name: "HuggingFace",
+      defaultModel: "meta-llama/Meta-Llama-3-8B-Instruct",
+      path: "../infrastructure/huggingface/adapter.js",
+    },
     OPENROUTER: {
       name: "OpenRouter",
       defaultModel: "openai/gpt-4o",
