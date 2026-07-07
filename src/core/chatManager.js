@@ -231,7 +231,10 @@ class ChatManager {
       const systemTools = await getToolInstance("systemTools");
       systemTools.setContext(this.assistant, this);
     } catch (e) {
-      logger.error("Failed to initialize memory context", e);
+      logger.error("Failed to initialize memory context", {
+        name: e.name,
+        message: e.message,
+      });
     }
 
     if (initialInput) {
@@ -278,10 +281,19 @@ ${welcomeMsg}`;
           this.ui.displayError(
             `AI connection error (${statusCode}): ${e.message}. The session remains active; please try again in a moment.`,
           );
-          logger.error(`API Error: ${e.message}`, e);
+          logger.error(`API Error: ${e.message}`, {
+            name: e.name,
+            message: e.message,
+            code: e.code,
+            statusCode: e.response?.status,
+          });
         } else {
           this.ui.displayError(`Critical error in processTurn: ${e.message}`);
-          logger.error(`Critical error: ${e.message}`, e);
+          logger.error(`Critical error: ${e.message}`, {
+            name: e.name,
+            message: e.message,
+            stack: e.stack,
+          });
         }
       }
     }

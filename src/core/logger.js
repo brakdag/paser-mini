@@ -2,6 +2,22 @@ import fs from "fs";
 import path from "path";
 
 /**
+ * Replacer function for JSON.stringify that detects and replaces circular references.
+ * Prevents TypeError: Converting circular structure to JSON.
+ * @returns {(key: string, value: unknown) => unknown} A replacer function to be used with JSON.stringify.
+ */
+const circularReplacer = () => {
+  const seen = new WeakSet();
+  return (_key, value) => {
+    if (typeof value === "object" && value !== null) {
+      if (seen.has(value)) return "[Circular]";
+      seen.add(value);
+    }
+    return value;
+  };
+};
+
+/**
  * Handles application logging, managing both a general system log and a session-specific log.
  */
 class Logger {
@@ -55,7 +71,8 @@ class Logger {
       return;
     }
 
-    const logEntry = `[${timestamp}] [${level}] ${message} ${data ? JSON.stringify(data) : ""}\n`;
+    const safeData = data ? JSON.stringify(data, circularReplacer()) : "";
+    const logEntry = `[${timestamp}] [${level}] ${message} ${safeData}\n`;
     fs.appendFileSync(targetFile, logEntry, "utf8");
   }
 
