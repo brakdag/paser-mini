@@ -54,7 +54,7 @@ const COMMAND_MAP = {
    * @returns {void}
    */
   "/help": (_, ui) => InterfaceCommands.handleHelp(ui),
-  "/connect": AICommands.handleConnect,
+
   "/config": ConfigCommands.handleConfig,
   /**
    * Checks available models.
@@ -161,6 +161,22 @@ const PREFIX_COMMANDS = {
    */
   "/paim ": (cm, ui, input) =>
     AICommands.handlePaim(cm, ui, input.slice(6).trim()),
+  /**
+   * Lists available models.
+   * @param {import("./chatManager.js").default} cm - The chat manager instance.
+   * @param {object} ui - The UI instance.
+   * @param {string} input - The raw input string.
+   * @returns {void}
+   */
+  /**
+   * Connects to an AI provider.
+   * @param {import("./chatManager.js").default} cm - The chat manager instance.
+   * @param {object} ui - The UI instance.
+   * @param {string} input - The raw input string.
+   * @returns {void}
+   */
+  "/connect": (cm, ui, input) =>
+    AICommands.handleConnect(cm, ui, input.split(/\s+/).slice(1).join(" ")),
   /**
    * Lists available models.
    * @param {import("./chatManager.js").default} cm - The chat manager instance.

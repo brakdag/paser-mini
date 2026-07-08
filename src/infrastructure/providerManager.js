@@ -39,10 +39,20 @@ class ProviderManager {
       defaultModel: "llama3-8b-8192",
       path: "../infrastructure/groq/adapter.js",
     },
+    CEREBRAS: {
+      name: "Cerebras",
+      defaultModel: "llama3.1-8b",
+      path: "../infrastructure/cerebras/adapter.js",
+    },
     COHERE: {
       name: "Cohere",
       defaultModel: "command-r-plus",
       path: "../infrastructure/cohere/adapter.js",
+    },
+    CLOUDFLARE: {
+      name: "Cloudflare",
+      defaultModel: "@cf/meta/llama-3.1-8b-instruct",
+      path: "../infrastructure/cloudflare/adapter.js",
     },
     ZAI: {
       name: "Z.AI",
