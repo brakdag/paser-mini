@@ -1,6 +1,7 @@
 import IRCFormat from "../formats/IRCFormat.js";
 import CleanFormat from "../formats/CleanFormat.js";
 import FountainFormat from "../formats/FountainFormat.js";
+import logger from "../core/logger.js";
 
 /**
  * Base class for AI adapters. This class is abstract and cannot be instantiated directly.
@@ -34,6 +35,66 @@ export default class BaseAdapter {
     this.fountainFormatter = new FountainFormat();
     this.renderingMode = "IRC";
     this.immersionMode = false;
+    this.lastRequestTime = 0;
+  }
+
+  /**
+   * Estimates the token count based on character length.
+   * @returns {number} The estimated token count.
+   */
+  _estimateTokens() {
+    const history = this.getHistory ? this.getHistory() : [];
+    const systemInstruction = this.systemInstruction || "";
+    
+    if (typeof this.countTokens === "function") {
+      return this.countTokens(systemInstruction, history);
+    }
+
+    const systemChars = systemInstruction?.length || 0;
+    const historyChars = history.reduce((acc, msg) => {
+      const content = msg.content || msg.text || "";
+      return acc + (typeof content === "string" ? content.length : JSON.stringify(content).length);
+    }, 0);
+    return Math.ceil((systemChars + historyChars) / 3.5);
+  }
+
+  /**
+   * Calculates the current RPM limit based on TPM and token estimates.
+   * @returns {number} The calculated requests-per-minute limit.
+   */
+  _calculateRpmLimit() {
+    let rpmLimit = Math.max(1, parseInt(this.configManager.get("rpm_limit", 15), 10) || 1);
+    const tpmLimit = parseInt(this.configManager.get("tpm_limit", 15000), 10);
+    const autoRpmEnabled = this.configManager.get("auto_rpm_enabled", false);
+
+    if (autoRpmEnabled && tpmLimit > 0) {
+      const currentTokens = this._estimateTokens();
+      rpmLimit = Math.max(1, Math.floor(tpmLimit / Math.max(currentTokens, 1000)));
+      logger.debug(`[${this.constructor.name}] Auto-RPM: Adjusted limit to ${rpmLimit} based on tokens`);
+    }
+    return rpmLimit;
+  }
+
+  /**
+   * Ensures the request rate does not exceed the defined RPM limit.
+   * @returns {Promise<void>}
+   */
+  async _applyRateLimit() {
+    const rpmLimit = this._calculateRpmLimit();
+    const minInterval = 60000 / rpmLimit;
+    const now = Date.now();
+    const elapsed = now - this.lastRequestTime;
+
+    if (elapsed < minInterval) {
+      const waitTime = minInterval - elapsed;
+      logger.debug(
+        `[${this.constructor.name}] Rate Limit: Waiting ${waitTime / 1000}s to maintain ${rpmLimit} RPM`,
+      );
+      await new Promise((resolve) => {
+        setTimeout(resolve, waitTime);
+      });
+    }
+    this.lastRequestTime = Date.now();
   }
 
   /**

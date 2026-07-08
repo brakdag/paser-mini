@@ -34,7 +34,6 @@ class ChatManager {
     this.providerManager = providerManager || new ProviderManager();
     const DEFAULT_TEMPERATURE = 0.7;
     const DEFAULT_CONTEXT_WINDOW_LIMIT = 250000;
-    const DEFAULT_TPM_LIMIT = 15000;
 
     this.temperature = parseFloat(
       this.configManager.get("default_temperature", DEFAULT_TEMPERATURE),
@@ -43,7 +42,7 @@ class ChatManager {
       this.configManager.get("context_window_limit", DEFAULT_CONTEXT_WINDOW_LIMIT),
       10,
     );
-    this.tpmLimit = parseInt(this.configManager.get("tpm_limit", DEFAULT_TPM_LIMIT), 10);
+    // this.tpmLimit = parseInt(this.configManager.get("tpm_limit", DEFAULT_TPM_LIMIT), 10);
     this.ui.setBashEnabled(false);
     this.currentChannel = "#main";
     this.timestampsEnabled = this.configManager.get(

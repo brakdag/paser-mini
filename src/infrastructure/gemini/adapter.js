@@ -41,7 +41,6 @@ class GeminiAdapter extends BaseAdapter {
     this.lastPayload = null;
     this.renderingMode = "IRC";
     this.lastRequestTime = 0;
-    this.rpmLimit = 15;
 
     this.client = axios.create({
       timeout: 600000,
@@ -53,28 +52,6 @@ class GeminiAdapter extends BaseAdapter {
       "No content parts returned",
       "Response blocked by safety filters.",
     ];
-  }
-
-  /**
-   * Ensures the request rate does not exceed the defined RPM limit.
-   * @private
-   * @returns {Promise<void>}
-   */
-  async _applyRateLimit() {
-    const minInterval = 60000 / this.rpmLimit;
-    const now = Date.now();
-    const elapsed = now - this.lastRequestTime;
-
-    if (elapsed < minInterval) {
-      const waitTime = minInterval - elapsed;
-      logger.debug(
-        `[GeminiAdapter] Rate Limit: Waiting ${waitTime / 1000}s to maintain ${this.rpmLimit} RPM`,
-      );
-      await new Promise((resolve) => {
-        setTimeout(resolve, waitTime);
-      });
-    }
-    this.lastRequestTime = Date.now();
   }
 
   /**

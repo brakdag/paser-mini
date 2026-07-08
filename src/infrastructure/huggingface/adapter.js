@@ -4,7 +4,17 @@ import logger from "../../core/logger.js";
 import IRCFormatter from "../../utils/ircFormatter.js";
 import RetryHandler from "../../utils/retryHandler.js";
 
+/**
+ * Adapter for the HuggingFace API, providing chat capabilities and history management.
+ * @augments BaseAdapter
+ */
 class HuggingFaceAdapter extends BaseAdapter {
+  /**
+   * @param {object} ui - The UI interface for displaying information.
+   * @param {object} configManager - The configuration manager.
+   * @param {string} [userNickname] - The nickname of the user.
+   * @param {string} [agentNickname] - The nickname of the agent.
+   */
   constructor(ui, configManager, userNickname = "user", agentNickname = "assistant") {
     super(ui, configManager, userNickname, agentNickname);
     this.apiKey = process.env.HUGGINGFACE_API_KEY;
@@ -18,6 +28,10 @@ class HuggingFaceAdapter extends BaseAdapter {
     this.recoverableErrors = ["Empty response from HuggingFace"];
   }
 
+  /**
+   * Configures the axios client with base URL, timeout, and headers.
+   * @private
+   */
   _configureClient() {
     this.client = axios.create({
       baseURL: "https://router.huggingface.co/v1",
@@ -29,6 +43,12 @@ class HuggingFaceAdapter extends BaseAdapter {
     });
   }
 
+  /**
+   * Initializes or updates the chat session parameters.
+   * @param {string} modelName - The name of the model to use.
+   * @param {string} systemInstruction - The system prompt/preamble.
+   * @param {number} [temperature] - The sampling temperature.
+   */
   startChat(modelName, systemInstruction, temperature = 0.7) {
     this.currentModel = modelName || this.currentModel;
     this.systemInstruction = systemInstruction;
@@ -42,6 +62,13 @@ class HuggingFaceAdapter extends BaseAdapter {
     }
   }
 
+  /**
+   * Sends a message to the HuggingFace API and returns the response text.
+   * @param {string|object|Array} message - The message content to send.
+   * @param {string} [role] - The role of the sender.
+   * @returns {Promise<string>} The response text from the AI.
+   * @throws {Error} If the API request fails.
+   */
   async sendMessage(message, role = "user") {
     const timestamp = IRCFormatter.getTimestamp();
     this.injectMessage(role, message, timestamp);
@@ -49,7 +76,13 @@ class HuggingFaceAdapter extends BaseAdapter {
 
     const payload = this._preparePayload();
 
+    await this._applyRateLimit();
+
     try {
+      /**
+       * Executes the API request with retry logic.
+       * @returns {Promise<string>} The response text.
+       */
       return await this.retryHandler.execute(async () => {
         try {
           logger.info(`[HuggingFaceAdapter] Requesting: ${this.client.defaults.baseURL}/chat/completions`);
@@ -62,6 +95,11 @@ class HuggingFaceAdapter extends BaseAdapter {
         }
       }, {
         recoverableErrors: this.recoverableErrors,
+        /**
+         * @param {number} attempt - The current attempt number.
+         * @param {Error} error - The error that triggered the retry.
+         * @param {string} formattedDelay - The formatted delay string.
+         */
         onRetry: (attempt, error, formattedDelay) => {
           logger.warn(`[HuggingFaceAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`);
           if (this.ui && this.ui.displayInfo) {
@@ -77,6 +115,11 @@ class HuggingFaceAdapter extends BaseAdapter {
     }
   }
 
+  /**
+   * Prepares the payload for the HuggingFace /chat/completions endpoint.
+   * @private
+   * @returns {object} The formatted payload.
+   */
   _preparePayload() {
     return {
       model: this.currentModel,
@@ -88,6 +131,13 @@ class HuggingFaceAdapter extends BaseAdapter {
     };
   }
 
+  /**
+   * Processes the API response and injects the assistant's message into history.
+   * @param {object} response - The axios response object.
+   * @private
+   * @returns {string} The extracted text content.
+   * @throws {Error} If the response text is empty.
+   */
   _handleResponse(response) {
     const textContent = response.data.choices[0].message.content;
 
@@ -100,6 +150,12 @@ class HuggingFaceAdapter extends BaseAdapter {
     throw new Error("Empty response from HuggingFace");
   }
 
+  /**
+   * Formats an API error into a standardized Error object.
+   * @param {Error} error - The caught error object.
+   * @private
+   * @returns {Error} A formatted Error object with name "APIError".
+   */
   _handleApiError(error) {
     const errorMsg = error.response?.data?.error?.message || error.message;
     const apiError = new Error(errorMsg);
@@ -109,6 +165,12 @@ class HuggingFaceAdapter extends BaseAdapter {
     return apiError;
   }
 
+  /**
+   * Normalizes and injects a message into the chat history.
+   * @param {string} role - The role of the message sender.
+   * @param {string|object|Array} content - The content of the message.
+   * @param {string|null} [timestamp] - The timestamp of the message.
+   */
   injectMessage(role, content, timestamp = null) {
     const apiRole = this._normalizeRole(role);
     const finalContent = this._normalizeContent(content, apiRole);
@@ -120,6 +182,12 @@ class HuggingFaceAdapter extends BaseAdapter {
     });
   }
 
+  /**
+   * Maps internal roles to HuggingFace/OpenAI roles.
+   * @param {string} role - The internal role name.
+   * @private
+   * @returns {string} The normalized API role.
+   */
   _normalizeRole(role) {
     if (role === this.userNickname) return "user";
     if (role === this.agentNickname) return "assistant";
@@ -127,6 +195,13 @@ class HuggingFaceAdapter extends BaseAdapter {
     return role;
   }
 
+  /**
+   * Sanitizes and formats message content based on type and role.
+   * @param {string|object|Array} content - The raw content.
+   * @param {string} role - The normalized API role.
+   * @private
+   * @returns {string|object[]} The formatted content.
+   */
   _normalizeContent(content, role) {
     let finalContent = content;
     if (content && typeof content === 'object' && content.mime_type && content.data) {
@@ -144,12 +219,19 @@ class HuggingFaceAdapter extends BaseAdapter {
     return finalContent;
   }
 
+  /**
+   * Removes the last message from the chat history.
+   */
   popLastMessage() {
     if (this.history.length > 0) {
       this.history.pop();
     }
   }
 
+  /**
+   * Resets the chat history, optionally with a new history array.
+   * @param {Array|null} [historyOverride] - The new history to set.
+   */
   hardReset(historyOverride = null) {
     this.history = historyOverride || [];
     if (this.systemInstruction) {
@@ -158,10 +240,18 @@ class HuggingFaceAdapter extends BaseAdapter {
     logger.info("[HuggingFaceAdapter] History hard reset");
   }
 
+  /**
+   * Retrieves the current chat history.
+   * @returns {Array} The history array.
+   */
   getHistory() {
     return this.history;
   }
 
+  /**
+   * Fetches the list of available models from the HuggingFace API.
+   * @returns {Promise<string[]>} A list of model names.
+   */
   async getAvailableModels() {
     try {
       const response = await this.client.get("/models");
@@ -172,6 +262,11 @@ class HuggingFaceAdapter extends BaseAdapter {
     }
   }
 
+  /**
+   * Checks if a specific model is available and responding.
+   * @param {string} modelName - The name of the model to check.
+   * @returns {Promise<boolean>} True if available, false otherwise.
+   */
   async checkAvailability(modelName) {
     try {
       await this.client.post("/chat/completions", {

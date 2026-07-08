@@ -62,6 +62,8 @@ class NvidiaAdapter extends BaseAdapter {
     const payload = this._preparePayload();
     this.lastPayload = payload;
 
+    await this._applyRateLimit();
+
     /**
      * Executes the API request with retry logic.
      * @returns {Promise<string>} The processed response text.

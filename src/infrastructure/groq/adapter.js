@@ -135,6 +135,8 @@ class GroqAdapter extends BaseAdapter {
     };
     this.lastPayload = payload;
 
+    await this._applyRateLimit();
+
     /**
      * Executes the API request with retry logic.
      * @returns {Promise<string>} The response text.

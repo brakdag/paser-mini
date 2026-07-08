@@ -70,6 +70,8 @@ class CohereAdapter extends BaseAdapter {
 
     const lastMessage = this.history.pop();
     const payload = this._preparePayload(lastMessage);
+
+    await this._applyRateLimit();
     this.history.push(lastMessage);
 
     /**

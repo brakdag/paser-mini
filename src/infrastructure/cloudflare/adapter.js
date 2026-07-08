@@ -136,6 +136,8 @@ class CloudflareAdapter extends BaseAdapter {
     };
     this.lastPayload = payload;
 
+    await this._applyRateLimit();
+
     try {
       return await this.retryHandler.execute(async () => {
         try {
