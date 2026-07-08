@@ -242,21 +242,29 @@ class CloudflareAdapter extends BaseAdapter {
   }
 
   /**
-   * Fetches the list of available models from the Cloudflare API.
+   * Fetches the list of available Text Generation models from the native Cloudflare API.
    * @returns {Promise<string[]>} A list of available model identifiers.
    */
   async getAvailableModels() {
     try {
-      const response = await this.client.get("/models");
-      return response.data.data.map((m) => m.id).sort();
+      const nativeUrl = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/ai/models/search`;
+      const response = await axios.get(nativeUrl, {
+        headers: { Authorization: `Bearer ${this.apiKey}` }
+      });
+
+      return response.data.result
+        .filter(m => m.task && m.task.name === "Text Generation")
+        .map(m => m.id)
+        .sort();
     } catch (error) {
       logger.error(`[CloudflareAdapter] Error fetching models: ${error.message}`);
       return [
         "@cf/meta/llama-3.1-8b-instruct",
-        "@cf/meta/llama-3.1-70b-instruct",
-        "@cf/meta/llama-3-8b-instruct",
-        "@cf/qwen/qwen1.5-14b-chat-awq",
-        "@cf/mistral/mistral-7b-instruct-v0.2",
+        "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+        "@cf/meta/llama-3.2-1b-instruct",
+        "@cf/meta/llama-3.2-3b-instruct",
+        "@cf/qwen/qwq-32b",
+        "@cf/deepseek-ai/deepseek-r1-distill-qwen-32b",
       ];
     }
   }
