@@ -254,7 +254,7 @@ class CloudflareAdapter extends BaseAdapter {
 
       return response.data.result
         .filter(m => m.task && m.task.name === "Text Generation")
-        .map(m => m.id)
+        .map(m => m.name)
         .sort();
     } catch (error) {
       logger.error(`[CloudflareAdapter] Error fetching models: ${error.message}`);
