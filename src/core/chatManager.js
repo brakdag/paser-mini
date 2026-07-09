@@ -42,8 +42,7 @@ class ChatManager {
       this.configManager.get("context_window_limit", DEFAULT_CONTEXT_WINDOW_LIMIT),
       10,
     );
-    // this.tpmLimit = parseInt(this.configManager.get("tpm_limit", DEFAULT_TPM_LIMIT), 10);
-    this.ui.setBashEnabled(false);
+        this.ui.setBashEnabled(false);
     this.currentChannel = "#main";
     this.timestampsEnabled = this.configManager.get(
       "timestamps_enabled",

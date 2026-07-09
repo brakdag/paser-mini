@@ -218,16 +218,15 @@ class CommandHandler {
    */
   _handleWindowConfig(input) {
     const parts = input.split(/\s+/);
-    if (parts.length !== 4) {
-      this.ui.displayError("Usage: /w <tokens> <rpm_limit> <tpm_limit>");
+    if (parts.length !== 3) {
+      this.ui.displayError("Usage: /w <tokens> <rpm_limit>");
       return true;
     }
-    const [, tokens, rpm, tpm] = parts.map((p) => parseInt(p, 10));
+    const [, tokens, rpm] = parts.map((p) => parseInt(p, 10));
     this.chatManager.configManager.save("context_window_limit", tokens);
     this.chatManager.configManager.save("rpm_limit", rpm);
-    this.chatManager.configManager.save("tpm_limit", tpm);
     this.ui.displayInfo(
-      `Context window: ${tokens} | RPM: ${rpm} | TPM: ${tpm}`,
+      `Context window: ${tokens} | RPM: ${rpm}`,
     );
     return true;
   }
