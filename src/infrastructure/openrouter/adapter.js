@@ -257,7 +257,9 @@ class OpenRouterAdapter extends BaseAdapter {
   async getAvailableModels() {
     try {
       const response = await this.client.get("/models");
-      return response.data.data.map((m) => m.id);
+      return response.data.data
+        .filter((m) => m.id.includes(":free"))
+        .map((m) => m.id);
     } catch (error) {
       logger.error(`[OpenRouterAdapter] Error fetching models: ${error.message}`);
       return ["openai/gpt-3.5-turbo", "anthropic/claude-3-opus"];
