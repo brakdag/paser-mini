@@ -10,7 +10,7 @@
 
 ## Lista de trabajos a realizar.
 
-[] Agregar tool "sed", para permitir uso de expresiones regulares para editar archivo.
+[x] Agregar tool "sed", para permitir uso de expresiones regulares para editar archivo.
 archivos ej: sed 's/:free$//' openrouter.txt > openrouter_clean.txt
 
 Esto sería sed(":free$","");
@@ -28,7 +28,7 @@ pero debe ser una tool distinta porque ciertos modelos pueden hacer desastre
 con esto porque hace modificaciones múltiples y ese pensamiento múltiple a veces
 no lo tienen bien claro todos los modelos de IA.
 
-[] Simplicacción de tool_call.
+[x] Simplicacción de tool_call.
 
 Actualmente utilizamos un símbolo al comienzo y otro al final de tool call.
 

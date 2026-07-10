@@ -9,14 +9,18 @@ import validator from "./schemaRegistry.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Delimiters as Unicode escapes to avoid self-reference
+const OPEN = "\u018f";       // Latin Capital Schwa
+const CLOSE = "\u0259";      // Latin Small Schwa
+const RESP_OPEN = "\u00f8";  // Latin Small O with Stroke
+const RESP_CLOSE = "\u0107"; // Latin Small C with Acute
+
 /**
- *
+ * SmartToolParser - Parses and executes tool calls from delimited text.
  */
 class SmartToolParser {
-  static TOOL_PATTERN = /Ə([\s\S]*?)(?:ə|$)/gis;
-
   /**
-   *
+   * Initializes the parser, loads positional registry, and binds validator/corrector.
    */
   constructor() {
     this.validator = validator;
@@ -24,9 +28,9 @@ class SmartToolParser {
     const regPath = path.join(__dirname, "../infrastructure/registry_positional.json");
     this.positionalRegistry = JSON.parse(fs.readFileSync(regPath, "utf8"));
     /**
-     * Checks if a tool is positional.
+     * Checks if a tool uses positional arguments.
      * @param {string} name - The tool name.
-     * @returns {boolean} True if positional.
+     * @returns {boolean} True if the tool is positional.
      */
     this.isPositional = (name) => !!this.toolMap[name];
     this.toolMap = Object.fromEntries(
@@ -35,9 +39,9 @@ class SmartToolParser {
   }
 
   /**
-   * Casts a value.
-   * @param {string} val - The value.
-   * @returns {unknown} The casted value.
+   * Casts a raw string value to its appropriate JS type (string, number, boolean, null, array, object).
+   * @param {string} val - The raw string value.
+   * @returns {*} The typed value.
    */
   _castValue(val) {
     if (!val) return null;
@@ -66,10 +70,10 @@ class SmartToolParser {
   }
 
   /**
-   * Evaluates an AST node.
+   * Evaluates an AST node to extract its raw or typed value.
    * @param {object} node - The AST node.
-   * @param {string} rawContent - The raw content string.
-   * @returns {unknown} The evaluated value.
+   * @param {string} rawContent - The original raw content string.
+   * @returns {*} The evaluated value.
    */
   _evaluateAST(node, rawContent) {
     if (node.type === "Literal") return node.value;
@@ -78,10 +82,7 @@ class SmartToolParser {
       for (let i = 0; i < node.quasis.length; i += 1) {
         result += node.quasis[i].value.cooked;
         if (node.expressions[i]) {
-          result += `\${${rawContent.substring(
-            node.expressions[i].start,
-            node.expressions[i].end,
-          )}}`;
+          result += `\${${rawContent.substring(node.expressions[i].start, node.expressions[i].end)}}`;
         }
       }
       return result;
@@ -101,9 +102,9 @@ class SmartToolParser {
   }
 
   /**
-   * Parses a call.
-   * @param {string} rawContent - The raw content.
-   * @returns {object} The parsed result.
+   * Parses a single tool call expression into structured data.
+   * @param {string} rawContent - The raw expression string (e.g. write("path", "content")).
+   * @returns {{data: ?{name: string, args: object}, error: ?string}} Result.
    */
   parseCall(rawContent) {
     try {
@@ -116,17 +117,14 @@ class SmartToolParser {
       ) {
         return { data: null, error: "Not a function call" };
       }
-
       const callExpr = stmt.expression;
       if (callExpr.callee.type !== "Identifier") {
         return { data: null, error: "Invalid function name" };
       }
-
-      const {name} = callExpr.callee;
+      const { name } = callExpr.callee;
       const args = callExpr.arguments.map((arg) =>
         this._evaluateAST(arg, rawContent),
       );
-
       const toolDef = this.toolMap[name];
       if (!toolDef) return { data: null, error: `Unknown tool: ${name}` };
       const schema = toolDef[2];
@@ -139,7 +137,6 @@ class SmartToolParser {
       } else {
         finalArgs = { data: args.join(" ") };
       }
-
       const validation = this.validator.validate(name, finalArgs);
       if (!validation.isValid)
         return {
@@ -153,43 +150,123 @@ class SmartToolParser {
   }
 
   /**
-   * Extracts tool calls.
-   * @param {string} text - The input text.
-   * @returns {Array<object>} The tool calls.
+   * Finds the closing parenthesis of a tool call, tracking depth and string literals.
+   * @param {string} text - The full text to search.
+   * @param {number} start - The index to start searching from.
+   * @returns {number} The index of the closing parenthesis, or -1 if not found.
    */
-  extractToolCalls(text) {
-    const matches = Array.from(text.matchAll(SmartToolParser.TOOL_PATTERN));
-    return matches.map((match) => {
-      const content = match[1].trim();
-      const { data, error } = this.parseCall(content);
-      return { data, content, error };
-    });
+  _findCallEnd(text, start) {
+    let i = start;
+    let inString = null;
+    let depth = 0;
+
+    while (i < text.length) {
+      const ch = text[i];
+      if (inString) {
+        if (ch === "\\") {
+          i += 2;
+        } else {
+          if (ch === inString) inString = null;
+          i += 1;
+        }
+      } else if (ch === '"' || ch === "'" || ch === "`") {
+        inString = ch;
+        i += 1;
+      } else if (ch === "(") {
+        depth += 1;
+        i += 1;
+      } else if (ch === ")" && depth > 0) {
+        depth -= 1;
+        if (depth === 0) return i;
+        i += 1;
+      } else {
+        i += 1;
+      }
+    }
+    return -1;
   }
 
   /**
-   * Formats a tool response.
-   * @param {string} context - The context string.
-   * @param {unknown} data - The tool data.
-   * @returns {string} The formatted string.
+   * Extracts all tool calls from a given text block.
+   * @param {string} text - The text to parse for tool calls.
+   * @returns {Array<{data: *, content: string, error: *}>} An array of parsed tool calls.
+   */
+  extractToolCalls(text) {
+    const calls = [];
+    let pos = 0;
+    while (pos < text.length) {
+      const openIdx = text.indexOf(OPEN, pos);
+      if (openIdx === -1) break;
+      const contentStart = openIdx + 1;
+      const closeIdx = this._findCallEnd(text, contentStart);
+      let content;
+      let endIdx;
+      if (closeIdx === -1) {
+        content = text.substring(contentStart).trim();
+        endIdx = text.length;
+      } else {
+        content = text.substring(contentStart, closeIdx + 1).trim();
+        endIdx = closeIdx + 1;
+        if (text[endIdx] === CLOSE) {
+          endIdx += 1;
+        }
+      }
+      if (content) {
+        const { data, error } = this.parseCall(content);
+        calls.push({ data, content, error });
+      }
+      pos = endIdx;
+    }
+    return calls;
+  }
+
+  /**
+   * Formats a tool response into a delimited string.
+   * @param {string} context - The context/header (e.g. file path or tool name).
+   * @param {*} data - The data to format.
+   * @returns {string} The formatted response.
    */
   formatToolResponse(context, data) {
     const header = context ? `[${context}]` : "[no details]";
     const content = typeof data === "object" ? JSON.stringify(data) : data;
-    return `ø${header} ${content}ć`;
+    return `${RESP_OPEN}${header} ${content}${RESP_CLOSE}`;
   }
 
   /**
-   * Cleans a response.
+   * Removes tool call and response delimiters from text, returning only clean content.
    * @param {string} text - The text to clean.
    * @returns {string} The cleaned text.
    */
   cleanResponse(text) {
     if (!text) return "";
-    // Tolerant cleaning: removes tool calls even if the closing delimiter is missing
-    return text.replace(
-      /Ə[\s\S]*?(?:ə|$)|ø[\s\S]*?ć|<[^>]+>.*?<\/[^>]+>/gs,
-      "",
-    );
+    let result = "";
+    let pos = 0;
+    while (pos < text.length) {
+      const openIdx = text.indexOf(OPEN, pos);
+      const respOpenIdx = text.indexOf(RESP_OPEN, pos);
+      const candidates = [openIdx, respOpenIdx].filter((i) => i !== -1);
+      if (candidates.length === 0) {
+        result += text.substring(pos);
+        break;
+      }
+      const nearest = Math.min(...candidates);
+      result += text.substring(pos, nearest);
+      if (nearest === openIdx) {
+        const closeIdx = this._findCallEnd(text, nearest + 1);
+        if (closeIdx === -1) {
+          pos = text.length;
+        } else {
+          pos = closeIdx + 1;
+          if (text[pos] === CLOSE) {
+            pos += 1;
+          }
+        }
+      } else {
+        const respCloseIdx = text.indexOf(RESP_CLOSE, nearest + 1);
+        pos = respCloseIdx === -1 ? text.length : respCloseIdx + 1;
+      }
+    }
+    return result;
   }
 }
 
