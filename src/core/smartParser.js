@@ -41,7 +41,7 @@ class SmartToolParser {
   /**
    * Casts a raw string value to its appropriate JS type (string, number, boolean, null, array, object).
    * @param {string} val - The raw string value.
-   * @returns {*} The typed value.
+   * @returns {unknown} The typed value.
    */
   _castValue(val) {
     if (!val) return null;
@@ -73,7 +73,7 @@ class SmartToolParser {
    * Evaluates an AST node to extract its raw or typed value.
    * @param {object} node - The AST node.
    * @param {string} rawContent - The original raw content string.
-   * @returns {*} The evaluated value.
+   * @returns {unknown} The evaluated value.
    */
   _evaluateAST(node, rawContent) {
     if (node.type === "Literal") return node.value;
@@ -189,7 +189,7 @@ class SmartToolParser {
   /**
    * Extracts all tool calls from a given text block.
    * @param {string} text - The text to parse for tool calls.
-   * @returns {Array<{data: *, content: string, error: *}>} An array of parsed tool calls.
+   * @returns {Array<{data: unknown, content: string, error: unknown}>} An array of parsed tool calls.
    */
   extractToolCalls(text) {
     const calls = [];
@@ -223,7 +223,7 @@ class SmartToolParser {
   /**
    * Formats a tool response into a delimited string.
    * @param {string} context - The context/header (e.g. file path or tool name).
-   * @param {*} data - The data to format.
+   * @param {unknown} data - The data to format.
    * @returns {string} The formatted response.
    */
   formatToolResponse(context, data) {

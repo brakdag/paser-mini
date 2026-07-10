@@ -364,6 +364,11 @@ export const AVAILABLE_TOOLS = {
    * @returns {Promise<unknown>} The image analysis.
    */
   img: async (...args) => (await getTool("utilTools", "seeImage"))(...args),
+  /**
+   * Debugs NodeJS code using built-in inspect repl.
+   * @param {...unknown} args - Arguments passed to the inspect tool.
+   * @returns {Promise<unknown>} The inspection result.
+   */
   inspect: async (...args) => (await getTool("inspectTools", "inspect"))(...args),
   /**
    * Resets the system state.

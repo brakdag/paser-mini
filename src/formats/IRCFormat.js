@@ -9,6 +9,7 @@ class IRCFormat extends FormatPlugin {
    * Formats a message into the standard IRC string.
    * @param {string} nickname - The sender's nickname.
    * @param {string} text - The message text.
+   * @param {string} [timestamp] - Optional timestamp for the message.
    * @returns {string} The formatted IRC message.
    */
   formatMessage(nickname, text, timestamp = null) {

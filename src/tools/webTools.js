@@ -130,7 +130,7 @@ export default class WebTools {
       responseType: "text",
     });
 
-    const data = response.data;
+    const { data } = response;
     const size = Buffer.byteLength(data, "utf8");
 
     if (size > FETCH_SIZE_LIMIT) {
