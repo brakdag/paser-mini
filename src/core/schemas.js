@@ -64,6 +64,7 @@ const SCHEMAS = {
   restore: z.object({ filepath: z.string() }).strict(),
   run: z.object({ code: z.string() }).strict(),
   scene: z.object({ scene: z.string(), action: z.string() }).strict(),
+  sed: z.object({ path: z.string(), pattern: z.string(), replacement: z.string().optional(), flags: z.string().optional() }).strict(),
   search: z.object({ query: z.string().min(1, "Search query cannot be empty") }),
   snapshot: z.object({ path: z.string() }).strict(),
   structure: z.object({ file_path: z.string(), path: z.string() }).strict(),

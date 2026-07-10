@@ -125,6 +125,12 @@ export const AVAILABLE_TOOLS = {
    */
   replace: async (...args) => (await getTool("fileTools", "replace"))(...args),
   /**
+   * Performs regex search and replace in a file.
+   * @param {...unknown} args - Arguments passed to the file tool.
+   * @returns {Promise<unknown>} The sed result.
+   */
+  sed: async (...args) => (await getTool("fileTools", "sed"))(...args),
+  /**
    * Runs ESLint on a file.
    * @param {...unknown} args - Arguments passed to the system tool.
    * @returns {Promise<unknown>} The lint result.

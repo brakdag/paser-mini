@@ -184,6 +184,24 @@ class FileTools {
   }
 
   /**
+   * Performs a regular expression search and replace on a file.
+   * @param {string} filepath The file path.
+   * @param {string} pattern The regular expression pattern.
+   * @param {string} replacement The replacement string.
+   * @param {string} flags The regular expression flags.
+   */
+  async sed(filepath, pattern, replacement = "", flags = "g") {
+    const safePath = this.#getSafePath(filepath);
+    const content = await fs.readFile(safePath, "utf8");
+    const regex = new RegExp(pattern, flags);
+    const newContent = content.replace(regex, replacement);
+    if (!newContent) {
+      throw new Error("Regex resulted in empty or invalid content");
+    }
+    await fs.writeFile(safePath, newContent, "utf8");
+  }
+
+  /**
    * Copies a file from origin to destination.
    * @param {string} origin The source file path.
    * @param {string} destination The destination file path.

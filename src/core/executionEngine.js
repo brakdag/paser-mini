@@ -11,6 +11,7 @@ const TOOL_DETAIL_EXTRACTORS = {
   tail: (args) => args.path ? path.basename(args.path) : "unknown",
   write: (args) => args.path ? path.basename(args.path) : "unknown",
   remove: (args) => args.path ? path.basename(args.path) : "unknown",
+  sed: (args) => args.path ? path.basename(args.path) : "unknown",
   replace: (args) => args.path ? path.basename(args.path) : "unknown",
   analysis: (args) => args.path ? path.basename(args.path) : "unknown",
   eslint: (args) => args.path ? path.basename(args.path) : "unknown",

@@ -7,6 +7,7 @@
   ],
   ["write", "Write content to file", { "path": "string", "content": "string" }],
   ["remove", "Remove file", { "path": "string" }],
+  ["sed", "Regex search and replace in file", { "path": "string", "pattern": "string", "replacement": "string", "flags": "string" }],
   ["list", "List directory", { "path": "string" }],
   [
     "replace",
