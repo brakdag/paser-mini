@@ -107,7 +107,7 @@ export default class WebTools {
     try {
       const { stdout } = await this.#execFilePromise(
         "elinks",
-        ["-dump", ".-no-numbering", normalizedUrl],
+        ["-dump", "-no-numbering", normalizedUrl],
         {
           timeout: 30000,
         },
