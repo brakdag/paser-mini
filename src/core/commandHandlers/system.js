@@ -1,8 +1,14 @@
+import SmartToolParser from "../smartParser.js";
+
 /**
  * Handles system-level commands such as clearing the terminal, 
  * exiting the application, and resetting the session.
  */
 class SystemCommands {
+  /**
+   * Initializes the SmartToolParser instance for direct tool execution.
+   */
+  static parser = new SmartToolParser();
   /**
    * Clears the terminal screen.
    * @returns {boolean} True if the operation succeeded.
@@ -62,6 +68,38 @@ class SystemCommands {
     ui.displayInfo("--- CURRENT SYSTEM PROMPT ---");
     ui.displayMessage(systemInstruction);
     ui.displayInfo("----------------------------");
+    return true;
+  }
+
+  /**
+   * Executes an agent tool directly and displays the result without modifying history.
+   * @param {object} chatManager The chat manager instance.
+   * @param {object} ui The terminal UI instance.
+   * @param {string} rawToolCall The raw tool call expression (e.g. read("file.js")).
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
+  static async handleTool(chatManager, ui, rawToolCall) {
+    const { data, error } = SystemCommands.parser.parseCall(rawToolCall);
+    if (error || !data) {
+      ui.displayError(`Tool Parse Error: ${error || "Invalid format"}`);
+      return true;
+    }
+
+    try {
+      ui.displayInfo(`Executing tool: ${data.name}`);
+      const { result } = await chatManager.engine.executeToolCall(
+        data.name,
+        data.args,
+      );
+      
+      const output = typeof result === "object" 
+        ? JSON.stringify(result, null, 2) 
+        : result;
+      
+      ui.displayMessage(`\n[Tool Output]\n${output}\n`);
+    } catch (e) {
+      ui.displayError(`Execution Error: ${e.message}`);
+    }
     return true;
   }
 }

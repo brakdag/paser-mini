@@ -117,6 +117,15 @@ const PREFIX_COMMANDS = {
   "/topic ": (cm, ui, input) =>
     InterfaceCommands.handleTopic(cm, ui, input.slice(7).trim()),
   /**
+   * Executes an agent tool directly without affecting history.
+   * @param {import("./chatManager.js").default} cm - The chat manager instance.
+   * @param {object} ui - The UI instance.
+   * @param {string} input - The raw input string.
+   * @returns {void}
+   */
+  "/tool ": (cm, ui, input) =>
+    SystemCommands.handleTool(cm, ui, input.slice(6).trim()),
+  /**
    * Changes the user nickname.
    * @param {import("./chatManager.js").default} cm - The chat manager instance.
    * @param {object} ui - The UI instance.

@@ -81,9 +81,7 @@ class InterfaceCommands {
      
     ui.setUserNickname(newNick);
     chatManager.assistant.updateNicknames(newNick, ui.agentNickname);
-    ui.displaySystemMessage(`${oldNick} changes his alias to ${newNick}`);
-    const actionMsg = `changes his alias to ${newNick}`;
-    await chatManager.processTurn(`*** ${actionMsg}`);
+    ui.displayInfo(`User nickname successfully changed to '${newNick}'`);
     return true;
   }
 
@@ -184,7 +182,7 @@ class InterfaceCommands {
       "/irc        - Set rendering mode to IRC (default)\n" +
       "/clean      - Set rendering mode to Clean (Minimalist)\n" +
       "/topic <text> - Change the channel topic\n" +
-      "/nick <name> - Change the agent's nickname\n" +
+      "/nick <name> - Change your user nickname\n" +
       "/me <action> - Perform an action (roleplay)\n" +
       "/action <txt> - Perform a narrative action (full-width)\n" +
       "/paim <msg>  - Simulate AI response (Pishin AI Message)\n" +
