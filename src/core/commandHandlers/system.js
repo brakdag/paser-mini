@@ -78,6 +78,33 @@ class SystemCommands {
    * @param {string} rawToolCall The raw tool call expression (e.g. read("file.js")).
    * @returns {Promise<boolean>} True if the operation succeeded.
    */
+  /**
+   * Sends a message to the agent and measures response latency in milliseconds.
+   * @param {object} chatManager The chat manager instance.
+   * @param {object} ui The terminal UI instance.
+   * @param {string} message The message to send to the agent.
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
+  static async handlePing(chatManager, ui, message) {
+    if (!message) {
+      ui.displayError("Usage: /ping <message>");
+      return true;
+    }
+    ui.displayChatMessage(ui.userNickname, message);
+    const start = Date.now();
+    await chatManager.processTurn(message);
+    const elapsed = Date.now() - start;
+    ui.displayInfo(`${elapsed}ms pong`);
+    return true;
+  }
+
+  /**
+   * Executes an agent tool directly and displays the result without modifying history.
+   * @param {object} chatManager The chat manager instance.
+   * @param {object} ui The terminal UI instance.
+   * @param {string} rawToolCall The raw tool call expression (e.g. read("file.js")).
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
   static async handleTool(chatManager, ui, rawToolCall) {
     const { data, error } = SystemCommands.parser.parseCall(rawToolCall);
     if (error || !data) {

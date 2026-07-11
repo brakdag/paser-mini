@@ -126,6 +126,15 @@ const PREFIX_COMMANDS = {
   "/tool ": (cm, ui, input) =>
     SystemCommands.handleTool(cm, ui, input.slice(6).trim()),
   /**
+   * Sends a message and measures response latency.
+   * @param {import("./chatManager.js").default} cm - The chat manager instance.
+   * @param {object} ui - The UI instance.
+   * @param {string} input - The raw input string.
+   * @returns {void}
+   */
+  "/ping ": (cm, ui, input) =>
+    SystemCommands.handlePing(cm, ui, input.slice(6).trim()),
+  /**
    * Changes the user nickname.
    * @param {import("./chatManager.js").default} cm - The chat manager instance.
    * @param {object} ui - The UI instance.

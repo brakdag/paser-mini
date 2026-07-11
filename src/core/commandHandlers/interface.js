@@ -179,6 +179,7 @@ class InterfaceCommands {
       "/w <t> <r> <p> - Set window, RPM, and TPM\n" +
       "AQUI      - Clear terminal\n" +
       "/tool <call> - Execute a tool directly, e.g. /tool read(\"file.js\")\n" +
+      "/ping <msg> - Send a message and measure response latency\n" +
       "/fountain   - Set rendering mode to Screenplay\n" +
       "/irc        - Set rendering mode to IRC (default)\n" +
       "/clean      - Set rendering mode to Clean (Minimalist)\n" +
