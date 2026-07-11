@@ -7,6 +7,7 @@ This document serves as the definitive reference for the tools available to the 
 - **Writing/Editing**: `write`, `replace`, `concat`.
 - **Management**: `remove`, `rename`, `copy`, `restore`.
 - **Navigation**: `list`.
+- **Batch Loading**: `index`, `load`.
 
 ### 🔍 Search & Analysis
 - **Global Search**: `grep`, `glob`.

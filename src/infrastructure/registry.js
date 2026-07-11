@@ -23,6 +23,7 @@ const MODULE_MAP = {
   astTools: "../tools/astTools.js",
   perfTools: "../tools/perfTools.js",
   inspectTools: "../tools/inspectTools.js",
+  loadTools: "../tools/loadTools.js",
 };
 
 let toolCache = {};
@@ -376,6 +377,22 @@ export const AVAILABLE_TOOLS = {
    * @returns {Promise<unknown>} The reset result.
    */
   reset: async (...args) => (await getTool("systemTools", "reset"))(...args),
+  /**
+   * Purges the tool cache.
+   * @returns {Promise<string>} The purge confirmation.
+   */
+  /**
+   * Indexes files in a directory tree, respecting .gitignore.
+   * @param {...unknown} args - Arguments passed to the load tool.
+   * @returns {Promise<unknown>} JSON with file index and total count.
+   */
+  index: async (...args) => (await getTool("loadTools", "index"))(...args),
+  /**
+   * Loads multiple files by IDs as MIME multipart.
+   * @param {...unknown} args - Arguments passed to the load tool.
+   * @returns {Promise<unknown>} MIME multipart formatted string.
+   */
+  load: async (...args) => (await getTool("loadTools", "load"))(...args),
   /**
    * Purges the tool cache.
    * @returns {Promise<string>} The purge confirmation.

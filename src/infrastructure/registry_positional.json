@@ -122,5 +122,7 @@
   ["ast", "Analyze JavaScript AST", { "path": "string", "query": "string" }],
   ["metrics", "Get current process memory and CPU usage", {}],
   ["snapshot", "Create a V8 heap snapshot", { "path": "string" }],
-  ["reset", "Resets the conversation context", { "user_message": "string" }]
+  ["reset", "Resets the conversation context", { "user_message": "string" }],
+  ["index", "Index files in directory tree respecting .gitignore", { "path": "string" }],
+  ["load", "Load files by IDs as MIME multipart", { "ids": "string" }]
 ]

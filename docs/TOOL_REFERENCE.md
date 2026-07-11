@@ -106,6 +106,15 @@ This document provides a comprehensive specification of all tools available to t
 
 ---
 
+## 📦 Batch File Operations
+
+| Tool | Description | Arguments |
+| :--- | :--- | :--- |
+| `index` | Indexes files in a directory tree, respecting `.gitignore`. Returns JSON with numeric IDs, paths, sizes, and total count. | `path` (str, optional, default: ".") |
+| `load` | Loads multiple files by their IDs and returns them as MIME 1.0 multipart with `---çç` boundary. | `ids` (str, comma-separated) |
+
+---
+
 ## 🎯 Operational Standard
 
 **The Surgical Rule:** Always prioritize the most specific tool. If you can use `update`, never use `write`. Every token saved is reasoning capacity gained.

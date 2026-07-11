@@ -52,6 +52,8 @@ const TOOL_DETAIL_EXTRACTORS = {
   run: () => "sandbox",
   img: (args) => args.path ? path.basename(args.path) : "image",
   reset: (args) => args.user_message ? args.user_message.substring(0, 30) : "reset",
+  index: (args) => args.path || "root",
+  load: (args) => args.ids || "ids",
   real: (args) => args.action || "action",
   inspect: (args) => {
     if (args.path) return path.basename(args.path);
