@@ -177,7 +177,8 @@ class InterfaceCommands {
       "/reset      - Hard Reset: Clear history and Leap via Bridge Block\n" +
       "/r <msg>    - Rewrite: Remove last interaction and re-prompt\n" +
       "/w <t> <r> <p> - Set window, RPM, and TPM\n" +
-      "/clear      - Clear terminal\n" +
+      "AQUI      - Clear terminal\n" +
+      "/tool <call> - Execute a tool directly, e.g. /tool read(\"file.js\")\n" +
       "/fountain   - Set rendering mode to Screenplay\n" +
       "/irc        - Set rendering mode to IRC (default)\n" +
       "/clean      - Set rendering mode to Clean (Minimalist)\n" +
