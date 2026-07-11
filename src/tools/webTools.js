@@ -30,6 +30,19 @@ export default class WebTools {
   #execFilePromise = promisify(execFile);
 
   /**
+   * Normalizes a URL by ensuring it has a protocol.
+   * @param {string} url - The URL to normalize.
+   * @returns {string} The normalized URL.
+   */
+  #normalizeUrl(url) {
+    if (!url) return url;
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      return `https://${url}`;
+    }
+    return url;
+  }
+
+  /**
    * Reads fetch headers from config.json.
    * @returns {Promise<object>} The fetch headers.
    */
@@ -59,33 +72,28 @@ export default class WebTools {
     for (let i = 0; i < searchUrls.length; i += 1) {
       const url = searchUrls[i];
       try {
-        const response = await axios.get(url, {
-          headers: this.#BROWSER_HEADERS,
-          timeout: 10000,
-        });
+        const { stdout } = await this.#execFilePromise(
+          "elinks",
+          ["-dump -no-numbering", url],
+          {
+            timeout: 20000,
+          },
+        );
 
-        const {data} = response;
         if (
-          !data.includes("captcha") &&
-          !data.includes("anomaly-modal") &&
-          !data.includes("Robot Check")
+          !stdout.includes("captcha") &&
+          !stdout.includes("anomaly-modal") &&
+          !stdout.includes("Robot Check") &&
+          stdout.trim() !== ""
         ) {
-          return data;
+          return stdout;
         }
       } catch (error) {
         // Silently fail and try next provider to ensure maximum availability
       }
     }
 
-    // Final fallback: Use elinks for the primary search engine
-    try {
-      const { stdout } = await this.#execFilePromise("elinks", ["-dump", searchUrls[0]], {
-        timeout: 20000,
-      });
-      return stdout;
-    } catch (e) {
-      throw new Error(`All search methods failed: ${e.message}`);
-    }
+    throw new Error("All search methods failed or returned empty results.");
   }
 
   /**
@@ -95,10 +103,15 @@ export default class WebTools {
    * @throws {Error} If the rendering process fails.
    */
   async renderWeb(url) {
+    const normalizedUrl = this.#normalizeUrl(url);
     try {
-      const { stdout } = await this.#execFilePromise("elinks", ["-dump", url], {
-        timeout: 30000,
-      });
+      const { stdout } = await this.#execFilePromise(
+        "elinks",
+        ["-dump", normalizedUrl],
+        {
+          timeout: 30000,
+        },
+      );
       return stdout;
     } catch (e) {
       throw new Error(`Rendering failed: ${e.message}`);
@@ -114,17 +127,19 @@ export default class WebTools {
    * @throws {Error} If the fetch fails or if customHeaders is invalid JSON.
    */
   async fetchRaw(url, customHeaders = "{}") {
+    const normalizedUrl = this.#normalizeUrl(url);
     let parsedHeaders = {};
     try {
-      parsedHeaders = typeof customHeaders === "string" 
-        ? JSON.parse(customHeaders || "{}") 
-        : customHeaders;
+      parsedHeaders =
+        typeof customHeaders === "string"
+          ? JSON.parse(customHeaders || "{}")
+          : customHeaders;
     } catch {
       throw new Error("Invalid JSON format for headers.");
     }
 
     const configHeaders = await this.#getFetchHeaders();
-    const response = await axios.get(url, {
+    const response = await axios.get(normalizedUrl, {
       headers: { ...this.#BROWSER_HEADERS, ...configHeaders, ...parsedHeaders },
       timeout: 15000,
       responseType: "text",
@@ -134,11 +149,15 @@ export default class WebTools {
     const size = Buffer.byteLength(data, "utf8");
 
     if (size > FETCH_SIZE_LIMIT) {
-      const contentType = response.headers['content-type'] || 'text/plain';
-      let ext = 'txt';
-      if (contentType.includes('application/json')) ext = 'json';
-      else if (contentType.includes('text/html')) ext = 'html';
-      else if (contentType.includes('application/xml') || contentType.includes('text/xml')) ext = 'xml';
+      const contentType = response.headers["content-type"] || "text/plain";
+      let ext = "txt";
+      if (contentType.includes("application/json")) ext = "json";
+      else if (contentType.includes("text/html")) ext = "html";
+      else if (
+        contentType.includes("application/xml") ||
+        contentType.includes("text/xml")
+      )
+        ext = "xml";
 
       const tempFileName = `fetch_tmp_${Date.now()}.${ext}`;
       const tempFilePath = path.resolve(ROOT_DIR, tempFileName);
