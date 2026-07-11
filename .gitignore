@@ -37,3 +37,4 @@ lint.txt
 schema_audit.logo
 *.heapsnapshot
 log/schema_audit.log
+.puter-token
