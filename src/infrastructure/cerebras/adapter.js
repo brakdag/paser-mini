@@ -7,6 +7,16 @@ const TIMESTAMP_FORMAT = "en-GB";
 const TIMESTAMP_OPTIONS = { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false };
 const BASE_URL = "https://api.cerebras.ai/v1";
 const DEFAULT_MODEL = "llama3.1-8b";
+
+/**
+ * Static fallback map for model context limits (in tokens).
+ * Used when the API does not return the context window size.
+ * @type {{[key: string]: number}}
+ */
+const MODEL_CONTEXT_LIMITS = {
+  "llama3.1-8b": 8192,
+  "llama3.1-70b": 128000,
+};
 const DEFAULT_TEMPERATURE = 0.7;
 const CHARS_PER_TOKEN = 3.5;
 
@@ -88,6 +98,29 @@ class CerebrasAdapter extends BaseAdapter {
 
     this.retryHandler = new RetryHandler();
     this.recoverableErrors = ["Empty response from Cerebras"];
+    this.maxContextTokens = MODEL_CONTEXT_LIMITS[DEFAULT_MODEL] || 8000;
+  }
+
+  /**
+   * Fetches and updates the context token limit for the current model.
+   * @returns {Promise<void>}
+   */
+  async _syncContextLimit() {
+    try {
+      const response = await this.client.get(`/models/${this.currentModel}`);
+      const apiLimit = response.data?.context_length || response.data?.max_context_length;
+      
+      if (apiLimit && typeof apiLimit === 'number') {
+        this.maxContextTokens = apiLimit;
+        logger.info(`[CerebrasAdapter] Context limit synced via API: ${this.maxContextTokens} tokens for ${this.currentModel}`);
+      } else {
+        this.maxContextTokens = MODEL_CONTEXT_LIMITS[this.currentModel] || this.maxContextTokens;
+        logger.warn(`[CerebrasAdapter] API did not return context limit. Using fallback: ${this.maxContextTokens} tokens for ${this.currentModel}`);
+      }
+    } catch (error) {
+      this.maxContextTokens = MODEL_CONTEXT_LIMITS[this.currentModel] || this.maxContextTokens;
+      logger.warn(`[CerebrasAdapter] Failed to sync context limit, using fallback: ${this.maxContextTokens}. Error: ${error.message}`);
+    }
   }
 
   /**
@@ -96,10 +129,13 @@ class CerebrasAdapter extends BaseAdapter {
    * @param {string} systemInstruction - The system-level prompt.
    * @param {number} [temperature] - The sampling temperature.
    */
-  startChat(modelName, systemInstruction, temperature = DEFAULT_TEMPERATURE) {
+  async startChat(modelName, systemInstruction, temperature = DEFAULT_TEMPERATURE) {
     this.currentModel = modelName || this.currentModel;
     this.systemInstruction = systemInstruction;
     this.temperature = temperature;
+
+    // Automatically sync the context limit from the API or fallback
+    await this._syncContextLimit();
 
     if (!this.systemInstruction) return;
 
@@ -115,6 +151,48 @@ class CerebrasAdapter extends BaseAdapter {
   }
 
   /**
+   * Trims the conversation history to fit within the context token limit.
+   * Preserves system instructions and the most recent messages.
+   * @param {Array} history - The raw conversation history.
+   * @param {number} tokenLimit - The maximum token count allowed.
+   * @returns {Array} The safely trimmed history.
+   * @private
+   */
+  _trimHistoryToContext(history, tokenLimit) {
+    const maxChars = Math.max(1000, tokenLimit * CHARS_PER_TOKEN);
+    const systemMsgs = [];
+    const otherMsgs = [];
+    let systemChars = 0;
+
+    history.forEach((msg) => {
+      const len = typeof msg.content === "string" ? msg.content.length : JSON.stringify(msg.content).length;
+      if (msg.role === "system") {
+        systemMsgs.push(msg);
+        systemChars += len;
+      } else {
+        otherMsgs.push(msg);
+      }
+    });
+
+    let currentChars = systemChars;
+    const keptOtherMsgs = [];
+
+    for (let i = otherMsgs.length - 1; i >= 0; i -= 1) {
+      const msg = otherMsgs[i];
+      const len = typeof msg.content === "string" ? msg.content.length : JSON.stringify(msg.content).length;
+      
+      if (currentChars + len > maxChars) {
+        logger.warn(`[CerebrasAdapter] Context limit exceeded (${maxChars} chars approx). Trimming ${i + 1} older messages.`);
+        break;
+      }
+      keptOtherMsgs.unshift(msg);
+      currentChars += len;
+    }
+
+    return [...systemMsgs, ...keptOtherMsgs];
+  }
+
+  /**
    * Sends a message to the Cerebras API and returns the response.
    * @param {string} message - The message content to send.
    * @param {string} [role] - The role of the sender.
@@ -125,9 +203,11 @@ class CerebrasAdapter extends BaseAdapter {
     this.injectMessage(role, message, getTimestamp());
     const historyLengthBefore = this.history.length;
 
+    const safeHistory = this._trimHistoryToContext(this.history, this.maxContextTokens);
+
     const payload = {
       model: this.currentModel,
-      messages: this.history.map(({ role: msgRole, content, timestamp }) => ({
+      messages: safeHistory.map(({ role: msgRole, content, timestamp }) => ({
         role: msgRole,
         content: this.formatTextForPayload(msgRole, content, timestamp)
       })),

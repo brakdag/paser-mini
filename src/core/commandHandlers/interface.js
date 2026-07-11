@@ -76,7 +76,6 @@ class InterfaceCommands {
    * @returns {Promise<boolean>} True if the operation succeeded.
    */
   static async handleNick(chatManager, ui, newNick) {
-    const oldNick = ui.userNickname;
     chatManager.configManager.save("user_nickname", newNick);
      
     ui.setUserNickname(newNick);
@@ -176,7 +175,7 @@ class InterfaceCommands {
       "/fav        - Manage favorite models (/fav, /fav+, /fav -<idx>, /fav <idx>)\n" +
       "/reset      - Hard Reset: Clear history and Leap via Bridge Block\n" +
       "/r <msg>    - Rewrite: Remove last interaction and re-prompt\n" +
-      "/w <t> <r> <p> - Set window, RPM, and TPM\n" +
+      "/rpm <n>    - Set RPM (Requests Per Minute) limit\n" +
       "AQUI      - Clear terminal\n" +
       "/tool <call> - Execute a tool directly, e.g. /tool read(\"file.js\")\n" +
       "/ping <msg> - Send a message and measure response latency\n" +

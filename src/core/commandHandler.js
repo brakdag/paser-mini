@@ -230,22 +230,23 @@ class CommandHandler {
   }
 
   /**
-   * Handles the /w command for window configuration.
+   * Handles the /rpm command for setting the Rate Per Minute limit.
    * @param {string} input - The raw input string.
    * @returns {boolean} True if the command was handled, false otherwise.
    */
-  _handleWindowConfig(input) {
+  _handleRpmConfig(input) {
     const parts = input.split(/\s+/);
-    if (parts.length !== 3) {
-      this.ui.displayError("Usage: /w <tokens> <rpm_limit>");
+    if (parts.length !== 2) {
+      this.ui.displayError("Usage: /rpm <limit>");
       return true;
     }
-    const [, tokens, rpm] = parts.map((p) => parseInt(p, 10));
-    this.chatManager.configManager.save("context_window_limit", tokens);
+    const rpm = parseInt(parts[1], 10);
+    if (Number.isNaN(rpm) || rpm < 1) {
+      this.ui.displayError("RPM limit must be a positive integer.");
+      return true;
+    }
     this.chatManager.configManager.save("rpm_limit", rpm);
-    this.ui.displayInfo(
-      `Context window: ${tokens} | RPM: ${rpm}`,
-    );
+    this.ui.displayInfo(`RPM limit set to: ${rpm}`);
     return true;
   }
 
@@ -277,7 +278,7 @@ class CommandHandler {
     if (prefixKey)
       return PREFIX_COMMANDS[prefixKey](this.chatManager, this.ui, input);
 
-    if (input.startsWith("/w ")) return this._handleWindowConfig(input);
+    if (input.startsWith("/rpm ")) return this._handleRpmConfig(input);
 
     if (input.startsWith("/") || input.startsWith(":")) {
       this.ui.displayError(
