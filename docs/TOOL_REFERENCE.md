@@ -110,7 +110,7 @@ This document provides a comprehensive specification of all tools available to t
 
 | Tool | Description | Arguments |
 | :--- | :--- | :--- |
-| `index` | Indexes files in a directory tree, respecting `.gitignore`. Returns JSON with numeric IDs, paths, sizes, and total count. | `path` (str, optional, default: ".") |
+| `index` | Indexes files in a directory tree, respecting `.gitignore`. Returns JSON with numeric IDs, paths, sizes, and total count. | `path` (str, optional, default: "."), `filter` (str, optional, e.g., "js", "js,ts,json") |
 | `load` | Loads multiple files by their IDs and returns them as MIME 1.0 multipart with `---çç` boundary. | `ids` (str, comma-separated) |
 
 ---

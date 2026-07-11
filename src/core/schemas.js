@@ -76,7 +76,10 @@ const SCHEMAS = {
   valide: z.object({ json_string: z.string() }).strict(),
   write: z.object({ path: z.string(), content: z.string() }).strict(),
   zip: z.object({ filePath: z.string() }).strict(),
-  index: z.object({ path: z.string().optional().default(".") }).strict(),
+  index: z.object({
+    path: z.string().optional().default("."),
+    filter: z.string().optional(),
+  }).strict(),
   load: z.object({ ids: z.string() }).strict(),
 };
 

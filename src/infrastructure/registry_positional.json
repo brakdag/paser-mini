@@ -123,6 +123,6 @@
   ["metrics", "Get current process memory and CPU usage", {}],
   ["snapshot", "Create a V8 heap snapshot", { "path": "string" }],
   ["reset", "Resets the conversation context", { "user_message": "string" }],
-  ["index", "Index files in directory tree respecting .gitignore", { "path": "string" }],
-  ["load", "Load files by IDs as MIME multipart", { "ids": "string" }]
+  ["index", "Scan directory tree and assign sequential numeric IDs to each file", { "path": "string?", "filter": "string?" }],
+  ["load", "Load files by their index IDs (comma-separated string, e.g. \"0,1,2\") as MIME multipart", { "ids": "string" }]
 ]

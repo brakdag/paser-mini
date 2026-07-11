@@ -8,6 +8,10 @@ const BOUNDARY = "---çç";
  * Provides tools for efficient file indexing and batch loading.
  */
 class LoadTools {
+  #cachedIndex = null;
+
+  #cachedDir = null;
+
   /**
    * Resolves and verifies that a path is safely within the project root.
    * @param {string} inputPath The path to verify.
@@ -64,14 +68,29 @@ class LoadTools {
   }
 
   /**
+   * Parses a comma-separated filter into an array of normalized extensions.
+   * @param {string} filter Comma-separated extensions (e.g., "js", ".js", "js,ts,json").
+   * @returns {string[]|null} Array of extensions without dots, or null if no filter.
+   */
+  #parseFilter(filter) {
+    if (!filter) return null;
+    return String(filter)
+      .split(",")
+      .map((f) => f.trim().toLowerCase())
+      .map((f) => f.startsWith(".") ? f.slice(1) : f)
+      .filter((f) => f.length > 0);
+  }
+
+  /**
    * Recursively scans a directory and indexes files.
    * @param {string} dirPath The absolute directory path.
    * @param {string} baseDir The project root for relative paths.
    * @param {string[]} patterns The gitignore patterns.
    * @param {number} startId The starting ID counter.
+   * @param {string[]} [extensions] Optional array of extensions to filter.
    * @returns {Promise<{files: Array, nextId: number}>} Indexed files and next ID.
    */
-  async #scanDirectory(dirPath, baseDir, patterns, startId) {
+  async #scanDirectory(dirPath, baseDir, patterns, startId, extensions = null) {
     const entries = await fs.readdir(dirPath, { withFileTypes: true });
     const files = [];
     let currentId = startId;
@@ -83,17 +102,20 @@ class LoadTools {
 
       if (!this.#isIgnored(relPath, patterns)) {
         if (entry.isDirectory()) {
-          const result = await this.#scanDirectory(fullPath, baseDir, patterns, currentId);
+          const result = await this.#scanDirectory(fullPath, baseDir, patterns, currentId, extensions);
           files.push(...result.files);
           currentId = result.nextId;
         } else if (entry.isFile()) {
-          const stats = await fs.stat(fullPath);
-          files.push({
-            id: currentId,
-            path: relPath,
-            size: stats.size,
-          });
-          currentId += 1;
+          const ext = path.extname(entry.name).slice(1).toLowerCase();
+          if (!extensions || extensions.includes(ext)) {
+            const stats = await fs.stat(fullPath);
+            files.push({
+              id: currentId,
+              path: relPath,
+              size: stats.size,
+            });
+            currentId += 1;
+          }
         }
       }
     }
@@ -103,12 +125,16 @@ class LoadTools {
   /**
    * Indexes all files in a directory tree, respecting .gitignore.
    * @param {string} dirPath The root directory to index.
+   * @param {string} [filter] Optional comma-separated extensions (e.g., "js,ts").
    * @returns {Promise<string>} JSON string with file index and total count.
    */
-  async index(dirPath = ".") {
+  async index(dirPath = ".", filter = null) {
     const safePath = this.#getSafePath(dirPath);
-    const patterns = await this.#parseGitignore(safePath);
-    const { files } = await this.#scanDirectory(safePath, safePath, patterns, 0);
+    const patterns = await this.#parseGitignore(process.cwd());
+    const extensions = this.#parseFilter(filter);
+    const { files } = await this.#scanDirectory(safePath, process.cwd(), patterns, 0, extensions);
+    this.#cachedIndex = files;
+    this.#cachedDir = safePath;
     return JSON.stringify({ total: files.length, files });
   }
 
@@ -127,8 +153,10 @@ class LoadTools {
       throw new Error("No valid IDs provided");
     }
 
-    const indexData = JSON.parse(await this.index("."));
-    const fileMap = new Map(indexData.files.map((f) => [f.id, f]));
+    if (!this.#cachedIndex) {
+      throw new Error("No index available. Run index() first.");
+    }
+    const fileMap = new Map(this.#cachedIndex.map((f) => [f.id, f]));
 
     const parts = [];
     for (let i = 0; i < idList.length; i += 1) {
