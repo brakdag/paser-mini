@@ -201,26 +201,26 @@ class TerminalRenderer {
       const code = chars[i].codePointAt(0);
       // Zero-width: combining marks, variation selectors, ZWJ, soft hyphen
       const isZeroWidth =
-        (code >= 0x0300 && code <= 0x036F) ||
-        code === 0x200D ||
-        (code >= 0xFE00 && code <= 0xFE0F) ||
-        code === 0x00AD;
+        (code >= 0x0300 && code <= 0x036f) ||
+        code === 0x200d ||
+        (code >= 0xfe00 && code <= 0xfe0f) ||
+        code === 0x00ad;
 
       // Wide: CJK, Hangul, fullwidth forms, etc.
       const isWide =
-        (code >= 0x1100 && code <= 0x115F) ||
-        (code >= 0x2E80 && code <= 0x303E) ||
-        (code >= 0x3041 && code <= 0x33FF) ||
-        (code >= 0x3400 && code <= 0x4DBF) ||
-        (code >= 0x4E00 && code <= 0x9FFF) ||
-        (code >= 0xA000 && code <= 0xA4CF) ||
-        (code >= 0xAC00 && code <= 0xD7A3) ||
-        (code >= 0xF900 && code <= 0xFAFF) ||
-        (code >= 0xFE30 && code <= 0xFE4F) ||
-        (code >= 0xFF00 && code <= 0xFF60) ||
-        (code >= 0xFFE0 && code <= 0xFFE6) ||
-        (code >= 0x20000 && code <= 0x2FFFD) ||
-        (code >= 0x30000 && code <= 0x3FFFD);
+        (code >= 0x1100 && code <= 0x115f) ||
+        (code >= 0x2e80 && code <= 0x303e) ||
+        (code >= 0x3041 && code <= 0x33ff) ||
+        (code >= 0x3400 && code <= 0x4dbf) ||
+        (code >= 0x4e00 && code <= 0x9fff) ||
+        (code >= 0xa000 && code <= 0xa4cf) ||
+        (code >= 0xac00 && code <= 0xd7a3) ||
+        (code >= 0xf900 && code <= 0xfaff) ||
+        (code >= 0xfe30 && code <= 0xfe4f) ||
+        (code >= 0xff00 && code <= 0xff60) ||
+        (code >= 0xffe0 && code <= 0xffe6) ||
+        (code >= 0x20000 && code <= 0x2fffd) ||
+        (code >= 0x30000 && code <= 0x3fffd);
 
       if (isZeroWidth) {
         // eslint-disable-next-line no-continue
@@ -276,7 +276,8 @@ class TerminalRenderer {
         if (chunk) lines.push(chunk);
         currentLine = "";
       } else if (
-        this._visualWidth(currentLine + (currentLine ? " " : "") + word) <= width
+        this._visualWidth(currentLine + (currentLine ? " " : "") + word) <=
+        width
       ) {
         currentLine += (currentLine ? " " : "") + word;
       } else {
@@ -318,7 +319,7 @@ class TerminalRenderer {
     if (dataRows.length === 0) return tableText;
 
     const numCols = dataRows[0].length;
-    const MAX_TOTAL_WIDTH = 120;
+    const MAX_TOTAL_WIDTH = 115;
     const MIN_COL_WIDTH = 5;
     const padding = 1;
     const borderOverhead = numCols + 1;
@@ -329,7 +330,10 @@ class TerminalRenderer {
     const naturalWidths = new Array(numCols).fill(MIN_COL_WIDTH);
     dataRows.forEach((row) => {
       row.forEach((cell, i) => {
-        naturalWidths[i] = Math.max(naturalWidths[i] || 0, this._visualWidth(cell));
+        naturalWidths[i] = Math.max(
+          naturalWidths[i] || 0,
+          this._visualWidth(cell),
+        );
       });
     });
 
