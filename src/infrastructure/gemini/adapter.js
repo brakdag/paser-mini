@@ -206,6 +206,7 @@ class GeminiAdapter extends BaseAdapter {
   async sendMessage(message, role = "user") {
     await this._applyRateLimit();
     this._recordMessage(role, message);
+    this._enforceContextLimit(); // Apply strict context boundary before API call
     const historyLengthBefore = this.history.length;
 
     /**

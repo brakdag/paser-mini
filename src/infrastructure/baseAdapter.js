@@ -112,6 +112,58 @@ export default class BaseAdapter {
   }
 
   /**
+   * Helper method to calculate the character length of a message regardless of its structural shape.
+   * Supports standard 'content', NVIDIA's 'text', and Gemini's 'parts'.
+   * @param {object} msg - The message object.
+   * @returns {number} The total character length of the message content.
+   * @private
+   */
+  _getMessageLength(msg) {
+    if (typeof msg.content === "string") return msg.content.length;
+    if (typeof msg.text === "string") return msg.text.length;
+    if (Array.isArray(msg.parts)) {
+      return msg.parts.reduce((acc, part) => acc + (typeof part.text === "string" ? part.text.length : 0), 0);
+    }
+    return JSON.stringify(msg).length;
+  }
+
+  /**
+   * The Guardian of Context. Trims the conversation history to fit within the configured token limit.
+   * Preserves system instructions and the most recent messages, purging the oldest (FIFO).
+   */
+  _enforceContextLimit() {
+    const limit = parseInt(this.configManager.get("context_window_limit", 0), 10);
+    if (!limit || limit <= 0) return; // 0 means infinite, disabled
+
+    const history = this.getHistory();
+    if (!history || history.length === 0) return;
+
+    const maxChars = limit * 3.5; // 3.5 chars per token heuristic
+    let totalChars = history.reduce((acc, msg) => acc + this._getMessageLength(msg), 0);
+
+    if (totalChars <= maxChars) return;
+
+    // Find the first non-system message index to start the purge
+    let firstNonSystemIndex = 0;
+    while (
+      firstNonSystemIndex < history.length && 
+      (history[firstNonSystemIndex].role === "system" || history[firstNonSystemIndex].role === "server")
+    ) {
+      firstNonSystemIndex += 1;
+    }
+
+    // If it's all system messages or we only have system + 1 message, do nothing
+    if (firstNonSystemIndex >= history.length - 1) return;
+
+    // Start removing from the first non-system message (FIFO)
+    while (totalChars > maxChars && firstNonSystemIndex < history.length - 1) {
+      const removed = history.splice(firstNonSystemIndex, 1)[0];
+      totalChars -= this._getMessageLength(removed);
+      logger.debug(`[${this.constructor.name}] Context limit exceeded. Purged 1 older message to maintain strict ${limit} token limit.`);
+    }
+  }
+
+  /**
    * Sends a message to the AI provider.
    * @param {string|object|Array} _message - The message content to send.
    * @param {string} [_role] - The role of the sender.

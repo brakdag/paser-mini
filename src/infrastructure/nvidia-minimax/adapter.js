@@ -72,6 +72,7 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
    */
   async sendMessage(message, role = "user") {
     this.state.addMessage(role, message);
+    this._enforceContextLimit(); // Apply strict context boundary before API call
     const historyLengthBefore = this.state.getRawHistory().length;
 
     const payload = this._preparePayload();

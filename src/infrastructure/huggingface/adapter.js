@@ -72,6 +72,7 @@ class HuggingFaceAdapter extends BaseAdapter {
   async sendMessage(message, role = "user") {
     const timestamp = IRCFormatter.getTimestamp();
     this.injectMessage(role, message, timestamp);
+    this._enforceContextLimit(); // Apply strict context boundary before API call
     const historyLengthBefore = this.history.length;
 
     const payload = this._preparePayload();

@@ -33,7 +33,7 @@ class ChatManager {
     this.configManager = configManager || new ConfigManager();
     this.providerManager = providerManager || new ProviderManager();
     const DEFAULT_TEMPERATURE = 0.7;
-    const DEFAULT_CONTEXT_WINDOW_LIMIT = 250000;
+    const DEFAULT_CONTEXT_WINDOW_LIMIT = 0; // 0 = Disabled (Infinite up to provider limit)
 
     this.temperature = parseFloat(
       this.configManager.get("default_temperature", DEFAULT_TEMPERATURE),

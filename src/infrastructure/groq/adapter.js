@@ -123,6 +123,7 @@ class GroqAdapter extends BaseAdapter {
    */
   async sendMessage(message, role = "user") {
     this.injectMessage(role, message, getTimestamp());
+    this._enforceContextLimit(); // Apply strict context boundary before API call
     const historyLengthBefore = this.history.length;
 
     const payload = {

@@ -230,6 +230,33 @@ class CommandHandler {
   }
 
   /**
+   * Handles the /trunc command to dynamically set the FIFO context window truncation limit.
+   * @param {string} input - The raw input string (e.g., /trunc 8000).
+   * @returns {boolean} True if the command was handled, false otherwise.
+   */
+  _handleTruncConfig(input) {
+    const parts = input.split(/\s+/);
+    if (parts.length !== 2) {
+      this.ui.displayError("Usage: /trunc <limit_in_tokens> (use 0 to disable)");
+      return true;
+    }
+    const limit = parseInt(parts[1], 10);
+    if (Number.isNaN(limit) || limit < 0) {
+      this.ui.displayError("Truncation limit must be a positive integer, or 0 to disable.");
+      return true;
+    }
+    this.chatManager.configManager.save("context_window_limit", limit);
+    this.chatManager.contextWindowLimit = limit;
+
+    if (limit === 0) {
+      this.ui.displayInfo("Context truncation DISABLED. Context window is now infinite.");
+    } else {
+      this.ui.displayInfo(`Context truncation ENABLED. FIFO limit strictly set to: ${limit} tokens.`);
+    }
+    return true;
+  }
+
+  /**
    * Handles the /rpm command for setting the Rate Per Minute limit.
    * @param {string} input - The raw input string.
    * @returns {boolean} True if the command was handled, false otherwise.
@@ -279,6 +306,7 @@ class CommandHandler {
       return PREFIX_COMMANDS[prefixKey](this.chatManager, this.ui, input);
 
     if (input.startsWith("/rpm ")) return this._handleRpmConfig(input);
+    if (input.startsWith("/trunc")) return this._handleTruncConfig(input);
 
     if (input.startsWith("/") || input.startsWith(":")) {
       this.ui.displayError(

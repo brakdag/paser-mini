@@ -151,48 +151,6 @@ class CerebrasAdapter extends BaseAdapter {
   }
 
   /**
-   * Trims the conversation history to fit within the context token limit.
-   * Preserves system instructions and the most recent messages.
-   * @param {Array} history - The raw conversation history.
-   * @param {number} tokenLimit - The maximum token count allowed.
-   * @returns {Array} The safely trimmed history.
-   * @private
-   */
-  _trimHistoryToContext(history, tokenLimit) {
-    const maxChars = Math.max(1000, tokenLimit * CHARS_PER_TOKEN);
-    const systemMsgs = [];
-    const otherMsgs = [];
-    let systemChars = 0;
-
-    history.forEach((msg) => {
-      const len = typeof msg.content === "string" ? msg.content.length : JSON.stringify(msg.content).length;
-      if (msg.role === "system") {
-        systemMsgs.push(msg);
-        systemChars += len;
-      } else {
-        otherMsgs.push(msg);
-      }
-    });
-
-    let currentChars = systemChars;
-    const keptOtherMsgs = [];
-
-    for (let i = otherMsgs.length - 1; i >= 0; i -= 1) {
-      const msg = otherMsgs[i];
-      const len = typeof msg.content === "string" ? msg.content.length : JSON.stringify(msg.content).length;
-      
-      if (currentChars + len > maxChars) {
-        logger.warn(`[CerebrasAdapter] Context limit exceeded (${maxChars} chars approx). Trimming ${i + 1} older messages.`);
-        break;
-      }
-      keptOtherMsgs.unshift(msg);
-      currentChars += len;
-    }
-
-    return [...systemMsgs, ...keptOtherMsgs];
-  }
-
-  /**
    * Sends a message to the Cerebras API and returns the response.
    * @param {string} message - The message content to send.
    * @param {string} [role] - The role of the sender.
@@ -201,9 +159,10 @@ class CerebrasAdapter extends BaseAdapter {
    */
   async sendMessage(message, role = "user") {
     this.injectMessage(role, message, getTimestamp());
+    this._enforceContextLimit(); // Apply strict context boundary before API call
     const historyLengthBefore = this.history.length;
 
-    const safeHistory = this._trimHistoryToContext(this.history, this.maxContextTokens);
+    const safeHistory = this.history; // Already trimmed by _enforceContextLimit in BaseAdapter
 
     const payload = {
       model: this.currentModel,

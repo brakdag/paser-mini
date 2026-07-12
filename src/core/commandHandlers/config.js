@@ -15,13 +15,16 @@ class ConfigCommands {
     memoryTools.setMemoryContext(chatManager.assistant, chatManager);
     const tokenUsage = await memoryTools.getTokenCount();
 
+    const truncLimit = chatManager.configManager.get("context_window_limit", 0);
+    const truncDisplay = truncLimit === 0 ? "Infinite" : `${truncLimit} tokens`;
+
     const configInfo = `| Setting | Value |
 | :--- | :--- |
 | Provider | ${chatManager.assistant.providerId || "Unknown"} |
 | Model | ${chatManager.assistant.currentModel} |
 | Temperature | ${chatManager.temperature} |
 | Rendering Mode | ${chatManager.ui.renderingMode} |
-| Context Window | ${chatManager.configManager.get("context_window_limit", "N/A")} tokens |
+| Truncation Limit | ${truncDisplay} |
 | RPM Limit | ${chatManager.configManager.get("rpm_limit", "N/A")} |
 | Instance Timeout | ${chatManager.configManager.get("instance_timeout", 300)}s |
 | Sandbox Mode | ${chatManager.configManager.get("sandbox_mode", false) ? "ENABLED" : "DISABLED"} |
