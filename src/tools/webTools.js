@@ -161,22 +161,34 @@ export default class WebTools {
 
     if (searchQuery) {
       const WINDOW = 500;
+      const MAX_MATCHES_PER_QUERY = 3;
+      const MAX_TOTAL_LENGTH = 10000;
       const queries = searchQuery.split(/\s+/).filter(Boolean);
       const allMatches = [];
 
       queries.forEach((q) => {
         let idx = data.indexOf(q);
-        while (idx !== -1) {
+        let count = 0;
+        while (idx !== -1 && count < MAX_MATCHES_PER_QUERY) {
           const start = Math.max(0, idx - WINDOW);
           const end = Math.min(data.length, idx + q.length + WINDOW);
           allMatches.push(data.substring(start, end));
+          count += 1;
           idx = data.indexOf(q, idx + 1);
         }
       });
 
-      return allMatches.length > 0
-        ? allMatches.join("\n---\n")
-        : "No matches found.";
+      if (allMatches.length === 0) {
+        return "No matches found.";
+      }
+
+      let result = allMatches.join("\n---\n");
+      if (result.length > MAX_TOTAL_LENGTH) {
+        result = result.substring(0, MAX_TOTAL_LENGTH);
+        result += "\n\n[TRUNCATED: Too many matches. Refine your search query.]";
+      }
+
+      return result;
     }
     return data.length > CHUNK_SIZE
       ? `${data.substring(0, CHUNK_SIZE)}\n\n[TRUNCATED: Content exceeds context limit. Use 'searchQuery' to access the remaining content.]`
