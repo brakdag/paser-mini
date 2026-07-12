@@ -72,7 +72,10 @@ const SCHEMAS = {
   tree: z.object({}).strict(),
   update: z.object({ file_path: z.string(), path: z.string(), value: z.any() }).strict(),
   url: z.object({ url: z.string().min(1).transform(v => v.startsWith("http://") || v.startsWith("https://") ? v : `https://${v}`) }),
-  fetch: z.object({ url: z.string().min(1).transform(v => v.startsWith("http://") || v.startsWith("https://") ? v : `https://${v}`) }),
+  fetch: z.object({
+    url: z.string().min(1).transform(v => v.startsWith("http://") || v.startsWith("https://") ? v : `https://${v}`),
+    searchQuery: z.string().optional(),
+  }).strict(),
   valide: z.object({ json_string: z.string() }).strict(),
   write: z.object({ path: z.string(), content: z.string() }).strict(),
   zip: z.object({ filePath: z.string() }).strict(),

@@ -122,11 +122,12 @@ export default class WebTools {
    * Fetches a URL and returns the raw HTML/text.
    * Uses fetch_headers from config.json if available.
    * @param {string} url - The URL to fetch.
+   * @param {string} [searchQuery] - Optional search term to filter the response content with a character window.
    * @param {string | object} [customHeaders] - Custom HTTP headers (JSON string or object) to add or override defaults.
-   * @returns {Promise<string>} The raw HTML/text content.
+   * @returns {Promise<string>} The raw HTML/text content or the filtered matching windows.
    * @throws {Error} If the fetch fails or if customHeaders is invalid JSON.
    */
-  async fetchRaw(url, customHeaders = "{}") {
+  async fetchRaw(url, searchQuery, customHeaders = "{}") {
     const normalizedUrl = this.#normalizeUrl(url);
     let parsedHeaders = {};
     try {
@@ -147,6 +148,14 @@ export default class WebTools {
 
     const { data } = response;
     const size = Buffer.byteLength(data, "utf8");
+
+    if (searchQuery) {
+      const WINDOW = 500;
+      const safeQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(`[\\s\\S]{0,${WINDOW}}${safeQuery}[\\s\\S]{0,${WINDOW}}`, "gi");
+      const matches = data.match(regex);
+      return matches && matches.length > 0 ? matches.join("\n---\n") : `No matches found for: ${searchQuery}`;
+    }
 
     if (size > FETCH_SIZE_LIMIT) {
       const contentType = response.headers["content-type"] || "text/plain";

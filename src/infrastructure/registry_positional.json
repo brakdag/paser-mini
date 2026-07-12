@@ -115,7 +115,7 @@
   ],
   ["search", "Search using DuckDuckGo", { "query": "string" }],
   ["url", "Render webpage using elinks", { "url": "string" }],
-  ["fetch", "Fetch raw HTML from URL", { "url": "string", "headers": "json string" }],
+  ["fetch", "Fetch raw HTML from URL and optionally search for a keyword", { "url": "string", "searchQuery": "string?", "headers": "json string" }],
   ["run", "Execute raw JavaScript in a secure sandbox", { "code": "string" }],
   ["img", "Visualizes an image.", { "path": "string" }],
   ["inspect", "Debug NodeJS code using built-in inspect repl", { "path": "string", "command": "string" }],
