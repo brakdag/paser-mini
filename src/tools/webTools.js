@@ -29,7 +29,7 @@ export default class WebTools {
   };
 
   #execFilePromise = promisify(execFile);
-  
+
   #fetchBuffer = { url: null, data: null };
 
   /**
@@ -145,7 +145,11 @@ export default class WebTools {
 
       const configHeaders = await this.#getFetchHeaders();
       const response = await axios.get(normalizedUrl, {
-        headers: { ...this.#BROWSER_HEADERS, ...configHeaders, ...parsedHeaders },
+        headers: {
+          ...this.#BROWSER_HEADERS,
+          ...configHeaders,
+          ...parsedHeaders,
+        },
         timeout: 15000,
         responseType: "text",
       });
@@ -157,14 +161,23 @@ export default class WebTools {
 
     if (searchQuery) {
       const WINDOW = 500;
-      const safeQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const regex = new RegExp(`[\\s\\S]{0,${WINDOW}}${safeQuery}[\\s\\S]{0,${WINDOW}}`, "gi");
-      const matches = data.match(regex);
-      return matches && matches.length > 0
-        ? matches.join("\n---\n")
+      const queries = searchQuery.split(/\s+/).filter(Boolean);
+      const allMatches = [];
+
+      queries.forEach((q) => {
+        let idx = data.indexOf(q);
+        while (idx !== -1) {
+          const start = Math.max(0, idx - WINDOW);
+          const end = Math.min(data.length, idx + q.length + WINDOW);
+          allMatches.push(data.substring(start, end));
+          idx = data.indexOf(q, idx + 1);
+        }
+      });
+
+      return allMatches.length > 0
+        ? allMatches.join("\n---\n")
         : "No matches found.";
     }
-
     return data.length > CHUNK_SIZE
       ? `${data.substring(0, CHUNK_SIZE)}\n\n[TRUNCATED: Content exceeds context limit. Use 'searchQuery' to access the remaining content.]`
       : data;
