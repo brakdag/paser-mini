@@ -5,7 +5,8 @@ import fs from "fs/promises";
 import path from "path";
 
 const ROOT_DIR = process.cwd();
-const FETCH_SIZE_LIMIT = 100 * 1024; // 100KB limit, matching read tool standards
+
+const CHUNK_SIZE = 10000; // 10KB limit for initial context window
 
 /**
  * Tools for web interaction, searching, and rendering pages to text.
@@ -28,6 +29,8 @@ export default class WebTools {
   };
 
   #execFilePromise = promisify(execFile);
+  
+  #fetchBuffer = { url: null, data: null };
 
   /**
    * Normalizes a URL by ensuring it has a protocol.
@@ -119,61 +122,51 @@ export default class WebTools {
   }
 
   /**
-   * Fetches a URL and returns the raw HTML/text.
-   * Uses fetch_headers from config.json if available.
+   * Fetches a URL and returns raw HTML/text, utilizing an in-memory buffer.
+   * If the URL is already in the buffer, it skips the HTTP request.
    * @param {string} url - The URL to fetch.
-   * @param {string} [searchQuery] - Optional search term to filter the response content with a character window.
-   * @param {string | object} [customHeaders] - Custom HTTP headers (JSON string or object) to add or override defaults.
-   * @returns {Promise<string>} The raw HTML/text content or the filtered matching windows.
-   * @throws {Error} If the fetch fails or if customHeaders is invalid JSON.
+   * @param {string} [searchQuery] - Optional exact string to search for in the full content.
+   * @param {string | object} [customHeaders] - Custom HTTP headers.
+   * @returns {Promise<string>} The first chunk of content, or matching windows if searchQuery is provided.
    */
   async fetchRaw(url, searchQuery, customHeaders = "{}") {
     const normalizedUrl = this.#normalizeUrl(url);
-    let parsedHeaders = {};
-    try {
-      parsedHeaders =
-        typeof customHeaders === "string"
-          ? JSON.parse(customHeaders || "{}")
-          : customHeaders;
-    } catch {
-      throw new Error("Invalid JSON format for headers.");
+
+    if (this.#fetchBuffer.url !== normalizedUrl) {
+      let parsedHeaders = {};
+      try {
+        parsedHeaders =
+          typeof customHeaders === "string"
+            ? JSON.parse(customHeaders || "{}")
+            : customHeaders;
+      } catch {
+        throw new Error("Invalid JSON format for headers.");
+      }
+
+      const configHeaders = await this.#getFetchHeaders();
+      const response = await axios.get(normalizedUrl, {
+        headers: { ...this.#BROWSER_HEADERS, ...configHeaders, ...parsedHeaders },
+        timeout: 15000,
+        responseType: "text",
+      });
+
+      this.#fetchBuffer = { url: normalizedUrl, data: response.data };
     }
 
-    const configHeaders = await this.#getFetchHeaders();
-    const response = await axios.get(normalizedUrl, {
-      headers: { ...this.#BROWSER_HEADERS, ...configHeaders, ...parsedHeaders },
-      timeout: 15000,
-      responseType: "text",
-    });
-
-    const { data } = response;
-    const size = Buffer.byteLength(data, "utf8");
+    const { data } = this.#fetchBuffer;
 
     if (searchQuery) {
       const WINDOW = 500;
       const safeQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const regex = new RegExp(`[\\s\\S]{0,${WINDOW}}${safeQuery}[\\s\\S]{0,${WINDOW}}`, "gi");
       const matches = data.match(regex);
-      return matches && matches.length > 0 ? matches.join("\n---\n") : `No matches found for: ${searchQuery}`;
+      return matches && matches.length > 0
+        ? matches.join("\n---\n")
+        : "No matches found.";
     }
 
-    if (size > FETCH_SIZE_LIMIT) {
-      const contentType = response.headers["content-type"] || "text/plain";
-      let ext = "txt";
-      if (contentType.includes("application/json")) ext = "json";
-      else if (contentType.includes("text/html")) ext = "html";
-      else if (
-        contentType.includes("application/xml") ||
-        contentType.includes("text/xml")
-      )
-        ext = "xml";
-
-      const tempFileName = `fetch_tmp_${Date.now()}.${ext}`;
-      const tempFilePath = path.resolve(ROOT_DIR, tempFileName);
-      await fs.writeFile(tempFilePath, data, "utf8");
-      return `Response size (${size} bytes) exceeds context limit. Content saved to: ${tempFileName}`;
-    }
-
-    return data;
+    return data.length > CHUNK_SIZE
+      ? `${data.substring(0, CHUNK_SIZE)}\n\n[TRUNCATED: Content exceeds context limit. Use 'searchQuery' to access the remaining content.]`
+      : data;
   }
 }
