@@ -103,10 +103,12 @@ class PuterAdapter extends BaseAdapter {
       temperature: this.temperature,
     };
 
-    const payload = this.history.map(({ role: msgRole, content }) => ({
-      role: msgRole,
-      content: this.formatTextForPayload(msgRole, content),
-    }));
+    const payload = this.history
+      .filter(msg => msg && msg.content != null && String(msg.content).trim() !== '')
+      .map(({ role: msgRole, content }) => ({
+        role: msgRole,
+        content: this.formatTextForPayload(msgRole, content) || ' ',
+      }));
 
     await this._applyRateLimit();
 
@@ -165,6 +167,12 @@ class PuterAdapter extends BaseAdapter {
 
     if (typeof finalContent === "string" && apiRole === "assistant") {
       finalContent = finalContent.replace(/<thought>[\s\S]*?<\/thought>/gi, "").trim();
+    }
+
+    // Sanitize: never allow null/undefined/empty content into history
+    if (finalContent == null || (typeof finalContent === "string" && finalContent.trim() === "")) {
+      logger.warn(`[PuterAdapter] Blocked message with empty content from entering history (role=${apiRole}).`);
+      return;
     }
 
     this.history.push({
