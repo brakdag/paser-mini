@@ -18,19 +18,19 @@ class ConfigCommands {
     const truncLimit = chatManager.configManager.get("context_window_limit", 0);
     const truncDisplay = truncLimit === 0 ? "Infinite" : `${truncLimit} tokens`;
 
-    const configInfo = `| Setting | Value |
-| :--- | :--- |
-| Provider | ${chatManager.assistant.providerId || "Unknown"} |
-| Model | ${chatManager.assistant.currentModel} |
-| Temperature | ${chatManager.temperature} |
-| Rendering Mode | ${chatManager.ui.renderingMode} |
-| Truncation Limit | ${truncDisplay} |
-| RPM Limit | ${chatManager.configManager.get("rpm_limit", "N/A")} |
-| Instance Timeout | ${chatManager.configManager.get("instance_timeout", 300)}s |
-| Execute | ${chatManager.ui.bashEnabled ? "ENABLED" : "DISABLED"} |
-| Token Usage | ${tokenUsage} |`;
+    const configData = [
+      ["Provider", chatManager.assistant.providerId || "Unknown"],
+      ["Model", chatManager.assistant.currentModel],
+      ["Temperature", chatManager.temperature],
+      ["Rendering Mode", chatManager.ui.renderingMode],
+      ["Truncation Limit", truncDisplay],
+      ["RPM Limit", chatManager.configManager.get("rpm_limit", "N/A")],
+      ["Instance Timeout", `${chatManager.configManager.get("instance_timeout", 300)}s`],
+      ["Execute", chatManager.ui.bashEnabled ? "ENABLED" : "DISABLED"],
+      ["Token Usage", tokenUsage],
+    ];
 
-    ui.displayMessage(`--- Current Configuration ---\n${configInfo}`);
+    ui.displayInfoPanel("Current Configuration", configData);
     return true;
   }
 }

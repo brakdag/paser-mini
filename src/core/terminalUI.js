@@ -173,6 +173,12 @@ class TerminalUI {
    * @param {string} message The content of the panel.
    * @param {string} [style] The style of the panel.
    */
+  displayInfoPanel(title, data) {
+    const renderedPanel = renderer.renderInfoPanel(title, data);
+    process.stdout.write(renderedPanel);
+    this.writeToLog(renderedPanel);
+  }
+
   displayPanel(title, message, style = "none") {
     process.stdout.write(renderer.renderPanel(title, message, style));
   }

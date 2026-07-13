@@ -422,6 +422,33 @@ class TerminalRenderer {
   }
 
   /**
+   * Renders an information panel with a title and key-value pairs.
+   * @param {string} title - The title of the panel.
+   * @param {Array<[string, string]>} data - The key-value pairs to display.
+   * @returns {string} The rendered panel string.
+   */
+  renderInfoPanel(title, data) {
+    const maxKeyLength = Math.max(...data.map(([key]) => this._visualWidth(key)));
+    const rows = data.map(([key, value]) => `${this._padToWidth(key, maxKeyLength)}   ${value}`);
+    
+    const contentWidth = Math.max(
+      this._visualWidth(title),
+      ...rows.map(row => this._visualWidth(row))
+    );
+    
+    const totalWidth = contentWidth + 2;
+    const paddedRows = rows.map(row => `${chalk.blue("│")} ${this._padToWidth(row, contentWidth)} ${chalk.blue("│")}`);
+    const paddedTitle = `${chalk.blue("│")} ${this._padToWidth(chalk.bold(title), contentWidth)} ${chalk.blue("│")}`;
+    
+    let output = `\n${chalk.blue(`┌${"─".repeat(totalWidth)}┐`)}\n`;
+    output += `${paddedTitle}\n`;
+    output += `${chalk.blue(`├${"─".repeat(totalWidth)}┤`)}\n`;
+    output += `${paddedRows.join("\n")}\n`;
+    output += `${chalk.blue(`└${"─".repeat(totalWidth)}┘`)}\n`;
+    return output;
+  }
+
+  /**
    * Renders a titled panel with a message and optional styling.
    * @param {string} title - The title of the panel.
    * @param {string} message - The message to display inside the panel.
