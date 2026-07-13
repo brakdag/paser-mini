@@ -100,13 +100,58 @@ export default class WebTools {
   }
 
   /**
-   * Renders a web page to text using elinks.
+   * Renders a web page or document to text.
+   * Detects if the content is a PDF and uses pdftotext, otherwise uses elinks for HTML.
    * @param {string} url - The URL to render.
    * @returns {Promise<string>} The rendered content.
    * @throws {Error} If the rendering process fails.
    */
   async renderWeb(url) {
     const normalizedUrl = this.#normalizeUrl(url);
+    const requestHeaders = {
+      ...this.#BROWSER_HEADERS,
+      ...(await this.#getFetchHeaders()),
+    };
+
+    let response;
+    try {
+      response = await axios.get(normalizedUrl, {
+        headers: requestHeaders,
+        timeout: 15000,
+        responseType: "arraybuffer",
+      });
+    } catch (e) {
+      throw new Error(`Fetch failed: ${e.message}`);
+    }
+
+    const contentType = response.headers["content-type"] || "";
+    const bufferData = Buffer.from(response.data);
+
+    // Detención de PDF mediante Content-Type o Magic Bytes (%PDF)
+    const isPdf =
+      contentType.includes("application/pdf") ||
+      bufferData.slice(0, 4).toString("latin1") === "%PDF";
+
+    if (isPdf) {
+      const tempPath = path.join(ROOT_DIR, `temp_${Date.now()}.pdf`);
+      try {
+        await fs.writeFile(tempPath, bufferData);
+        const { stdout } = await this.#execFilePromise(
+          "pdftotext",
+          ["-layout", "-htmlmeta", tempPath, "-"],
+          {
+            timeout: 30000,
+            maxBuffer: 10 * 1024 * 1024,
+          },
+        );
+        return stdout;
+      } catch (e) {
+        throw new Error(`PDF conversion failed: ${e.message}`);
+      } finally {
+        await fs.unlink(tempPath).catch(() => {});
+      }
+    }
+
     try {
       const { stdout } = await this.#execFilePromise(
         "elinks",

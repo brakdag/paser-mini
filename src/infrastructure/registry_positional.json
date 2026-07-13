@@ -114,7 +114,7 @@
     }
   ],
   ["search", "Search the web using DuckDuckGo. Use this tool for any general information query, research, or when you need to find URLs. This is the primary web search tool.", { "query": "string" }],
-  ["url", "Render webpage using elinks", { "url": "string" }],
+  ["url", "Render webpage using elinks or PDF content as text via pdftotext", { "url": "string" }],
   ["fetch", "Download raw HTML content from a specific URL. The searchQuery parameter filters the downloaded content by exact string match only — it is NOT a web search. For general information queries, use the search tool instead.", { "url": "string", "searchQuery": "string?", "headers": "json string" }],
   ["run", "Execute raw JavaScript in a secure sandbox", { "code": "string" }],
   ["img", "Visualizes an image.", { "path": "string" }],
