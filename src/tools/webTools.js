@@ -77,7 +77,7 @@ export default class WebTools {
       try {
         const { stdout } = await this.#execFilePromise(
           "elinks",
-          ["-dump", "-no-numbering", url],
+          ["-dump", "-no-numbering", "-no-references", "-force-html", url],
           {
             timeout: 20000,
           },
@@ -110,7 +110,13 @@ export default class WebTools {
     try {
       const { stdout } = await this.#execFilePromise(
         "elinks",
-        ["-dump", "-no-numbering", normalizedUrl],
+        [
+          "-dump",
+          "-no-numbering",
+          "-no-references",
+          "-force-html",
+          normalizedUrl,
+        ],
         {
           timeout: 30000,
         },
@@ -185,7 +191,8 @@ export default class WebTools {
       let result = allMatches.join("\n---\n");
       if (result.length > MAX_TOTAL_LENGTH) {
         result = result.substring(0, MAX_TOTAL_LENGTH);
-        result += "\n\n[TRUNCATED: Too many matches. Refine your search query.]";
+        result +=
+          "\n\n[TRUNCATED: Too many matches. Refine your search query.]";
       }
 
       return result;
