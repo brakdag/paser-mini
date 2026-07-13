@@ -132,7 +132,7 @@ class ExecutionEngine {
       } else if (!this.toolTracker.recordAttempt(toolName, args)) {
         result = `Tool loop detected: ${toolName} called too many times.`;
       } else if (toolName === "execute" && !this.ui.bashEnabled) {
-        result = "Bash access is disabled for security. Please use /enableBash to activate it.";
+        result = "Bash access is disabled for security. Please ask the user to run /execute to activate it.";
       } else if (!(toolName in this.tools)) {
         result = `Unknown tool: ${toolName}`;
       } else {

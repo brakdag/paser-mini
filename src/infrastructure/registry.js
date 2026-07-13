@@ -148,7 +148,7 @@ export const AVAILABLE_TOOLS = {
    * @param {...unknown} args - Arguments passed to the system tool.
    * @returns {Promise<unknown>} The execution result.
    */
-  execute: async (...args) => (await getTool("systemTools", "executeBash"))(...args),
+  execute: async (...args) => (await getTool("systemTools", "execute"))(...args),
   /**
    * Searches for text in files.
    * @param {...unknown} args - Arguments passed to the search tool.
@@ -418,7 +418,7 @@ const systemInstrData = JSON.parse(
  */
 export function generateSystemInstruction(availableToolNames) {
   const filteredCatalog = fullCatalog
-    .filter((t) => t[0] !== "executeBash" && availableToolNames.includes(t[0]))
+    .filter((t) => t[0] !== "execute" && availableToolNames.includes(t[0]))
     .map((t) => {
       const canonicalName = t[0];
       const args =

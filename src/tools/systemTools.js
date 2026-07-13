@@ -134,7 +134,7 @@ export class SystemTools {
    * @returns {Promise<string>} The command output.
    * @throws {Error} If the bash command fails.
    */
-  async executeBash(command) {
+  async execute(command) {
     try {
       const { stdout, stderr } = await this.#execPromise(command, {
         cwd: process.cwd(),

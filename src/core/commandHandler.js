@@ -42,7 +42,21 @@ const COMMAND_MAP = {
    * @returns {void}
    */
   "/clear": (_, ui) => SystemCommands.handleClear(ui),
-  "/enablebash": SystemCommands.handleEnableBash,
+  /**
+   * Toggles the bash execution mode.
+   * @param {import("./chatManager.js").default} cm - The chat manager instance.
+   * @param {object} ui - The UI instance.
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
+  "/execute": SystemCommands.handleExecute,
+  /**
+   * Sets the bash execution mode with specific arguments.
+   * @param {import("./chatManager.js").default} cm - The chat manager instance.
+   * @param {object} ui - The UI instance.
+   * @param {string} input - The raw input string.
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
+  "/execute ": (cm, ui, input) => SystemCommands.handleExecute(cm, ui, input.slice(9).trim()),
   "/fountain": InterfaceCommands.handleFountain,
   "/irc": InterfaceCommands.handleIRC,
   "/clean": InterfaceCommands.handleClean,

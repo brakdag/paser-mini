@@ -9,6 +9,7 @@ class SystemCommands {
    * Initializes the SmartToolParser instance for direct tool execution.
    */
   static parser = new SmartToolParser();
+
   /**
    * Clears the terminal screen.
    * @returns {boolean} True if the operation succeeded.
@@ -42,18 +43,35 @@ class SystemCommands {
   }
 
   /**
-   * Enables bash access and notifies the assistant of the new capability.
+   * Toggles or sets the state of bash execution, persisting it to the configuration.
    * @param {object} chatManager The chat manager instance.
    * @param {object} ui The terminal UI instance.
-   * @returns {boolean} True if the operation succeeded.
+   * @param {string} args The arguments ('on', 'off', or empty for toggle).
+   * @returns {Promise<boolean>} True if the operation succeeded.
    */
-  static handleEnableBash(chatManager, ui) {
-    ui.setBashEnabled(true);
-    ui.displayInfo("Bash access enabled. You can now use executeBash.");
-    const bashInstruction = 
-      "SYSTEM UPDATE: Bash access has been enabled. You now have access to the tool `executeBash(command: string)`, which allows you to execute shell commands in the project root.";
-    const content = ui.formatSystemMessage(bashInstruction);
-    chatManager.assistant.injectMessage("server", content);
+  static async handleExecute(chatManager, ui, args) {
+    const currentStatus = ui.bashEnabled;
+    let targetStatus = !currentStatus; // Default to toggle
+
+    if (args) {
+      if (args.toLowerCase() === "on") targetStatus = true;
+      else if (args.toLowerCase() === "off") targetStatus = false;
+    }
+
+    if (targetStatus === currentStatus) {
+      ui.displayInfo(`Bash execution is already ${targetStatus ? "ENABLED" : "DISABLED"}.`);
+      return true;
+    }
+
+    ui.setBashEnabled(targetStatus);
+    chatManager.configManager.save("execute_enabled", targetStatus);
+    ui.displayInfo(`Bash execution ${targetStatus ? "ENABLED" : "DISABLED"}.`);
+
+    const stateChangeMsg = targetStatus
+      ? "SYSTEM UPDATE: Bash access has been enabled. You now have access to the tool `execute(command: string)`, which allows you to execute shell commands in the project root."
+      : "SYSTEM UPDATE: Bash access has been disabled. The tool `execute` is no longer available.";
+    
+    chatManager.assistant.injectMessage("server", ui.formatSystemMessage(stateChangeMsg));
     return true;
   }
 

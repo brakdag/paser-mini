@@ -6,7 +6,7 @@ const systemTools = new SystemTools();
 
 describe("systemTools", () => {
   it("should execute a simple bash command", async () => {
-    const result = await systemTools.executeBash({ command: "echo hello" });
+    const result = await systemTools.execute({ command: "echo hello" });
     assert.strictEqual(result.trim(), "hello");
   });
 });

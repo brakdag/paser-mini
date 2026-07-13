@@ -36,7 +36,7 @@ These commands are handled locally by the `CommandHandler` and do not consume to
 - `/irc`: Switch UI rendering to IRC style.
 - `/fountain`: Switch UI rendering to Screenplay (Fountain) style.
 - `/clean`: Switch UI rendering to clean text only.
-- `/enablebash`: Enables bash execution for tools (disabled by default for security).
+- `/execute [on|off]`: Toggles or sets bash execution for tools (disabled by default for security). Persists across sessions.
 
 ---
 

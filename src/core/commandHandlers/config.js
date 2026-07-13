@@ -27,8 +27,7 @@ class ConfigCommands {
 | Truncation Limit | ${truncDisplay} |
 | RPM Limit | ${chatManager.configManager.get("rpm_limit", "N/A")} |
 | Instance Timeout | ${chatManager.configManager.get("instance_timeout", 300)}s |
-| Sandbox Mode | ${chatManager.configManager.get("sandbox_mode", false) ? "ENABLED" : "DISABLED"} |
-| Safe Mode | ${chatManager.configManager.get("safemode", false) ? "ENABLED" : "DISABLED"} |
+| Execute | ${chatManager.ui.bashEnabled ? "ENABLED" : "DISABLED"} |
 | Token Usage | ${tokenUsage} |`;
 
     ui.displayMessage(`--- Current Configuration ---\n${configInfo}`);
