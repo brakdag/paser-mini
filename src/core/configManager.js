@@ -12,7 +12,7 @@ class ConfigManager {
    * Initializes the ConfigManager and loads the configuration from disk.
    */
   constructor() {
-    this.configPath = path.join(__dirname, "..", "..", "config", "config.json");
+    this.configPath = path.join(process.cwd(), "config", "config.json");
     this.config = this._loadConfig();
   }
 

@@ -21,7 +21,7 @@ class ConfigCommands {
     const configData = [
       ["Provider", chatManager.assistant.providerId || "Unknown"],
       ["Model", chatManager.assistant.currentModel],
-      ["Temperature", chatManager.temperature],
+      ["Temperature", chatManager.model.temperature],
       ["Rendering Mode", chatManager.ui.renderingMode],
       ["Truncation Limit", truncDisplay],
       ["RPM Limit", chatManager.configManager.get("rpm_limit", "N/A")],

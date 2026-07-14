@@ -82,6 +82,83 @@ class ChatManager {
   }
 
   /**
+   * Getter for the current model temperature, delegating to the shared model identity.
+   * @returns {number} The current temperature.
+   */
+  get temperature() {
+    return this.model.temperature;
+  }
+
+  /**
+   * Signals the main loop to stop execution and exit.
+   */
+  requestExit() {
+    this.stopRequested = true;
+  }
+
+  /**
+   * Switches the current AI provider, model, and temperature dynamically.
+   * @param {string} providerId - The target provider ID.
+   * @param {string} modelName - The target model name.
+   * @param {number} temp - The target temperature.
+   */
+  async switchProvider(providerId, modelName, temp) {
+    this.assistant = await this.providerManager.createAdapter({
+      providerId,
+      ui: this.ui,
+      configManager: this.configManager,
+    });
+    this.assistant.setIdentities(this.user, this.model);
+    this.model.name = modelName;
+    this.model.temperature = temp;
+    
+    // Reiniciar el chat y propagar el nuevo adaptador
+    this.assistant.startChat(modelName, this.systemInstruction, temp);
+    this.engine.assistant = this.assistant;
+    this.engine.chatManager = this;
+    this.turnProcessor.assistant = this.assistant;
+    this.turnProcessor.api.assistant = this.assistant;
+  }
+
+  /**
+   * Sets the current model temperature and restarts the chat session.
+   * @param {number} temp - The new temperature value.
+   */
+  setTemperature(temp) {
+    this.model.temperature = temp;
+    if (this.assistant && this.assistant.startChat) {
+      this.assistant.startChat(this.model.name, this.systemInstruction, temp);
+    }
+  }
+
+  /**
+   * Updates the system instruction and tools registry dynamically.
+   * @param {string} systemInstruction - The new system prompt.
+   * @param {object} tools - The new tools object.
+   */
+  updateSystemContext(systemInstruction, tools) {
+    this.systemInstruction = systemInstruction;
+    this.tools = tools;
+    this.engine.tools = tools;
+    this.turnProcessor.tools = tools;
+    
+    if (this.assistant && this.assistant.updateSystemInstruction) {
+      this.assistant.updateSystemInstruction(systemInstruction);
+    }
+  }
+
+  /**
+   * Updates the agent's nickname across the UI and shared identity.
+   * @param {string} newNick - The new agent nickname.
+   */
+  updateModelNickname(newNick) {
+    this.model.nickname = newNick;
+    if (this.ui && this.ui.setIdentities) {
+      this.ui.setIdentities(this.user, this.model);
+    }
+  }
+
+  /**
    * Saves a configuration value, respecting the instance mode.
    * @param {string} key - The configuration key.
    * @param {unknown} value - The value to save.
