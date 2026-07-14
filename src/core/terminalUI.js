@@ -205,7 +205,6 @@ class TerminalUI {
   displayInfoPanel(title, data) {
     const renderedPanel = renderer.renderInfoPanel(title, data);
     process.stdout.write(renderedPanel);
-    this.writeToLog(renderedPanel);
   }
 
   /**
@@ -216,7 +215,6 @@ class TerminalUI {
   displayMenu(title, items) {
     const renderedMenu = renderer.renderMenu(title, items);
     process.stdout.write(renderedMenu);
-    this.writeToLog(renderedMenu);
   }
 
   /**
