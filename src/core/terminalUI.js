@@ -261,17 +261,20 @@ class TerminalUI {
    * @param {string} detail The detail of the operation.
    */
   displayToolStatus(name, success, detail) {
-    const nameColor = chalk.cyan;
+    input.clearCurrentLine();
     const statusIcon = success ? "✓" : "✗";
     const statusColor = success ? chalk.green : chalk.red;
+    const ts = IRCFormatter.getTimestamp();
 
-    const prefix = `<${nameColor(this.model.nickname)}>`;
-    const finalMsg = `${prefix} * ${name} (${detail}) ${statusColor(statusIcon)}`;
-    console.log(finalMsg);
+    const actionText = `* ${name} (${detail})`;
 
-    const plainStatus = success ? "✓" : "✗";
+    // 1. Mensaje coloreado para la terminal (con timestamp y estado)
+    const terminalText = IRCFormatter.formatTerminalAction(this.model.nickname, actionText, statusColor(statusIcon), ts);
+    process.stdout.write(`${terminalText}\n`);
+
+    // 2. Mensaje plano para el log (con timestamp y estado)
     this.writeToLog(
-      this.activePlugin.formatAction(this.model.nickname, `${name} (${detail}) ${plainStatus}`),
+      this.activePlugin.formatAction(this.model.nickname, `${actionText} ${statusIcon}`),
     );
   }
 

@@ -236,7 +236,6 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
   _filterThoughts(text) {
     if (!text) return "";
     let cleaned = text.replace(/<(thought|reasoning)>[\s\S]*?<\/\1>/gi, "");
-    cleaned = cleaned.replace(/^(\[\d{2}:\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, "");
     return cleaned.trim();
   }
 

@@ -60,6 +60,20 @@ class IRCFormatter {
     const nameColor = nickname === agentNickname ? chalk.cyan : chalk.green;
     return `${chalk.white(`[${ts}]`)} <${nameColor(nickname)}> ${text}`;
   }
+
+  /**
+   * Formats an action message for terminal output with colors.
+   * @param {string} nickname - The nickname of the action performer.
+   * @param {string} actionText - The action text.
+   * @param {string} statusIcon - The status icon (e.g., '✓', '✗').
+   * @param {string} [timestamp] - Optional override for the timestamp.
+   * @returns {string} The formatted terminal action string with colors.
+   */
+  static formatTerminalAction(nickname, actionText, statusIcon, timestamp = null) {
+    const ts = timestamp || this.getTimestamp();
+    const nameColor = chalk.cyan;
+    return `${chalk.white(`[${ts}]`)} <${nameColor(nickname)}> ${actionText} ${statusIcon}`;
+  }
 }
 
 export default IRCFormatter;

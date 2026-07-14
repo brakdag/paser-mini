@@ -34,7 +34,7 @@ class IRCFormat extends FormatPlugin {
    */
   formatAction(nickname, text) {
     const ts = IRCFormatter.getTimestamp();
-    return `[${ts}] * ${nickname} ${text}`;
+    return `[${ts}] <${nickname}> ${text}`;
   }
 }
 

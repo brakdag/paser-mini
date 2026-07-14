@@ -77,9 +77,11 @@ class InterfaceCommands {
    */
   static async handleNick(chatManager, ui, newNick) {
     chatManager.configManager.save("user_nickname", newNick);
-     
+    chatManager.user.nickname = newNick;
     ui.setUserNickname(newNick);
-    chatManager.assistant.updateNicknames(newNick, ui.agentNickname);
+    if (chatManager.assistant && chatManager.assistant.setIdentities) {
+      chatManager.assistant.setIdentities(chatManager.user, chatManager.model);
+    }
     ui.displayInfo(`User nickname successfully changed to '${newNick}'`);
     return true;
   }
@@ -171,7 +173,6 @@ class InterfaceCommands {
       ["/help", "Show this help menu"],
       ["/config", "Show current system configuration"],
       ["/models", "Change AI model and temperature"],
-      ["/cache", "Rebuild system prompt and tools cache"],
       ["/cache", "Rebuild system prompt and tools cache"],
       ["/fav", "Manage favorite models (/fav, /fav+, /fav -<idx>, /fav <idx>)"],
       ["/reset", "Hard Reset: Clear history and Leap via Bridge Block"],

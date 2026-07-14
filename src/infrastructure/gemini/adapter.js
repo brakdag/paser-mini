@@ -20,13 +20,8 @@ class GeminiAdapter extends BaseAdapter {
    * @param {string} [userNickname] - The nickname of the user.
    * @param {string} [agentNickname] - The nickname of the agent.
    */
-  constructor(
-    ui,
-    configManager,
-    userNickname = "user",
-    agentNickname = "assistant",
-  ) {
-    super(ui, configManager, userNickname, agentNickname);
+  constructor({ ui, configManager, userNickname = "user", agentNickname = "assistant" }) {
+    super({ ui, configManager, userNickname, agentNickname });
     this.apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     this.history = [];
     this.currentModel = "models/gemma-4-26b-a4b-it";
@@ -132,7 +127,6 @@ class GeminiAdapter extends BaseAdapter {
   _filterThoughts(text) {
     if (!text) return "";
     let cleaned = text.replace(/<(thought|reasoning)>[\s\S]*?<\/\1>/gi, "");
-    cleaned = cleaned.replace(/^(\[\d{2}:\d{2}:\d{2}\]\s*<[^>]+>\s*)+/g, "");
     return cleaned.trim();
   }
 
