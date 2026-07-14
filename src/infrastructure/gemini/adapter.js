@@ -8,12 +8,6 @@ import {
   GeminiEmptyResponseError,
 } from "../../core/exceptions.js";
 
-const GEMINI_VARIANTS = [
-  { name: "flash", model: "models/gemini-2.0-flash", temp: 0.5 },
-  { name: "high", model: "models/gemini-2.0-pro-exp-02-05", temp: 0.7 },
-  { name: "pro", model: "models/gemini-1.5-pro", temp: 0.7 },
-];
-
 /**
  * Adapter for the Google Gemini API, handling communication, rate limiting, and history.
  * @augments BaseAdapter
@@ -400,14 +394,6 @@ class GeminiAdapter extends BaseAdapter {
       if (status === 404 || status === 400) return false;
       return true;
     }
-  }
-
-  /**
-   * Returns the predefined model variants.
-   * @returns {Array<object>} The list of model variants.
-   */
-  getVariants() {
-    return GEMINI_VARIANTS;
   }
 }
 

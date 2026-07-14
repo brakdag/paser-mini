@@ -168,10 +168,9 @@ class TerminalUI {
   }
 
   /**
-   * Displays a formatted panel in the terminal.
+   * Displays a formatted info panel in the terminal.
    * @param {string} title The title of the panel.
-   * @param {string} message The content of the panel.
-   * @param {string} [style] The style of the panel.
+   * @param {Array<[string, string]>} data The key-value pairs to display.
    */
   displayInfoPanel(title, data) {
     const renderedPanel = renderer.renderInfoPanel(title, data);
@@ -179,6 +178,23 @@ class TerminalUI {
     this.writeToLog(renderedPanel);
   }
 
+  /**
+   * Displays a formatted menu panel with indexed options.
+   * @param {string} title The title of the menu.
+   * @param {string[]} items The list of options to display.
+   */
+  displayMenu(title, items) {
+    const renderedMenu = renderer.renderMenu(title, items);
+    process.stdout.write(renderedMenu);
+    this.writeToLog(renderedMenu);
+  }
+
+  /**
+   * Displays a generic formatted panel in the terminal.
+   * @param {string} title The title of the panel.
+   * @param {string} message The content of the panel.
+   * @param {string} [style] The style of the panel.
+   */
   displayPanel(title, message, style = "none") {
     process.stdout.write(renderer.renderPanel(title, message, style));
   }

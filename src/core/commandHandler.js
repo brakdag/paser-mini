@@ -84,15 +84,6 @@ const COMMAND_MAP = {
    * @returns {void}
    */
   "/sp": (cm, ui) => SystemCommands.handleShowSystemPrompt(cm, ui),
-  /**
-   * Generates response variants.
-   * @param {import("./chatManager.js").default} cm - The chat manager instance.
-   * @param {object} ui - The UI instance.
-   * @param {string} input - The raw input string.
-   * @returns {void}
-   */
-  "/variants": (cm, ui, input) =>
-    ModelCommands.handleVariants(cm, ui, input.split(/\s+/)),
 };
 
 /**

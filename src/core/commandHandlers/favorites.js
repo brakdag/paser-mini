@@ -20,15 +20,8 @@ class FavoriteCommands {
         return true;
       }
 
-      const header = "| ID | Model (Provider) | Temp |\n|---|---|---|\n";
-      const rows = [];
-      for (let i = 0; i < favorites.length; i += 1) {
-        const f = favorites[i];
-        const m = `${f.model} (${f.provider})`;
-        const t = f.temp;
-        rows.push(`| ${i} | ${m} | ${t} |`);
-      }
-      ui.displayMessage(`--- Favorite Models ---\n${header}${rows.join("\n")}`);
+      const favNames = favorites.map((f) => `${f.model} (${f.provider}) [Temp: ${f.temp}]`);
+      ui.displayMenu("Favorite Models", favNames);
       return true;
     }
 

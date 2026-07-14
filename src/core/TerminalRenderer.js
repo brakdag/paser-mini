@@ -449,6 +449,31 @@ class TerminalRenderer {
   }
 
   /**
+   * Renders a titled menu panel with indexed options.
+   * @param {string} title - The title of the menu.
+   * @param {string[]} items - The list of options to display.
+   * @returns {string} The rendered menu string.
+   */
+  renderMenu(title, items) {
+    const indexed = items.map((item, i) => `${chalk.cyan(`${i}.`)} ${item}`);
+    const contentWidth = Math.max(
+      this._visualWidth(title),
+      ...indexed.map((item) => this._visualWidth(item)),
+    );
+    const totalWidth = contentWidth + 2;
+    const paddedRows = indexed.map(
+      (item) => `${chalk.blue("│")} ${this._padToWidth(item, contentWidth)} ${chalk.blue("│")}`,
+    );
+    const paddedTitle = `${chalk.blue("│")} ${this._padToWidth(chalk.bold(title), contentWidth)} ${chalk.blue("│")}`;
+    let output = `\n${chalk.blue(`┌${"─".repeat(totalWidth)}┐`)}\n`;
+    output += `${paddedTitle}\n`;
+    output += `${chalk.blue(`├${"─".repeat(totalWidth)}┤`)}\n`;
+    output += `${paddedRows.join("\n")}\n`;
+    output += `${chalk.blue(`└${"─".repeat(totalWidth)}┘`)}\n`;
+    return output;
+  }
+
+  /**
    * Renders a titled panel with a message and optional styling.
    * @param {string} title - The title of the panel.
    * @param {string} message - The message to display inside the panel.

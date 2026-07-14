@@ -59,11 +59,6 @@ class ProviderManager {
       defaultModel: "glm-5.2",
       path: "../infrastructure/zai/adapter.js",
     },
-    PUTER: {
-      name: "Puter",
-      defaultModel: "gpt-4o-mini",
-      path: "../infrastructure/puter/adapter.js",
-    },
   };
 
   /**

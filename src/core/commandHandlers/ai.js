@@ -71,12 +71,8 @@ class AICommands {
         return true;
       }
     } else {
-      let menu = "Select Provider:\n";
-      providers.forEach((p, i) => {
-        menu += `${i}: ${p.name}\n`;
-      });
-
-      ui.displayMessage(menu);
+      const providerNames = providers.map((p) => p.name);
+      ui.displayMenu("Select Provider", providerNames);
       const choice = await ui.requestInput("Provider: ");
       const selectedIndex = parseInt(choice, 10);
 

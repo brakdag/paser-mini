@@ -240,12 +240,4 @@ export default class BaseAdapter {
   async checkAvailability(_modelName) {
     throw new Error("Method 'checkAvailability()' must be implemented.");
   }
-
-  /**
-   * Returns the available variants for this adapter.
-   * @returns {Array} A list of variants.
-   */
-  getVariants() {
-    return [];
-  }
 }
