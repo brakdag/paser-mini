@@ -170,6 +170,15 @@ class ChatManager {
   }
 
   /**
+   * Sets a new context window truncation limit and persists it to the configuration.
+   * @param {number} limit - The token limit.
+   */
+  setContextWindowLimit(limit) {
+    this.contextWindowLimit = limit;
+    this.saveConfig("context_window_limit", limit);
+  }
+
+  /**
    * Updates the agent's nickname across the UI and shared identity.
    * @param {string} newNick - The new agent nickname.
    */

@@ -190,12 +190,48 @@ const PREFIX_COMMANDS = {
    */
   "/join ": (cm, ui, input, prefix) =>
     InterfaceCommands.handleJoin(cm, ui, input.substring(prefix.length).trim()),
+  /**
+   * Sets the FIFO context window truncation limit.
+   * @param {import("./chatManager.js").default} cm - The chat manager instance.
+   * @param {object} ui - The UI instance.
+   * @param {string} input - The raw input string.
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
   "/trunc ": (cm, ui, input) => SystemCommands.handleTrunc(cm, ui, input),
+  /**
+   * Sets the rate limit (requests per minute).
+   * @param {import("./chatManager.js").default} cm - The chat manager instance.
+   * @param {object} ui - The UI instance.
+   * @param {string} input - The raw input string.
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
   "/rpm ": (cm, ui, input) => SystemCommands.handleRpm(cm, ui, input),
+  /**
+   * Injects a custom AI message into the conversation history.
+   * @param {import("./chatManager.js").default} cm - The chat manager instance.
+   * @param {object} ui - The UI instance.
+   * @param {string} input - The raw input string.
+   * @param {string} prefix - The command prefix.
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
   "/paim ": (cm, ui, input, prefix) =>
     AICommands.handlePaim(cm, ui, input.substring(prefix.length).trim()),
+  /**
+   * Connects to a specific AI provider.
+   * @param {import("./chatManager.js").default} cm - The chat manager instance.
+   * @param {object} ui - The UI instance.
+   * @param {string} input - The raw input string.
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
   "/connect": (cm, ui, input) =>
     AICommands.handleConnect(cm, ui, input.split(/\s+/).slice(1).join(" ")),
+  /**
+   * Lists or queries available AI models.
+   * @param {import("./chatManager.js").default} cm - The chat manager instance.
+   * @param {object} ui - The UI instance.
+   * @param {string} input - The raw input string.
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
   "/models": (cm, ui, input) =>
     ModelCommands.handleModels(cm, ui, input.split(/\s+/)),
   /**

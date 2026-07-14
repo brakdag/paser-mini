@@ -2,7 +2,6 @@ import IRCFormat from "../formats/IRCFormat.js";
 import CleanFormat from "../formats/CleanFormat.js";
 import FountainFormat from "../formats/FountainFormat.js";
 import logger from "../core/logger.js";
-import { normalizeRole, normalizeContent } from "./historyNormalizer.js";
 
 /**
  * Base class for AI adapters. This class is abstract and cannot be instantiated directly.
