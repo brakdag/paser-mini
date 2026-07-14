@@ -1,4 +1,5 @@
 import SmartToolParser from "../smartParser.js";
+import promptManager from "../systemPromptManager.js";
 
 /**
  * Handles system-level commands such as clearing the terminal, 
@@ -72,6 +73,41 @@ class SystemCommands {
       : "SYSTEM UPDATE: Bash access has been disabled. The tool `execute` is no longer available.";
     
     chatManager.assistant.injectMessage("server", ui.formatSystemMessage(stateChangeMsg));
+    return true;
+  }
+
+  /**
+   * Forces a cache rebuild and hot-reloads the system prompt and tools.
+   * @param {object} chatManager The chat manager instance.
+   * @param {object} ui The terminal UI instance.
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
+  static async handleCache(chatManager, ui) {
+    try {
+      ui.displayInfo("Forcing system cache rebuild...");
+      const { systemInstruction, filteredTools } = await promptManager.rebuildCache();
+
+      // Hot-injection delegando al ChatManager
+      chatManager.updateSystemContext(systemInstruction, filteredTools);
+
+      promptManager.saveCache();
+      ui.displayInfo("Cache rebuilt and updated successfully.");
+    } catch (e) {
+      ui.displayError(`Failed to rebuild cache: ${e.message}`);
+    }
+    return true;
+  }
+
+  /**
+   * Changes the agent nickname using the shared identity object.
+   * @param {object} chatManager The chat manager instance.
+   * @param {object} ui The terminal UI instance.
+   * @param {string} newNick The new nickname.
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
+  static async handleNick(chatManager, ui, newNick) {
+    chatManager.updateModelNickname(newNick);
+    ui.displayInfo(`Agent nickname successfully changed to '${newNick}'`);
     return true;
   }
 

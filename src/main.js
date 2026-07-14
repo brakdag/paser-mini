@@ -4,7 +4,11 @@ import TerminalUI from "./core/terminalUI.js";
 import ChatManager from "./core/chatManager.js";
 import ConfigManager from "./core/configManager.js";
 import ProviderManager from "./infrastructure/providerManager.js";
-import SystemPromptManager from "./core/systemPromptManager.js";
+import promptManager from "./core/systemPromptManager.js";
+import { getToolInstance } from "./infrastructure/registry.js";
+import GeminiAdapter from "./infrastructure/gemini/adapter.js";
+import logger from "./core/logger.js";
+
 /**
  * Main entry point for the paser-mini application.
  * Initializes the CLI, configuration, and chat manager.
@@ -43,8 +47,7 @@ async function main() {
     const { GitHubModeOrchestrator } =
       await import("./core/githubModeOrchestrator.js");
     
-    const promptManager = new SystemPromptManager();
-    const { systemInstruction, filteredTools } = promptManager.buildPrompt(options);
+    const { systemInstruction, filteredTools } = await promptManager.buildPrompt(options);
 
     const orchestrator = new GitHubModeOrchestrator(
       systemInstruction,
@@ -54,38 +57,67 @@ async function main() {
     return;
   }
 
-  const ui = new TerminalUI();
-  const providerManager = new ProviderManager();
-  const promptManager = new SystemPromptManager();
+// 1. Carga estática en paralelo en lugar de imports dinámicos secuenciales
+  const [ui, providerManager, memoryToolsInstance, systemToolsInstance, utilToolsInstance] = await Promise.all([
+    new TerminalUI(),
+    new ProviderManager(),
+    getToolInstance("memoryTools"),
+    getToolInstance("systemTools"),
+    getToolInstance("utilTools"),
+  ]);
 
-  const { systemInstruction, filteredTools } = promptManager.buildPrompt(options);
+  // 2. Construcción del System Prompt (asíncrono)
+  const { systemInstruction, filteredTools } = await promptManager.buildPrompt(options);
 
   const providerId = configManager.get("provider", "GEMINI");
   const userNick = configManager.get("user_nickname", "user");
   const agentNick = configManager.get("agent_nickname", "assistant");
+  const modelName = configManager.get("model_name", "gemini-2.0-flash");
+  const temp = parseFloat(configManager.get("default_temperature", 0.7));
 
-  const assistant = await providerManager.createAdapter({
-    providerId,
-    ui,
-    configManager,
-    userNickname: userNick,
-    agentNickname: agentNick,
-  });
+  // 3. Objetos de Identidad Compartidos (Clean Code)
+  const user = { nickname: userNick };
+  const model = { nickname: agentNick, name: modelName, temperature: temp };
+
+  logger.info(`Startup: Loading adapter for provider ${providerId}...`);
+
+  // 4. Instanciación directa del adaptador por defecto (Gemini) para evitar import() runtime overhead
+  let assistant;
+  if (providerId === "GEMINI") {
+    assistant = new GeminiAdapter({ ui, configManager });
+    assistant.providerId = providerId;
+  } else {
+    // Fallback a carga dinámica si se usa un proveedor distinto al arranque por defecto
+    assistant = await providerManager.createAdapter({
+      providerId,
+      ui,
+      configManager,
+    });
+  }
 
   const chatManager = new ChatManager({
     assistant,
     tools: filteredTools,
     systemInstruction,
     ui,
+    user,
+    model,
+    configManager,
   });
 
-  chatManager.configManager = configManager;
   chatManager.providerManager = providerManager;
 
-  const { getToolInstance } = await import("./infrastructure/registry.js");
-  const memoryToolsInstance = await getToolInstance("memoryTools");
+  // Inyectar contextos
   memoryToolsInstance.setMemoryContext(assistant, chatManager);
+  await systemToolsInstance.setContext(assistant, chatManager);
+  utilToolsInstance.setIdentityContext(model);
+
+  logger.info("Startup: Initialization complete. Handing off to ChatManager.\n");
+  
   await chatManager.run(options.message);
+
+  // Guardar caché de arranque al salir correctamente (redundante con process.on('exit') pero seguro)
+  promptManager.saveCache();
 }
 
 process.on("unhandledRejection", (reason, promise) => {
@@ -94,6 +126,11 @@ process.on("unhandledRejection", (reason, promise) => {
 
 process.on("uncaughtException", (err) => {
   console.error("Uncaught Exception thrown:", err);
+});
+
+// Guardar caché del system prompt al cerrar la aplicación
+process.on("exit", () => {
+  promptManager.saveCache();
 });
 
 main().catch((err) => {

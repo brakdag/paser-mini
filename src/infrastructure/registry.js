@@ -37,7 +37,7 @@ export async function getToolInstance(moduleKey) {
   if (!toolCache[moduleKey]) {
     const modulePath = MODULE_MAP[moduleKey];
     if (!modulePath) throw new Error(`Module ${moduleKey} not mapped.`);
-    const module = await import(`${modulePath}?update=${Date.now()}`);
+    const module = await import(modulePath);
     let className = moduleKey.charAt(0).toUpperCase() + moduleKey.slice(1);
     if (moduleKey === "githubTools") className = "GithubTools";
     const ToolClass = module[className] || module.default;

@@ -330,16 +330,6 @@ class GeminiAdapter extends BaseAdapter {
   }
 
   /**
-   * Updates the nicknames for the user and the agent.
-   * @param {string} userNickname - The new user nickname.
-   * @param {string} agentNickname - The new agent nickname.
-   */
-  updateNicknames(userNickname, agentNickname) {
-    this.userNickname = userNickname;
-    this.agentNickname = agentNickname;
-  }
-
-  /**
    * Estimates the token count based on character length heuristic.
    * Accounts for the 'parts' array structure specific to the Gemini API.
    * @param {string} systemInstruction - The system instruction text.

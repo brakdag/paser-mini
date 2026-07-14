@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import ora from "ora";
-
 import renderer from "./TerminalRenderer.js";
+import IRCFormatter from "../utils/ircFormatter.js";
 import input from "./TerminalInput.js";
 import sessionLogger from "./SessionLogger.js";
 import IRCFormat from "../formats/IRCFormat.js";
@@ -27,8 +27,8 @@ class TerminalUI {
   constructor() {
     this.noSpinner = true;
     this.activeSpinners = new Map();
-    this.agentNickname = "paser_mini";
-    this.userNickname = "user";
+    this.user = { nickname: "user" };
+    this.model = { nickname: "paser_mini" };
     this.renderingMode = "IRC";
 
     this.formatPlugins = {
@@ -74,6 +74,18 @@ class TerminalUI {
   }
 
   /**
+   * Sets the agent nickname and propagates the change to the config.
+   * @param {string} newNick The new nickname of the agent.
+   * @param {object} [chatManager] The chat manager instance for persistence.
+   */
+  setAgentNickname(newNick, chatManager = null) {
+    this.agentNickname = newNick;
+    if (chatManager) {
+      chatManager.configManager.save("agent_nickname", newNick);
+    }
+  }
+
+  /**
    * Writes a message to the session log.
    * @param {string} text The text to write to the log.
    */
@@ -110,16 +122,34 @@ class TerminalUI {
   }
 
   /**
+   * Sets the shared user and model identity objects.
+   * @param {object} user The user identity object.
+   * @param {object} model The model identity object.
+   */
+  setIdentities(user, model) {
+    this.user = user;
+    this.model = model;
+  }
+
+  /**
    * Displays a chat message in the terminal and logs it.
    * @param {string} nickname The nickname of the sender.
    * @param {string} text The message text.
+   * @param {string} [timestamp] Optional override for the timestamp.
    */
-  displayChatMessage(nickname, text) {
+  displayChatMessage(nickname, text, timestamp = null) {
     input.clearCurrentLine();
-    const formattedText = this.activePlugin.formatMessage(nickname, text.trim());
-    const renderedText = renderer.formatMarkdown(formattedText);
+    const plainText = text.trim();
+    const ts = timestamp || IRCFormatter.getTimestamp();
+    
+    // 1. Formato coloreado para la terminal (con timestamp)
+    const terminalText = IRCFormatter.formatTerminalMessage(nickname, plainText, this.model.nickname, ts);
+    const renderedText = renderer.formatMarkdown(terminalText);
     process.stdout.write(`${renderedText}\n`);
-    this.writeToLog(formattedText);
+
+    // 2. Formato plano para el log (con timestamp)
+    const logText = IRCFormatter.formatMessage(nickname, plainText, ts);
+    this.writeToLog(logText);
   }
 
   /**
@@ -235,13 +265,13 @@ class TerminalUI {
     const statusIcon = success ? "✓" : "✗";
     const statusColor = success ? chalk.green : chalk.red;
 
-    const prefix = `<${nameColor(this.agentNickname)}>`;
+    const prefix = `<${nameColor(this.model.nickname)}>`;
     const finalMsg = `${prefix} * ${name} (${detail}) ${statusColor(statusIcon)}`;
     console.log(finalMsg);
 
     const plainStatus = success ? "✓" : "✗";
     this.writeToLog(
-      this.activePlugin.formatAction(this.agentNickname, `${name} (${detail}) ${plainStatus}`),
+      this.activePlugin.formatAction(this.model.nickname, `${name} (${detail}) ${plainStatus}`),
     );
   }
 

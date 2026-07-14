@@ -171,6 +171,8 @@ class InterfaceCommands {
       ["/help", "Show this help menu"],
       ["/config", "Show current system configuration"],
       ["/models", "Change AI model and temperature"],
+      ["/cache", "Rebuild system prompt and tools cache"],
+      ["/cache", "Rebuild system prompt and tools cache"],
       ["/fav", "Manage favorite models (/fav, /fav+, /fav -<idx>, /fav <idx>)"],
       ["/reset", "Hard Reset: Clear history and Leap via Bridge Block"],
       ["/r <msg>", "Rewrite: Remove last interaction and re-prompt"],

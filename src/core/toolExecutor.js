@@ -40,18 +40,6 @@ class ToolExecutor {
           return { results: [], errorCount: 0, terminate: true };
         }
 
-        if (
-          call.data.name === "nickname" &&
-          typeof result === "string" &&
-          result.startsWith("* ")
-        ) {
-          const [, name] = result.match(/is now known as\s+(.+)$/);
-          if (name) {
-            // eslint-disable-next-line no-param-reassign
-            ui.agentNickname = name;
-          }
-        }
-
         toolResults.push({ response, result });
       } else if (call.error) {
         errorCount += 1;

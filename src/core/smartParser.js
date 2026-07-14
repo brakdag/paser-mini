@@ -3,39 +3,40 @@ import path from "path";
 import { fileURLToPath } from "url";
 import * as acorn from "acorn";
 import logger from "./logger.js";
-import AutoCorrector from "./autoCorrector.js";
 import validator from "./schemaRegistry.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Delimiters as Unicode escapes to avoid self-reference
 const OPEN = "\u018f";       // Latin Capital Schwa
 const CLOSE = "\u0259";      // Latin Small Schwa
-const RESP_OPEN = "\u00f8";  // Latin Small O with Stroke
-const RESP_CLOSE = "\u0107"; // Latin Small C with Acute
 
 /**
  * SmartToolParser - Parses and executes tool calls from delimited text.
  */
 class SmartToolParser {
   /**
-   * Initializes the parser, loads positional registry, and binds validator/corrector.
+   * Initializes the parser, loads positional registry, and binds validator.
    */
   constructor() {
     this.validator = validator;
-    this.corrector = AutoCorrector;
     const regPath = path.join(__dirname, "../infrastructure/registry_positional.json");
     this.positionalRegistry = JSON.parse(fs.readFileSync(regPath, "utf8"));
     /**
-     * Checks if a tool uses positional arguments.
-     * @param {string} name - The tool name.
-     * @returns {boolean} True if the tool is positional.
+     * @type {{[key: string]: Array}}
      */
-    this.isPositional = (name) => !!this.toolMap[name];
     this.toolMap = Object.fromEntries(
       this.positionalRegistry.map((t) => [t[0], t]),
     );
+  }
+
+  /**
+   * Checks if a tool uses positional arguments.
+   * @param {string} name - The tool name.
+   * @returns {boolean} True if the tool is positional.
+   */
+  isPositional(name) {
+    return !!this.toolMap[name];
   }
 
   /**
@@ -53,8 +54,7 @@ class SmartToolParser {
     ) {
       return trimmed.substring(1, trimmed.length - 1);
     }
-    if (!Number.isNaN(Number(trimmed)) && trimmed !== "")
-      return Number(trimmed);
+    if (!Number.isNaN(Number(trimmed)) && trimmed !== "") return Number(trimmed);
     if (trimmed === "true") return true;
     if (trimmed === "false") return false;
     if (trimmed === "null") return null;
@@ -221,19 +221,19 @@ class SmartToolParser {
   }
 
   /**
-   * Formats a tool response into a delimited string.
+   * Formats a tool response into a clean string.
    * @param {string} context - The context/header (e.g. file path or tool name).
    * @param {unknown} data - The data to format.
    * @returns {string} The formatted response.
    */
   formatToolResponse(context, data) {
     const header = context ? `[${context}]` : "[no details]";
-    const content = typeof data === "object" ? JSON.stringify(data) : data;
-    return `${RESP_OPEN}${header} ${content}${RESP_CLOSE}`;
+    const content = typeof data === "object" ? JSON.stringify(data, null, 2) : data;
+    return `${header} ${content}`;
   }
 
   /**
-   * Removes tool call and response delimiters from text, returning only clean content.
+   * Removes tool call delimiters from text, returning only clean content.
    * @param {string} text - The text to clean.
    * @returns {string} The cleaned text.
    */
@@ -243,27 +243,19 @@ class SmartToolParser {
     let pos = 0;
     while (pos < text.length) {
       const openIdx = text.indexOf(OPEN, pos);
-      const respOpenIdx = text.indexOf(RESP_OPEN, pos);
-      const candidates = [openIdx, respOpenIdx].filter((i) => i !== -1);
-      if (candidates.length === 0) {
+      if (openIdx === -1) {
         result += text.substring(pos);
         break;
       }
-      const nearest = Math.min(...candidates);
-      result += text.substring(pos, nearest);
-      if (nearest === openIdx) {
-        const closeIdx = this._findCallEnd(text, nearest + 1);
-        if (closeIdx === -1) {
-          pos = text.length;
-        } else {
-          pos = closeIdx + 1;
-          if (text[pos] === CLOSE) {
-            pos += 1;
-          }
-        }
+      result += text.substring(pos, openIdx);
+      const closeIdx = this._findCallEnd(text, openIdx + 1);
+      if (closeIdx === -1) {
+        pos = text.length;
       } else {
-        const respCloseIdx = text.indexOf(RESP_CLOSE, nearest + 1);
-        pos = respCloseIdx === -1 ? text.length : respCloseIdx + 1;
+        pos = closeIdx + 1;
+        if (text[pos] === CLOSE) {
+          pos += 1;
+        }
       }
     }
     return result;

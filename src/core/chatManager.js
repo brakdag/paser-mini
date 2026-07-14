@@ -5,7 +5,6 @@ import RepetitionDetector from "./repetitionDetector.js";
 import logger from "./logger.js";
 import ConfigManager from "./configManager.js";
 import TurnProcessor from "./turnProcessor.js";
-import ProviderManager from "../infrastructure/providerManager.js";
 
 /**
  * ChatManager orchestrates the interaction between the user, the AI assistant,
@@ -20,63 +19,59 @@ class ChatManager {
    * @param {{[key: string]: (...args: unknown[]) => unknown}} params.tools - The available tools map.
    * @param {string} params.systemInstruction - The system prompt/instructions.
    * @param {object} params.ui - The user interface handler.
+   * @param {object} params.user - The shared user identity object.
+   * @param {object} params.model - The shared model identity object.
    * @param {boolean} [params.instanceMode] - Whether this is a sub-instance of the agent.
    * @param {ConfigManager|null} [params.configManager] - Optional injected configuration manager.
-   * @param {ProviderManager|null} [params.providerManager] - Optional injected provider manager.
    */
-  constructor({ assistant, tools, systemInstruction, ui, instanceMode = false, configManager = null, providerManager = null }) {
+  constructor({ assistant, tools, systemInstruction, ui, user, model, instanceMode = false, configManager = null }) {
     this.assistant = assistant;
     this.tools = tools;
     this.systemInstruction = systemInstruction;
     this.ui = ui;
+    this.user = user;
+    this.model = model;
     this.instanceMode = instanceMode;
     this.configManager = configManager || new ConfigManager();
-    this.providerManager = providerManager || new ProviderManager();
-    const DEFAULT_TEMPERATURE = 0.7;
-    const DEFAULT_CONTEXT_WINDOW_LIMIT = 0; // 0 = Disabled (Infinite up to provider limit)
+    const DEFAULT_CONTEXT_WINDOW_LIMIT = 0;
 
-    this.temperature = parseFloat(
-      this.configManager.get("default_temperature", DEFAULT_TEMPERATURE),
-    );
     this.contextWindowLimit = parseInt(
       this.configManager.get("context_window_limit", DEFAULT_CONTEXT_WINDOW_LIMIT),
       10,
     );
-        this.ui.setBashEnabled(this.configManager.get("execute_enabled", false));
+
+    this.ui.setBashEnabled(this.configManager.get("execute_enabled", false));
     this.currentChannel = "#main";
-    this.timestampsEnabled = this.configManager.get(
-      "timestamps_enabled",
-      false,
-    );
+    this.timestampsEnabled = this.configManager.get("timestamps_enabled", false);
     this.safemode = this.configManager.get("safemode", false);
+    
     this.parser = new SmartToolParser();
     this.engine = new ExecutionEngine(
-      assistant,
-      tools,
+      this.assistant,
+      this.tools,
       this.parser,
-      ui,
-      instanceMode,
+      this.ui,
+      this.instanceMode,
       null,
       this.systemInstruction === "",
     );
-    this.commandHandler = new CommandHandler(this, ui);
+    this.engine.chatManager = this;
+
+    this.commandHandler = new CommandHandler(this, this.ui);
     this.ui.setCommandHandler(this.commandHandler);
     this.repetitionDetector = new RepetitionDetector();
     this.turnProcessor = new TurnProcessor(
-      assistant,
-      tools,
+      this.assistant,
+      this.tools,
       this.parser,
       this.engine,
-      ui,
+      this.ui,
       this.repetitionDetector,
     );
+    this.turnProcessor.chatManager = this;
 
-    this.ui.agentNickname = this.configManager.get(
-      "agent_nickname",
-      "paser_mini",
-    );
-    logger.setAgentNickname(this.ui.agentNickname);
-    this.ui.userNickname = this.configManager.get("user_nickname", "user");
+    this.ui.setIdentities(this.user, this.model);
+    logger.setAgentNickname(this.model.nickname);
     this.setRenderingMode(this.configManager.get("rendering_mode", "IRC"));
     this.immersionMode = this.configManager.get("immersion_mode", false);
     if (this.assistant && this.assistant.setImmersionMode) {
@@ -106,12 +101,8 @@ class ChatManager {
   setRenderingMode(mode) {
     this.saveConfig("rendering_mode", mode);
     this.ui.setRenderingMode(mode);
-    if (this.assistant) {
-      if (this.assistant.setRenderingMode) {
-        this.assistant.setRenderingMode(mode);
-      } else if (this.assistant.state?.setRenderingMode) {
-        this.assistant.state.setRenderingMode(mode);
-      }
+    if (this.assistant && this.assistant.setRenderingMode) {
+      this.assistant.setRenderingMode(mode);
     }
   }
 
@@ -128,90 +119,6 @@ class ChatManager {
   }
 
   /**
-   * Updates the rendering mode for the UI and the assistant.
-   * @param {number} temp - The sampling temperature.
-   */
-  setTemperature(temp) {
-    this.temperature = parseFloat(temp);
-  }
-
-  /**
-   * Updates the current active channel.
-   * @param {string} channel - The channel name.
-   */
-  setCurrentChannel(channel) {
-    this.currentChannel = channel;
-  }
-
-  /**
-   * Signals the manager to stop the execution loop.
-   */
-  requestExit() {
-    this.stopRequested = true;
-  }
-
-  /**
-   * Switches the AI provider and migrates the conversation history.
-   * @param {string} providerId - The ID of the new provider.
-   * @param {string} model - The model name to use.
-   * @param {number} temperature - The sampling temperature.
-   * @returns {Promise<void>}
-   */
-  async switchProvider(providerId, model, temperature) {
-    const oldAssistant = this.assistant;
-    let newAssistant;
-
-    try {
-      newAssistant = await this.providerManager.createAdapter({
-        providerId,
-        ui: this.ui,
-        configManager: this.configManager,
-        userNickname: this.ui.userNickname,
-        agentNickname: this.ui.agentNickname,
-      });
-    } catch (e) {
-      this.ui.displayError(`Failed to switch provider: ${e.message}`);
-      return;
-    }
-
-    // Migrate history
-    if (oldAssistant && oldAssistant.getHistory) {
-      const history = oldAssistant.getHistory();
-      if (history?.length > 0) {
-        history.forEach((msg) => {
-          const text = msg.text ?? msg.parts?.[0]?.text ?? "";
-          newAssistant.injectMessage(msg.role, text);
-        });
-      }
-    }
-
-    this.assistant = newAssistant;
-    this.assistant.startChat(model, this.systemInstruction, temperature);
-
-    // Propagate current rendering and immersion states to the new adapter
-    this.setRenderingMode(this.configManager.get("rendering_mode", "IRC"));
-    if (this.immersionMode) {
-      this.assistant.setImmersionMode(true);
-    }
-
-    // Synchronize references
-    if (this.turnProcessor) {
-      this.turnProcessor.assistant = newAssistant;
-      if (this.turnProcessor.api) {
-        this.turnProcessor.api.assistant = newAssistant;
-      }
-      if (this.turnProcessor.fountain) {
-        this.turnProcessor.fountain.assistant = newAssistant;
-      }
-    }
-    if (this.engine) {
-      this.engine.assistant = newAssistant;
-    }
-
-    logger.info(`Provider switched to ${providerId} | Model: ${model}`);
-  }
-
-  /**
    * Starts the main chat loop and initializes memory/system contexts.
    * @param {string|null} [initialInput] - Optional initial message to process.
    * @returns {Promise<void>}
@@ -219,27 +126,13 @@ class ChatManager {
   async run(initialInput = null) {
     logger.info("Initializing ChatManager.run");
 
-    const model = this.configManager.get("model_name", "gemini-2.0-flash");
-    this.assistant.startChat(model, this.systemInstruction, this.temperature);
-
-    try {
-      const { getToolInstance } = await import("../infrastructure/registry.js");
-      const memoryTools = await getToolInstance("memoryTools");
-      memoryTools.setMemoryContext(this.assistant, this);
-      const systemTools = await getToolInstance("systemTools");
-      systemTools.setContext(this.assistant, this);
-    } catch (e) {
-      logger.error("Failed to initialize memory context", {
-        name: e.name,
-        message: e.message,
-      });
-    }
+    this.assistant.setIdentities(this.user, this.model);
+    this.assistant.startChat(this.model.name, this.systemInstruction, this.model.temperature);
 
     if (initialInput) {
       const logMsg = this.ui.getLogOpenedString();
       const welcomeMsg = "System initialized. Ready for input.";
-      const combinedMsg = `${logMsg}
-${welcomeMsg}`;
+      const combinedMsg = `${logMsg}\n${welcomeMsg}`;
 
       this.ui.displayChatMessage("system", combinedMsg);
       this.assistant.injectMessage("server", combinedMsg);
@@ -265,8 +158,7 @@ ${welcomeMsg}`;
 
           const handled = await this.commandHandler.handle(input);
           if (!handled) {
-            this.ui.displayChatMessage(this.ui.userNickname, input);
-
+            this.ui.displayChatMessage(this.user.nickname, input);
             await this.processTurn(input);
           }
         }
@@ -279,19 +171,9 @@ ${welcomeMsg}`;
           this.ui.displayError(
             `AI connection error (${statusCode}): ${e.message}. The session remains active; please try again in a moment.`,
           );
-          logger.error(`API Error: ${e.message}`, {
-            name: e.name,
-            message: e.message,
-            code: e.code,
-            statusCode: e.response?.status,
-          });
         } else {
           this.ui.displayError(`Critical error in processTurn: ${e.message}`);
-          logger.error(`Critical error: ${e.message}`, {
-            name: e.name,
-            message: e.message,
-            stack: e.stack,
-          });
+          logger.error(`Critical error: ${e.message}`, { stack: e.stack });
         }
       }
     }

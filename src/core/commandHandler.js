@@ -84,6 +84,13 @@ const COMMAND_MAP = {
    * @returns {void}
    */
   "/sp": (cm, ui) => SystemCommands.handleShowSystemPrompt(cm, ui),
+  /**
+   * Rebuilds the system prompt and tools cache.
+   * @param {import("./chatManager.js").default} cm - The chat manager instance.
+   * @param {object} ui - The UI instance.
+   * @returns {void}
+   */
+  "/cache": (cm, ui) => SystemCommands.handleCache(cm, ui),
 };
 
 /**

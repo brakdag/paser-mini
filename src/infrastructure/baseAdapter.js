@@ -11,16 +11,9 @@ export default class BaseAdapter {
    * @param {object} config - Configuration object for the adapter.
    * @param {object} config.ui - The UI interface.
    * @param {object} config.configManager - The configuration manager.
-   * @param {string} [config.userNickname] - The user's nickname.
-   * @param {string} [config.agentNickname] - The agent's nickname.
    * @throws {Error} If instantiated directly.
    */
-  constructor({
-    ui,
-    configManager,
-    userNickname = "user",
-    agentNickname = "assistant",
-  }) {
+  constructor({ ui, configManager }) {
     if (this.constructor === BaseAdapter) {
       throw new Error(
         "BaseAdapter is an abstract class and cannot be instantiated directly.",
@@ -28,14 +21,24 @@ export default class BaseAdapter {
     }
     this.ui = ui;
     this.configManager = configManager;
-    this.userNickname = userNickname;
-    this.agentNickname = agentNickname;
+    this.user = { nickname: "user" };
+    this.model = { nickname: "assistant" };
     this.ircFormatter = new IRCFormat();
     this.cleanFormatter = new CleanFormat();
     this.fountainFormatter = new FountainFormat();
     this.renderingMode = "IRC";
     this.immersionMode = false;
     this.lastRequestTime = 0;
+  }
+
+  /**
+   * Injects the shared user and model identity objects.
+   * @param {object} user The user identity object.
+   * @param {object} model The model identity object.
+   */
+  setIdentities(user, model) {
+    this.user = user;
+    this.model = model;
   }
 
   /**
@@ -78,11 +81,11 @@ export default class BaseAdapter {
 
     let nickname;
     if (normalizedRole === "user") {
-      nickname = this.ui.userNickname;
+      nickname = this.user.nickname;
     } else if (normalizedRole === "system") {
       nickname = "system";
     } else {
-      nickname = this.ui.agentNickname;
+      nickname = this.model.nickname;
     }
 
     if (this.renderingMode === "IRC") {
@@ -210,16 +213,6 @@ export default class BaseAdapter {
    */
   getHistory() {
     throw new Error("Method 'getHistory()' must be implemented.");
-  }
-
-  /**
-   * Updates the nicknames for the user and the agent.
-   * @param {string} userNickname - The new nickname for the user.
-   * @param {string} agentNickname - The new nickname for the agent.
-   */
-  updateNicknames(userNickname, agentNickname) {
-    this.userNickname = userNickname;
-    this.agentNickname = agentNickname;
   }
 
   /**

@@ -11,6 +11,16 @@ const execFilePromise = promisify(execFile);
  * Utility tools for system operations and data validation.
  */
 export default class UtilTools {
+  #model = null;
+
+  /**
+   * Injects the shared model identity object.
+   * @param {object} model The shared model identity.
+   */
+  setIdentityContext(model) {
+    this.#model = model;
+  }
+
   /**
    * Validates if a string is a valid JSON.
    * @param {string|object} arg1 - The JSON string or an object containing jsonString.
@@ -19,7 +29,7 @@ export default class UtilTools {
    */
   async validateJson(arg1) {
     let jsonString = arg1;
-    if (typeof arg1 === 'object' && arg1 !== null) {
+    if (typeof arg1 === "object" && arg1 !== null) {
       jsonString = arg1.jsonString;
     }
     if (!jsonString) {
@@ -34,16 +44,22 @@ export default class UtilTools {
   }
 
   /**
-   * Updates the agent nickname in the configuration.
+   * Updates the agent nickname globally by mutating the shared identity object.
    * @param {string} newNickname - The new nickname to be set.
    * @returns {Promise<string>} Confirmation message.
-   * @throws {Error} If the update fails.
+   * @throws {Error} If the identity context is not set or update fails.
    */
   async setNickname(newNickname) {
+    if (!this.#model) {
+      throw new Error("Identity context not initialized in UtilTools.");
+    }
     try {
+      const oldNickname = this.#model.nickname;
+      this.#model.nickname = newNickname; // Mutación instantánea por referencia
+      
       const config = new ConfigManager();
-      const oldNickname = config.get("agent_nickname", "paser_mini");
       config.save("agent_nickname", newNickname);
+      
       return `*** ${oldNickname} is now known as ${newNickname}`;
     } catch (e) {
       throw new Error(`Failed to update nickname: ${e.message}`);

@@ -82,7 +82,7 @@ class TurnProcessor {
 
     const finalResponse = this.parser.cleanResponse(currentResponse);
     if (finalResponse.trim()) {
-      this.ui.displayChatMessage(this.ui.agentNickname, finalResponse);
+      this.ui.displayChatMessage(this.ui.model.nickname, finalResponse);
     }
   }
 
