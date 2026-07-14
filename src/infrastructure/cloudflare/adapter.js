@@ -2,23 +2,14 @@ import axios from "axios";
 import BaseAdapter from "../baseAdapter.js";
 import logger from "../../core/logger.js";
 import RetryHandler from "../../utils/retryHandler.js";
+import IRCFormatter from "../../utils/ircFormatter.js";
 import { normalizeRole, normalizeContent, countTokensHeuristic } from "../historyNormalizer.js";
 
-const TIMESTAMP_FORMAT = "en-GB";
-const TIMESTAMP_OPTIONS = { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false };
 const ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID;
 const BASE_URL = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/ai/v1`;
 const DEFAULT_MODEL = "@cf/meta/llama-3.1-8b-instruct";
 const DEFAULT_TEMPERATURE = 0.7;
 const CHARS_PER_TOKEN = 3.5;
-
-/**
- * Generates a timestamp string in HH:MM:SS format.
- * @returns {string} The formatted timestamp.
- */
-function getTimestamp() {
-  return new Date().toLocaleTimeString(TIMESTAMP_FORMAT, TIMESTAMP_OPTIONS);
-}
 
 /**
  * Adapter for integrating Cloudflare Workers AI models into the system.
@@ -72,7 +63,7 @@ class CloudflareAdapter extends BaseAdapter {
       this.history.unshift({
         role: "system",
         content: this.systemInstruction,
-        timestamp: getTimestamp(),
+        timestamp: IRCFormatter.getTimestamp()()()(),
       });
     }
   }
@@ -85,7 +76,7 @@ class CloudflareAdapter extends BaseAdapter {
    * @throws {Error} If the response is empty or the request fails.
    */
   async sendMessage(message, role = "user") {
-    this.injectMessage(role, message, getTimestamp());
+    this.injectMessage(role, message, IRCFormatter.getTimestamp()()()());
     this._enforceContextLimit(); // Apply strict context boundary before API call
     const historyLengthBefore = this.history.length;
 
@@ -111,7 +102,7 @@ class CloudflareAdapter extends BaseAdapter {
             throw new Error("Empty response from Cloudflare");
           }
 
-          this.injectMessage("assistant", textContent, getTimestamp());
+          this.injectMessage("assistant", textContent, IRCFormatter.getTimestamp()()()());
           return textContent;
         } catch (error) {
           const errorMsg = error.response?.data?.error?.message || error.message;
@@ -156,7 +147,7 @@ class CloudflareAdapter extends BaseAdapter {
     this.history.push({
       role: apiRole,
       content: finalContent,
-      timestamp: timestamp || getTimestamp(),
+      timestamp: timestamp || IRCFormatter.getTimestamp()()()(),
     });
   }
 

@@ -10,13 +10,14 @@ import RetryHandler from "../../utils/retryHandler.js";
  */
 class HuggingFaceAdapter extends BaseAdapter {
   /**
-   * @param {object} ui - The UI interface for displaying information.
-   * @param {object} configManager - The configuration manager.
-   * @param {string} [userNickname] - The nickname of the user.
-   * @param {string} [agentNickname] - The nickname of the agent.
+   * @param {object} params - The constructor parameters.
+   * @param {object} params.ui - The UI interface.
+   * @param {object} params.configManager - The configuration manager.
+   * @param {string} [params.userNickname] - The user's nickname.
+   * @param {string} [params.agentNickname] - The agent's nickname.
    */
-  constructor(ui, configManager, userNickname = "user", agentNickname = "assistant") {
-    super(ui, configManager, userNickname, agentNickname);
+  constructor({ ui, configManager, userNickname = "user", agentNickname = "assistant" }) {
+    super({ ui, configManager, userNickname, agentNickname });
     this.apiKey = process.env.HUGGINGFACE_API_KEY;
     this.history = [];
     this.currentModel = "meta-llama/Meta-Llama-3-8B-Instruct";
@@ -181,43 +182,6 @@ class HuggingFaceAdapter extends BaseAdapter {
       content: finalContent,
       timestamp: timestamp || IRCFormatter.getTimestamp(),
     });
-  }
-
-  /**
-   * Maps internal roles to HuggingFace/OpenAI roles.
-   * @param {string} role - The internal role name.
-   * @private
-   * @returns {string} The normalized API role.
-   */
-  _normalizeRole(role) {
-    if (role === this.userNickname) return "user";
-    if (role === this.agentNickname) return "assistant";
-    if (role === "server") return "user";
-    return role;
-  }
-
-  /**
-   * Sanitizes and formats message content based on type and role.
-   * @param {string|object|Array} content - The raw content.
-   * @param {string} role - The normalized API role.
-   * @private
-   * @returns {string|object[]} The formatted content.
-   */
-  _normalizeContent(content, role) {
-    let finalContent = content;
-    if (content && typeof content === 'object' && content.mime_type && content.data) {
-      finalContent = [
-        { type: "text", text: `Image resolution: ${content.resolution || 'unknown'}` },
-        { type: "image_url", image_url: { url: `data:${content.mime_type};base64,${content.data}` } }
-      ];
-    } else if (Array.isArray(content)) {
-      finalContent = content.join("\n");
-    }
-
-    if (typeof finalContent === 'string' && role === 'assistant') {
-      finalContent = finalContent.replace(/<thought>[\s\S]*?<\/thought>/gi, '').trim();
-    }
-    return finalContent;
   }
 
   /**

@@ -186,7 +186,7 @@ export const AVAILABLE_TOOLS = {
    * @param {...unknown} args - Arguments passed to the util tool.
    * @returns {Promise<unknown>} The validation result.
    */
-  valide: async (...args) => (await getTool("utilTools", "validateJson"))(...args),
+  validate: async (...args) => (await getTool("utilTools", "validateJson"))(...args),
   /**
    * Sets the agent nickname.
    * @param {...unknown} args - Arguments passed to the util tool.

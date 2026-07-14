@@ -2,10 +2,9 @@ import axios from "axios";
 import BaseAdapter from "../baseAdapter.js";
 import logger from "../../core/logger.js";
 import RetryHandler from "../../utils/retryHandler.js";
+import IRCFormatter from "../../utils/ircFormatter.js";
 import { normalizeRole, normalizeContent, countTokensHeuristic } from "../historyNormalizer.js";
 
-const TIMESTAMP_FORMAT = "en-GB";
-const TIMESTAMP_OPTIONS = { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false };
 const BASE_URL = "https://api.cerebras.ai/v1";
 const DEFAULT_MODEL = "llama3.1-8b";
 
@@ -20,14 +19,6 @@ const MODEL_CONTEXT_LIMITS = {
 };
 const DEFAULT_TEMPERATURE = 0.7;
 const CHARS_PER_TOKEN = 3.5;
-
-/**
- * Generates a timestamp string in HH:MM:SS format.
- * @returns {string} The formatted timestamp.
- */
-function getTimestamp() {
-  return new Date().toLocaleTimeString(TIMESTAMP_FORMAT, TIMESTAMP_OPTIONS);
-}
 
 /**
  * Adapter for integrating Cerebras AI models into the system.
@@ -107,7 +98,7 @@ class CerebrasAdapter extends BaseAdapter {
       this.history.unshift({
         role: "system",
         content: this.systemInstruction,
-        timestamp: getTimestamp(),
+        timestamp: IRCFormatter.getTimestamp()()()(),
       });
     }
   }
@@ -120,7 +111,7 @@ class CerebrasAdapter extends BaseAdapter {
    * @throws {Error} If the response is empty or the request fails.
    */
   async sendMessage(message, role = "user") {
-    this.injectMessage(role, message, getTimestamp());
+    this.injectMessage(role, message, IRCFormatter.getTimestamp()()()());
     this._enforceContextLimit(); // Apply strict context boundary before API call
     const historyLengthBefore = this.history.length;
 
@@ -148,7 +139,7 @@ class CerebrasAdapter extends BaseAdapter {
             throw new Error("Empty response from Cerebras");
           }
 
-          this.injectMessage("assistant", textContent, getTimestamp());
+          this.injectMessage("assistant", textContent, IRCFormatter.getTimestamp()()()());
           return textContent;
         } catch (error) {
           const errorMsg = error.response?.data?.error?.message || error.message;
@@ -193,7 +184,7 @@ class CerebrasAdapter extends BaseAdapter {
     this.history.push({
       role: apiRole,
       content: finalContent,
-      timestamp: timestamp || getTimestamp(),
+      timestamp: timestamp || IRCFormatter.getTimestamp()()()(),
     });
   }
 
