@@ -65,25 +65,24 @@ async function main() {
     getToolInstance("utilTools"),
   ]);
 
-    const { systemInstruction, filteredTools } = await promptManager.buildPrompt(options);
+  const { systemInstruction, filteredTools } = await promptManager.buildPrompt(options);
 
   const providerId = configManager.get("provider", "GEMINI");
   const userNick = configManager.get("user_nickname", "user");
   const agentNick = configManager.get("agent_nickname", "assistant");
   const modelName = configManager.get("model_name", "gemini-2.0-flash");
-  const temp = parseFloat(configManager.get("default_temperature", 0.7));
+  const temperature = parseFloat(configManager.get("default_temperature", 0.7));
 
-    const user = { nickname: userNick };
-  const model = { nickname: agentNick, name: modelName, temperature: temp };
+  const user = { nickname: userNick };
+  const model = { nickname: agentNick, name: modelName, temperature };
 
   logger.info(`Startup: Loading adapter for provider ${providerId}...`);
 
-    let assistant;
+  let assistant;
   if (providerId === "GEMINI") {
     assistant = new GeminiAdapter({ ui, configManager });
     assistant.providerId = providerId;
   } else {
-    // Fallback a carga dinámica si se usa un proveedor distinto al arranque por defecto
     assistant = await providerManager.createAdapter({
       providerId,
       ui,
@@ -103,7 +102,6 @@ async function main() {
 
   chatManager.providerManager = providerManager;
 
-  // Inyectar contextos
   memoryToolsInstance.setMemoryContext(assistant, chatManager);
   await systemToolsInstance.setContext(assistant, chatManager);
   utilToolsInstance.setIdentityContext(model);
@@ -112,7 +110,6 @@ async function main() {
   
   await chatManager.run(options.message);
 
-  // Guardar caché de arranque al salir correctamente (redundante con process.on('exit') pero seguro)
   promptManager.saveCache();
 }
 

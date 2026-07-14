@@ -91,44 +91,42 @@ class GroqAdapter extends BaseAdapter {
 
     await this._applyRateLimit();
 
-    /**
-     * Executes the API request with retry logic.
-     * @returns {Promise<string>} The response text.
-     */
     try {
       return await this.retryHandler.execute(async () => {
-      try {
-        const response = await this.client.post("/chat/completions", payload);
-        const textContent = response.data.choices[0].message.content;
+        try {
+          const response = await this.client.post("/chat/completions", payload);
+          const textContent = response.data.choices[0].message.content;
 
-        if (!textContent) {
-          throw new Error("Empty response from Groq");
-        }
+          if (!textContent) {
+            throw new Error("Empty response from Groq");
+          }
 
-        this.injectMessage("assistant", textContent, IRCFormatter.getTimestamp()()()());
-        return textContent;
-      } catch (error) {
-        const errorMsg = error.response?.data?.error?.message || error.message;
-        const apiError = new Error(errorMsg);
-        apiError.name = "APIError";
-        apiError.response = error.response;
-        apiError.code = error.code;
-        throw apiError;
-      }
-    }, {
-      recoverableErrors: this.recoverableErrors,
-      /**
-       * @param {number} attempt - The current attempt number.
-       * @param {Error} error - The error that triggered the retry.
-       * @param {string} formattedDelay - The formatted delay string.
-       */
-      onRetry: (attempt, error, formattedDelay) => {
-        logger.warn(`[GroqAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`);
-        if (this.ui && this.ui.displayInfo) {
-          this.ui.displayInfo(`Reintentando Groq en ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`);
+          this.injectMessage("assistant", textContent, IRCFormatter.getTimestamp()()()());
+          return textContent;
+        } catch (error) {
+          const errorMsg = error.response?.data?.error?.message || error.message;
+          const apiError = new Error(errorMsg);
+          apiError.name = "APIError";
+          apiError.response = error.response;
+          apiError.code = error.code;
+          throw apiError;
         }
-      }
-    });
+      }, {
+        recoverableErrors: this.recoverableErrors,
+        /**
+         * Callback executed when a retry is attempted.
+         * @param {number} attempt - The current attempt number.
+         * @param {Error} error - The error that triggered the retry.
+         * @param {string} formattedDelay - The formatted delay string.
+         * @returns {void}
+         */
+        onRetry: (attempt, error, formattedDelay) => {
+          logger.warn(`[GroqAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`);
+          if (this.ui && this.ui.displayInfo) {
+            this.ui.displayInfo(`Retrying Groq in ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`);
+          }
+        }
+      });
     } catch (error) {
       if (this.history.length === historyLengthBefore) {
         this.popLastMessage();

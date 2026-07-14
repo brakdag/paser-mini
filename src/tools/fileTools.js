@@ -51,8 +51,8 @@ class FileTools {
       throw new Error("tail must be a number");
     }
     if (numericTail <= 0) {
-    return "";
-  }
+      return "";
+    }
 
     const stats = await fs.stat(safePath);
     const bufferSize = 64 * 1024;

@@ -48,13 +48,13 @@ class RetryHandler {
   _isRecoverable(error, recoverableMessages) {
     if (error.name === 'ServiceDegradedError') return true;
     
-    // Revisar códigos de estado HTTP (500, 429, 503, etc.) en el objeto envuelto
+    // Check HTTP status codes (500, 429, 503, etc.) in the wrapped object
     const httpStatus = error.response?.status;
     if (httpStatus && [429, 500, 502, 503, 504].includes(httpStatus)) {
       return true;
     }
 
-    // Revisar códigos de error de red de Axios
+    // Check Axios network error codes
     const networkErrors = ['ECONNABORTED', 'ETIMEDOUT', 'ECONNRESET', 'ERR_NETWORK'];
     if (error.code && networkErrors.includes(error.code)) {
       return true;

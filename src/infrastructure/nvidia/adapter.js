@@ -65,32 +65,30 @@ class NvidiaAdapter extends BaseAdapter {
 
     await this._applyRateLimit();
 
-    /**
-     * Executes the API request with retry logic.
-     * @returns {Promise<string>} The processed response text.
-     */
     try {
       return await this.retryHandler.execute(async () => {
-      try {
-        const data = await this.restClient.chatCompletions(payload);
-        return this._handleResponse(data);
-      } catch (e) {
-        throw this._handleError(e);
-      }
-    }, {
-      recoverableErrors: this.recoverableErrors,
-      /**
-       * @param {number} attempt - The current attempt number.
-       * @param {Error} error - The error that triggered the retry.
-       * @param {string} formattedDelay - The formatted delay string.
-       */
-      onRetry: (attempt, error, formattedDelay) => {
-        logger.warn(`[NvidiaAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`);
-        if (this.ui && this.ui.displayInfo) {
-          this.ui.displayInfo(`Reintentando NVIDIA en ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`);
+        try {
+          const data = await this.restClient.chatCompletions(payload);
+          return this._handleResponse(data);
+        } catch (e) {
+          throw this._handleError(e);
         }
-      }
-    });
+      }, {
+        recoverableErrors: this.recoverableErrors,
+        /**
+         * Callback executed when a retry is attempted.
+         * @param {number} attempt - The current attempt number.
+         * @param {Error} error - The error that triggered the retry.
+         * @param {string} formattedDelay - The formatted delay string.
+         * @returns {void}
+         */
+        onRetry: (attempt, error, formattedDelay) => {
+          logger.warn(`[NvidiaAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`);
+          if (this.ui && this.ui.displayInfo) {
+            this.ui.displayInfo(`Retrying NVIDIA in ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`);
+          }
+        }
+      });
     } catch (error) {
       if (this.state.getRawHistory().length === historyLengthBefore) {
         this.state.popLastMessage();
@@ -229,7 +227,7 @@ class NvidiaAdapter extends BaseAdapter {
       logger.info("NvidiaAdapter: Models fetched", { count: models.length });
       return models;
     } catch (e) {
-      const errMsg = `[NvidiaAdapter Error] No se pudo obtener la lista de modelos de NVIDIA: ${e.response?.status || ""} - ${e.message}`;
+      const errMsg = `[NvidiaAdapter Error] Failed to fetch model list from NVIDIA: ${e.response?.status || ""} - ${e.message}`;
       logger.error(errMsg);
       console.error(errMsg);
       return [];

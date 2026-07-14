@@ -190,40 +190,12 @@ const PREFIX_COMMANDS = {
    */
   "/join ": (cm, ui, input, prefix) =>
     InterfaceCommands.handleJoin(cm, ui, input.substring(prefix.length).trim()),
-  /**
-   * Invokes the Paimal AI assistant.
-   * @param {import("./chatManager.js").default} cm - The chat manager instance.
-   * @param {object} ui - The UI instance.
-   * @param {string} input - The raw input string.
-   * @param {string} prefix - The command prefix.
-   * @returns {void}
-   */
+  "/trunc ": (cm, ui, input) => SystemCommands.handleTrunc(cm, ui, input),
+  "/rpm ": (cm, ui, input) => SystemCommands.handleRpm(cm, ui, input),
   "/paim ": (cm, ui, input, prefix) =>
     AICommands.handlePaim(cm, ui, input.substring(prefix.length).trim()),
-  /**
-   * Lists available models.
-   * @param {import("./chatManager.js").default} cm - The chat manager instance.
-   * @param {object} ui - The UI instance.
-   * @param {string} input - The raw input string.
-   * @param {string} prefix - The command prefix.
-   * @returns {void}
-   */
-  /**
-   * Connects to an AI provider.
-   * @param {import("./chatManager.js").default} cm - The chat manager instance.
-   * @param {object} ui - The UI instance.
-   * @param {string} input - The raw input string.
-   * @returns {void}
-   */
   "/connect": (cm, ui, input) =>
     AICommands.handleConnect(cm, ui, input.split(/\s+/).slice(1).join(" ")),
-  /**
-   * Lists available models.
-   * @param {import("./chatManager.js").default} cm - The chat manager instance.
-   * @param {object} ui - The UI instance.
-   * @param {string} input - The raw input string.
-   * @returns {void}
-   */
   "/models": (cm, ui, input) =>
     ModelCommands.handleModels(cm, ui, input.split(/\s+/)),
   /**
@@ -249,54 +221,6 @@ class CommandHandler {
   constructor(chatManager, ui) {
     this.chatManager = chatManager;
     this.ui = ui;
-  }
-
-  /**
-   * Handles the /trunc command to dynamically set the FIFO context window truncation limit.
-   * @param {string} input - The raw input string (e.g., /trunc 8000).
-   * @returns {boolean} True if the command was handled, false otherwise.
-   */
-  _handleTruncConfig(input) {
-    const parts = input.split(/\s+/);
-    if (parts.length !== 2) {
-      this.ui.displayError("Usage: /trunc <limit_in_tokens> (use 0 to disable)");
-      return true;
-    }
-    const limit = parseInt(parts[1], 10);
-    if (Number.isNaN(limit) || limit < 0) {
-      this.ui.displayError("Truncation limit must be a positive integer, or 0 to disable.");
-      return true;
-    }
-    this.chatManager.configManager.save("context_window_limit", limit);
-    this.chatManager.contextWindowLimit = limit;
-
-    if (limit === 0) {
-      this.ui.displayInfo("Context truncation DISABLED. Context window is now infinite.");
-    } else {
-      this.ui.displayInfo(`Context truncation ENABLED. FIFO limit strictly set to: ${limit} tokens.`);
-    }
-    return true;
-  }
-
-  /**
-   * Handles the /rpm command for setting the Rate Per Minute limit.
-   * @param {string} input - The raw input string.
-   * @returns {boolean} True if the command was handled, false otherwise.
-   */
-  _handleRpmConfig(input) {
-    const parts = input.split(/\s+/);
-    if (parts.length !== 2) {
-      this.ui.displayError("Usage: /rpm <limit>");
-      return true;
-    }
-    const rpm = parseInt(parts[1], 10);
-    if (Number.isNaN(rpm) || rpm < 1) {
-      this.ui.displayError("RPM limit must be a positive integer.");
-      return true;
-    }
-    this.chatManager.configManager.save("rpm_limit", rpm);
-    this.ui.displayInfo(`RPM limit set to: ${rpm}`);
-    return true;
   }
 
   /**
@@ -326,9 +250,6 @@ class CommandHandler {
     );
     if (prefixKey)
       return PREFIX_COMMANDS[prefixKey](this.chatManager, this.ui, input, prefixKey);
-
-    if (input.startsWith("/rpm ")) return this._handleRpmConfig(input);
-    if (input.startsWith("/trunc")) return this._handleTruncConfig(input);
 
     if (input.startsWith("/") || input.startsWith(":")) {
       this.ui.displayError(

@@ -1,6 +1,12 @@
 /**
  * Handles communication with the API, including retry logic and error recovery.
  */
+const RETRYABLE_NETWORK_ERRORS = ['ECONNABORTED', 'ETIMEDOUT', 'ECONNRESET', 'ERR_NETWORK', 'ENOTFOUND', 'EAI_AGAIN', 'EHOSTUNREACH', 'ENETUNREACH', 'ECONNREFUSED', 'EPIPE'];
+const RETRYABLE_SERVER_STATUSES = [429, 500, 502, 503, 504];
+
+/**
+ * Handles communication with the API, including retry logic and error recovery.
+ */
 class ApiCommunicator {
   /**
    * Initializes the ApiCommunicator.
@@ -29,11 +35,10 @@ class ApiCommunicator {
       if (attempt >= this.maxRetries) throw error;
 
       const httpStatus = error.response?.status;
-      const networkErrors = ['ECONNABORTED', 'ETIMEDOUT', 'ECONNRESET', 'ERR_NETWORK', 'ENOTFOUND', 'EAI_AGAIN', 'EHOSTUNREACH', 'ENETUNREACH', 'ECONNREFUSED', 'EPIPE'];
-      const isNetworkError = error.code && networkErrors.includes(error.code);
-      const isServerError = httpStatus && [429, 500, 502, 503, 504].includes(httpStatus);
+      const isNetworkError = error.code && RETRYABLE_NETWORK_ERRORS.includes(error.code);
+      const isServerError = httpStatus && RETRYABLE_SERVER_STATUSES.includes(httpStatus);
 
-      // Solo reintentar si es un error de red conocido o un error de servidor (500s)
+      // Only retry if it is a known network error or a server error (500s)
       const isRetryable = isNetworkError || isServerError;
       if (!isRetryable) throw error;
 

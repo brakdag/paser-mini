@@ -109,7 +109,7 @@ class ZaiAdapter extends BaseAdapter {
         logger.warn(msg);
         if (this.ui && this.ui.displayInfo) {
           this.ui.displayInfo(
-            `Reintentando Z.AI... (${retryCount}/${MAX_RETRIES}) | Error: ${errorMsg}`,
+            `Retrying Z.AI... (${retryCount}/${MAX_RETRIES}) | Error: ${errorMsg}`,
           );
         }
       },

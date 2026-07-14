@@ -127,7 +127,7 @@ export default class WebTools {
     const contentType = response.headers["content-type"] || "";
     const bufferData = Buffer.from(response.data);
 
-    // Detención de PDF mediante Content-Type o Magic Bytes (%PDF)
+    // PDF detection via Content-Type or Magic Bytes (%PDF)
     const isPdf =
       contentType.includes("application/pdf") ||
       bufferData.slice(0, 4).toString("latin1") === "%PDF";

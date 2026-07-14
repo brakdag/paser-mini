@@ -135,7 +135,7 @@ export default class JsonTools {
     return JSON.stringify({
       length: target.length,
       itemType: target.length > 0 ? typeof target[0] : "unknown",
-      });
+    });
   }
 
   /**

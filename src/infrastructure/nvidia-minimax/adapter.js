@@ -6,7 +6,7 @@ import RetryHandler from "../../utils/retryHandler.js";
 
 const DEFAULT_MODEL = "minimaxai/minimax-m3";
 const DEFAULT_TEMPERATURE = 0.3;
-const M3_TIMEOUT = 900000; // 15 minutos - el M3 en NVIDIA sufre colas largas
+const M3_TIMEOUT = 900000; // 15 minutes - M3 on NVIDIA experiences long queue times
 
 /**
  * Dedicated adapter for the MiniMax M3 model on NVIDIA NIM infrastructure.
@@ -78,32 +78,30 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
     const payload = this._preparePayload();
     this.lastPayload = payload;
 
-    /**
-     * Executes the API request with retry logic.
-     * @returns {Promise<string>} The processed response text.
-     */
     try {
       return await this.retryHandler.execute(async () => {
-      try {
-        const data = await this.restClient.chatCompletions(payload, false, M3_TIMEOUT);
-        return this._handleResponse(data);
-      } catch (e) {
-        throw this._handleError(e);
-      }
-    }, {
-      recoverableErrors: this.recoverableErrors,
-      /**
-       * @param {number} attempt - The current attempt number.
-       * @param {Error} error - The error that triggered the retry.
-       * @param {string} formattedDelay - The formatted delay string.
-       */
-      onRetry: (attempt, error, formattedDelay) => {
-        logger.warn(`[NvidiaMiniMaxAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`);
-        if (this.ui && this.ui.displayInfo) {
-          this.ui.displayInfo(`Reintentando NVIDIA M3 en ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`);
+        try {
+          const data = await this.restClient.chatCompletions(payload, false, M3_TIMEOUT);
+          return this._handleResponse(data);
+        } catch (e) {
+          throw this._handleError(e);
         }
-      }
-    });
+      }, {
+        recoverableErrors: this.recoverableErrors,
+        /**
+         * Callback executed when a retry is attempted.
+         * @param {number} attempt - The current attempt number.
+         * @param {Error} error - The error that triggered the retry.
+         * @param {string} formattedDelay - The formatted delay string.
+         * @returns {void}
+         */
+        onRetry: (attempt, error, formattedDelay) => {
+          logger.warn(`[NvidiaMiniMaxAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`);
+          if (this.ui && this.ui.displayInfo) {
+            this.ui.displayInfo(`Retrying NVIDIA M3 in ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`);
+          }
+        }
+      });
     } catch (error) {
       if (this.state.getRawHistory().length === historyLengthBefore) {
         this.state.popLastMessage();
@@ -139,8 +137,8 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
       model: this.currentModel,
       messages,
       temperature: this.temperature,
-      stream: false, // Forzar no-stream hasta que el endpoint se estabilice
-      max_tokens: 8192, // El M3 requiere un limite explicito para evitar respuestas truncadas
+      stream: false, // Force no-stream until the endpoint stabilizes
+      max_tokens: 8192, // M3 requires an explicit limit to avoid truncated responses
     };
   }
 

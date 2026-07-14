@@ -4,7 +4,8 @@ import SCHEMAS from "./schemas.js";
 const validator = new SchemaValidator();
 
 /**
- *
+ * Registers all schemas from the schemas module into the validator.
+ * @returns {Promise<void>}
  */
 async function registerSchemas() {
   try {

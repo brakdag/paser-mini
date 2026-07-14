@@ -38,9 +38,9 @@ export default class UtilTools {
     }
     try {
       JSON.parse(jsonString);
-      return "El JSON es valido.";
+      return "The JSON is valid.";
     } catch (e) {
-      throw new Error(`JSON invalido: ${e.message}`);
+      throw new Error(`Invalid JSON: ${e.message}`);
     }
   }
 
@@ -56,7 +56,7 @@ export default class UtilTools {
     }
     try {
       const oldNickname = this.#model.nickname;
-      this.#model.nickname = newNickname; // Mutación instantánea por referencia
+      this.#model.nickname = newNickname; // Instant mutation by reference
       
       const config = new ConfigManager();
       config.save(AGENT_NICKNAME_CONFIG_KEY, newNickname);

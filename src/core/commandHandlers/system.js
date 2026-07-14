@@ -77,6 +77,58 @@ class SystemCommands {
   }
 
   /**
+   * Handles the /trunc command to dynamically set the FIFO context window truncation limit.
+   * @param {object} chatManager The chat manager instance.
+   * @param {object} ui The terminal UI instance.
+   * @param {string} input The arguments (e.g., 8000).
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
+  static async handleTrunc(chatManager, ui, input) {
+    const parts = input.split(/\s+/);
+    if (parts.length !== 2) {
+      ui.displayError("Usage: /trunc <limit_in_tokens> (use 0 to disable)");
+      return true;
+    }
+    const limit = parseInt(parts[1], 10);
+    if (Number.isNaN(limit) || limit < 0) {
+      ui.displayError("Truncation limit must be a positive integer, or 0 to disable.");
+      return true;
+    }
+    chatManager.configManager.save("context_window_limit", limit);
+    chatManager.contextWindowLimit = limit;
+
+    if (limit === 0) {
+      ui.displayInfo("Context truncation DISABLED. Context window is now infinite.");
+    } else {
+      ui.displayInfo(`Context truncation ENABLED. FIFO limit strictly set to: ${limit} tokens.`);
+    }
+    return true;
+  }
+
+  /**
+   * Handles the /rpm command for setting the Rate Per Minute limit.
+   * @param {object} chatManager The chat manager instance.
+   * @param {object} ui The terminal UI instance.
+   * @param {string} input The arguments (e.g., 60).
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
+  static async handleRpm(chatManager, ui, input) {
+    const parts = input.split(/\s+/);
+    if (parts.length !== 2) {
+      ui.displayError("Usage: /rpm <limit>");
+      return true;
+    }
+    const rpm = parseInt(parts[1], 10);
+    if (Number.isNaN(rpm) || rpm < 1) {
+      ui.displayError("RPM limit must be a positive integer.");
+      return true;
+    }
+    chatManager.configManager.save("rpm_limit", rpm);
+    ui.displayInfo(`RPM limit set to: ${rpm}`);
+    return true;
+  }
+
+  /**
    * Forces a cache rebuild and hot-reloads the system prompt and tools.
    * @param {object} chatManager The chat manager instance.
    * @param {object} ui The terminal UI instance.
@@ -87,7 +139,6 @@ class SystemCommands {
       ui.displayInfo("Forcing system cache rebuild...");
       const { systemInstruction, filteredTools } = await promptManager.rebuildCache();
 
-      // Hot-injection delegando al ChatManager
       chatManager.updateSystemContext(systemInstruction, filteredTools);
 
       promptManager.saveCache();
@@ -125,13 +176,6 @@ class SystemCommands {
     return true;
   }
 
-  /**
-   * Executes an agent tool directly and displays the result without modifying history.
-   * @param {object} chatManager The chat manager instance.
-   * @param {object} ui The terminal UI instance.
-   * @param {string} rawToolCall The raw tool call expression (e.g. read("file.js")).
-   * @returns {Promise<boolean>} True if the operation succeeded.
-   */
   /**
    * Sends a message to the agent and measures response latency in milliseconds.
    * @param {object} chatManager The chat manager instance.

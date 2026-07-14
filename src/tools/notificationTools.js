@@ -20,7 +20,7 @@ export default class NotificationTools {
 
     // Strict validation of the sound path to prevent command injection
     if (!soundPath.includes("../") && !soundPath.includes(" ; ") && !soundPath.includes("\n")) {
-      // We use a lapped shell command for cross-platform compatibility
+      // We use a wrapped shell command for cross-platform compatibility
       // The sound path is wrapped in double quotes to prevent space-related issues
       const cmd = `(aplay "${soundPath}" || afplay "${soundPath}" || play "${soundPath}") &`;
       await this.#execPromise(cmd);

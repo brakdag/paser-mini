@@ -8,7 +8,10 @@ class MementoManager {
   #LOG_FILE;
 
   /**
-   *
+   * Initializes a new instance of the MementoManager.
+   */
+  /**
+   * Initializes a new instance of the MementoManager.
    */
   constructor() {
     this.#LOG_FILE = path.join(process.cwd(), "log", "memento.log");
@@ -57,8 +60,8 @@ class MementoManager {
     const refPattern = /#(d+)/g;
     const matches = [...text.matchAll(refPattern)];
     if (matches.length === 0) {
-    return;
-  }
+      return;
+    }
 
     const referencedIds = matches.map((m) => m[1]);
     const content = await fs.readFile(this.#LOG_FILE, "utf8");
@@ -67,8 +70,8 @@ class MementoManager {
     const lines = content.split("\n");
     const updatedLines = lines.map((line) => {
       if (!line) {
-    return line;
-  }
+        return line;
+      }
 
       const idMatch = line.match(/^[ID: (d+)]/);
       if (idMatch && referencedIds.includes(idMatch[1])) {
@@ -95,11 +98,9 @@ class MementoManager {
       const content = await fs.readFile(this.#LOG_FILE, "utf8");
       return content.trim().split("\n").filter(Boolean);
     } catch (error) {
-      // Return empty array if log file is missing or unreadable
       return [];
     }
   }
-
 }
 
 export default MementoManager;

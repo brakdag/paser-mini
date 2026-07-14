@@ -115,14 +115,16 @@ class CloudflareAdapter extends BaseAdapter {
       }, {
         recoverableErrors: this.recoverableErrors,
         /**
+         * Callback executed when a retry is attempted.
          * @param {number} attempt - The current attempt number.
          * @param {Error} error - The error that triggered the retry.
          * @param {string} formattedDelay - The formatted delay string.
+         * @returns {void}
          */
         onRetry: (attempt, error, formattedDelay) => {
           logger.warn(`[CloudflareAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`);
           if (this.ui && this.ui.displayInfo) {
-            this.ui.displayInfo(`Reintentando Cloudflare en ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`);
+            this.ui.displayInfo(`Retrying Cloudflare in ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`);
           }
         }
       });

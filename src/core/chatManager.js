@@ -122,7 +122,7 @@ class ChatManager {
     this.model.name = modelName;
     this.model.temperature = temp;
     
-    // Reiniciar el chat y propagar el nuevo adaptador
+    // Restart the chat and propagate the new adapter
     this.assistant.startChat(modelName, this.systemInstruction, temp);
     this.engine.assistant = this.assistant;
     this.engine.chatManager = this;
