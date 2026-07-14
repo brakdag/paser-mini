@@ -99,6 +99,14 @@ class ChatManager {
   }
 
   /**
+   * Sets the current active channel.
+   * @param {string} channel - The channel name.
+   */
+  setCurrentChannel(channel) {
+    this.currentChannel = channel;
+  }
+
+  /**
    * Switches the current AI provider, model, and temperature dynamically.
    * @param {string} providerId - The target provider ID.
    * @param {string} modelName - The target model name.
@@ -146,6 +154,18 @@ class ChatManager {
     
     if (this.assistant && this.assistant.updateSystemInstruction) {
       this.assistant.updateSystemInstruction(systemInstruction);
+    }
+  }
+
+  /**
+   * Updates the user's nickname in the shared identity, config, and assistant.
+   * @param {string} newNick - The new user nickname.
+   */
+  updateUserNickname(newNick) {
+    this.configManager.save("user_nickname", newNick);
+    this.user.nickname = newNick;
+    if (this.assistant && this.assistant.setIdentities) {
+      this.assistant.setIdentities(this.user, this.model);
     }
   }
 

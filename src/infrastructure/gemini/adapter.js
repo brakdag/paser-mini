@@ -15,10 +15,11 @@ import {
 class GeminiAdapter extends BaseAdapter {
   /**
    * Initializes the GeminiAdapter with necessary dependencies and configurations.
-   * @param {object} ui - The UI interface for displaying information.
-   * @param {object} configManager - The configuration manager.
-   * @param {string} [userNickname] - The nickname of the user.
-   * @param {string} [agentNickname] - The nickname of the agent.
+   * @param {object} params - The constructor parameters.
+   * @param {object} params.ui - The UI interface for displaying information.
+   * @param {object} params.configManager - The configuration manager.
+   * @param {string} [params.userNickname] - The nickname of the user.
+   * @param {string} [params.agentNickname] - The nickname of the agent.
    */
   constructor({ ui, configManager, userNickname = "user", agentNickname = "assistant" }) {
     super({ ui, configManager, userNickname, agentNickname });
@@ -126,7 +127,7 @@ class GeminiAdapter extends BaseAdapter {
    */
   _filterThoughts(text) {
     if (!text) return "";
-    let cleaned = text.replace(/<(thought|reasoning)>[\s\S]*?<\/\1>/gi, "");
+    const cleaned = text.replace(/<(thought|reasoning)>[\s\S]*?<\/\1>/gi, "");
     return cleaned.trim();
   }
 

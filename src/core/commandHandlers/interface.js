@@ -76,12 +76,8 @@ class InterfaceCommands {
    * @returns {Promise<boolean>} True if the operation succeeded.
    */
   static async handleNick(chatManager, ui, newNick) {
-    chatManager.configManager.save("user_nickname", newNick);
-    chatManager.user.nickname = newNick;
+    chatManager.updateUserNickname(newNick);
     ui.setUserNickname(newNick);
-    if (chatManager.assistant && chatManager.assistant.setIdentities) {
-      chatManager.assistant.setIdentities(chatManager.user, chatManager.model);
-    }
     ui.displayInfo(`User nickname successfully changed to '${newNick}'`);
     return true;
   }

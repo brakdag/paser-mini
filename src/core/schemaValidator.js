@@ -1,4 +1,3 @@
-import fs from "fs";
 import ValidationResult from "./validationResult.js";
 
 /**
@@ -38,8 +37,6 @@ class SchemaValidator {
       ]);
     }
 
-    fs.appendFileSync('./log/schema_audit.log', `Tool: ${toolName}, Type: ${typeof schema}, hasSafeParse: ${typeof schema?.safeParse === 'function'}\n`);
-
     if (typeof args !== "object" || args === null || Array.isArray(args)) {
       return new ValidationResult(false, [
         `Arguments for '${toolName}' must be a JSON object, got ${typeof args}.`,
@@ -48,7 +45,6 @@ class SchemaValidator {
 
     if (typeof schema.safeParse !== 'function') {
       const errorMsg = `CRITICAL: Schema for tool '${toolName}' is not a Zod schema. Type: ${typeof schema}. Value: ${JSON.stringify(schema)}`;
-      fs.appendFileSync('./log/schema_audit.log', `${errorMsg}\n`);
       throw new TypeError(errorMsg);
     }
 
