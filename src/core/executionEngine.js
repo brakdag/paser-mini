@@ -1,6 +1,8 @@
 import path from "path";
 import ToolAttemptTracker from "./toolTracker.js";
 
+const DEFAULT_MAX_TURNS = 10000;
+
 /* eslint-disable jsdoc/require-jsdoc */
 /**
  * A scalable map of tool details extractors complying with the Open/Closed Principle.
@@ -97,7 +99,7 @@ class ExecutionEngine {
     this.toolTracker = tracker || new ToolAttemptTracker();
     this.strictPureMode = pureMode || false;
     this.turnCount = 0;
-    this.maxTurns = 10000;
+    this.maxTurns = DEFAULT_MAX_TURNS;
     this.stopRequested = false;
   }
 

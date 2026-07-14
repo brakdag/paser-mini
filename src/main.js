@@ -57,7 +57,6 @@ async function main() {
     return;
   }
 
-// 1. Carga estática en paralelo en lugar de imports dinámicos secuenciales
   const [ui, providerManager, memoryToolsInstance, systemToolsInstance, utilToolsInstance] = await Promise.all([
     new TerminalUI(),
     new ProviderManager(),
@@ -66,8 +65,7 @@ async function main() {
     getToolInstance("utilTools"),
   ]);
 
-  // 2. Construcción del System Prompt (asíncrono)
-  const { systemInstruction, filteredTools } = await promptManager.buildPrompt(options);
+    const { systemInstruction, filteredTools } = await promptManager.buildPrompt(options);
 
   const providerId = configManager.get("provider", "GEMINI");
   const userNick = configManager.get("user_nickname", "user");
@@ -75,14 +73,12 @@ async function main() {
   const modelName = configManager.get("model_name", "gemini-2.0-flash");
   const temp = parseFloat(configManager.get("default_temperature", 0.7));
 
-  // 3. Objetos de Identidad Compartidos (Clean Code)
-  const user = { nickname: userNick };
+    const user = { nickname: userNick };
   const model = { nickname: agentNick, name: modelName, temperature: temp };
 
   logger.info(`Startup: Loading adapter for provider ${providerId}...`);
 
-  // 4. Instanciación directa del adaptador por defecto (Gemini) para evitar import() runtime overhead
-  let assistant;
+    let assistant;
   if (providerId === "GEMINI") {
     assistant = new GeminiAdapter({ ui, configManager });
     assistant.providerId = providerId;

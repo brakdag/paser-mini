@@ -56,7 +56,6 @@ const COMMAND_MAP = {
    * @param {string} input - The raw input string.
    * @returns {Promise<boolean>} True if the operation succeeded.
    */
-  "/execute ": (cm, ui, input) => SystemCommands.handleExecute(cm, ui, input.slice(9).trim()),
   "/fountain": InterfaceCommands.handleFountain,
   "/irc": InterfaceCommands.handleIRC,
   "/clean": InterfaceCommands.handleClean,
@@ -102,100 +101,111 @@ const PREFIX_COMMANDS = {
    * @param {import("./chatManager.js").default} cm - The chat manager instance.
    * @param {object} ui - The UI instance.
    * @param {string} input - The raw input string.
+   * @param {string} prefix - The command prefix.
    * @returns {void}
    */
-  "/r ": (cm, ui, input) =>
-    SessionCommands.handleRewrite(cm, ui, input.slice(3).trim()),
+  "/r ": (cm, ui, input, prefix) =>
+    SessionCommands.handleRewrite(cm, ui, input.substring(prefix.length).trim()),
   /**
    * Saves the last payload to a file.
    * @param {import("./chatManager.js").default} cm - The chat manager instance.
    * @param {object} ui - The UI instance.
    * @param {string} input - The raw input string.
+   * @param {string} prefix - The command prefix.
    * @returns {void}
    */
-  "/s ": (cm, ui, input) =>
+  "/s ": (cm, ui, input, prefix) =>
     SessionCommands.handleSavePayload(
       cm,
       ui,
-      input.slice(3).trim() || "last_request.json",
+      input.substring(prefix.length).trim() || "last_request.json",
     ),
   /**
    * Sets the channel topic.
    * @param {import("./chatManager.js").default} cm - The chat manager instance.
    * @param {object} ui - The UI instance.
    * @param {string} input - The raw input string.
+   * @param {string} prefix - The command prefix.
    * @returns {void}
    */
-  "/topic ": (cm, ui, input) =>
-    InterfaceCommands.handleTopic(cm, ui, input.slice(7).trim()),
+  "/topic ": (cm, ui, input, prefix) =>
+    InterfaceCommands.handleTopic(cm, ui, input.substring(prefix.length).trim()),
   /**
    * Executes an agent tool directly without affecting history.
    * @param {import("./chatManager.js").default} cm - The chat manager instance.
    * @param {object} ui - The UI instance.
    * @param {string} input - The raw input string.
+   * @param {string} prefix - The command prefix.
    * @returns {void}
    */
-  "/tool ": (cm, ui, input) =>
-    SystemCommands.handleTool(cm, ui, input.slice(6).trim()),
+  "/tool ": (cm, ui, input, prefix) =>
+    SystemCommands.handleTool(cm, ui, input.substring(prefix.length).trim()),
   /**
    * Sends a message and measures response latency.
    * @param {import("./chatManager.js").default} cm - The chat manager instance.
    * @param {object} ui - The UI instance.
    * @param {string} input - The raw input string.
+   * @param {string} prefix - The command prefix.
    * @returns {void}
    */
-  "/ping ": (cm, ui, input) =>
-    SystemCommands.handlePing(cm, ui, input.slice(6).trim()),
+  "/ping ": (cm, ui, input, prefix) =>
+    SystemCommands.handlePing(cm, ui, input.substring(prefix.length).trim()),
   /**
    * Changes the user nickname.
    * @param {import("./chatManager.js").default} cm - The chat manager instance.
    * @param {object} ui - The UI instance.
    * @param {string} input - The raw input string.
+   * @param {string} prefix - The command prefix.
    * @returns {void}
    */
-  "/nick ": (cm, ui, input) =>
-    InterfaceCommands.handleNick(cm, ui, input.slice(6).trim()),
+  "/nick ": (cm, ui, input, prefix) =>
+    InterfaceCommands.handleNick(cm, ui, input.substring(prefix.length).trim()),
   /**
    * Performs a /me action.
    * @param {import("./chatManager.js").default} cm - The chat manager instance.
    * @param {object} ui - The UI instance.
    * @param {string} input - The raw input string.
+   * @param {string} prefix - The command prefix.
    * @returns {void}
    */
-  "/me ": (cm, ui, input) =>
-    InterfaceCommands.handleMe(cm, ui, input.slice(4).trim()),
+  "/me ": (cm, ui, input, prefix) =>
+    InterfaceCommands.handleMe(cm, ui, input.substring(prefix.length).trim()),
   /**
    * Performs a screenplay action.
    * @param {import("./chatManager.js").default} cm - The chat manager instance.
    * @param {object} ui - The UI instance.
    * @param {string} input - The raw input string.
+   * @param {string} prefix - The command prefix.
    * @returns {void}
    */
-  "/action ": (cm, ui, input) =>
-    InterfaceCommands.handleAction(cm, ui, input.slice(8).trim()),
+  "/action ": (cm, ui, input, prefix) =>
+    InterfaceCommands.handleAction(cm, ui, input.substring(prefix.length).trim()),
   /**
    * Joins a virtual channel.
    * @param {import("./chatManager.js").default} cm - The chat manager instance.
    * @param {object} ui - The UI instance.
    * @param {string} input - The raw input string.
+   * @param {string} prefix - The command prefix.
    * @returns {void}
    */
-  "/join ": (cm, ui, input) =>
-    InterfaceCommands.handleJoin(cm, ui, input.slice(6).trim()),
+  "/join ": (cm, ui, input, prefix) =>
+    InterfaceCommands.handleJoin(cm, ui, input.substring(prefix.length).trim()),
   /**
    * Invokes the Paimal AI assistant.
    * @param {import("./chatManager.js").default} cm - The chat manager instance.
    * @param {object} ui - The UI instance.
    * @param {string} input - The raw input string.
+   * @param {string} prefix - The command prefix.
    * @returns {void}
    */
-  "/paim ": (cm, ui, input) =>
-    AICommands.handlePaim(cm, ui, input.slice(6).trim()),
+  "/paim ": (cm, ui, input, prefix) =>
+    AICommands.handlePaim(cm, ui, input.substring(prefix.length).trim()),
   /**
    * Lists available models.
    * @param {import("./chatManager.js").default} cm - The chat manager instance.
    * @param {object} ui - The UI instance.
    * @param {string} input - The raw input string.
+   * @param {string} prefix - The command prefix.
    * @returns {void}
    */
   /**
@@ -315,7 +325,7 @@ class CommandHandler {
       lowerInput.startsWith(key),
     );
     if (prefixKey)
-      return PREFIX_COMMANDS[prefixKey](this.chatManager, this.ui, input);
+      return PREFIX_COMMANDS[prefixKey](this.chatManager, this.ui, input, prefixKey);
 
     if (input.startsWith("/rpm ")) return this._handleRpmConfig(input);
     if (input.startsWith("/trunc")) return this._handleTruncConfig(input);

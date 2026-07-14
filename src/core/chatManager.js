@@ -6,6 +6,8 @@ import logger from "./logger.js";
 import ConfigManager from "./configManager.js";
 import TurnProcessor from "./turnProcessor.js";
 
+const MAX_CONTEXT_TOKENS = 250000;
+
 /**
  * ChatManager orchestrates the interaction between the user, the AI assistant,
  * and the tool execution engine. It manages the conversation lifecycle, 
@@ -291,7 +293,7 @@ class ChatManager {
       count = Math.ceil((systemInstruction.length + historyChars) / 4);
     }
 
-    const limit = this.contextWindowLimit || 250000;
+    const limit = this.contextWindowLimit || MAX_CONTEXT_TOKENS;
     const percentage = (count / limit) * 100;
     return `${count}/${limit}(${percentage.toFixed(1)}%)`;
   }

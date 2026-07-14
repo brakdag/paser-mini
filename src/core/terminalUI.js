@@ -148,7 +148,7 @@ class TerminalUI {
     process.stdout.write(`${renderedText}\n`);
 
     // 2. Formato plano para el log (con timestamp)
-    const logText = IRCFormatter.formatMessage(nickname, plainText, ts);
+    const logText = this.activePlugin.formatMessage(nickname, plainText, ts);
     this.writeToLog(logText);
   }
 
