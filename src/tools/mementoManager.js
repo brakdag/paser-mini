@@ -10,9 +10,6 @@ class MementoManager {
   /**
    * Initializes a new instance of the MementoManager.
    */
-  /**
-   * Initializes a new instance of the MementoManager.
-   */
   constructor() {
     this.#LOG_FILE = path.join(process.cwd(), "log", "memento.log");
   }
@@ -57,7 +54,7 @@ class MementoManager {
       return;
     }
 
-    const refPattern = /#(d+)/g;
+    const refPattern = /#(\d+)/g;
     const matches = [...text.matchAll(refPattern)];
     if (matches.length === 0) {
       return;
@@ -73,10 +70,10 @@ class MementoManager {
         return line;
       }
 
-      const idMatch = line.match(/^[ID: (d+)]/);
+      const idMatch = line.match(/^\[ID: (\d+)\]/);
       if (idMatch && referencedIds.includes(idMatch[1])) {
         modified = true;
-        return line.replace(/([Rank: )(d+)(])/, (match, p1, p2, p3) => {
+        return line.replace(/(\[Rank: )(\d+)(\])/, (match, p1, p2, p3) => {
           const newRank = parseInt(p2, 10) + 1;
           return `${p1}${newRank}${p3}`;
         });

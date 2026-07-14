@@ -23,12 +23,13 @@ class ApiCommunicator {
   /**
    * Sends a message to the assistant with exponential backoff retry logic.
    * @param {string} message - The message to send.
-   * @param {string} [role] - The role of the sender.
-   * @param {number} [attempt] - The current attempt number.
+   * @param {object} [options] - The options for the send operation.
+   * @param {string} [options.role] - The role of the sender.
+   * @param {number} [options.attempt] - The current attempt number.
    * @returns {Promise<string|object>} The response from the assistant.
    * @throws {Error} If the maximum number of retries is reached or a non-retryable error occurs.
    */
-  async send(message, role = "user", attempt = 1) {
+  async send(message, { role = "user", attempt = 1 } = {}) {
     try {
       return await this.assistant.sendMessage(message, role);
     } catch (error) {
@@ -51,7 +52,7 @@ class ApiCommunicator {
       await new Promise((resolve) => {
         setTimeout(resolve, delay);
       });
-      return this.send(message, role, attempt + 1);
+      return this.send(message, { role, attempt: attempt + 1 });
     }
   }
 
@@ -71,7 +72,7 @@ class ApiCommunicator {
 
     return this.send(
       `System Error: ${currentResponse}. Please attempt to recover or rephrase your last action.`,
-      "user",
+      { role: "user" },
     );
   }
 }

@@ -1,6 +1,7 @@
 import v8 from "v8";
 import fs from "fs";
 import { pipeline } from "stream/promises";
+import PathValidator from "../utils/pathValidator.js";
 
 /**
  * Performance monitoring tools for system health and memory analysis.
@@ -44,14 +45,15 @@ export default class PerfTools {
       throw new Error("The 'filepath' parameter is required for heap snapshots.");
     }
 
+    const safePath = PathValidator.getSafePath(filepath);
     const snapshotStream = v8.getHeapSnapshot();
-    const fileStream = fs.createWriteStream(filepath);
+    const fileStream = fs.createWriteStream(safePath);
 
     await pipeline(
       snapshotStream,
       fileStream,
     );
 
-    return `Heap snapshot written to ${filepath}`;
+    return `Heap snapshot written to ${safePath}`;
   }
 }

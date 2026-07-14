@@ -304,24 +304,33 @@ class ChatManager {
   }
 
   /**
+   * Calculates the total token count from the system instruction and history.
+   * Uses the assistant's token counter if available, otherwise falls back to a heuristic.
+   * @returns {number} The calculated token count.
+   * @private
+   */
+  _calculateTokenCount() {
+    const systemInstruction = this.systemInstruction || "";
+    const history = this.assistant.getHistory ? this.assistant.getHistory() : [];
+
+    if (typeof this.assistant.countTokens === "function") {
+      return this.assistant.countTokens(systemInstruction, history);
+    }
+
+    const historyChars = history.reduce((acc, msg) => {
+      const content = msg.content || msg.text || "";
+      return acc + (typeof content === "string" ? content.length : JSON.stringify(content).length);
+    }, 0);
+
+    return Math.ceil((systemInstruction.length + historyChars) / 4);
+  }
+
+  /**
    * Calculates the current token usage relative to the context window limit.
    * @returns {string} A formatted string showing current/limit and percentage.
    */
   getTokenCount() {
-    const systemInstruction = this.systemInstruction || "";
-    const history = this.assistant.getHistory ? this.assistant.getHistory() : [];
-    
-    let count;
-    if (typeof this.assistant.countTokens === "function") {
-      count = this.assistant.countTokens(systemInstruction, history);
-    } else {
-      const historyChars = history.reduce((acc, msg) => {
-        const content = msg.content || msg.text || "";
-        return acc + (typeof content === "string" ? content.length : JSON.stringify(content).length);
-      }, 0);
-      count = Math.ceil((systemInstruction.length + historyChars) / 4);
-    }
-
+    const count = this._calculateTokenCount();
     const limit = this.contextWindowLimit || MAX_CONTEXT_TOKENS;
     const percentage = (count / limit) * 100;
     return `${count}/${limit}(${percentage.toFixed(1)}%)`;

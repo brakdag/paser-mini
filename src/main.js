@@ -6,7 +6,6 @@ import ConfigManager from "./core/configManager.js";
 import ProviderManager from "./infrastructure/providerManager.js";
 import promptManager from "./core/systemPromptManager.js";
 import { getToolInstance } from "./infrastructure/registry.js";
-import GeminiAdapter from "./infrastructure/gemini/adapter.js";
 import logger from "./core/logger.js";
 
 /**
@@ -78,17 +77,13 @@ async function main() {
 
   logger.info(`Startup: Loading adapter for provider ${providerId}...`);
 
-  let assistant;
-  if (providerId === "GEMINI") {
-    assistant = new GeminiAdapter({ ui, configManager });
-    assistant.providerId = providerId;
-  } else {
-    assistant = await providerManager.createAdapter({
-      providerId,
-      ui,
-      configManager,
-    });
-  }
+  const assistant = await providerManager.createAdapter({
+    providerId,
+    ui,
+    configManager,
+    userNickname: userNick,
+    agentNickname: agentNick,
+  });
 
   const chatManager = new ChatManager({
     assistant,

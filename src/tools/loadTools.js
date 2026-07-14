@@ -1,5 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
+import PathValidator from "../utils/pathValidator.js";
 
 const FILE_SIZE_LIMIT = 100 * 1024;
 const BOUNDARY = "---çç";
@@ -11,19 +12,6 @@ class LoadTools {
   #cachedIndex = null;
 
   #cachedDir = null;
-
-  /**
-   * Resolves and verifies that a path is safely within the project root.
-   * @param {string} inputPath The path to verify.
-   * @returns {string} The safe absolute path.
-   */
-  #getSafePath(inputPath) {
-    const resolved = path.resolve(process.cwd(), inputPath);
-    if (!resolved.startsWith(process.cwd())) {
-      throw new Error("Security Error: Path is outside of project root");
-    }
-    return resolved;
-  }
 
   /**
    * Parses .gitignore and returns a set of ignore patterns.
@@ -129,7 +117,7 @@ class LoadTools {
    * @returns {Promise<string>} JSON string with file index and total count.
    */
   async index(dirPath = ".", filter = null) {
-    const safePath = this.#getSafePath(dirPath);
+    const safePath = PathValidator.getSafePath(dirPath);
     const patterns = await this.#parseGitignore(process.cwd());
     const extensions = this.#parseFilter(filter);
     const { files } = await this.#scanDirectory(safePath, process.cwd(), patterns, 0, extensions);
@@ -167,7 +155,7 @@ class LoadTools {
           `${BOUNDARY}\nContent-ID: ${id}\nContent-Type: text/plain\nContent-Description: File not found\n\nError: File with ID ${id} not found in index.`
         );
       } else {
-        const safePath = this.#getSafePath(fileEntry.path);
+        const safePath = PathValidator.getSafePath(fileEntry.path);
         const stats = await fs.stat(safePath);
 
         if (stats.size > FILE_SIZE_LIMIT) {

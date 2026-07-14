@@ -19,10 +19,7 @@ class EvalTools {
      * @returns {Promise<void>}
      */
     write: async (filename, content) => {
-      const resolvedPath = path.resolve(this.#ROOT_DIR, filename);
-      if (!resolvedPath.startsWith(this.#ROOT_DIR)) {
-        throw new Error(`SECURITY_ERR: Access denied to ${filename}`);
-      }
+      const resolvedPath = this.#getSafeSandboxPath(filename);
       await fs.writeFile(resolvedPath, content, "utf8");
     },
     /**
@@ -31,10 +28,7 @@ class EvalTools {
      * @returns {Promise<string>} The content of the file.
      */
     read: async (filename) => {
-      const resolvedPath = path.resolve(this.#ROOT_DIR, filename);
-      if (!resolvedPath.startsWith(this.#ROOT_DIR)) {
-        throw new Error(`SECURITY_ERR: Access denied to ${filename}`);
-      }
+      const resolvedPath = this.#getSafeSandboxPath(filename);
       return fs.readFile(resolvedPath, "utf8");
     },
     /**
@@ -48,13 +42,24 @@ class EvalTools {
      * @returns {Promise<void>}
      */
     delete: async (filename) => {
-      const resolvedPath = path.resolve(this.#ROOT_DIR, filename);
-      if (!resolvedPath.startsWith(this.#ROOT_DIR)) {
-        throw new Error(`SECURITY_ERR: Access denied to ${filename}`);
-      }
+      const resolvedPath = this.#getSafeSandboxPath(filename);
       await fs.unlink(resolvedPath);
     },
   };
+
+  /**
+   * Validates and resolves a filename within the secure sandbox root.
+   * @param {string} filename - The filename to validate.
+   * @returns {string} The absolute, safe path.
+   * @throws {Error} If the path attempts to traverse outside the sandbox root.
+   */
+  #getSafeSandboxPath(filename) {
+    const resolvedPath = path.resolve(this.#ROOT_DIR, filename);
+    if (!resolvedPath.startsWith(this.#ROOT_DIR)) {
+      throw new Error(`SECURITY_ERR: Access denied to ${filename}`);
+    }
+    return resolvedPath;
+  }
 
   #trace = [];
 

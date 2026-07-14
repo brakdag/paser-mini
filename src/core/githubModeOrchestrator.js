@@ -1,7 +1,8 @@
 import * as githubTools from "../tools/githubTools.js";
 import GitHubUI from "./githubUI.js";
 import ChatManager from "./chatManager.js";
-import GeminiAdapter from "../infrastructure/gemini/adapter.js";
+import ConfigManager from "./configManager.js";
+import ProviderManager from "../infrastructure/providerManager.js";
 
 /**
  * Orchestrates the AI's interaction with GitHub issues, monitoring for specific hashtags
@@ -34,7 +35,7 @@ class GitHubModeOrchestrator {
     const filtered = issues.filter(
       (i) =>
         (i.body || "").includes(this.triggerHashtag) &&
-        !(i.labels || []).map((l) => l.name).includes(this.processingLabel),
+        !(i.labels || []).some((l) => l.name === this.processingLabel),
     );
 
     await filtered.reduce(async (promise, issue) => {
@@ -56,14 +57,27 @@ class GitHubModeOrchestrator {
       label: this.processingLabel,
     });
     try {
+      const configManager = new ConfigManager();
+      const providerManager = new ProviderManager();
+      const providerId = configManager.get("provider", "GEMINI");
+
       const ui = new GitHubUI(issueNumber);
-      const chatManager = new ChatManager(
-        new GeminiAdapter(),
-        this.tools,
-        this.systemInstruction,
+      const assistant = await providerManager.createAdapter({
+        providerId,
         ui,
-        true,
-      );
+        configManager,
+        userNickname: "user",
+        agentNickname: "assistant",
+      });
+
+      const chatManager = new ChatManager({
+        assistant,
+        tools: this.tools,
+        systemInstruction: this.systemInstruction,
+        ui,
+        configManager,
+      });
+
       await chatManager.run(
         `SYSTEM: GitHub Issue #${issueNumber}.\n${issueBody}`,
       );

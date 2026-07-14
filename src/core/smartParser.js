@@ -224,10 +224,12 @@ class SmartToolParser {
    * Formats a tool response into a clean string.
    * @param {string} context - The context/header (e.g. file path or tool name).
    * @param {unknown} data - The data to format.
+   * @param {boolean} success - Whether the tool execution was successful.
    * @returns {string} The formatted response.
    */
-  formatToolResponse(context, data) {
-    const header = context ? `[${context}]` : "[no details]";
+  formatToolResponse(context, data, success = true) {
+    const status = success ? "✓" : "✗";
+    const header = context ? `[${context}] ${status}` : `[no details] ${status}`;
     const content = typeof data === "object" ? JSON.stringify(data, null, 2) : data;
     return `${header} ${content}`;
   }

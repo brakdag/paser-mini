@@ -1,8 +1,31 @@
 /**
+ * Map of specific channels to their descriptive operational modes.
+ */
+const CHANNEL_MODES = {
+  "#charla": "Casual, friendly, and conversational mode.",
+  "#work": "Professional, focused, and highly efficient engineering mode.",
+};
+
+/**
  * Handles interface-related commands, including rendering modes, 
  * user identity, and channel management.
  */
 class InterfaceCommands {
+  /**
+   * Internal helper to update rendering mode and notify the UI.
+   * @param {object} chatManager The chat manager instance.
+   * @param {object} ui The terminal UI instance.
+   * @param {string} mode The rendering mode identifier.
+   * @param {string} description The human-readable description of the mode.
+   * @returns {boolean} True if the operation succeeded.
+   * @private
+   */
+  static _setRenderingMode(chatManager, ui, mode, description) {
+    chatManager.setRenderingMode(mode);
+    ui.displayInfo(`Rendering mode set to ${description}`);
+    return true;
+  }
+
   /**
    * Sets the rendering mode to Fountain (Screenplay).
    * @param {object} chatManager The chat manager instance.
@@ -10,9 +33,7 @@ class InterfaceCommands {
    * @returns {boolean} True if the operation succeeded.
    */
   static handleFountain(chatManager, ui) {
-    chatManager.setRenderingMode("FOUNTAIN");
-    ui.displayInfo("Rendering mode set to Fountain (Screenplay)");
-    return true;
+    return InterfaceCommands._setRenderingMode(chatManager, ui, "FOUNTAIN", "Fountain (Screenplay)");
   }
 
   /**
@@ -22,9 +43,7 @@ class InterfaceCommands {
    * @returns {boolean} True if the operation succeeded.
    */
   static handleIRC(chatManager, ui) {
-    chatManager.setRenderingMode("IRC");
-    ui.displayInfo("Rendering mode set to IRC (Default)");
-    return true;
+    return InterfaceCommands._setRenderingMode(chatManager, ui, "IRC", "IRC (Default)");
   }
 
   /**
@@ -34,9 +53,7 @@ class InterfaceCommands {
    * @returns {boolean} True if the operation succeeded.
    */
   static handleClean(chatManager, ui) {
-    chatManager.setRenderingMode("CLEAN");
-    ui.displayInfo("Rendering mode set to Clean (Minimalist)");
-    return true;
+    return InterfaceCommands._setRenderingMode(chatManager, ui, "CLEAN", "Clean (Minimalist)");
   }
 
   /**
@@ -145,13 +162,7 @@ class InterfaceCommands {
       ui.displaySystemMessage(`Scene changed to: ${channel}`);
       await chatManager.processTurn(`* SCENE: ${channel} *`);
     } else {
-      let modeDesc = "General purpose mode.";
-      if (channel === "#charla") {
-        modeDesc = "Casual, friendly, and conversational mode.";
-      } else if (channel === "#work") {
-        modeDesc = 
-          "Professional, focused, and highly efficient engineering mode.";
-      }
+      const modeDesc = CHANNEL_MODES[channel] || "General purpose mode.";
       const systemMsg = `Joined channel ${channel}. Mode: ${modeDesc}`;
       ui.displaySystemMessage(systemMsg);
       chatManager.assistant.injectMessage("server", systemMsg);

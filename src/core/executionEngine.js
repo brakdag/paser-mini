@@ -165,11 +165,9 @@ class ExecutionEngine {
         monitoringStarted = true;
 
         const toolFunc = this.tools[toolName];
-        if (this.toolParser.isPositional(toolName)) {
-          result = await toolFunc(...Object.values(args));
-        } else {
-          result = await toolFunc(args);
-        }
+        result = this.toolParser.isPositional(toolName)
+          ? await toolFunc(...Object.values(args))
+          : await toolFunc(args);
         success = true;
       }
     } catch (e) {

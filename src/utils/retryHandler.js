@@ -23,7 +23,7 @@ class RetryHandler {
     const hours = seconds / 3600;
     if (hours >= 1) return `${hours.toFixed(1)}h`;
     const minutes = seconds / 60;
-    if (minutes >= 1) return `${minutes.toFixed(0)}m`;
+    if (minutes >= 1) return `${Math.floor(minutes)}m`;
     return `${seconds}s`;
   }
 
@@ -81,8 +81,7 @@ class RetryHandler {
       } catch (error) {
         lastError = error;
         
-        const isAxiosNetworkError = error.isAxiosError && (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT' || error.code === 'ECONNRESET');
-        const isRecoverable = isAxiosNetworkError || this._isRecoverable(error, recoverableErrors);
+        const isRecoverable = this._isRecoverable(error, recoverableErrors);
 
         if (!isRecoverable) {
           throw error;

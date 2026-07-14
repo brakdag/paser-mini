@@ -1,6 +1,7 @@
 import { exec, execFile } from "child_process";
 import { promisify } from "util";
 import fs from "fs/promises";
+import PathValidator from "../utils/pathValidator.js";
 import { registerSchemas } from "../core/schemaRegistry.js";
 
 export const SYSTEM_TOOLS_VERSION = "1.0.0";
@@ -53,9 +54,10 @@ export class SystemTools {
    */
   async analyzeCode(targetPath) {
     try {
+      const safePath = PathValidator.getSafePath(targetPath);
       const { stdout } = await this.#execFilePromise(
         "npx",
-        ["pyright", "--outputjson", targetPath],
+        ["pyright", "--outputjson", safePath],
         {
           timeout: 60000,
         },
@@ -75,9 +77,10 @@ export class SystemTools {
    */
   async lintCode(targetPath) {
     try {
+      const safePath = PathValidator.getSafePath(targetPath);
       const { stdout } = await this.#execFilePromise(
         "npx",
-        ["eslint", targetPath, "--no-color"],
+        ["eslint", safePath, "--no-color"],
         {
           timeout: 60000,
         },
@@ -111,11 +114,14 @@ export class SystemTools {
       throw new Error(`Missing required arguments for generateDocs. targetPath: ${targetPath}, outputDir: ${finalOutputDir}`);
     }
 
-    await fs.mkdir(finalOutputDir, { recursive: true });
-    await this.#execFilePromise("npx", ["jsdoc", targetPath, "-d", finalOutputDir], {
+    const safeTargetPath = PathValidator.getSafePath(targetPath);
+    const safeOutputDir = PathValidator.getSafePath(finalOutputDir);
+
+    await fs.mkdir(safeOutputDir, { recursive: true });
+    await this.#execFilePromise("npx", ["jsdoc", safeTargetPath, "-d", safeOutputDir], {
       timeout: 60000,
     });
-    return `Documentation successfully generated in: ${finalOutputDir}`;
+    return `Documentation successfully generated in: ${safeOutputDir}`;
   }
 
   /**

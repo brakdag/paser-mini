@@ -12,22 +12,27 @@ export class AstTools {
    */
   simplifyNode(node) {
     const simplified = { type: node.type };
-    if (node.type === "Identifier") {
-      simplified.name = node.name;
-    }
-    if (node.type === "Literal") {
-      simplified.value = node.value;
-    }
-    if (node.type === "CallExpression") {
-      simplified.callee =
-        node.callee.name ||
-        (node.callee.property ? node.callee.property.name : "complex");
-    }
-    if (node.type === "VariableDeclarator") {
-      simplified.id = node.id.name;
-    }
-    if (node.type === "FunctionDeclaration") {
-      simplified.id = node.id ? node.id.name : "anonymous";
+    switch (node.type) {
+      case "Identifier":
+        simplified.name = node.name;
+        break;
+      case "Literal":
+        simplified.value = node.value;
+        break;
+      case "CallExpression":
+        simplified.callee =
+          node.callee.name ||
+          (node.callee.property ? node.callee.property.name : "complex");
+        break;
+      case "VariableDeclarator":
+        simplified.id = node.id.name;
+        break;
+      case "FunctionDeclaration":
+        simplified.id = node.id ? node.id.name : "anonymous";
+        break;
+      default:
+        // No additional properties for this type
+        break;
     }
     return simplified;
   }

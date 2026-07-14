@@ -3,6 +3,7 @@ import BaseAdapter from "../baseAdapter.js";
 import logger from "../../core/logger.js";
 import IRCFormatter from "../../utils/ircFormatter.js";
 import RetryHandler from "../../utils/retryHandler.js";
+import { normalizeRole, normalizeContent } from "../historyNormalizer.js";
 
 /**
  * Adapter for the Cohere AI API, providing chat capabilities and history management.
@@ -67,6 +68,7 @@ class CohereAdapter extends BaseAdapter {
   async sendMessage(message, role = "user") {
     const timestamp = IRCFormatter.getTimestamp();
     this.injectMessage(role, message, timestamp);
+    this._enforceContextLimit();
     const historyLengthBefore = this.history.length;
 
     const lastMessage = this.history.pop();
@@ -173,8 +175,8 @@ class CohereAdapter extends BaseAdapter {
    * @param {string|null} [timestamp] - The timestamp of the message.
    */
   injectMessage(role, content, timestamp = null) {
-    const apiRole = this._normalizeRole(role);
-    const finalContent = this._normalizeContent(content, apiRole);
+    const apiRole = normalizeRole(role, this.user.nickname, this.model.nickname);
+    const finalContent = normalizeContent(content, apiRole);
 
     this.history.push({
       role: apiRole,

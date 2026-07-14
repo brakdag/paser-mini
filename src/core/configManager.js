@@ -132,14 +132,11 @@ class ConfigManager {
    */
   save(key, value) {
     const isGlobal = GLOBAL_KEYS.has(key);
-    
-    if (isGlobal) {
-      this.globalConfig[key] = value;
-      this._saveConfig(this.globalPath, this.globalConfig);
-    } else {
-      this.localConfig[key] = value;
-      this._saveConfig(this.localPath, this.localConfig);
-    }
+    const config = isGlobal ? this.globalConfig : this.localConfig;
+    const configPath = isGlobal ? this.globalPath : this.localPath;
+
+    config[key] = value;
+    this._saveConfig(configPath, config);
   }
 }
 

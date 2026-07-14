@@ -229,7 +229,6 @@ class NvidiaAdapter extends BaseAdapter {
     } catch (e) {
       const errMsg = `[NvidiaAdapter Error] Failed to fetch model list from NVIDIA: ${e.response?.status || ""} - ${e.message}`;
       logger.error(errMsg);
-      console.error(errMsg);
       return [];
     }
   }

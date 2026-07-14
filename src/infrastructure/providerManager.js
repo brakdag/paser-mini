@@ -12,52 +12,52 @@ class ProviderManager {
     GEMINI: {
       name: "Gemini",
       defaultModel: "gemini-2.0-flash",
-      path: "../infrastructure/gemini/adapter.js",
+      path: "./gemini/adapter.js",
     },
     NVIDIA: {
       name: "NVIDIA",
       defaultModel: "meta/llama-3.1-405b-instruct",
-      path: "../infrastructure/nvidia/adapter.js",
+      path: "./nvidia/adapter.js",
     },
     NVIDIA_MINIMAX: {
       name: "NVIDIA MiniMax M3",
       defaultModel: "minimaxai/minimax-m3",
-      path: "../infrastructure/nvidia-minimax/adapter.js",
+      path: "./nvidia-minimax/adapter.js",
     },
     HUGGINGFACE: {
       name: "HuggingFace",
       defaultModel: "meta-llama/Meta-Llama-3-8B-Instruct",
-      path: "../infrastructure/huggingface/adapter.js",
+      path: "./huggingface/adapter.js",
     },
     OPENROUTER: {
       name: "OpenRouter",
       defaultModel: "openai/gpt-4o",
-      path: "../infrastructure/openrouter/adapter.js",
+      path: "./openrouter/adapter.js",
     },
     GROQ: {
       name: "Groq",
       defaultModel: "llama3-8b-8192",
-      path: "../infrastructure/groq/adapter.js",
+      path: "./groq/adapter.js",
     },
     CEREBRAS: {
       name: "Cerebras",
       defaultModel: "llama3.1-8b",
-      path: "../infrastructure/cerebras/adapter.js",
+      path: "./cerebras/adapter.js",
     },
     COHERE: {
       name: "Cohere",
       defaultModel: "command-r-plus",
-      path: "../infrastructure/cohere/adapter.js",
+      path: "./cohere/adapter.js",
     },
     CLOUDFLARE: {
       name: "Cloudflare",
       defaultModel: "@cf/meta/llama-3.1-8b-instruct",
-      path: "../infrastructure/cloudflare/adapter.js",
+      path: "./cloudflare/adapter.js",
     },
     ZAI: {
       name: "Z.AI",
       defaultModel: "glm-5.2",
-      path: "../infrastructure/zai/adapter.js",
+      path: "./zai/adapter.js",
     },
   };
 

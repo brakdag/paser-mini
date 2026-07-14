@@ -63,7 +63,7 @@ class CloudflareAdapter extends BaseAdapter {
       this.history.unshift({
         role: "system",
         content: this.systemInstruction,
-        timestamp: IRCFormatter.getTimestamp()()()(),
+        timestamp: IRCFormatter.getTimestamp(),
       });
     }
   }
@@ -76,7 +76,7 @@ class CloudflareAdapter extends BaseAdapter {
    * @throws {Error} If the response is empty or the request fails.
    */
   async sendMessage(message, role = "user") {
-    this.injectMessage(role, message, IRCFormatter.getTimestamp()()()());
+    this.injectMessage(role, message, IRCFormatter.getTimestamp());
     this._enforceContextLimit(); // Apply strict context boundary before API call
     const historyLengthBefore = this.history.length;
 
@@ -102,7 +102,7 @@ class CloudflareAdapter extends BaseAdapter {
             throw new Error("Empty response from Cloudflare");
           }
 
-          this.injectMessage("assistant", textContent, IRCFormatter.getTimestamp()()()());
+          this.injectMessage("assistant", textContent, IRCFormatter.getTimestamp());
           return textContent;
         } catch (error) {
           const errorMsg = error.response?.data?.error?.message || error.message;
@@ -143,13 +143,13 @@ class CloudflareAdapter extends BaseAdapter {
    * @param {string|null} [timestamp] - The message timestamp.
    */
   injectMessage(role, content, timestamp = null) {
-    const apiRole = normalizeRole(role, this.userNickname, this.agentNickname);
+    const apiRole = normalizeRole(role, this.user.nickname, this.model.nickname);
     const finalContent = normalizeContent(content, apiRole);
 
     this.history.push({
       role: apiRole,
       content: finalContent,
-      timestamp: timestamp || IRCFormatter.getTimestamp()()()(),
+      timestamp: timestamp || IRCFormatter.getTimestamp(),
     });
   }
 

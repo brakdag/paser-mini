@@ -45,14 +45,6 @@ class GeminiAdapter extends BaseAdapter {
   }
 
   /**
-   * Sets the rendering mode for the adapter.
-   * @param {string} mode - The rendering mode to use.
-   */
-  setRenderingMode(mode) {
-    this.renderingMode = mode;
-  }
-
-  /**
    * Configures the chat session with a specific model, system instruction, and temperature.
    * @param {string} modelName - The name of the model to use.
    * @param {string} systemInstruction - The system instruction for the model.
@@ -379,6 +371,9 @@ class GeminiAdapter extends BaseAdapter {
     } catch (error) {
       const status = error.response?.status;
       if (status === 404 || status === 400) return false;
+      logger.warn(
+        `[GeminiAdapter] Availability check inconclusive for ${modelName} (HTTP ${status || "unknown"}): ${error.message}. Assuming available.`,
+      );
       return true;
     }
   }

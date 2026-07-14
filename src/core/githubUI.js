@@ -28,18 +28,16 @@ class GitHubUI {
   /**
    * Posts a message as a comment to the GitHub issue.
    * @param {string} text - The text to post as a comment.
-   * @returns {void}
+   * @returns {Promise<void>}
    */
-  displayMessage(text) {
+  async displayMessage(text) {
     console.log(`[POSTING TO GITHUB] Issue #${this.issueNumber}: ${text}`);
     try {
-      githubTools
-        .postComment({
-          issue_number: this.issueNumber,
-          body: text,
-          repo: this.repo,
-        })
-        .catch((e) => console.error(`Failed to post comment: ${e.message}`));
+      await githubTools.postComment({
+        issue_number: this.issueNumber,
+        body: text,
+        repo: this.repo,
+      });
     } catch (e) {
       console.error(`Error in displayMessage: ${e.message}`);
     }

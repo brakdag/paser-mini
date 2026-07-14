@@ -47,8 +47,8 @@ export default class GithubTools {
   async #getHeaders() {
     const token = process.env.GITHUB_TOKEN;
     if (!token) {
-    throw new Error("GITHUB_TOKEN no configurado.");
-  }
+      throw new Error("GITHUB_TOKEN no configurado.");
+    }
     return { Authorization: `token ${token}` };
   }
 
@@ -133,11 +133,11 @@ export default class GithubTools {
     const { targetRepo, headers } = await this.#prepareRequest(repo);
     const data = {};
     if (title) {
-    data.title = title;
-  }
+      data.title = title;
+    }
     if (body) {
-    data.body = body;
-  }
+      data.body = body;
+    }
 
     await this.#client.patch(
       `/repos/${targetRepo}/issues/${issueNumber}`,
@@ -175,8 +175,8 @@ export default class GithubTools {
 
     const cleanIssueNumber = String(issueNumber).replace(/\D/g, '');
     if (!cleanIssueNumber) {
-    throw new Error("Invalid issue number provided.");
-  }
+      throw new Error("Invalid issue number provided.");
+    }
 
     if (!body || typeof body !== 'string' || body.trim() === '') {
       throw new Error("Comment body must be a non-empty string.");

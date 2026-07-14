@@ -1,6 +1,7 @@
 import { spawn } from "child_process";
 import path from "path";
 import fs from "fs/promises";
+import PathValidator from "../utils/pathValidator.js";
 
 /**
  * Tools for searching files and text within the project.
@@ -79,7 +80,7 @@ export default class SearchTools {
 
     return new Promise((resolve, reject) => {
       const rootPath = process.cwd();
-      const targetPath = path.resolve(rootPath, searchPath);
+      const targetPath = PathValidator.getSafePath(searchPath);
       const child = spawn("grep", [
         "-rInH",
         "--exclude-dir=.git",

@@ -1,6 +1,12 @@
 import { UserInterruptException } from "./exceptions.js";
 
 /**
+ * Constant for the special Fountain injection result type.
+ * Used by the scene tool to interrupt normal execution flow and inject content directly.
+ */
+const FOUNTAIN_INJECTION_TYPE = "FOUNTAIN_INJECTION";
+
+/**
  * Handles the execution of tool calls and manages their interaction with the system.
  */
 class ToolExecutor {
@@ -30,7 +36,7 @@ class ToolExecutor {
         );
         const { response, result } = executionResult;
 
-        if (result && result.type === "FOUNTAIN_INJECTION") {
+        if (result && result.type === FOUNTAIN_INJECTION_TYPE) {
           ui.displayChatMessage("system", result.content);
           assistant.injectMessage("user", result.content);
           assistant.injectMessage(

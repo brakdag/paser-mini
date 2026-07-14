@@ -3,6 +3,7 @@ import BaseAdapter from "../baseAdapter.js";
 import logger from "../../core/logger.js";
 import IRCFormatter from "../../utils/ircFormatter.js";
 import RetryHandler from "../../utils/retryHandler.js";
+import { normalizeRole, normalizeContent } from "../historyNormalizer.js";
 
 /**
  * Adapter for the HuggingFace API, providing chat capabilities and history management.
@@ -176,8 +177,8 @@ class HuggingFaceAdapter extends BaseAdapter {
    * @param {string|null} [timestamp] - The timestamp of the message.
    */
   injectMessage(role, content, timestamp = null) {
-    const apiRole = this._normalizeRole(role);
-    const finalContent = this._normalizeContent(content, apiRole);
+    const apiRole = normalizeRole(role, this.user.nickname, this.model.nickname);
+    const finalContent = normalizeContent(content, apiRole);
 
     this.history.push({
       role: apiRole,
@@ -245,6 +246,9 @@ class HuggingFaceAdapter extends BaseAdapter {
     } catch (error) {
       const status = error.response?.status;
       if (status === 404 || status === 400) return false;
+      logger.warn(
+        `[HuggingFaceAdapter] Availability check inconclusive for ${modelName} (HTTP ${status || "unknown"}): ${error.message}. Assuming available.`,
+      );
       return true;
     }
   }

@@ -3,6 +3,7 @@ import BaseAdapter from "../baseAdapter.js";
 import logger from "../../core/logger.js";
 import IRCFormatter from "../../utils/ircFormatter.js";
 import RetryHandler from "../../utils/retryHandler.js";
+import { normalizeRole, normalizeContent } from "../historyNormalizer.js";
 
 /**
  * Adapter for the OpenRouter AI API, providing chat capabilities and history management.
@@ -107,7 +108,7 @@ class OpenRouterAdapter extends BaseAdapter {
       onRetry: (attempt, error, formattedDelay) => {
         logger.warn(`[OpenRouterAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`);
         if (this.ui && this.ui.displayInfo) {
-          this.ui.displayInfo(`Reintentando OpenRouter en ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`);
+          this.ui.displayInfo(`Retrying OpenRouter in ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`);
         }
       }
     });
@@ -176,8 +177,8 @@ class OpenRouterAdapter extends BaseAdapter {
    * @param {string|null} [timestamp] - The timestamp of the message.
    */
   injectMessage(role, content, timestamp = null) {
-    const apiRole = this._normalizeRole(role);
-    const finalContent = this._normalizeContent(content, apiRole);
+    const apiRole = normalizeRole(role, this.user.nickname, this.model.nickname);
+    const finalContent = normalizeContent(content, apiRole);
 
     this.history.push({
       role: apiRole,
@@ -247,7 +248,10 @@ class OpenRouterAdapter extends BaseAdapter {
     } catch (error) {
       const status = error.response?.status;
       if (status === 404 || status === 400) return false;
-      return true;
+      logger.warn(
+        `[OpenRouterAdapter] Availability check failed for ${modelName}: ${error.message}`,
+      );
+      throw error;
     }
   }
 }

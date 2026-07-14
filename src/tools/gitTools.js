@@ -34,9 +34,10 @@ export default class GitTools {
       const stdout = await this.#run(["remote", "get-url", "origin"]);
       return stdout.replace(/\.git$/, "").split(/[:/]/).slice(-2).join("/");
     } catch (e) {
-      // If the remote origin is not set, we return null instead of an empty string
-      // to explicitly signal the absence of a repository identifier.
-      return null;
+      if (e.message.includes("No such remote") || e.message.includes("not a git repository")) {
+        return null;
+      }
+      throw e;
     }
   }
 

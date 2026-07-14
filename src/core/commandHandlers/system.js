@@ -55,8 +55,9 @@ class SystemCommands {
     let targetStatus = !currentStatus; // Default to toggle
 
     if (args) {
-      if (args.toLowerCase() === "on") targetStatus = true;
-      else if (args.toLowerCase() === "off") targetStatus = false;
+      const lowerArgs = args.toLowerCase();
+      if (lowerArgs === "on") targetStatus = true;
+      else if (lowerArgs === "off") targetStatus = false;
     }
 
     if (targetStatus === currentStatus) {
