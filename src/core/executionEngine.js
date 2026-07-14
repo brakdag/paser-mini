@@ -3,68 +3,6 @@ import ToolAttemptTracker from "./toolTracker.js";
 
 const DEFAULT_MAX_TURNS = 10000;
 
-/* eslint-disable jsdoc/require-jsdoc */
-/**
- * A scalable map of tool details extractors complying with the Open/Closed Principle.
- * Defined at the module level to avoid memory allocation on every call.
- */
-const TOOL_DETAIL_EXTRACTORS = {
-  read: (args) => args.path ? path.basename(args.path) : "unknown",
-  tail: (args) => args.path ? path.basename(args.path) : "unknown",
-  write: (args) => args.path ? path.basename(args.path) : "unknown",
-  remove: (args) => args.path ? path.basename(args.path) : "unknown",
-  sed: (args) => args.path ? path.basename(args.path) : "unknown",
-  replace: (args) => args.path ? path.basename(args.path) : "unknown",
-  analysis: (args) => args.path ? path.basename(args.path) : "unknown",
-  eslint: (args) => args.path ? path.basename(args.path) : "unknown",
-  diff: (args) => args.path ? path.basename(args.path) : "unknown",
-  restore: (args) => args.path ? path.basename(args.path) : "unknown",
-  ls: (args) => args.path || "root",
-  list: (args) => args.path || "root",
-  rename: (args) => args.origin && args.destination ? `${path.basename(args.origin)} -> ${path.basename(args.destination)}` : "unknown",
-  copy: (args) => args.origin && args.destination ? `${path.basename(args.origin)} -> ${path.basename(args.destination)}` : "unknown",
-  concat: (args) => args.destination ? path.basename(args.destination) : "unknown",
-  doc: (args) => args.path ? `Docs: ${path.basename(args.path)}` : "unknown",
-  execute: (args) => args.command ? args.command.substring(0, 50) : "bash",
-  grep: (args) => args.query || "search",
-  glob: (args) => args.pattern || "pattern",
-  valide: (args) => args.json_string ? `len: ${args.json_string.length}` : "json",
-  nickname: (args) => args.newNickname || "nickname",
-  push: () => "insight",
-  token: () => "tokens",
-  tree: () => "tree",
-  difference: () => "all",
-  remote: () => "url",
-  patch: () => "git patch",
-  structure: (args) => args.file_path ? path.basename(args.file_path) : "unknown",
-  node: (args) => args.file_path ? path.basename(args.file_path) : "unknown",
-  arrange: (args) => args.file_path ? path.basename(args.file_path) : "unknown",
-  update: (args) => args.file_path ? path.basename(args.file_path) : "unknown",
-  create: (args) => args.title || "issue",
-  edit: (args) => args.issue_number ? `#${args.issue_number}` : "issue",
-  close: (args) => args.issue_number ? `#${args.issue_number}` : "issue",
-  post: (args) => args.issue_number ? `#${args.issue_number}` : "issue",
-  notify: (args) => args.message ? args.message.substring(0, 30) : "notify",
-  scene: (args) => args.scene || "scene",
-  jszip: (args) => args.filePath ? path.basename(args.filePath) : "zip",
-  bin: (args) => args.filePath ? path.basename(args.filePath) : "binary",
-  search: (args) => args.query || "web",
-  url: (args) => args.url || "url",
-  fetch: (args) => args.searchQuery ? `${args.url} (q: ${args.searchQuery})` : args.url || "url",
-  run: () => "sandbox",
-  img: (args) => args.path ? path.basename(args.path) : "image",
-  reset: (args) => args.user_message ? args.user_message.substring(0, 30) : "reset",
-  index: (args) => `${args.path || "root"}${args.filter ? ` (${args.filter})` : ""}`,
-  load: (args) => args.ids || "ids",
-  real: (args) => args.action || "action",
-  inspect: (args) => {
-    if (args.path) return path.basename(args.path);
-    if (args.command) return args.command.substring(0, 50);
-    return "inspect";
-  },
-};
-/* eslint-enable jsdoc/require-jsdoc */
-
 /**
  * ExecutionEngine is responsible for the orchestration of tool calls.
  * It manages tool validation, loop detection, security constraints,
@@ -110,8 +48,91 @@ class ExecutionEngine {
    * @returns {string} A descriptive string identifying the target of the tool operation.
    */
   _getToolDetail(toolName, args) {
-    const extractor = TOOL_DETAIL_EXTRACTORS[toolName];
-    return extractor ? extractor(args) : "no details";
+    switch (toolName) {
+      case "read":
+      case "tail":
+      case "write":
+      case "remove":
+      case "sed":
+      case "replace":
+      case "analysis":
+      case "eslint":
+      case "diff":
+      case "restore":
+      case "img":
+        return args.path ? path.basename(args.path) : "unknown";
+      case "ls":
+      case "list":
+        return args.path || "root";
+      case "rename":
+      case "copy":
+        return args.origin && args.destination ? `${path.basename(args.origin)} -> ${path.basename(args.destination)}` : "unknown";
+      case "concat":
+        return args.destination ? path.basename(args.destination) : "unknown";
+      case "doc":
+        return args.path ? `Docs: ${path.basename(args.path)}` : "unknown";
+      case "execute":
+        return args.command ? args.command.substring(0, 50) : "bash";
+      case "grep":
+      case "search":
+        return args.query || "search";
+      case "glob":
+        return args.pattern || "pattern";
+      case "validate":
+        return args.jsonString ? `len: ${args.jsonString.length}` : "json";
+      case "nickname":
+        return args.newNickname || "nickname";
+      case "push":
+        return "insight";
+      case "token":
+        return "tokens";
+      case "tree":
+        return "tree";
+      case "difference":
+        return "all";
+      case "remote":
+        return "url";
+      case "patch":
+        return "git patch";
+      case "structure":
+      case "node":
+      case "arrange":
+      case "update":
+        return args.file_path ? path.basename(args.file_path) : "unknown";
+      case "create":
+        return args.title || "issue";
+      case "edit":
+      case "close":
+      case "post":
+        return args.issue_number ? `#${args.issue_number}` : "issue";
+      case "notify":
+        return args.message ? args.message.substring(0, 30) : "notify";
+      case "scene":
+        return args.scene || "scene";
+      case "jszip":
+      case "bin":
+        return args.filePath ? path.basename(args.filePath) : "unknown";
+      case "url":
+        return args.url || "url";
+      case "fetch":
+        return args.searchQuery ? `${args.url} (q: ${args.searchQuery})` : args.url || "url";
+      case "run":
+        return "sandbox";
+      case "reset":
+        return args.user_message ? args.user_message.substring(0, 30) : "reset";
+      case "index":
+        return `${args.path || "root"}${args.filter ? ` (${args.filter})` : ""}`;
+      case "load":
+        return args.ids || "ids";
+      case "real":
+        return args.action || "action";
+      case "inspect":
+        if (args.path) return path.basename(args.path);
+        if (args.command) return args.command.substring(0, 50);
+        return "inspect";
+      default:
+        return "no details";
+    }
   }
 
   /**

@@ -85,7 +85,8 @@ class ConfigManager {
       return fs.existsSync(configPath)
         ? JSON.parse(fs.readFileSync(configPath, "utf8"))
         : {};
-    } catch {
+    } catch (error) {
+      console.error(`Failed to load config from ${configPath}:`, error);
       return {};
     }
   }

@@ -1,23 +1,10 @@
 import fs from "fs/promises";
-import path from "path";
+import PathValidator from "../utils/pathValidator.js";
 
 /**
  * Provides utilities for manipulating JSON files.
  */
 export default class JsonTools {
-  /**
-   * Resolves and validates the input path.
-   * @param {string} inputPath - The path to resolve.
-   * @returns {string} The resolved absolute path.
-   */
-  #getSafePath(inputPath) {
-    const resolved = path.resolve(process.cwd(), inputPath);
-    if (!resolved.startsWith(process.cwd())) {
-      throw new Error("Security Error: Path is outside of project root");
-    }
-    return resolved;
-  }
-
   /**
    * Parses a path string into segments.
    * @param {string} pathStr - The path string to parse.
@@ -37,7 +24,7 @@ export default class JsonTools {
    * @returns {Promise<unknown>} The parsed JSON data.
    */
   async #loadJson(filePath) {
-    const safePath = this.#getSafePath(filePath);
+    const safePath = PathValidator.getSafePath(filePath);
     const content = await fs.readFile(safePath, "utf8");
     return JSON.parse(content);
   }
@@ -162,7 +149,7 @@ export default class JsonTools {
     const data = await this.#loadJson(filePath);
     const parts = this.#parsePath(pathStr);
     const updatedData = this.#setByPathImmutable(data, parts, value);
-    const safePath = this.#getSafePath(filePath);
+    const safePath = PathValidator.getSafePath(filePath);
     await fs.writeFile(safePath, JSON.stringify(updatedData, null, 2), "utf8");
   }
 }

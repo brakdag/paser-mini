@@ -6,6 +6,7 @@ import os from "os";
 import ConfigManager from "../core/configManager.js";
 
 const execFilePromise = promisify(execFile);
+const AGENT_NICKNAME_CONFIG_KEY = "agent_nickname";
 
 /**
  * Utility tools for system operations and data validation.
@@ -58,7 +59,7 @@ export default class UtilTools {
       this.#model.nickname = newNickname; // Mutación instantánea por referencia
       
       const config = new ConfigManager();
-      config.save("agent_nickname", newNickname);
+      config.save(AGENT_NICKNAME_CONFIG_KEY, newNickname);
       
       return `*** ${oldNickname} is now known as ${newNickname}`;
     } catch (e) {
