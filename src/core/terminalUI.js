@@ -355,7 +355,7 @@ class TerminalUI {
     const now = new Date();
     const datePart = now.toDateString();
     const [, month, day, year] = datePart.split(" ");
-    return `--- Log ${month} ${day} ${year} San Rafael Mendoza Argentina resumed from ./log/session.log`;
+    return `--- Log ${month} ${day} ${year} San Rafael Mendoza Argentina resumed from ./.paser-mini/log/session.log`;
   }
 
   /**

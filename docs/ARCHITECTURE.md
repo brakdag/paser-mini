@@ -18,7 +18,7 @@ This project follows a modular ReAct (Reasoning and Acting) architecture. Below 
 - **`commandHandler.js`**: Implements the internal command system (e.g., `/models`, `/s`, `/fav`) to modify agent state without affecting the chat history.
 - **`smartParser.js`**: The Smart Tool Parser. It extracts tool calls from LLM responses using AST evaluation and regex matching, casting arguments to their correct types.
 - **`executionEngine.js`**: The tool execution orchestrator. Validates tool calls, prevents infinite loops via `ToolAttemptTracker`, and enforces security constraints before invoking tool functions.
-- **`configManager.js`**: Handles the persistence of user preferences in `config/config.json`.
+- **`configManager.js`**: Handles the persistence of user preferences in `./.paser-mini/config/config.json`.
 
 ### 💠 Infrastructure (`src/infrastructure/`)
 

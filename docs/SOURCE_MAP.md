@@ -6,6 +6,6 @@ To avoid path resolution errors, always remember the following structure:
 - **Core Logic**: `src_js/core/` (ChatManager, ExecutionEngine, etc.)
 - **Infrastructure**: `src_js/infrastructure/` (Adapters)
 - **Tools**: `src_js/tools/` (File tools, Memory tools)
-- **Config**: `src_js/config/`
+- **Config**: `src_js/.paser-mini/config/`
 
 **Rule**: All core logic and tool implementations are written in JavaScript/Node.js and reside within the `src_js/` directory.

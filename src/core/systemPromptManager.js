@@ -7,7 +7,7 @@ import {
 } from "../infrastructure/registry.js";
 import logger from "./logger.js";
 
-const CACHE_DIR = path.join(process.cwd(), ".cache");
+const CACHE_DIR = path.join(process.cwd(), ".paser-mini/cache");
 const CACHE_FILE = path.join(CACHE_DIR, "startup.json");
 
 /**
@@ -70,7 +70,7 @@ class SystemPromptManager {
       return { systemInstruction: "", filteredTools: {} };
     }
 
-    const defaultPath = ".staff/default.log";
+    const defaultPath = ".paser-mini/staff/default.log";
     const injectionFile = options.fileSystemInstruction || (await this._exists(defaultPath) ? defaultPath : null);
 
     const dependencies = [

@@ -55,7 +55,7 @@ export default class WebTools {
    */
   async #getFetchHeaders() {
     try {
-      const configPath = path.resolve(ROOT_DIR, "config/config.json");
+      const configPath = path.resolve(ROOT_DIR, ".paser-mini/config/config.json");
       const config = JSON.parse(await fs.readFile(configPath, "utf8"));
       return config.fetch_headers || {};
     } catch {

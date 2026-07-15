@@ -17,7 +17,7 @@ const GLOBAL_KEYS = new Set([
 /**
  * Manages the application configuration, providing layered persistence:
  * 1. Global (User home ~/.paser-mini/config.json)
- * 2. Local (Current project ./config/config.json)
+ * 2. Local (Current project ./.paser-mini/config/config.json)
  */
 class ConfigManager {
   /**
@@ -33,7 +33,7 @@ class ConfigManager {
     this.globalConfig = this._loadConfig(this.globalPath);
 
     // Local Layer
-    const localDir = path.join(process.cwd(), "config");
+    const localDir = path.join(process.cwd(), ".paser-mini/config");
     if (!fs.existsSync(localDir)) {
       fs.mkdirSync(localDir, { recursive: true });
     }

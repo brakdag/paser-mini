@@ -31,7 +31,7 @@ Allow: /src/core/schemas/
 
 # [PRIORITY: LOW] - Implementation details and config
 Allow: /src/
-Allow: /config/
+Allow: /.paser-mini/config/
 Allow: /.migration/
 Allow: /scripts/
 

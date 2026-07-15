@@ -1,4 +1,7 @@
 import fs from "fs";
+import path from "path";
+
+const LOG_DIR = path.join(process.cwd(), ".paser-mini", "log");
 
 /**
  * Handles logging of session events to a file.
@@ -11,7 +14,10 @@ class SessionLogger {
    */
   writeToLog(text) {
     try {
-      fs.appendFileSync("log/session.log", `${text}\n`, "utf8");
+      if (!fs.existsSync(LOG_DIR)) {
+        fs.mkdirSync(LOG_DIR, { recursive: true });
+      }
+      fs.appendFileSync(path.join(LOG_DIR, "session.log"), `${text}\n`, "utf8");
     } catch (e) {
       console.error(`[Log Error] ${e.message}`);
     }

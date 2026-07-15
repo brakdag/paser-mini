@@ -1,5 +1,8 @@
 import fs from "fs/promises";
+import fsSync from "fs";
 import path from "path";
+
+const LOG_DIR = path.join(process.cwd(), ".paser-mini", "log");
 
 /**
  * Manages the memento log file, handling memory storage and rank tracking.
@@ -11,7 +14,10 @@ class MementoManager {
    * Initializes a new instance of the MementoManager.
    */
   constructor() {
-    this.#LOG_FILE = path.join(process.cwd(), "log", "memento.log");
+    if (!fsSync.existsSync(LOG_DIR)) {
+      fsSync.mkdirSync(LOG_DIR, { recursive: true });
+    }
+    this.#LOG_FILE = path.join(LOG_DIR, "memento.log");
   }
 
   /**

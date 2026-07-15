@@ -4,8 +4,6 @@
 # Node.js / JS Port
 node_modules/
 last_request.json
-schema_audit.logo
 .paser_mini/
 .staff/
-config/
-log/
+.paser-mini/

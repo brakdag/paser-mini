@@ -26,12 +26,13 @@ class Logger {
    * @returns {void}
    */
   constructor() {
-    this.logFile = path.join(process.cwd(), "log", "paser_mini.log");
-    this.sessionFile = path.join(process.cwd(), "log", "session.log");
+    const logDir = path.join(process.cwd(), ".paser-mini", "log");
+    this.logFile = path.join(logDir, "paser_mini.log");
+    this.sessionFile = path.join(logDir, "session.log");
     this.agentNickname = null;
 
-    if (!fs.existsSync(path.join(process.cwd(), "log"))) {
-      fs.mkdirSync(path.join(process.cwd(), "log"));
+    if (!fs.existsSync(logDir)) {
+      fs.mkdirSync(logDir, { recursive: true });
     }
 
     fs.appendFileSync(

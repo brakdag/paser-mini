@@ -36,7 +36,8 @@ This document provides the definitive map of the Paser Mini codebase. The projec
 │   │   ├── searchTools.js    # Global search & patterns
 │   │   ├── systemTools.js    # OS & analysis tools
 │   │   └── utilTools.js      # General utilities
-│   └── config/                # Local configuration & cache
+│   ├── .paser-mini/config/       # Local configuration
+└── .paser-mini/cache/        # System startup cache
 ├── tests/                     # Test suite & stress tests
 ├── docs/                      # Technical documentation & protocols
 
