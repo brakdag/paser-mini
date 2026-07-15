@@ -1,6 +1,3 @@
-/**
- * Handles communication with the API, including retry logic and error recovery.
- */
 const RETRYABLE_NETWORK_ERRORS = ['ECONNABORTED', 'ETIMEDOUT', 'ECONNRESET', 'ERR_NETWORK', 'ENOTFOUND', 'EAI_AGAIN', 'EHOSTUNREACH', 'ENETUNREACH', 'ECONNREFUSED', 'EPIPE'];
 const RETRYABLE_SERVER_STATUSES = [429, 500, 502, 503, 504];
 const MAX_RETRIES = 5;

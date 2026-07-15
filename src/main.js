@@ -98,7 +98,7 @@ async function main() {
   chatManager.providerManager = providerManager;
 
   memoryToolsInstance.setMemoryContext(assistant, chatManager);
-  await systemToolsInstance.setContext(assistant, chatManager);
+  systemToolsInstance.setContext(assistant, chatManager);
   utilToolsInstance.setIdentityContext(model);
 
   logger.info("Startup: Initialization complete. Handing off to ChatManager.\n");

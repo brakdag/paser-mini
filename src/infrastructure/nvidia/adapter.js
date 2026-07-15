@@ -138,7 +138,8 @@ class NvidiaAdapter extends BaseAdapter {
   /**
    * Standardizes API errors.
    * @param {Error} e - The caught error object.
-   * @throws {Error} A standardized APIError.
+   * @private
+   * @returns {Error} A formatted Error object with name "APIError".
    */
   _handleError(e) {
     const errorMsg = e.response?.data?.error?.message || e.message;
@@ -148,7 +149,7 @@ class NvidiaAdapter extends BaseAdapter {
     error.name = "APIError";
     error.response = e.response;
     error.code = e.code;
-    throw error;
+    return error;
   }
 
   /**

@@ -207,7 +207,8 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
   /**
    * Standardizes API errors with M3-specific context.
    * @param {Error} e - The caught error object.
-   * @throws {Error} A standardized APIError.
+   * @private
+   * @returns {Error} A formatted Error object with name "APIError" or "ServiceDegradedError".
    */
   _handleError(e) {
     const errorMsg = e.response?.data?.error?.message || e.message;
@@ -222,7 +223,8 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
     const error = new Error(errorMsg);
     error.name = e.name === "ServiceDegradedError" ? "ServiceDegradedError" : "APIError";
     error.response = e.response;
-    throw error;
+    error.code = e.code;
+    return error;
   }
 
   /**

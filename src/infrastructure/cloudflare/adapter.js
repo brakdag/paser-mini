@@ -105,12 +105,7 @@ class CloudflareAdapter extends BaseAdapter {
           this.injectMessage("assistant", textContent, IRCFormatter.getTimestamp());
           return textContent;
         } catch (error) {
-          const errorMsg = error.response?.data?.error?.message || error.message;
-          const apiError = new Error(errorMsg);
-          apiError.name = "APIError";
-          apiError.response = error.response;
-          apiError.code = error.code;
-          throw apiError;
+          throw this._handleApiError(error);
         }
       }, {
         recoverableErrors: this.recoverableErrors,
@@ -134,6 +129,21 @@ class CloudflareAdapter extends BaseAdapter {
       }
       throw error;
     }
+  }
+
+  /**
+   * Formats an API error into a standardized Error object.
+   * @param {Error} error - The caught error object.
+   * @private
+   * @returns {Error} A formatted Error object with name "APIError".
+   */
+  _handleApiError(error) {
+    const errorMsg = error.response?.data?.error?.message || error.message;
+    const apiError = new Error(errorMsg);
+    apiError.name = "APIError";
+    apiError.response = error.response;
+    apiError.code = error.code;
+    return apiError;
   }
 
   /**

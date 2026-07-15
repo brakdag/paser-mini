@@ -165,6 +165,8 @@ class CohereAdapter extends BaseAdapter {
     const errorMsg = error.response?.data?.error?.message || error.message;
     const apiError = new Error(errorMsg);
     apiError.name = "APIError";
+    apiError.response = error.response;
+    apiError.code = error.code;
     return apiError;
   }
 

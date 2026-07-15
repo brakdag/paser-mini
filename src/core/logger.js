@@ -106,7 +106,6 @@ class Logger {
     const time = new Date().toLocaleTimeString("en-GB", {
       hour: "2-digit",
       minute: "2-digit",
-      second: "2-digit",
       hour12: false,
     });
     const nick = this.agentNickname || "agent";
@@ -128,3 +127,4 @@ class Logger {
 const logger = new Logger();
 
 export default logger;
+
