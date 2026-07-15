@@ -9,10 +9,10 @@ import {
   DEFAULT_MODELS,
   HTTP_TIMEOUT,
   MAX_RETRIES,
-  MAX_RETRY_DELAY,
   MAX_TOKENS,
   RECOVERABLE_STATUS_CODES,
 } from "./constants.js";
+import RetryHandler from "../../utils/retryHandler.js";
 
 /**
  * Adapter for the Z.AI API, providing chat capabilities and history management.
@@ -43,6 +43,7 @@ class ZaiAdapter extends BaseAdapter {
     this.historyManager = new HistoryManager(userNickname, agentNickname);
     this.baseURL = this._resolveBaseUrl();
     this._configureClient(httpClient);
+    this.retryHandler = new RetryHandler();
   }
 
   /**
@@ -132,32 +133,6 @@ class ZaiAdapter extends BaseAdapter {
   }
 
   /**
-   * Formats milliseconds into a human-readable string (e.g., "2.5h", "45m").
-   * @param {number} ms - Milliseconds.
-   * @returns {string} Formatted time string.
-   * @private
-   */
-  _formatDelay(ms) {
-    const seconds = Math.floor(ms / 1000);
-    const hours = seconds / 3600;
-    if (hours >= 1) return `${hours.toFixed(1)}h`;
-    const minutes = seconds / 60;
-    if (minutes >= 1) return `${minutes.toFixed(0)}m`;
-    return `${seconds}s`;
-  }
-
-  /**
-   * Calculates the exponential backoff delay with a maximum cap.
-   * @param {number} attempt - The current attempt number (1-indexed).
-   * @returns {number} Delay in milliseconds.
-   * @private
-   */
-  _getExponentialDelay(attempt) {
-    const delay = 2 ** attempt * 1000;
-    return Math.min(delay, MAX_RETRY_DELAY);
-  }
-
-  /**
    * Sends a message to the Z.AI API and records the interaction in history.
    * @param {string|object|Array} message - The message content to send.
    * @param {string} [role] - The role of the sender.
@@ -167,46 +142,36 @@ class ZaiAdapter extends BaseAdapter {
   async sendMessage(message, role = "user") {
     const timestamp = IRCFormatter.getTimestamp();
     this.injectMessage(role, message, timestamp);
-    this._enforceContextLimit(); // Apply strict context boundary before API call
+    this._enforceContextLimit();
     const historyLengthBefore = this.getHistory().length;
 
     const payload = this._preparePayload();
     this.lastPayload = payload;
-    let lastError = null;
 
     try {
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt += 1) {
-      try {
-        logger.info(
-          `[ZaiAdapter] Requesting (Attempt ${attempt}/${MAX_RETRIES}): ${this.client.defaults.baseURL}/chat/completions`,
-        );
-        const response = await this.client.post("/chat/completions", payload);
-        return this._handleResponse(response);
-      } catch (error) {
-        lastError = error;
-        const isEmptyResponseError = error.message === "Empty response from Z.AI";
-
-        if (!isEmptyResponseError) {
+      return await this.retryHandler.execute(async () => {
+        try {
+          logger.info(`[ZaiAdapter] Requesting: ${this.client.defaults.baseURL}/chat/completions`);
+          const response = await this.client.post("/chat/completions", payload);
+          return this._handleResponse(response);
+        } catch (error) {
           throw this._handleApiError(error);
         }
-
-        const delay = this._getExponentialDelay(attempt);
-        const formattedDelay = this._formatDelay(delay);
-        logger.warn(
-          `[ZaiAdapter] Empty response received. Retrying in ${formattedDelay}... (Attempt ${attempt}/${MAX_RETRIES})`,
-        );
-        if (this.ui && this.ui.displayInfo) {
-          this.ui.displayInfo(
-            `Empty response from Z.AI. Retrying in ${formattedDelay}... (${attempt}/${MAX_RETRIES})`,
-          );
-        }
-        await new Promise((resolve) => {
-          setTimeout(resolve, delay);
-        });
-      }
-    }
-
-    throw this._handleApiError(lastError || new Error("Max retries reached with empty response."));
+      }, {
+        recoverableErrors: ["Empty response from Z.AI"],
+        /**
+         * Callback executed on each retry attempt.
+         * @param {number} attempt - The current retry attempt number.
+         * @param {Error} error - The error that triggered the retry.
+         * @param {string} formattedDelay - The formatted delay string for display.
+         */
+        onRetry: (attempt, error, formattedDelay) => {
+          logger.warn(`[ZaiAdapter] Retrying in ${formattedDelay}... (${attempt}/${this.retryHandler.maxRetries}) due to: ${error.message}`);
+          if (this.ui && this.ui.displayInfo) {
+            this.ui.displayInfo(`Retrying Z.AI in ${formattedDelay}... (${attempt}/${this.retryHandler.maxRetries}) | Error: ${error.message}`);
+          }
+        },
+      });
     } catch (error) {
       if (this.getHistory().length === historyLengthBefore) {
         this.popLastMessage();
@@ -218,7 +183,7 @@ class ZaiAdapter extends BaseAdapter {
   /**
    * Prepares the payload for the Z.AI /chat/completions endpoint.
    *
-   * Prepends the system instruction as the leading {role:"system"} message
+   * Prepends the system instruction as the leading `role:"system"` message
    * (OpenAI/Z.AI convention), matching the NVIDIA adapter pattern. This is
    * done at payload-build time rather than stored in history, so history
    * stays conversation-only and the instruction is always fresh from

@@ -47,7 +47,7 @@ export default class GithubTools {
   async #getHeaders() {
     const token = process.env.GITHUB_TOKEN;
     if (!token) {
-      throw new Error("GITHUB_TOKEN no configurado.");
+      throw new Error("GITHUB_TOKEN is not configured.");
     }
     return { Authorization: `token ${token}` };
   }
