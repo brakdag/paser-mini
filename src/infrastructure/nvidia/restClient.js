@@ -1,5 +1,6 @@
 import axios from "axios";
 
+const BASE_URL = "https://integrate.api.nvidia.com/v1";
 
 /**
  * Low-level REST client for Nvidia API interactions.
@@ -10,7 +11,7 @@ class NvidiaRestClient {
    */
   constructor(configManager) {
     this.apiKey = process.env.NVIDIA_API_KEY;
-    this.baseUrl = "https://integrate.api.nvidia.com/v1";
+    this.baseUrl = BASE_URL;
     this.configManager = configManager;
     this.lastRequestTime = 0;
     this.client = axios.create({

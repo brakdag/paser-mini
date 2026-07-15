@@ -5,6 +5,8 @@ import IRCFormatter from "../../utils/ircFormatter.js";
 import RetryHandler from "../../utils/retryHandler.js";
 import { normalizeRole, normalizeContent } from "../historyNormalizer.js";
 
+const BASE_URL = "https://openrouter.ai/api/v1";
+
 /**
  * Adapter for the OpenRouter AI API, providing chat capabilities and history management.
  * @augments BaseAdapter
@@ -36,7 +38,7 @@ class OpenRouterAdapter extends BaseAdapter {
    */
   _configureClient() {
     this.client = axios.create({
-      baseURL: "https://openrouter.ai/api/v1",
+      baseURL: BASE_URL,
       timeout: 600000,
       headers: {
         "Authorization": `Bearer ${this.apiKey}`,

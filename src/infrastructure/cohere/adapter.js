@@ -5,6 +5,8 @@ import IRCFormatter from "../../utils/ircFormatter.js";
 import RetryHandler from "../../utils/retryHandler.js";
 import { normalizeRole, normalizeContent } from "../historyNormalizer.js";
 
+const BASE_URL = "https://api.cohere.com/v1";
+
 /**
  * Adapter for the Cohere AI API, providing chat capabilities and history management.
  * @augments BaseAdapter
@@ -36,7 +38,7 @@ class CohereAdapter extends BaseAdapter {
    */
   _configureClient() {
     this.client = axios.create({
-      baseURL: "https://api.cohere.com/v1",
+      baseURL: BASE_URL,
       timeout: 600000,
       headers: {
         "Authorization": `Bearer ${this.apiKey}`,

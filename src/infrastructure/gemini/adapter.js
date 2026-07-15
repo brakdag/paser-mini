@@ -8,6 +8,8 @@ import {
   GeminiEmptyResponseError,
 } from "../../core/exceptions.js";
 
+const BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
+
 /**
  * Adapter for the Google Gemini API, handling communication, rate limiting, and history.
  * @augments BaseAdapter
@@ -201,7 +203,7 @@ class GeminiAdapter extends BaseAdapter {
           this.lastPayload = payload;
 
           const modelName = this.currentModel.replace(/^models\//, "");
-          const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${this.apiKey}`;
+          const url = `${BASE_URL}/models/${modelName}:generateContent?key=${this.apiKey}`;
 
           const response = await this.client.post(url, payload);
           return this._processApiResponse(response.data);
@@ -346,7 +348,7 @@ class GeminiAdapter extends BaseAdapter {
    */
   async getAvailableModels() {
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${this.apiKey}`;
+      const url = `${BASE_URL}/models?key=${this.apiKey}`;
       const response = await this.client.get(url);
       const { data } = response;
       return data.models.map((m) => m.name);
@@ -364,7 +366,7 @@ class GeminiAdapter extends BaseAdapter {
   async checkAvailability(modelName) {
     try {
       const name = modelName.replace(/^models\//, "");
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${name}:generateContent?key=${this.apiKey}`;
+      const url = `${BASE_URL}/models/${name}:generateContent?key=${this.apiKey}`;
       const payload = { contents: [{ role: "user", parts: [{ text: "hi" }] }] };
       await this.client.post(url, payload);
       return true;

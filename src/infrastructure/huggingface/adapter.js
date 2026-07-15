@@ -5,6 +5,8 @@ import IRCFormatter from "../../utils/ircFormatter.js";
 import RetryHandler from "../../utils/retryHandler.js";
 import { normalizeRole, normalizeContent } from "../historyNormalizer.js";
 
+const BASE_URL = "https://router.huggingface.co/v1";
+
 /**
  * Adapter for the HuggingFace API, providing chat capabilities and history management.
  * @augments BaseAdapter
@@ -36,7 +38,7 @@ class HuggingFaceAdapter extends BaseAdapter {
    */
   _configureClient() {
     this.client = axios.create({
-      baseURL: "https://router.huggingface.co/v1",
+      baseURL: BASE_URL,
       timeout: 600000,
       headers: {
         "Authorization": `Bearer ${this.apiKey}`,

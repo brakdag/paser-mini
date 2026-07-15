@@ -78,6 +78,8 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
     const payload = this._preparePayload();
     this.lastPayload = payload;
 
+    await this._applyRateLimit();
+
     try {
       return await this.retryHandler.execute(async () => {
         try {

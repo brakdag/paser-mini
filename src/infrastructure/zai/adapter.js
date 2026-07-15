@@ -148,6 +148,8 @@ class ZaiAdapter extends BaseAdapter {
     const payload = this._preparePayload();
     this.lastPayload = payload;
 
+    await this._applyRateLimit();
+
     try {
       return await this.retryHandler.execute(
         async () => {
@@ -285,9 +287,6 @@ class ZaiAdapter extends BaseAdapter {
    */
   hardReset(historyOverride = null) {
     this.historyManager.hardReset(historyOverride);
-    if (this.systemInstruction) {
-      this.injectMessage("system", this.systemInstruction);
-    }
     logger.info("[ZaiAdapter] History hard reset");
   }
 
