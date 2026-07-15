@@ -3,7 +3,7 @@ import os from "os";
 import path from "path";
 
 /**
- * Claves que pertenecen al ámbito global del usuario y persisten entre proyectos.
+ * Keys belonging to the user's global scope and persisting across projects.
  * @type {Set<string>}
  */
 const GLOBAL_KEYS = new Set([
@@ -24,7 +24,7 @@ class ConfigManager {
    * Initializes the ConfigManager and loads configurations from both layers.
    */
   constructor() {
-    // Capa Global
+    // Global Layer
     const globalDir = path.join(os.homedir(), ".paser-mini");
     if (!fs.existsSync(globalDir)) {
       fs.mkdirSync(globalDir, { recursive: true });
@@ -32,7 +32,7 @@ class ConfigManager {
     this.globalPath = path.join(globalDir, "config.json");
     this.globalConfig = this._loadConfig(this.globalPath);
 
-    // Capa Local
+    // Local Layer
     const localDir = path.join(process.cwd(), "config");
     if (!fs.existsSync(localDir)) {
       fs.mkdirSync(localDir, { recursive: true });
@@ -40,7 +40,7 @@ class ConfigManager {
     this.localPath = path.join(localDir, "config.json");
     this.localConfig = this._loadConfig(this.localPath);
 
-    // Migración automática: si hay claves globales en el archivo local, se mueven al global.
+    // Automatic migration: if global keys exist in the local file, they are moved to the global one.
     this._migrateGlobalKeys();
   }
 
@@ -56,7 +56,7 @@ class ConfigManager {
 
     GLOBAL_KEYS.forEach((key) => {
       if (key in this.localConfig) {
-        // Solo migrar si no existe ya en el global (evita sobrescribir datos más recientes)
+        // Only migrate if it does not already exist globally (prevents overwriting more recent data)
         if (!(key in this.globalConfig)) {
           this.globalConfig[key] = this.localConfig[key];
           needsGlobalSave = true;
@@ -117,7 +117,7 @@ class ConfigManager {
     }
 
     if (key in this.localConfig) return this.localConfig[key];
-    // Fallback por si se busca una clave local que no existe localmente pero sí globalmente
+    // Fallback in case a local key is searched that does not exist locally but does globally
     if (key in this.globalConfig) return this.globalConfig[key];
     
     return defaultValue;

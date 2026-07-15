@@ -148,12 +148,12 @@ class TerminalUI {
     const plainText = text.trim();
     const ts = timestamp || IRCFormatter.getTimestamp();
     
-    // 1. Formato coloreado para la terminal (con timestamp)
+    // 1. Colored format for the terminal (with timestamp)
     const terminalText = IRCFormatter.formatTerminalMessage(nickname, plainText, this.model.nickname, ts);
     const renderedText = renderer.formatMarkdown(terminalText);
     process.stdout.write(`${renderedText}\n`);
 
-    // 2. Formato plano para el log (con timestamp)
+    // 2. Plain format for the log (with timestamp)
     const logText = this.activePlugin.formatMessage(nickname, plainText, ts);
     this.writeToLog(logText);
   }
@@ -271,11 +271,11 @@ class TerminalUI {
 
     const actionText = `* ${name} (${detail})`;
 
-    // 1. Mensaje coloreado para la terminal (con timestamp y estado)
+    // 1. Colored message for the terminal (with timestamp and status)
     const terminalText = IRCFormatter.formatTerminalAction(this.model.nickname, actionText, statusColor(statusIcon), ts);
     process.stdout.write(`${terminalText}\n`);
 
-    // 2. Mensaje plano para el log (con timestamp y estado)
+    // 2. Plain message for the log (with timestamp and status)
     this.writeToLog(
       this.activePlugin.formatAction(this.model.nickname, `${actionText} ${statusIcon}`),
     );

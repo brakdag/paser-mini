@@ -116,7 +116,7 @@ process.on("uncaughtException", (err) => {
   console.error("Uncaught Exception thrown:", err);
 });
 
-// Guardar caché del system prompt al cerrar la aplicación
+// Save system prompt cache on application exit
 process.on("exit", () => {
   promptManager.saveCache();
 });

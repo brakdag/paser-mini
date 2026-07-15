@@ -104,7 +104,7 @@ class SystemPromptManager {
           };
         }
       } catch (err) {
-        // Caché inválido o inexistente
+        // Invalid or non-existent cache
       }
     }
 
@@ -142,7 +142,7 @@ class SystemPromptManager {
       ? `PERSON AND ROLE:\n${injection}\n\nCORE OPERATIONAL PROTOCOLS:\n${baseInstr}`
       : baseInstr;
 
-    // 3. Guardar payload en memoria
+    // 3. Save payload in memory
     this._pendingCache = {
       mtimes: currentMtimes,
       options: {
@@ -153,7 +153,7 @@ class SystemPromptManager {
       systemInstruction: finalInstruction
     };
 
-    // Resetear la bandera si estaba forzada
+    // Reset the flag if it was forced
     this._forceRebuild = false;
 
     return {
@@ -186,7 +186,7 @@ class SystemPromptManager {
         fs.mkdirSync(CACHE_DIR, { recursive: true });
       }
       fs.writeFileSync(CACHE_FILE, JSON.stringify(this._pendingCache), "utf8");
-      this._pendingCache = null; // Limpiar después de guardar
+      this._pendingCache = null; // Clear after saving
     } catch (err) {
       console.warn(`Warning: Could not write startup cache on exit: ${err.message}`);
     }
