@@ -52,8 +52,8 @@ class ZaiAdapter extends BaseAdapter {
    * @returns {string} The resolved base URL.
    */
   _resolveBaseUrl() {
-    const STANDARD = "https://api.z.ai/api/paas/v4";
-    const CODING = "https://api.z.ai/api/coding/paas/v4";
+    const STANDARD = "https://api.z.ai/api/coding/paas/v4";
+    const CODING = "https://api.z.ai/api/paas/v4";
 
     if (process.env.ZAI_BASE_URL) return process.env.ZAI_BASE_URL.trim();
 
@@ -149,29 +149,41 @@ class ZaiAdapter extends BaseAdapter {
     this.lastPayload = payload;
 
     try {
-      return await this.retryHandler.execute(async () => {
-        try {
-          logger.info(`[ZaiAdapter] Requesting: ${this.client.defaults.baseURL}/chat/completions`);
-          const response = await this.client.post("/chat/completions", payload);
-          return this._handleResponse(response);
-        } catch (error) {
-          throw this._handleApiError(error);
-        }
-      }, {
-        recoverableErrors: ["Empty response from Z.AI"],
-        /**
-         * Callback executed on each retry attempt.
-         * @param {number} attempt - The current retry attempt number.
-         * @param {Error} error - The error that triggered the retry.
-         * @param {string} formattedDelay - The formatted delay string for display.
-         */
-        onRetry: (attempt, error, formattedDelay) => {
-          logger.warn(`[ZaiAdapter] Retrying in ${formattedDelay}... (${attempt}/${this.retryHandler.maxRetries}) due to: ${error.message}`);
-          if (this.ui && this.ui.displayInfo) {
-            this.ui.displayInfo(`Retrying Z.AI in ${formattedDelay}... (${attempt}/${this.retryHandler.maxRetries}) | Error: ${error.message}`);
+      return await this.retryHandler.execute(
+        async () => {
+          try {
+            logger.info(
+              `[ZaiAdapter] Requesting: ${this.client.defaults.baseURL}/chat/completions`,
+            );
+            const response = await this.client.post(
+              "/chat/completions",
+              payload,
+            );
+            return this._handleResponse(response);
+          } catch (error) {
+            throw this._handleApiError(error);
           }
         },
-      });
+        {
+          recoverableErrors: ["Empty response from Z.AI"],
+          /**
+           * Callback executed on each retry attempt.
+           * @param {number} attempt - The current retry attempt number.
+           * @param {Error} error - The error that triggered the retry.
+           * @param {string} formattedDelay - The formatted delay string for display.
+           */
+          onRetry: (attempt, error, formattedDelay) => {
+            logger.warn(
+              `[ZaiAdapter] Retrying in ${formattedDelay}... (${attempt}/${this.retryHandler.maxRetries}) due to: ${error.message}`,
+            );
+            if (this.ui && this.ui.displayInfo) {
+              this.ui.displayInfo(
+                `Retrying Z.AI in ${formattedDelay}... (${attempt}/${this.retryHandler.maxRetries}) | Error: ${error.message}`,
+              );
+            }
+          },
+        },
+      );
     } catch (error) {
       if (this.getHistory().length === historyLengthBefore) {
         this.popLastMessage();
