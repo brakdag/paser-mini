@@ -57,8 +57,6 @@ class ChatManager {
       null,
       this.systemInstruction === "",
     );
-    this.engine.chatManager = this;
-
     this.commandHandler = new CommandHandler(this, this.ui);
     this.ui.setCommandHandler(this.commandHandler);
     this.repetitionDetector = new RepetitionDetector();
@@ -125,7 +123,6 @@ class ChatManager {
     // Restart the chat and propagate the new adapter
     this.assistant.startChat(modelName, this.systemInstruction, temp);
     this.engine.assistant = this.assistant;
-    this.engine.chatManager = this;
     this.turnProcessor.assistant = this.assistant;
     this.turnProcessor.api.assistant = this.assistant;
   }

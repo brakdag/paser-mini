@@ -2,6 +2,8 @@ import path from "path";
 import ToolAttemptTracker from "./toolTracker.js";
 
 const DEFAULT_MAX_TURNS = 10000;
+const MONITORING_DETAIL_MAX_LENGTH = 50;
+const MONITORING_MESSAGE_MAX_LENGTH = 30;
 
 /**
  * Extracts base path from args.path.
@@ -122,7 +124,7 @@ const TOOL_DETAIL_EXTRACTORS = {
    * @param {object} args Tool arguments.
    * @returns {string} Extracted detail.
    */
-  execute: (args) => args.command ? args.command.substring(0, 50) : "bash",
+  execute: (args) => args.command ? args.command.substring(0, MONITORING_DETAIL_MAX_LENGTH) : "bash",
   /**
    * @param {object} args Tool arguments.
    * @returns {string} Extracted detail.
@@ -216,7 +218,7 @@ const TOOL_DETAIL_EXTRACTORS = {
    * @param {object} args Tool arguments.
    * @returns {string} Extracted detail.
    */
-  notify: (args) => args.message ? args.message.substring(0, 30) : "notify",
+  notify: (args) => args.message ? args.message.substring(0, MONITORING_MESSAGE_MAX_LENGTH) : "notify",
   /**
    * @param {object} args Tool arguments.
    * @returns {string} Extracted detail.
@@ -250,7 +252,7 @@ const TOOL_DETAIL_EXTRACTORS = {
    * @param {object} args Tool arguments.
    * @returns {string} Extracted detail.
    */
-  reset: (args) => args.user_message ? args.user_message.substring(0, 30) : "reset",
+  reset: (args) => args.user_message ? args.user_message.substring(0, MONITORING_MESSAGE_MAX_LENGTH) : "reset",
   /**
    * @param {object} args Tool arguments.
    * @returns {string} Extracted detail.
@@ -272,11 +274,10 @@ const TOOL_DETAIL_EXTRACTORS = {
    */
   inspect: (args) => {
     if (args.path) return path.basename(args.path);
-    if (args.command) return args.command.substring(0, 50);
+    if (args.command) return args.command.substring(0, MONITORING_DETAIL_MAX_LENGTH);
     return "inspect";
   }
 };
-
 
 /**
  * ExecutionEngine is responsible for the orchestration of tool calls.

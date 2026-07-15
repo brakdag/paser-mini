@@ -12,7 +12,16 @@ import AICommands from "./commandHandlers/ai.js";
  * @property {object} ui The UI instance.
  * @property {string} input The raw input string.
  * @property {string} prefix The matched command prefix.
+ * @property {string} payload The extracted argument string.
  */
+
+/**
+ * Extracts the argument payload from the input string, minus the command prefix.
+ * @param {string} input - The raw input string.
+ * @param {string} prefix - The matched command prefix.
+ * @returns {string} The trimmed payload.
+ */
+const getPayload = (input, prefix) => input.substring(prefix.length).trim();
 
 /**
  * Map of exact-match commands to their handler functions.
@@ -132,74 +141,56 @@ const PREFIX_COMMANDS = {
    * @param {CommandContext} args The context.
    * @returns {Promise<boolean>} Always true.
    */
-  "/r ": ({ cm, ui, input, prefix }) =>
-    SessionCommands.handleRewrite(cm, ui, input.substring(prefix.length).trim()),
+  "/r ": ({ cm, ui, payload }) =>
+    SessionCommands.handleRewrite(cm, ui, payload),
   /**
    * @param {CommandContext} args The context.
    * @returns {Promise<boolean>} Always true.
    */
-  "/s ": ({ cm, ui, input, prefix }) =>
-    SessionCommands.handleSavePayload(
-      cm,
-      ui,
-      input.substring(prefix.length).trim() || "last_request.json",
-    ),
+  "/s ": ({ cm, ui, payload }) =>
+    SessionCommands.handleSavePayload(cm, ui, payload || "last_request.json"),
   /**
    * @param {CommandContext} args The context.
    * @returns {Promise<boolean>} Always true.
    */
-  "/topic ": ({ cm, ui, input, prefix }) => {
-    const topic = input.substring(prefix.length).trim();
-    return InterfaceCommands.handleTopic(cm, ui, topic);
-  },
+  "/topic ": ({ cm, ui, payload }) =>
+    InterfaceCommands.handleTopic(cm, ui, payload),
   /**
    * @param {CommandContext} args The context.
    * @returns {Promise<boolean>} Always true.
    */
-  "/tool ": ({ cm, ui, input, prefix }) => {
-    const toolCall = input.substring(prefix.length).trim();
-    return SystemCommands.handleTool(cm, ui, toolCall);
-  },
+  "/tool ": ({ cm, ui, payload }) =>
+    SystemCommands.handleTool(cm, ui, payload),
   /**
    * @param {CommandContext} args The context.
    * @returns {Promise<boolean>} Always true.
    */
-  "/ping ": ({ cm, ui, input, prefix }) => {
-    const message = input.substring(prefix.length).trim();
-    return SystemCommands.handlePing(cm, ui, message);
-  },
+  "/ping ": ({ cm, ui, payload }) =>
+    SystemCommands.handlePing(cm, ui, payload),
   /**
    * @param {CommandContext} args The context.
    * @returns {Promise<boolean>} Always true.
    */
-  "/nick ": ({ cm, ui, input, prefix }) => {
-    const newNick = input.substring(prefix.length).trim();
-    return InterfaceCommands.handleNick(cm, ui, newNick);
-  },
+  "/nick ": ({ cm, ui, payload }) =>
+    InterfaceCommands.handleNick(cm, ui, payload),
   /**
    * @param {CommandContext} args The context.
    * @returns {Promise<boolean>} Always true.
    */
-  "/me ": ({ cm, ui, input, prefix }) => {
-    const action = input.substring(prefix.length).trim();
-    return InterfaceCommands.handleMe(cm, ui, action);
-  },
+  "/me ": ({ cm, ui, payload }) =>
+    InterfaceCommands.handleMe(cm, ui, payload),
   /**
    * @param {CommandContext} args The context.
    * @returns {Promise<boolean>} Always true.
    */
-  "/action ": ({ cm, ui, input, prefix }) => {
-    const actionText = input.substring(prefix.length).trim();
-    return InterfaceCommands.handleAction(cm, ui, actionText);
-  },
+  "/action ": ({ cm, ui, payload }) =>
+    InterfaceCommands.handleAction(cm, ui, payload),
   /**
    * @param {CommandContext} args The context.
    * @returns {Promise<boolean>} Always true.
    */
-  "/join ": ({ cm, ui, input, prefix }) => {
-    const channel = input.substring(prefix.length).trim();
-    return InterfaceCommands.handleJoin(cm, ui, channel);
-  },
+  "/join ": ({ cm, ui, payload }) =>
+    InterfaceCommands.handleJoin(cm, ui, payload),
   /**
    * @param {CommandContext} args The context.
    * @returns {Promise<boolean>} Always true.
@@ -214,14 +205,14 @@ const PREFIX_COMMANDS = {
    * @param {CommandContext} args The context.
    * @returns {Promise<boolean>} Always true.
    */
-  "/paim ": ({ cm, ui, input, prefix }) =>
-    AICommands.handlePaim(cm, ui, input.substring(prefix.length).trim()),
+  "/paim ": ({ cm, ui, payload }) =>
+    AICommands.handlePaim(cm, ui, payload),
   /**
    * @param {CommandContext} args The context.
    * @returns {Promise<boolean>} Always true.
    */
-  "/connect": ({ cm, ui, input, prefix }) =>
-    AICommands.handleConnect(cm, ui, input.substring(prefix.length).trim()),
+  "/connect": ({ cm, ui, payload }) =>
+    AICommands.handleConnect(cm, ui, payload),
   /**
    * @param {CommandContext} args The context.
    * @returns {Promise<boolean>} Always true.
@@ -238,8 +229,8 @@ const PREFIX_COMMANDS = {
    * @param {CommandContext} args The context.
    * @returns {Promise<boolean>} Always true.
    */
-  "/execute ": ({ cm, ui, input, prefix }) =>
-    SystemCommands.handleExecute(cm, ui, input.substring(prefix.length).trim()),
+  "/execute ": ({ cm, ui, payload }) =>
+    SystemCommands.handleExecute(cm, ui, payload),
 };
 
 /**
@@ -286,6 +277,7 @@ class CommandHandler {
         ui: this.ui,
         input,
         prefix: prefixKey,
+        payload: getPayload(input, prefixKey),
       });
     }
 

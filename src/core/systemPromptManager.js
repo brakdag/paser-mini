@@ -81,7 +81,7 @@ class SystemPromptManager {
 
     const currentMtimes = await this._getMtimes(dependencies);
 
-    // 1. Intentar leer de caché (a menos que se fuerce un rebuild)
+    // 1. Attempt to read from cache (unless a rebuild is forced)
     if (!this._forceRebuild) {
       try {
         const cacheData = JSON.parse(await fsp.readFile(CACHE_FILE, "utf8"));
@@ -109,7 +109,7 @@ class SystemPromptManager {
       }
     }
 
-    // 2. Construir desde cero
+    // 2. Build from scratch
     let injection = "";
     let filteredTools = { ...AVAILABLE_TOOLS };
 

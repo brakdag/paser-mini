@@ -85,7 +85,7 @@ export default class GitTools {
 
   /**
    * Restores a specific file to its last committed state.
-   * @param {string|{path: string}} f - File path or object containing path.
+   * @param {string|{filepath: string}} f - File path or object containing path.
    * @returns {Promise<string>} The result of the restore command.
    * @throws {Error} If the file path is missing.
    */
