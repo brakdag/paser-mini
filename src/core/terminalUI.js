@@ -15,7 +15,7 @@ import FountainFormat from "../formats/FountainFormat.js";
 const TOOL_ICON = "🛠️";
 
 /**
- * Manages the terminal user interface, including message display, 
+ * Manages the terminal user interface, including message display,
  * tool monitoring, and input handling.
  */
 class TerminalUI {
@@ -147,9 +147,14 @@ class TerminalUI {
     input.clearCurrentLine();
     const plainText = text.trim();
     const ts = timestamp || IRCFormatter.getTimestamp();
-    
+
     // 1. Colored format for the terminal (with timestamp)
-    const terminalText = IRCFormatter.formatTerminalMessage(nickname, plainText, this.model.nickname, ts);
+    const terminalText = IRCFormatter.formatTerminalMessage(
+      nickname,
+      plainText,
+      this.model.nickname,
+      ts,
+    );
     const renderedText = renderer.formatMarkdown(terminalText);
     process.stdout.write(`${renderedText}\n`);
 
@@ -172,7 +177,7 @@ class TerminalUI {
    */
   displayThought(text) {
     input.clearCurrentLine();
-    process.stdout.write(`${chalk.green.italic(`💭 ${text}`)}\n`);
+    process.stdout.write(`${chalk.green.italic(`🗬  ${text}`)}\n`);
   }
 
   /**
@@ -272,12 +277,20 @@ class TerminalUI {
     const actionText = `* ${name} (${detail})`;
 
     // 1. Colored message for the terminal (with timestamp and status)
-    const terminalText = IRCFormatter.formatTerminalAction(this.model.nickname, actionText, statusColor(statusIcon), ts);
+    const terminalText = IRCFormatter.formatTerminalAction(
+      this.model.nickname,
+      actionText,
+      statusColor(statusIcon),
+      ts,
+    );
     process.stdout.write(`${terminalText}\n`);
 
     // 2. Plain message for the log (with timestamp and status)
     this.writeToLog(
-      this.activePlugin.formatAction(this.model.nickname, `${actionText} ${statusIcon}`),
+      this.activePlugin.formatAction(
+        this.model.nickname,
+        `${actionText} ${statusIcon}`,
+      ),
     );
   }
 
@@ -354,3 +367,4 @@ class TerminalUI {
 }
 
 export default TerminalUI;
+
