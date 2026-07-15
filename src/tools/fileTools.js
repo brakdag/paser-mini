@@ -183,8 +183,8 @@ class FileTools {
     const content = await fs.readFile(safePath, "utf8");
     const regex = new RegExp(pattern, flags);
     const newContent = content.replace(regex, replacement);
-    if (!newContent) {
-      throw new Error("Regex resulted in empty or invalid content");
+    if (newContent === content) {
+      throw new Error("Pattern not found in file.");
     }
     await fs.writeFile(safePath, newContent, "utf8");
   }

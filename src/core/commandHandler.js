@@ -262,8 +262,7 @@ class CommandHandler {
    * @returns {boolean} True if the command is non-blocking.
    */
   isNonBlocking(input) {
-    const lowerInput = input.trim().toLowerCase();
-    return ["/config"].includes(lowerInput);
+    return input.trim().toLowerCase() === "/config";
   }
 
   /**

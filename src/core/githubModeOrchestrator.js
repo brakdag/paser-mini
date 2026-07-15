@@ -70,11 +70,17 @@ class GitHubModeOrchestrator {
         agentNickname: "assistant",
       });
 
+      // Provide dummy identity objects to satisfy ChatManager requirements
+      const user = { nickname: "user" };
+      const model = { nickname: "assistant", temperature: 1.0, name: "model" };
+
       const chatManager = new ChatManager({
         assistant,
         tools: this.tools,
         systemInstruction: this.systemInstruction,
         ui,
+        user,
+        model,
         configManager,
       });
 

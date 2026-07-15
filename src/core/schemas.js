@@ -76,7 +76,7 @@ const SCHEMAS = {
     url: z.string().min(1).transform(v => v.startsWith("http://") || v.startsWith("https://") ? v : `https://${v}`),
     searchQuery: z.string().optional(),
   }).strict(),
-  valide: z.object({ json_string: z.string() }).strict(),
+  validate: z.object({ json_string: z.string() }).strict(),
   write: z.object({ path: z.string(), content: z.string() }).strict(),
   zip: z.object({ filePath: z.string() }).strict(),
   index: z.object({

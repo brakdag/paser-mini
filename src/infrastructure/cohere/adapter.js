@@ -71,11 +71,9 @@ class CohereAdapter extends BaseAdapter {
     this._enforceContextLimit();
     const historyLengthBefore = this.history.length;
 
-    const lastMessage = this.history.pop();
-    const payload = this._preparePayload(lastMessage);
+    const payload = this._preparePayload();
 
     await this._applyRateLimit();
-    this.history.push(lastMessage);
 
     try {
       return await this.retryHandler.execute(async () => {
@@ -114,17 +112,19 @@ class CohereAdapter extends BaseAdapter {
 
   /**
    * Prepares the payload for the Cohere /chat endpoint.
-   * @param {object} lastMessage - The most recent message in the history.
    * @private
    * @returns {object} The formatted payload.
    */
-  _preparePayload(lastMessage) {
+  _preparePayload() {
     const chatHistory = this.history
+      .slice(0, -1) // Safely exclude the last message without mutating the array
       .filter(msg => msg.role !== 'system')
       .map(msg => ({
         role: msg.role === 'user' ? 'USER' : 'CHATBOT',
         message: this.formatTextForPayload(msg.role, msg.content, msg.timestamp)
       }));
+
+    const lastMessage = this.history[this.history.length - 1];
 
     return {
       model: this.currentModel,

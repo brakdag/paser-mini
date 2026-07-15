@@ -142,7 +142,7 @@ const TOOL_DETAIL_EXTRACTORS = {
    * @param {object} args Tool arguments.
    * @returns {string} Extracted detail.
    */
-  validate: (args) => args.jsonString ? `len: ${args.jsonString.length}` : "json",
+  validate: (args) => args.json_string ? `len: ${args.json_string.length}` : "json",
   /**
    * @param {object} args Tool arguments.
    * @returns {string} Extracted detail.

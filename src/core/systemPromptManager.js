@@ -5,6 +5,7 @@ import {
   generateSystemInstruction,
   AVAILABLE_TOOLS,
 } from "../infrastructure/registry.js";
+import logger from "./logger.js";
 
 const CACHE_DIR = path.join(process.cwd(), ".cache");
 const CACHE_FILE = path.join(CACHE_DIR, "startup.json");
@@ -104,7 +105,7 @@ class SystemPromptManager {
           };
         }
       } catch (err) {
-        // Invalid or non-existent cache
+        logger.warn(`Cache read failed, rebuilding: ${err.message}`);
       }
     }
 
@@ -127,8 +128,8 @@ class SystemPromptManager {
             )
           );
         } catch (e) {
-          console.warn(
-            `Warning: Could not parse TOOLS_AVAILABLE array in ${injectionFile}: ${e.message}`
+          logger.warn(
+            `Could not parse TOOLS_AVAILABLE array in ${injectionFile}: ${e.message}`
           );
         }
       }
@@ -188,7 +189,7 @@ class SystemPromptManager {
       fs.writeFileSync(CACHE_FILE, JSON.stringify(this._pendingCache), "utf8");
       this._pendingCache = null; // Clear after saving
     } catch (err) {
-      console.warn(`Warning: Could not write startup cache on exit: ${err.message}`);
+      logger.warn(`Could not write startup cache on exit: ${err.message}`);
     }
   }
 }

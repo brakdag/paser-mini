@@ -12,7 +12,10 @@ export default class PathValidator {
    */
   static getSafePath(inputPath) {
     const resolved = path.resolve(process.cwd(), inputPath);
-    if (!resolved.startsWith(process.cwd())) {
+    const relative = path.relative(process.cwd(), resolved);
+    
+    // Prevent traversal: path must be relative and not start with '..'
+    if (relative.startsWith("..") || path.isAbsolute(relative)) {
       throw new Error("Security Error: Path is outside of project root");
     }
     return resolved;

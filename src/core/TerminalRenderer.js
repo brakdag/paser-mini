@@ -212,32 +212,6 @@ class TerminalRenderer {
   }
 
   /**
-   * Wraps text to fit within a specified column range.
-   * @param {string} text - The text to be wrapped.
-   * @param {number} start - The starting column position.
-   * @param {number} end - The ending column position.
-   * @returns {string} The wrapped text formatted with leading spaces.
-   */
-  _wrapText(text, start, end) {
-    const width = end - start;
-    const words = text.split(/\s+/);
-    const lines = [];
-    let currentLine = "";
-
-    words.forEach((word) => {
-      if ((currentLine + (currentLine ? " " : "") + word).length <= width) {
-        currentLine += (currentLine ? " " : "") + word;
-      } else {
-        lines.push(currentLine);
-        currentLine = word;
-      }
-    });
-    lines.push(currentLine);
-
-    return lines.map((line) => " ".repeat(start) + line).join("\n");
-  }
-
-  /**
    * Pads a string to a specified visual width with trailing spaces.
    * Unlike String.prototype.padEnd, this accounts for wide characters.
    * @param {string} text - The text to pad.

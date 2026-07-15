@@ -153,6 +153,52 @@ class GitHubUI {
   setBashEnabled(enabled) {
     this.bashEnabled = enabled;
   }
+
+  /**
+   * Sets the command handler (no-op for GitHub mode).
+   * @param {object} _handler - The command handler instance.
+   * @returns {void}
+   */
+  setCommandHandler(_handler) {}
+
+  /**
+   * Sets the shared user and model identity objects (no-op for GitHub mode).
+   * @param {object} _user - The user identity object.
+   * @param {object} _model - The model identity object.
+   * @returns {void}
+   */
+  setIdentities(_user, _model) {}
+
+  /**
+   * Sets the rendering mode (no-op for GitHub mode).
+   * @param {string} _mode - The rendering mode to set.
+   * @returns {void}
+   */
+  setRenderingMode(_mode) {}
+
+  /**
+   * Initializes the terminal input handler (no-op for GitHub mode).
+   * @returns {void}
+   */
+  initInput() {}
+
+  /**
+   * Generates the log session resumption string.
+   * @returns {string} The formatted log opened string.
+   */
+  getLogOpenedString() {
+    return "--- GitHub Mode Session Started ---";
+  }
+
+  /**
+   * Displays a chat message by posting it to the GitHub issue.
+   * @param {string} _nickname - The nickname of the sender.
+   * @param {string} text - The message text.
+   * @returns {Promise<void>}
+   */
+  async displayChatMessage(_nickname, text) {
+    return this.displayMessage(text);
+  }
 }
 
 export default GitHubUI;

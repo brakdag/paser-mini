@@ -59,7 +59,11 @@ class HuggingFaceAdapter extends BaseAdapter {
       if (this.history.length > 0 && this.history[0].role === "system") {
         this.history[0].content = this.systemInstruction;
       } else {
-        this.injectMessage("system", this.systemInstruction);
+        this.history.unshift({
+          role: "system",
+          content: this.systemInstruction,
+          timestamp: IRCFormatter.getTimestamp(),
+        });
       }
     }
   }

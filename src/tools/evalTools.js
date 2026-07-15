@@ -106,6 +106,24 @@ class EvalTools {
   }
 
   /**
+   * Safely stringifies an object, handling circular references.
+   * @param {unknown} obj - The object to stringify.
+   * @returns {string} The JSON string representation.
+   */
+  #safeStringify(obj) {
+    const seen = new WeakSet();
+    return JSON.stringify(obj, (key, value) => {
+      if (typeof value === "object" && value !== null) {
+        if (seen.has(value)) {
+          return "[Circular]";
+        }
+        seen.add(value);
+      }
+      return value;
+    });
+  }
+
+  /**
    * Internal logger that formats and stores messages in the trace.
    * @param {string} type - The log level/type.
    * @param {unknown[]} args - The data to log.
@@ -113,7 +131,7 @@ class EvalTools {
   #log(type, args) {
     const argsArray = Array.isArray(args) ? args : [args];
     const msg = argsArray
-      .map((a) => (typeof a === "object" ? JSON.stringify(a) : a))
+      .map((a) => (typeof a === "object" ? this.#safeStringify(a) : a))
       .join(" ");
     const timestamp = new Date().toISOString().split("T")[1].split(".")[0];
     this.#trace.push(`[${timestamp}] [${type}] ${msg}`);
@@ -132,7 +150,10 @@ class EvalTools {
       // We use runInContext. Note: if the code uses await at top level,
       // it will fail unless wrapped in an async IIFE.
       result = vm.runInContext(code, this.#context, { timeout: 1000 });
-      if (result !== undefined) this.#log("RETURN", JSON.stringify(result));
+      if (result !== undefined) {
+        const safeResult = typeof result === "object" ? this.#safeStringify(result) : result;
+        this.#log("RETURN", safeResult);
+      }
     } catch (err) {
       this.#log("CRASH", err.message);
       throw err; // Propagate the error to the engine

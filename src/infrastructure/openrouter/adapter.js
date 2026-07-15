@@ -61,7 +61,11 @@ class OpenRouterAdapter extends BaseAdapter {
       if (this.history.length > 0 && this.history[0].role === "system") {
         this.history[0].content = this.systemInstruction;
       } else {
-        this.injectMessage("system", this.systemInstruction);
+        this.history.unshift({
+          role: "system",
+          content: this.systemInstruction,
+          timestamp: IRCFormatter.getTimestamp(),
+        });
       }
     }
   }
@@ -89,29 +93,29 @@ class OpenRouterAdapter extends BaseAdapter {
      */
     try {
       return await this.retryHandler.execute(async () => {
-      try {
-        logger.info(`[OpenRouterAdapter] Requesting: ${this.client.defaults.baseURL}/chat/completions`);
-        logger.info(`[OpenRouterAdapter] Payload: ${JSON.stringify(payload)}`);
+        try {
+          logger.info(`[OpenRouterAdapter] Requesting: ${this.client.defaults.baseURL}/chat/completions`);
+          logger.info(`[OpenRouterAdapter] Payload: ${JSON.stringify(payload)}`);
 
-        const response = await this.client.post("/chat/completions", payload);
-        return this._handleResponse(response);
-      } catch (error) {
-        throw this._handleApiError(error);
-      }
-    }, {
-      recoverableErrors: this.recoverableErrors,
-      /**
-       * @param {number} attempt - The current attempt number.
-       * @param {Error} error - The error that triggered the retry.
-       * @param {string} formattedDelay - The formatted delay string.
-       */
-      onRetry: (attempt, error, formattedDelay) => {
-        logger.warn(`[OpenRouterAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`);
-        if (this.ui && this.ui.displayInfo) {
-          this.ui.displayInfo(`Retrying OpenRouter in ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`);
+          const response = await this.client.post("/chat/completions", payload);
+          return this._handleResponse(response);
+        } catch (error) {
+          throw this._handleApiError(error);
         }
-      }
-    });
+      }, {
+        recoverableErrors: this.recoverableErrors,
+        /**
+         * @param {number} attempt - The current attempt number.
+         * @param {Error} error - The error that triggered the retry.
+         * @param {string} formattedDelay - The formatted delay string.
+         */
+        onRetry: (attempt, error, formattedDelay) => {
+          logger.warn(`[OpenRouterAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`);
+          if (this.ui && this.ui.displayInfo) {
+            this.ui.displayInfo(`Retrying OpenRouter in ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`);
+          }
+        }
+      });
     } catch (error) {
       if (this.history.length === historyLengthBefore) {
         this.popLastMessage();
