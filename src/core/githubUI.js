@@ -1,4 +1,4 @@
-import * as githubTools from "../tools/githubTools.js";
+import GithubTools from "../tools/githubTools.js";
 
 /**
  * Provides a UI implementation for interacting with GitHub issues, acting as a bridge
@@ -33,11 +33,8 @@ class GitHubUI {
   async displayMessage(text) {
     console.log(`[POSTING TO GITHUB] Issue #${this.issueNumber}: ${text}`);
     try {
-      await githubTools.postComment({
-        issue_number: this.issueNumber,
-        body: text,
-        repo: this.repo,
-      });
+      const githubApi = new GithubTools();
+      await githubApi.postComment(this.issueNumber, text, this.repo);
     } catch (e) {
       console.error(`Error in displayMessage: ${e.message}`);
     }

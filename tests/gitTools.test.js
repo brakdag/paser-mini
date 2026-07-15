@@ -1,9 +1,10 @@
 import { describe, it } from "node:test";
 import assert from "node:assert";
 import fs from "fs/promises";
-import { GitTools } from "../src/tools/gitTools.js";
+import GitTools from "../src/tools/gitTools.js";
 
 const gitTools = new GitTools();
+const testFilePath = "./tests/patch_test_new_file.txt";
 
 describe("gitTools", () => {
   it("should run git diff", async () => {
@@ -20,22 +21,17 @@ index 0000000..f7db191
 @@ -0,0 +1 @@
 +Patch applied successfully!
 `;
-    
-    const testFilePath = "./tests/patch_test_new_file.txt";
-    try {
-      await fs.unlink(testFilePath);
-    } catch (e) {}
 
-    try {
-      const result = await gitTools.applyPatch({ patch: patchContent });
-      assert.ok(result);
-      
-      const fileContent = await fs.readFile(testFilePath, "utf8");
-      assert.strictEqual(fileContent.trim(), "Patch applied successfully!");
-    } finally {
-      try {
-        await fs.unlink(testFilePath);
-      } catch (e) {}
-    }
+    // Use force: true to avoid try/catch around cleanup (Clean Code: Error Handling)
+    await fs.rm(testFilePath, { force: true });
+
+    const result = await gitTools.applyPatch({ patch: patchContent });
+    assert.ok(result);
+    
+    const fileContent = await fs.readFile(testFilePath, "utf8");
+    assert.strictEqual(fileContent.trim(), "Patch applied successfully!");
+    
+    // Clean up after successful test
+    await fs.rm(testFilePath, { force: true });
   });
 });
