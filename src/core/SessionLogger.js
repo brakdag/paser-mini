@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import logger from "./logger.js";
 
 const LOG_DIR = path.join(process.cwd(), ".paser-mini", "log");
 
@@ -19,7 +20,7 @@ class SessionLogger {
       }
       fs.appendFileSync(path.join(LOG_DIR, "session.log"), `${text}\n`, "utf8");
     } catch (e) {
-      console.error(`[Log Error] ${e.message}`);
+      logger.error(`[SessionLogger] Log Error: ${e.message}`);
     }
   }
 }

@@ -1,4 +1,5 @@
 import GithubTools from "../tools/githubTools.js";
+import logger from "./logger.js";
 
 /**
  * Provides a UI implementation for interacting with GitHub issues, acting as a bridge
@@ -31,12 +32,12 @@ class GitHubUI {
    * @returns {Promise<void>}
    */
   async displayMessage(text) {
-    console.log(`[POSTING TO GITHUB] Issue #${this.issueNumber}: ${text}`);
+    logger.info(`[GitHubUI] Posting to Issue #${this.issueNumber}: ${text}`);
     try {
       const githubApi = new GithubTools();
       await githubApi.postComment(this.issueNumber, text, this.repo);
     } catch (e) {
-      console.error(`Error in displayMessage: ${e.message}`);
+      logger.error(`[GitHubUI] Error in displayMessage: ${e.message}`);
     }
   }
 
@@ -46,7 +47,7 @@ class GitHubUI {
    * @returns {void}
    */
   displayThought(text) {
-    console.log(`[THOUGHT] [Issue ${this.issueNumber}] ${text}`);
+    logger.info(`[GitHubUI] [THOUGHT] [Issue ${this.issueNumber}] ${text}`);
   }
 
   /**
@@ -55,7 +56,7 @@ class GitHubUI {
    * @returns {void}
    */
   displayInfo(message) {
-    console.log(`[INFO] [Issue ${this.issueNumber}] ${message}`);
+    logger.info(`[GitHubUI] [INFO] [Issue ${this.issueNumber}] ${message}`);
   }
 
   /**
@@ -64,7 +65,7 @@ class GitHubUI {
    * @returns {void}
    */
   displayError(message) {
-    console.error(`[ERROR] [Issue ${this.issueNumber}] ${message}`);
+    logger.error(`[GitHubUI] [ERROR] [Issue ${this.issueNumber}] ${message}`);
   }
 
   /**
@@ -76,9 +77,7 @@ class GitHubUI {
    */
   displayToolStatus(toolName, success, detail = "") {
     const status = success ? "OK" : "FAIL";
-    console.log(
-      `[TOOL] [Issue ${this.issueNumber}] ${toolName} -> ${status} ${detail}`,
-    );
+    logger.info(`[GitHubUI] [TOOL] [Issue ${this.issueNumber}] ${toolName} -> ${status} ${detail}`);
   }
 
   /**
@@ -87,9 +86,7 @@ class GitHubUI {
    * @returns {Promise<boolean>} A promise that resolves to true.
    */
   async getConfirmation(message) {
-    console.log(
-      `[CONFIRMATION REQUEST] [Issue ${this.issueNumber}] ${message} -> Defaulting to True`,
-    );
+    logger.info(`[GitHubUI] [CONFIRMATION REQUEST] [Issue ${this.issueNumber}] ${message} -> Defaulting to True`);
     return true;
   }
 
@@ -100,9 +97,7 @@ class GitHubUI {
    * @returns {void}
    */
   startToolMonitoring(toolName, detail = "") {
-    console.log(
-      `[MONITORING START] [Issue ${this.issueNumber}] ${toolName} -> ${detail}`,
-    );
+    logger.info(`[GitHubUI] [MONITORING START] [Issue ${this.issueNumber}] ${toolName} -> ${detail}`);
   }
 
   /**
@@ -113,9 +108,7 @@ class GitHubUI {
    */
   endToolMonitoring(toolName, success) {
     const status = success ? "OK" : "FAIL";
-    console.log(
-      `[MONITORING END] [Issue ${this.issueNumber}] ${toolName} -> ${status}`,
-    );
+    logger.info(`[GitHubUI] [MONITORING END] [Issue ${this.issueNumber}] ${toolName} -> ${status}`);
   }
 
   /**
@@ -123,7 +116,7 @@ class GitHubUI {
    * @returns {void}
    */
   stopAllMonitoring() {
-    console.log(`[MONITORING STOPPED] [Issue ${this.issueNumber}]`);
+    logger.info(`[GitHubUI] [MONITORING STOPPED] [Issue ${this.issueNumber}]`);
   }
 
   /**
@@ -131,7 +124,7 @@ class GitHubUI {
    * @returns {void}
    */
   addSpacing() {
-    console.log(`[SPACING] [Issue ${this.issueNumber}]`);
+    logger.info(`[GitHubUI] [SPACING] [Issue ${this.issueNumber}]`);
   }
 
   /**
@@ -139,7 +132,7 @@ class GitHubUI {
    * @returns {void}
    */
   updateQueueCount() {
-    console.log(`[QUEUE UPDATE] [Issue ${this.issueNumber}]`);
+    logger.info(`[GitHubUI] [QUEUE UPDATE] [Issue ${this.issueNumber}]`);
   }
 
   /**

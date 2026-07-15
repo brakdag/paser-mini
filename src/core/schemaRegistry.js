@@ -1,5 +1,6 @@
 import SchemaValidator from "./schemaValidator.js";
 import SCHEMAS from "./schemas.js";
+import logger from "./logger.js";
 
 const validator = new SchemaValidator();
 
@@ -13,7 +14,7 @@ async function registerSchemas() {
       validator.registerSchema(toolName, schema);
     });
   } catch (e) {
-    console.error(`[SchemaRegistry] Critical error registering schemas: ${e.message}`);
+    logger.error(`[SchemaRegistry] Critical error registering schemas: ${e.message}`);
   }
 }
 

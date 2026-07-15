@@ -1,6 +1,7 @@
 import fs from "fs";
 import os from "os";
 import path from "path";
+import logger from "./logger.js";
 
 /**
  * Keys belonging to the user's global scope and persisting across projects.
@@ -86,7 +87,7 @@ class ConfigManager {
         ? JSON.parse(fs.readFileSync(configPath, "utf8"))
         : {};
     } catch (error) {
-      console.error(`Failed to load config from ${configPath}:`, error);
+      logger.error(`Failed to load config from ${configPath}: ${error.message}`);
       return {};
     }
   }

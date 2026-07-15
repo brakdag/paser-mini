@@ -52,7 +52,7 @@ async function main() {
       systemInstruction,
       filteredTools,
     );
-    await orchestrator.runForever();
+    await orchestrator.run();
     return;
   }
 
@@ -109,11 +109,11 @@ async function main() {
 }
 
 process.on("unhandledRejection", (reason, promise) => {
-  console.error("Unhandled Rejection at:", reason, promise);
+  logger.error("Unhandled Rejection at:", reason, { promise });
 });
 
 process.on("uncaughtException", (err) => {
-  console.error("Uncaught Exception thrown:", err);
+  logger.error("Uncaught Exception thrown:", err);
 });
 
 // Save system prompt cache on application exit
@@ -122,6 +122,6 @@ process.on("exit", () => {
 });
 
 main().catch((err) => {
-  console.error("Critical Error:", err);
+  logger.error("Critical Error:", err);
   process.exit(1);
 });

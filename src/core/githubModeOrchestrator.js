@@ -1,8 +1,10 @@
-import * as githubTools from "../tools/githubTools.js";
+import GithubTools from "../tools/githubTools.js";
 import GitHubUI from "./githubUI.js";
 import ChatManager from "./chatManager.js";
 import ConfigManager from "./configManager.js";
 import ProviderManager from "../infrastructure/providerManager.js";
+
+const githubApi = new GithubTools();
 
 /**
  * Orchestrates the AI's interaction with GitHub issues, monitoring for specific hashtags
@@ -28,10 +30,10 @@ class GitHubModeOrchestrator {
    */
   async run() {
     if (!this.botLogin) {
-      const userData = await githubTools.get_authenticated_user();
+      const userData = await githubApi.getAuthenticatedUser();
       this.botLogin = userData.login;
     }
-    const issues = await githubTools.listIssues();
+    const issues = await githubApi.listIssues();
     const filtered = issues.filter(
       (i) =>
         (i.body || "").includes(this.triggerHashtag) &&
@@ -52,10 +54,7 @@ class GitHubModeOrchestrator {
    */
   async processIssue(issue) {
     const { number: issueNumber, body: issueBody = "" } = issue;
-    await githubTools.add_label({
-      issue_number: issueNumber,
-      label: this.processingLabel,
-    });
+    await githubApi.addLabel(issueNumber, this.processingLabel);
     try {
       const configManager = new ConfigManager();
       const providerManager = new ProviderManager();
@@ -88,10 +87,7 @@ class GitHubModeOrchestrator {
         `SYSTEM: GitHub Issue #${issueNumber}.\n${issueBody}`,
       );
     } finally {
-      await githubTools.remove_label({
-        issue_number: issueNumber,
-        label: this.processingLabel,
-      });
+      await githubApi.removeLabel(issueNumber, this.processingLabel);
     }
   }
 }
