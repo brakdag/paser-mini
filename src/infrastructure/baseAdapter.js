@@ -141,8 +141,14 @@ export default class BaseAdapter {
     const history = this.getHistory();
     if (!history || history.length === 0) return;
 
+    // Check if the system instruction is already inside the history (e.g. OpenAI style adapters)
+    const historyHasSystem = history.some(msg => msg.role === 'system' || msg.role === 'server');
+    let systemChars = 0;
+    if (!historyHasSystem && typeof this.systemInstruction === 'string') {
+      systemChars = this.systemInstruction.length;
+    }
     const maxChars = limit * 3.5; // 3.5 chars per token heuristic
-    let totalChars = history.reduce((acc, msg) => acc + this._getMessageLength(msg), 0);
+    let totalChars = history.reduce((acc, msg) => acc + this._getMessageLength(msg), 0) + systemChars;
 
     if (totalChars <= maxChars) return;
 
