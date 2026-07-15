@@ -1,3 +1,3 @@
-- [] Check if all the code in src/ is aligned with docs/cleanCode.md.
-- [] Always check eslint in src/
-- [] Check if all the code in src/ is aligned with docs/maintainable_software_principles.md
+- [x] Check if all the code in src/ is aligned with docs/cleanCode.md.
+- [x] Check if all the code in src/ is aligned with docs/maintainable_software_principles.md
+- [x] Always check eslint in src/
