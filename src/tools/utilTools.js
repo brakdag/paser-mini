@@ -7,6 +7,8 @@ import ConfigManager from "../core/configManager.js";
 
 const execFilePromise = promisify(execFile);
 const AGENT_NICKNAME_CONFIG_KEY = "agent_nickname";
+const IMAGE_RESIZE_DIMENSION = "512x512";
+const IMAGE_QUALITY = "75";
 
 /**
  * Utility tools for system operations and data validation.
@@ -119,7 +121,7 @@ export default class UtilTools {
       args.push("-crop", `${width}x${height}+${left}+${top}`, "+repage");
     }
 
-    args.push("-resize", "512x512", "-colorspace", "sRGB", "-quality", "75", imagePath, tempFile);
+    args.push("-resize", IMAGE_RESIZE_DIMENSION, "-colorspace", "sRGB", "-quality", IMAGE_QUALITY, imagePath, tempFile);
     await execFilePromise("convert", args);
   }
 

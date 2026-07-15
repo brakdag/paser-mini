@@ -7,150 +7,136 @@ import InterfaceCommands from "./commandHandlers/interface.js";
 import AICommands from "./commandHandlers/ai.js";
 
 /**
+ * @typedef {object} CommandContext
+ * @property {import("./chatManager.js").default} cm The chat manager instance.
+ * @property {object} ui The UI instance.
+ * @property {string} input The raw input string.
+ * @property {string} prefix The matched command prefix.
+ */
+
+/**
  * Map of exact-match commands to their handler functions.
- * @property {function(import("./chatManager.js").default): void} /q - Exits the application.
+ * @type {{[key: string]: (cm: import("./chatManager.js").default, ui: object) => Promise<boolean|void> | boolean | void}}
  */
 const COMMAND_MAP = {
   /**
-   * Exits the application.
-   * @param {import("./chatManager.js").default} cm - The chat manager instance.
-   * @returns {void}
+   * @param {import("./chatManager.js").default} cm The chat manager.
+   * @param {object} ui The UI.
+   * @returns {Promise<void>} Resolves when exited.
    */
-  "/q": (cm) => SystemCommands.handleExit(cm),
+  "/q": SystemCommands.handleExit,
   /**
-   * Exits the application.
-   * @param {import("./chatManager.js").default} cm - The chat manager instance.
-   * @returns {void}
+   * @param {import("./chatManager.js").default} cm The chat manager.
+   * @param {object} ui The UI.
+   * @returns {Promise<void>} Resolves when exited.
    */
-  "/quit": (cm) => SystemCommands.handleExit(cm),
+  "/quit": SystemCommands.handleExit,
   /**
-   * Exits the application.
-   * @param {import("./chatManager.js").default} cm - The chat manager instance.
-   * @returns {void}
+   * @param {import("./chatManager.js").default} cm The chat manager.
+   * @param {object} ui The UI.
+   * @returns {Promise<void>} Resolves when exited.
    */
-  "/exit": (cm) => SystemCommands.handleExit(cm),
+  "/exit": SystemCommands.handleExit,
   /**
-   * Exits the application.
-   * @param {import("./chatManager.js").default} cm - The chat manager instance.
-   * @returns {void}
+   * @param {import("./chatManager.js").default} cm The chat manager.
+   * @param {object} ui The UI.
+   * @returns {Promise<void>} Resolves when exited.
    */
-  ":q": (cm) => SystemCommands.handleExit(cm),
+  ":q": SystemCommands.handleExit,
   /**
-   * Resets the current session.
-   * @param {import("./chatManager.js").default} cm - The chat manager instance.
-   * @param {object} ui - The UI instance.
-   * @returns {void}
+   * @param {import("./chatManager.js").default} cm The chat manager.
+   * @param {object} ui The UI.
+   * @returns {Promise<boolean>} Always true.
    */
   "/reset": SystemCommands.handleReset,
   /**
-   * Clears the terminal screen.
-   * @param {unknown} _ - Unused chat manager instance.
-   * @param {object} ui - The UI instance.
-   * @returns {void}
+   * @param {object} _ The chat manager (unused).
+   * @param {object} ui The UI.
+   * @returns {boolean} Always true.
    */
   "/clear": (_, ui) => SystemCommands.handleClear(ui),
   /**
-   * Toggles the bash execution mode.
-   * @param {import("./chatManager.js").default} cm - The chat manager instance.
-   * @param {object} ui - The UI instance.
-   * @returns {Promise<boolean>} True if the operation succeeded.
+   * @param {import("./chatManager.js").default} cm The chat manager.
+   * @param {object} ui The UI.
+   * @returns {Promise<boolean>} Always true.
    */
   "/execute": (cm, ui) => SystemCommands.handleExecute(cm, ui, ""),
   /**
-   * Sets the rendering mode to Fountain.
-   * @param {import("./chatManager.js").default} cm - The chat manager instance.
-   * @param {object} ui - The UI instance.
-   * @returns {void}
+   * @param {import("./chatManager.js").default} cm The chat manager.
+   * @param {object} ui The UI.
+   * @returns {Promise<boolean>} Always true.
    */
   "/fountain": InterfaceCommands.handleFountain,
   /**
-   * Sets the rendering mode to IRC.
-   * @param {import("./chatManager.js").default} cm - The chat manager instance.
-   * @param {object} ui - The UI instance.
-   * @returns {void}
+   * @param {import("./chatManager.js").default} cm The chat manager.
+   * @param {object} ui The UI.
+   * @returns {Promise<boolean>} Always true.
    */
   "/irc": InterfaceCommands.handleIRC,
   /**
-   * Sets the rendering mode to Clean.
-   * @param {import("./chatManager.js").default} cm - The chat manager instance.
-   * @param {object} ui - The UI instance.
-   * @returns {void}
+   * @param {import("./chatManager.js").default} cm The chat manager.
+   * @param {object} ui The UI.
+   * @returns {Promise<boolean>} Always true.
    */
   "/clean": InterfaceCommands.handleClean,
   /**
-   * Enables Immersion Mode.
-   * @param {import("./chatManager.js").default} cm - The chat manager instance.
-   * @param {object} ui - The UI instance.
-   * @returns {void}
+   * @param {import("./chatManager.js").default} cm The chat manager.
+   * @param {object} ui The UI.
+   * @returns {Promise<boolean>} Always true.
    */
   "/true": InterfaceCommands.handleTrue,
   /**
-   * Displays the help menu.
-   * @param {unknown} _ - Unused chat manager instance.
-   * @param {object} ui - The UI instance.
+   * @param {object} _ The chat manager (unused).
+   * @param {object} ui The UI.
    * @returns {void}
    */
   "/help": (_, ui) => InterfaceCommands.handleHelp(ui),
   /**
-   * Displays the current configuration.
-   * @param {import("./chatManager.js").default} cm - The chat manager instance.
-   * @param {object} ui - The UI instance.
-   * @returns {void}
+   * @param {import("./chatManager.js").default} cm The chat manager.
+   * @param {object} ui The UI.
+   * @returns {Promise<boolean>} Always true.
    */
   "/config": ConfigCommands.handleConfig,
   /**
-   * Reloads the system prompt and tools cache.
-   * @param {import("./chatManager.js").default} cm - The chat manager instance.
-   * @param {object} ui - The UI instance.
-   * @returns {Promise<boolean>} True if the operation succeeded.
+   * @param {import("./chatManager.js").default} cm The chat manager.
+   * @param {object} ui The UI.
+   * @returns {Promise<boolean>} Always true.
    */
   "/reload": (cm, ui) => SystemCommands.handleReload(cm, ui),
   /**
-   * Checks available models.
-   * @param {import("./chatManager.js").default} cm - The chat manager instance.
-   * @param {object} ui - The UI instance.
-   * @returns {void}
+   * @param {import("./chatManager.js").default} cm The chat manager.
+   * @param {object} ui The UI.
+   * @returns {Promise<boolean>} Always true.
    */
   "/mchk": (cm, ui) => ModelCommands.handleModelsCheck(cm, ui),
   /**
-   * Shows the current system prompt.
-   * @param {import("./chatManager.js").default} cm - The chat manager instance.
-   * @param {object} ui - The UI instance.
-   * @returns {void}
+   * @param {import("./chatManager.js").default} cm The chat manager.
+   * @param {object} ui The UI.
+   * @returns {Promise<boolean>} Always true.
    */
   "/sp": (cm, ui) => SystemCommands.handleShowSystemPrompt(cm, ui),
   /**
-   * Rebuilds the system prompt and tools cache.
-   * @param {import("./chatManager.js").default} cm - The chat manager instance.
-   * @param {object} ui - The UI instance.
-   * @returns {void}
+   * @param {import("./chatManager.js").default} cm The chat manager.
+   * @param {object} ui The UI.
+   * @returns {Promise<boolean>} Always true.
    */
   "/cache": (cm, ui) => SystemCommands.handleCache(cm, ui),
 };
 
 /**
  * Map of prefix-based commands to their handler functions.
+ * @type {{[key: string]: (args: CommandContext) => Promise<boolean|void>}}
  */
 const PREFIX_COMMANDS = {
   /**
-   * Rewrites the last message.
-   * @param {object} param0 - Destructured parameters.
-   * @param {import("./chatManager.js").default} param0.cm - The chat manager instance.
-   * @param {object} param0.ui - The UI instance.
-   * @param {string} param0.input - The raw input string.
-   * @param {string} param0.prefix - The command prefix.
-   * @returns {void}
+   * @param {CommandContext} args The context.
+   * @returns {Promise<boolean>} Always true.
    */
   "/r ": ({ cm, ui, input, prefix }) =>
     SessionCommands.handleRewrite(cm, ui, input.substring(prefix.length).trim()),
   /**
-   * Saves the last payload to a file.
-   * @param {object} param0 - Destructured parameters.
-   * @param {import("./chatManager.js").default} param0.cm - The chat manager instance.
-   * @param {object} param0.ui - The UI instance.
-   * @param {string} param0.input - The raw input string.
-   * @param {string} param0.prefix - The command prefix.
-   * @returns {void}
+   * @param {CommandContext} args The context.
+   * @returns {Promise<boolean>} Always true.
    */
   "/s ": ({ cm, ui, input, prefix }) =>
     SessionCommands.handleSavePayload(
@@ -159,163 +145,98 @@ const PREFIX_COMMANDS = {
       input.substring(prefix.length).trim() || "last_request.json",
     ),
   /**
-   * Sets the channel topic.
-   * @param {object} param0 - Destructured parameters.
-   * @param {import("./chatManager.js").default} param0.cm - The chat manager instance.
-   * @param {object} param0.ui - The UI instance.
-   * @param {string} param0.input - The raw input string.
-   * @param {string} param0.prefix - The command prefix.
-   * @returns {void}
+   * @param {CommandContext} args The context.
+   * @returns {Promise<boolean>} Always true.
    */
   "/topic ": ({ cm, ui, input, prefix }) => {
     const topic = input.substring(prefix.length).trim();
     return InterfaceCommands.handleTopic(cm, ui, topic);
   },
   /**
-   * Executes an agent tool directly without affecting history.
-   * @param {object} param0 - Destructured parameters.
-   * @param {import("./chatManager.js").default} param0.cm - The chat manager instance.
-   * @param {object} param0.ui - The UI instance.
-   * @param {string} param0.input - The raw input string.
-   * @param {string} param0.prefix - The command prefix.
-   * @returns {void}
+   * @param {CommandContext} args The context.
+   * @returns {Promise<boolean>} Always true.
    */
   "/tool ": ({ cm, ui, input, prefix }) => {
     const toolCall = input.substring(prefix.length).trim();
     return SystemCommands.handleTool(cm, ui, toolCall);
   },
   /**
-   * Sends a message and measures response latency.
-   * @param {object} param0 - Destructured parameters.
-   * @param {import("./chatManager.js").default} param0.cm - The chat manager instance.
-   * @param {object} param0.ui - The UI instance.
-   * @param {string} param0.input - The raw input string.
-   * @param {string} param0.prefix - The command prefix.
-   * @returns {void}
+   * @param {CommandContext} args The context.
+   * @returns {Promise<boolean>} Always true.
    */
   "/ping ": ({ cm, ui, input, prefix }) => {
     const message = input.substring(prefix.length).trim();
     return SystemCommands.handlePing(cm, ui, message);
   },
   /**
-   * Changes the user nickname.
-   * @param {object} param0 - Destructured parameters.
-   * @param {import("./chatManager.js").default} param0.cm - The chat manager instance.
-   * @param {object} param0.ui - The UI instance.
-   * @param {string} param0.input - The raw input string.
-   * @param {string} param0.prefix - The command prefix.
-   * @returns {void}
+   * @param {CommandContext} args The context.
+   * @returns {Promise<boolean>} Always true.
    */
   "/nick ": ({ cm, ui, input, prefix }) => {
     const newNick = input.substring(prefix.length).trim();
     return InterfaceCommands.handleNick(cm, ui, newNick);
   },
   /**
-   * Performs a /me action.
-   * @param {object} param0 - Destructured parameters.
-   * @param {import("./chatManager.js").default} param0.cm - The chat manager instance.
-   * @param {object} param0.ui - The UI instance.
-   * @param {string} param0.input - The raw input string.
-   * @param {string} param0.prefix - The command prefix.
-   * @returns {void}
+   * @param {CommandContext} args The context.
+   * @returns {Promise<boolean>} Always true.
    */
   "/me ": ({ cm, ui, input, prefix }) => {
     const action = input.substring(prefix.length).trim();
     return InterfaceCommands.handleMe(cm, ui, action);
   },
   /**
-   * Performs a screenplay action.
-   * @param {object} param0 - Destructured parameters.
-   * @param {import("./chatManager.js").default} param0.cm - The chat manager instance.
-   * @param {object} param0.ui - The UI instance.
-   * @param {string} param0.input - The raw input string.
-   * @param {string} param0.prefix - The command prefix.
-   * @returns {void}
+   * @param {CommandContext} args The context.
+   * @returns {Promise<boolean>} Always true.
    */
   "/action ": ({ cm, ui, input, prefix }) => {
     const actionText = input.substring(prefix.length).trim();
     return InterfaceCommands.handleAction(cm, ui, actionText);
   },
   /**
-   * Joins a virtual channel.
-   * @param {object} param0 - Destructured parameters.
-   * @param {import("./chatManager.js").default} param0.cm - The chat manager instance.
-   * @param {object} param0.ui - The UI instance.
-   * @param {string} param0.input - The raw input string.
-   * @param {string} param0.prefix - The command prefix.
-   * @returns {void}
+   * @param {CommandContext} args The context.
+   * @returns {Promise<boolean>} Always true.
    */
   "/join ": ({ cm, ui, input, prefix }) => {
     const channel = input.substring(prefix.length).trim();
     return InterfaceCommands.handleJoin(cm, ui, channel);
   },
   /**
-   * Sets the FIFO context window truncation limit.
-   * @param {object} param0 - Destructured parameters.
-   * @param {import("./chatManager.js").default} param0.cm - The chat manager instance.
-   * @param {object} param0.ui - The UI instance.
-   * @param {string} param0.input - The raw input string.
-   * @returns {Promise<boolean>} True if the operation succeeded.
+   * @param {CommandContext} args The context.
+   * @returns {Promise<boolean>} Always true.
    */
   "/trunc ": ({ cm, ui, input }) => SystemCommands.handleTrunc(cm, ui, input),
   /**
-   * Sets the rate limit (requests per minute).
-   * @param {object} param0 - Destructured parameters.
-   * @param {import("./chatManager.js").default} param0.cm - The chat manager instance.
-   * @param {object} param0.ui - The UI instance.
-   * @param {string} param0.input - The raw input string.
-   * @returns {Promise<boolean>} True if the operation succeeded.
+   * @param {CommandContext} args The context.
+   * @returns {Promise<boolean>} Always true.
    */
   "/rpm ": ({ cm, ui, input }) => SystemCommands.handleRpm(cm, ui, input),
   /**
-   * Injects a custom AI message into the conversation history.
-   * @param {object} param0 - Destructured parameters.
-   * @param {import("./chatManager.js").default} param0.cm - The chat manager instance.
-   * @param {object} param0.ui - The UI instance.
-   * @param {string} param0.input - The raw input string.
-   * @param {string} param0.prefix - The command prefix.
-   * @returns {Promise<boolean>} True if the operation succeeded.
+   * @param {CommandContext} args The context.
+   * @returns {Promise<boolean>} Always true.
    */
   "/paim ": ({ cm, ui, input, prefix }) =>
     AICommands.handlePaim(cm, ui, input.substring(prefix.length).trim()),
   /**
-   * Connects to a specific AI provider.
-   * @param {object} param0 - Destructured parameters.
-   * @param {import("./chatManager.js").default} param0.cm - The chat manager instance.
-   * @param {object} param0.ui - The UI instance.
-   * @param {string} param0.input - The raw input string.
-   * @returns {Promise<boolean>} True if the operation succeeded.
+   * @param {CommandContext} args The context.
+   * @returns {Promise<boolean>} Always true.
    */
-  "/connect": ({ cm, ui, input }) =>
-    AICommands.handleConnect(cm, ui, input.split(/s+/).slice(1).join(" ")),
+  "/connect": ({ cm, ui, input, prefix }) =>
+    AICommands.handleConnect(cm, ui, input.substring(prefix.length).trim()),
   /**
-   * Lists or queries available AI models.
-   * @param {object} param0 - Destructured parameters.
-   * @param {import("./chatManager.js").default} param0.cm - The chat manager instance.
-   * @param {object} param0.ui - The UI instance.
-   * @param {string} param0.input - The raw input string.
-   * @returns {Promise<boolean>} True if the operation succeeded.
+   * @param {CommandContext} args The context.
+   * @returns {Promise<boolean>} Always true.
    */
   "/models": ({ cm, ui, input }) =>
-    ModelCommands.handleModels(cm, ui, input.split(/s+/)),
+    ModelCommands.handleModels(cm, ui, input.split(/\s+/)),
   /**
-   * Manages favorite prompts.
-   * @param {object} param0 - Destructured parameters.
-   * @param {import("./chatManager.js").default} param0.cm - The chat manager instance.
-   * @param {object} param0.ui - The UI instance.
-   * @param {string} param0.input - The raw input string.
-   * @returns {void}
+   * @param {CommandContext} args The context.
+   * @returns {Promise<boolean>} Always true.
    */
   "/fav": ({ cm, ui, input }) =>
-    FavoriteCommands.handleFav(cm, ui, input.split(/s+/)),
+    FavoriteCommands.handleFav(cm, ui, input.split(/\s+/)),
   /**
-   * Executes bash commands with arguments.
-   * @param {object} param0 - Destructured parameters.
-   * @param {import("./chatManager.js").default} param0.cm - The chat manager instance.
-   * @param {object} param0.ui - The UI instance.
-   * @param {string} param0.input - The raw input string.
-   * @param {string} param0.prefix - The command prefix.
-   * @returns {Promise<boolean>} True if the operation succeeded.
+   * @param {CommandContext} args The context.
+   * @returns {Promise<boolean>} Always true.
    */
   "/execute ": ({ cm, ui, input, prefix }) =>
     SystemCommands.handleExecute(cm, ui, input.substring(prefix.length).trim()),

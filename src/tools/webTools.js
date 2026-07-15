@@ -7,6 +7,10 @@ import path from "path";
 const ROOT_DIR = process.cwd();
 
 const CHUNK_SIZE = 10000; // 10KB limit for initial context window
+const SEARCH_TIMEOUT_MS = 20000;
+const FETCH_TIMEOUT_MS = 15000;
+const RENDER_TIMEOUT_MS = 30000;
+const MAX_PDF_BUFFER = 10 * 1024 * 1024;
 
 /**
  * Tools for web interaction, searching, and rendering pages to text.
@@ -79,7 +83,7 @@ export default class WebTools {
           "elinks",
           ["-dump", "-no-numbering", "-no-references", "-force-html", url],
           {
-            timeout: 20000,
+            timeout: SEARCH_TIMEOUT_MS,
           },
         );
 
@@ -117,7 +121,7 @@ export default class WebTools {
     try {
       response = await axios.get(normalizedUrl, {
         headers: requestHeaders,
-        timeout: 15000,
+        timeout: FETCH_TIMEOUT_MS,
         responseType: "arraybuffer",
       });
     } catch (e) {
@@ -140,8 +144,8 @@ export default class WebTools {
           "pdftotext",
           ["-layout", "-htmlmeta", tempPath, "-"],
           {
-            timeout: 30000,
-            maxBuffer: 10 * 1024 * 1024,
+            timeout: RENDER_TIMEOUT_MS,
+            maxBuffer: MAX_PDF_BUFFER,
           },
         );
         return stdout;
@@ -157,7 +161,7 @@ export default class WebTools {
         "elinks",
         ["-dump", "-force-html", normalizedUrl],
         {
-          timeout: 30000,
+          timeout: RENDER_TIMEOUT_MS,
         },
       );
       return stdout;
@@ -195,7 +199,7 @@ export default class WebTools {
           ...configHeaders,
           ...parsedHeaders,
         },
-        timeout: 15000,
+        timeout: FETCH_TIMEOUT_MS,
         responseType: "text",
       });
 
@@ -205,7 +209,7 @@ export default class WebTools {
     const { data } = this.#fetchBuffer;
 
     if (searchQuery) {
-      const WINDOW = 500;
+      const SEARCH_WINDOW_CHARS = 500;
       const MAX_MATCHES_PER_QUERY = 3;
       const MAX_TOTAL_LENGTH = 10000;
       const queries = searchQuery.split(/\s+/).filter(Boolean);
@@ -215,8 +219,8 @@ export default class WebTools {
         let idx = data.indexOf(q);
         let count = 0;
         while (idx !== -1 && count < MAX_MATCHES_PER_QUERY) {
-          const start = Math.max(0, idx - WINDOW);
-          const end = Math.min(data.length, idx + q.length + WINDOW);
+          const start = Math.max(0, idx - SEARCH_WINDOW_CHARS);
+          const end = Math.min(data.length, idx + q.length + SEARCH_WINDOW_CHARS);
           allMatches.push(data.substring(start, end));
           count += 1;
           idx = data.indexOf(q, idx + 1);

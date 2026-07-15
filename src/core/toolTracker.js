@@ -1,5 +1,7 @@
 import logger from "./logger.js";
 
+const MAX_ATTEMPTS = 100;
+
 /**
  * Tracks tool call attempts to detect and prevent infinite loops.
  */
@@ -9,7 +11,7 @@ class ToolAttemptTracker {
    */
   constructor() {
     this.attempts = new Map();
-    this.maxAttempts = 100;
+    this.maxAttempts = MAX_ATTEMPTS;
   }
 
   /**
@@ -19,12 +21,9 @@ class ToolAttemptTracker {
    * @returns {boolean} True if the attempt is within limits, false if a loop is detected.
    */
   recordAttempt(name, args) {
-    const argKey = JSON.stringify(args);
-    const key = `${name}:${argKey}`;
-
+    const key = this._getKey(name, args);
     const count = (this.attempts.get(key) || 0) + 1;
     this.attempts.set(key, count);
-
     return count <= this.maxAttempts;
   }
 
@@ -34,8 +33,7 @@ class ToolAttemptTracker {
    * @param {object} args The arguments used in the call.
    */
   recordSuccess(name, args) {
-    const argKey = JSON.stringify(args);
-    this.attempts.delete(`${name}:${argKey}`);
+    this.attempts.delete(this._getKey(name, args));
   }
 
   /**
@@ -51,9 +49,19 @@ class ToolAttemptTracker {
    * @param {object} args The arguments used in the call.
    */
   recordFailure(name, args) {
-    const argKey = JSON.stringify(args);
-    const key = `${name}:${argKey}`;
+    const key = this._getKey(name, args);
     logger.warn(`Tool execution failed for ${key}`);
+  }
+
+  /**
+   * Generates a unique key for a tool call based on its name and arguments.
+   * @private
+   * @param {string} name The name of the tool.
+   * @param {object} args The arguments used in the call.
+   * @returns {string} The generated key.
+   */
+  _getKey(name, args) {
+    return `${name}:${JSON.stringify(args)}`;
   }
 }
 

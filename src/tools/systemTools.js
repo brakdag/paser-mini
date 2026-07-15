@@ -6,6 +6,8 @@ import { registerSchemas } from "../core/schemaRegistry.js";
 
 export const SYSTEM_TOOLS_VERSION = "1.0.0";
 
+const EXEC_TIMEOUT_MS = 60000;
+
 /**
  * System tools for environment management, code analysis, and system control.
  */
@@ -59,7 +61,7 @@ export class SystemTools {
         "npx",
         ["pyright", "--outputjson", safePath],
         {
-          timeout: 60000,
+          timeout: EXEC_TIMEOUT_MS,
         },
       );
       return stdout.trim() === "" ? "No type or syntax errors found." : stdout;
@@ -82,7 +84,7 @@ export class SystemTools {
         "npx",
         ["eslint", safePath, "--no-color"],
         {
-          timeout: 60000,
+          timeout: EXEC_TIMEOUT_MS,
         },
       );
       return !stdout || stdout.trim() === "[]"
@@ -119,7 +121,7 @@ export class SystemTools {
 
     await fs.mkdir(safeOutputDir, { recursive: true });
     await this.#execFilePromise("npx", ["jsdoc", safeTargetPath, "-d", safeOutputDir], {
-      timeout: 60000,
+      timeout: EXEC_TIMEOUT_MS,
     });
     return `Documentation successfully generated in: ${safeOutputDir}`;
   }
@@ -144,7 +146,7 @@ export class SystemTools {
     try {
       const { stdout, stderr } = await this.#execPromise(command, {
         cwd: process.cwd(),
-        timeout: 60000,
+        timeout: EXEC_TIMEOUT_MS,
       });
       return stdout || stderr || "Command executed successfully (no output).";
     } catch (e) {

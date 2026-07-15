@@ -4,6 +4,281 @@ import ToolAttemptTracker from "./toolTracker.js";
 const DEFAULT_MAX_TURNS = 10000;
 
 /**
+ * Extracts base path from args.path.
+ * @param {object} args Tool arguments.
+ * @returns {string} Extracted detail.
+ */
+const getPathDetail = (args) => args.path ? path.basename(args.path) : "unknown";
+/**
+ * Extracts base path from args.file_path.
+ * @param {object} args Tool arguments.
+ * @returns {string} Extracted detail.
+ */
+const getFilePathDetail = (args) => args.file_path ? path.basename(args.file_path) : "unknown";
+/**
+ * Extracts issue number from args.issue_number.
+ * @param {object} args Tool arguments.
+ * @returns {string} Extracted detail.
+ */
+const getIssueDetail = (args) => args.issue_number ? `#${args.issue_number}` : "issue";
+/**
+ * Extracts search query from args.query.
+ * @param {object} args Tool arguments.
+ * @returns {string} Extracted detail.
+ */
+const getSearchDetail = (args) => args.query || "search";
+
+/**
+ * Map of tool names to functions that extract human-readable details for monitoring.
+ * @type {{[key: string]: (args: object) => string}}
+ */
+const TOOL_DETAIL_EXTRACTORS = {
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  read: getPathDetail,
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  tail: getPathDetail,
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  write: getPathDetail,
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  remove: getPathDetail,
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  sed: getPathDetail,
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  replace: getPathDetail,
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  analysis: getPathDetail,
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  eslint: getPathDetail,
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  diff: getPathDetail,
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  restore: (args) => args.filepath ? path.basename(args.filepath) : "unknown",
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  img: getPathDetail,
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  ls: (args) => args.path || "root",
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  list: (args) => args.path || "root",
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  rename: (args) => args.origin && args.destination ? `${path.basename(args.origin)} -> ${path.basename(args.destination)}` : "unknown",
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  copy: (args) => args.origin && args.destination ? `${path.basename(args.origin)} -> ${path.basename(args.destination)}` : "unknown",
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  concat: (args) => args.destination ? path.basename(args.destination) : "unknown",
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  doc: (args) => args.path ? `Docs: ${path.basename(args.path)}` : "unknown",
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  execute: (args) => args.command ? args.command.substring(0, 50) : "bash",
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  grep: getSearchDetail,
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  search: getSearchDetail,
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  glob: (args) => args.pattern || "pattern",
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  validate: (args) => args.jsonString ? `len: ${args.jsonString.length}` : "json",
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  nickname: (args) => args.newNickname || "nickname",
+  /**
+   * @returns {string} Extracted detail.
+   */
+  push: () => "insight",
+  /**
+   * @returns {string} Extracted detail.
+   */
+  token: () => "tokens",
+  /**
+   * @returns {string} Extracted detail.
+   */
+  tree: () => "tree",
+  /**
+   * @returns {string} Extracted detail.
+   */
+  difference: () => "all",
+  /**
+   * @returns {string} Extracted detail.
+   */
+  remote: () => "url",
+  /**
+   * @returns {string} Extracted detail.
+   */
+  patch: () => "git patch",
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  structure: getFilePathDetail,
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  node: getFilePathDetail,
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  arrange: getFilePathDetail,
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  update: getFilePathDetail,
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  create: (args) => args.title || "issue",
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  edit: getIssueDetail,
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  close: getIssueDetail,
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  post: getIssueDetail,
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  notify: (args) => args.message ? args.message.substring(0, 30) : "notify",
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  scene: (args) => args.scene || "scene",
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  jszip: (args) => args.filePath ? path.basename(args.filePath) : "unknown",
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  bin: (args) => args.filePath ? path.basename(args.filePath) : "unknown",
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  url: (args) => args.url || "url",
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  fetch: (args) => args.searchQuery ? `${args.url} (q: ${args.searchQuery})` : args.url || "url",
+  /**
+   * @returns {string} Extracted detail.
+   */
+  run: () => "sandbox",
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  reset: (args) => args.user_message ? args.user_message.substring(0, 30) : "reset",
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  index: (args) => `${args.path || "root"}${args.filter ? ` (${args.filter})` : ""}`,
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  load: (args) => args.ids || "ids",
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  real: (args) => args.action || "action",
+  /**
+   * @param {object} args Tool arguments.
+   * @returns {string} Extracted detail.
+   */
+  inspect: (args) => {
+    if (args.path) return path.basename(args.path);
+    if (args.command) return args.command.substring(0, 50);
+    return "inspect";
+  }
+};
+
+
+/**
  * ExecutionEngine is responsible for the orchestration of tool calls.
  * It manages tool validation, loop detection, security constraints,
  * and the actual invocation of tool functions, ensuring that results
@@ -48,91 +323,8 @@ class ExecutionEngine {
    * @returns {string} A descriptive string identifying the target of the tool operation.
    */
   _getToolDetail(toolName, args) {
-    switch (toolName) {
-      case "read":
-      case "tail":
-      case "write":
-      case "remove":
-      case "sed":
-      case "replace":
-      case "analysis":
-      case "eslint":
-      case "diff":
-      case "restore":
-      case "img":
-        return args.path ? path.basename(args.path) : "unknown";
-      case "ls":
-      case "list":
-        return args.path || "root";
-      case "rename":
-      case "copy":
-        return args.origin && args.destination ? `${path.basename(args.origin)} -> ${path.basename(args.destination)}` : "unknown";
-      case "concat":
-        return args.destination ? path.basename(args.destination) : "unknown";
-      case "doc":
-        return args.path ? `Docs: ${path.basename(args.path)}` : "unknown";
-      case "execute":
-        return args.command ? args.command.substring(0, 50) : "bash";
-      case "grep":
-      case "search":
-        return args.query || "search";
-      case "glob":
-        return args.pattern || "pattern";
-      case "validate":
-        return args.jsonString ? `len: ${args.jsonString.length}` : "json";
-      case "nickname":
-        return args.newNickname || "nickname";
-      case "push":
-        return "insight";
-      case "token":
-        return "tokens";
-      case "tree":
-        return "tree";
-      case "difference":
-        return "all";
-      case "remote":
-        return "url";
-      case "patch":
-        return "git patch";
-      case "structure":
-      case "node":
-      case "arrange":
-      case "update":
-        return args.file_path ? path.basename(args.file_path) : "unknown";
-      case "create":
-        return args.title || "issue";
-      case "edit":
-      case "close":
-      case "post":
-        return args.issue_number ? `#${args.issue_number}` : "issue";
-      case "notify":
-        return args.message ? args.message.substring(0, 30) : "notify";
-      case "scene":
-        return args.scene || "scene";
-      case "jszip":
-      case "bin":
-        return args.filePath ? path.basename(args.filePath) : "unknown";
-      case "url":
-        return args.url || "url";
-      case "fetch":
-        return args.searchQuery ? `${args.url} (q: ${args.searchQuery})` : args.url || "url";
-      case "run":
-        return "sandbox";
-      case "reset":
-        return args.user_message ? args.user_message.substring(0, 30) : "reset";
-      case "index":
-        return `${args.path || "root"}${args.filter ? ` (${args.filter})` : ""}`;
-      case "load":
-        return args.ids || "ids";
-      case "real":
-        return args.action || "action";
-      case "inspect":
-        if (args.path) return path.basename(args.path);
-        if (args.command) return args.command.substring(0, 50);
-        return "inspect";
-      default:
-        return "no details";
-    }
+    const extractor = TOOL_DETAIL_EXTRACTORS[toolName];
+    return extractor ? extractor(args) : "no details";
   }
 
   /**
@@ -180,7 +372,7 @@ class ExecutionEngine {
     }
 
     if (success) {
-      this.toolTracker.recordSuccess(toolName);
+      this.toolTracker.recordSuccess(toolName, args);
     } else {
       this.toolTracker.recordFailure(toolName, args);
     }

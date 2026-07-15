@@ -9,6 +9,12 @@ import CleanFormat from "../formats/CleanFormat.js";
 import FountainFormat from "../formats/FountainFormat.js";
 
 /**
+ * Icon used for tool monitoring spinners.
+ * @type {string}
+ */
+const TOOL_ICON = "🛠️";
+
+/**
  * Manages the terminal user interface, including message display, 
  * tool monitoring, and input handling.
  */
@@ -166,7 +172,7 @@ class TerminalUI {
    */
   displayThought(text) {
     input.clearCurrentLine();
-    process.stdout.write(`${chalk.green.italic(`\ud83d\udcad ${text}`)}\n`);
+    process.stdout.write(`${chalk.green.italic(`💭 ${text}`)}\n`);
   }
 
   /**
@@ -175,7 +181,7 @@ class TerminalUI {
    */
   displayInfo(text) {
     input.clearCurrentLine();
-    process.stdout.write(`${chalk.blue("\u2139 ") + chalk.cyan(text)}\n`);
+    process.stdout.write(`${chalk.blue("ℹ ") + chalk.cyan(text)}\n`);
     this.writeToLog(this.activePlugin.formatSystem(`INFO: ${text}`));
   }
 
@@ -185,7 +191,7 @@ class TerminalUI {
    */
   displayError(text) {
     input.clearCurrentLine();
-    process.stdout.write(`${chalk.red("\u2716 ") + chalk.red.bold(text)}\n`);
+    process.stdout.write(`${chalk.red("✖ ") + chalk.red.bold(text)}\n`);
     this.writeToLog(this.activePlugin.formatSystem(`ERROR: ${text}`));
   }
 
@@ -233,8 +239,7 @@ class TerminalUI {
    * @param {string} detail The detail of the operation.
    */
   startToolMonitoring(name, detail) {
-    const toolIcon = "\ud83d\udee0\ufe0f";
-    const msg = `${toolIcon} ${name} (${detail})...`;
+    const msg = `${TOOL_ICON} ${name} (${detail})...`;
     if (this.noSpinner) {
       return;
     }

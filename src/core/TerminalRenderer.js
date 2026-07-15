@@ -120,26 +120,78 @@ class TerminalRenderer {
     "$\\Im$": "ℑ",
     "$\\aleph$": "ℵ",
     // Nerd Font glyphs
-    "[calendar]": "D",
-    "[clock]": "",
-    "[folder]": "",
-    "[file]": "",
-    "[code]": "",
-    "[terminal]": "",
-    "[check]": "",
-    "[cross]": "",
-    "[warning]": "",
-    "[info]": "",
-    "[gear]": "",
-    "[bolt]": "",
-    "[book]": "",
-    "[pen]": "",
-    "[bug]": "",
-    "[star]": "",
-    "[heart]": "",
-    "[fire]": "",
-    "[rocket]": "",
+    "[calendar]": "D",
+    "[clock]": "",
+    "[folder]": "",
+    "[file]": "",
+    "[code]": "",
+    "[terminal]": "",
+    "[check]": "",
+    "[cross]": "",
+    "[warning]": "",
+    "[info]": "",
+    "[gear]": "",
+    "[bolt]": "",
+    "[book]": "",
+    "[pen]": "",
+    "[bug]": "",
+    "[star]": "",
+    "[heart]": "",
+    "[fire]": "",
+    "[rocket]": "",
   };
+
+  /**
+   * Checks if a numeric code point falls within any of the provided ranges.
+   * @private
+   * @param {number} code - The Unicode code point.
+   * @param {number[][]} ranges - An array of [start, end] ranges.
+   * @returns {boolean} True if the code is within any range.
+   */
+  _isInRanges(code, ranges) {
+    return ranges.some(([start, end]) => code >= start && code <= end);
+  }
+
+  /**
+   * Calculates the visual display width of a string, accounting for
+   * wide characters (CJK, fullwidth) and zero-width characters
+   * (combining marks, variation selectors, ZWJ).
+   * @param {string} text - The text to measure.
+   * @returns {number} The visual width in terminal columns.
+   */
+  _visualWidth(text) {
+    const ZERO_WIDTH_RANGES = [
+      [0x0300, 0x036f], // Combining marks
+      [0x200d, 0x200d], // Zero Width Joiner
+      [0xfe00, 0xfe0f], // Variation selectors
+      [0x00ad, 0x00ad], // Soft hyphen
+    ];
+    const WIDE_CHAR_RANGES = [
+      [0x1100, 0x115f], // Hangul Jamo
+      [0x2e80, 0x303e], // CJK Radicals
+      [0x3041, 0x33ff], // Hiragana, Katakana, CJK Symbols
+      [0x3400, 0x4dbf], // CJK Unified Ideographs Extension A
+      [0x4e00, 0x9fff], // CJK Unified Ideographs
+      [0xa000, 0xa4cf], // Yi Syllables
+      [0xac00, 0xd7a3], // Hangul Syllables
+      [0xf900, 0xfaff], // CJK Compatibility Ideographs
+      [0xfe30, 0xfe4f], // CJK Compatibility Forms
+      [0xff00, 0xff60], // Fullwidth Forms
+      [0xffe0, 0xffe6], // Fullwidth Signs
+      [0x20000, 0x2fffd], // CJK Unified Ideographs Extension B-F
+      [0x30000, 0x3fffd], // CJK Unified Ideographs Extension G+
+    ];
+
+    // eslint-disable-next-line no-control-regex
+    const cleanText = text.replace(/\u001B\[[0-9;]*m/g, "");
+    const chars = Array.from(cleanText);
+    return chars.reduce((width, char) => {
+      const code = char.codePointAt(0);
+      if (this._isInRanges(code, ZERO_WIDTH_RANGES)) return width;
+      if (this._isInRanges(code, WIDE_CHAR_RANGES)) return width + 2;
+      return width + 1;
+    }, 0);
+  }
 
   /**
    * Translates LaTeX notation and bracket tokens to Unicode/Nerd Font glyphs.
@@ -183,55 +235,6 @@ class TerminalRenderer {
     lines.push(currentLine);
 
     return lines.map((line) => " ".repeat(start) + line).join("\n");
-  }
-
-  /**
-   * Calculates the visual display width of a string, accounting for
-   * wide characters (CJK, fullwidth) and zero-width characters
-   * (combining marks, variation selectors, ZWJ).
-   * @param {string} text - The text to measure.
-   * @returns {number} The visual width in terminal columns.
-   */
-  _visualWidth(text) {
-    let width = 0;
-    // eslint-disable-next-line no-control-regex
-    const cleanText = text.replace(/\u001B\[[0-9;]*m/g, "");
-    const chars = Array.from(cleanText);
-    for (let i = 0; i < chars.length; i += 1) {
-      const code = chars[i].codePointAt(0);
-      // Zero-width: combining marks, variation selectors, ZWJ, soft hyphen
-      const isZeroWidth =
-        (code >= 0x0300 && code <= 0x036f) ||
-        code === 0x200d ||
-        (code >= 0xfe00 && code <= 0xfe0f) ||
-        code === 0x00ad;
-
-      // Wide: CJK, Hangul, fullwidth forms, etc.
-      const isWide =
-        (code >= 0x1100 && code <= 0x115f) ||
-        (code >= 0x2e80 && code <= 0x303e) ||
-        (code >= 0x3041 && code <= 0x33ff) ||
-        (code >= 0x3400 && code <= 0x4dbf) ||
-        (code >= 0x4e00 && code <= 0x9fff) ||
-        (code >= 0xa000 && code <= 0xa4cf) ||
-        (code >= 0xac00 && code <= 0xd7a3) ||
-        (code >= 0xf900 && code <= 0xfaff) ||
-        (code >= 0xfe30 && code <= 0xfe4f) ||
-        (code >= 0xff00 && code <= 0xff60) ||
-        (code >= 0xffe0 && code <= 0xffe6) ||
-        (code >= 0x20000 && code <= 0x2fffd) ||
-        (code >= 0x30000 && code <= 0x3fffd);
-
-      if (isZeroWidth) {
-        // eslint-disable-next-line no-continue
-        continue;
-      } else if (isWide) {
-        width += 2;
-      } else {
-        width += 1;
-      }
-    }
-    return width;
   }
 
   /**
@@ -422,24 +425,25 @@ class TerminalRenderer {
   }
 
   /**
-   * Renders an information panel with a title and key-value pairs.
+   * Renders a titled panel with a list of rows.
+   * @private
    * @param {string} title - The title of the panel.
-   * @param {Array<[string, string]>} data - The key-value pairs to display.
+   * @param {string[]} rows - The pre-formatted string rows to display.
    * @returns {string} The rendered panel string.
    */
-  renderInfoPanel(title, data) {
-    const maxKeyLength = Math.max(...data.map(([key]) => this._visualWidth(key)));
-    const rows = data.map(([key, value]) => `${this._padToWidth(key, maxKeyLength)}   ${value}`);
-    
+  _renderBoxPanel(title, rows) {
     const contentWidth = Math.max(
       this._visualWidth(title),
-      ...rows.map(row => this._visualWidth(row))
+      ...rows.map((row) => this._visualWidth(row)),
     );
-    
     const totalWidth = contentWidth + 2;
-    const paddedRows = rows.map(row => `${chalk.blue("│")} ${this._padToWidth(row, contentWidth)} ${chalk.blue("│")}`);
+
+    const paddedRows = rows.map(
+      (row) =>
+        `${chalk.blue("│")} ${this._padToWidth(row, contentWidth)} ${chalk.blue("│")}`,
+    );
     const paddedTitle = `${chalk.blue("│")} ${this._padToWidth(chalk.bold(title), contentWidth)} ${chalk.blue("│")}`;
-    
+
     let output = `\n${chalk.blue(`┌${"─".repeat(totalWidth)}┐`)}\n`;
     output += `${paddedTitle}\n`;
     output += `${chalk.blue(`├${"─".repeat(totalWidth)}┤`)}\n`;
@@ -449,28 +453,26 @@ class TerminalRenderer {
   }
 
   /**
+   * Renders an information panel with a title and key-value pairs.
+   * @param {string} title - The title of the panel.
+   * @param {Array<[string, string]>} data - The key-value pairs to display.
+   * @returns {string} The rendered panel string.
+   */
+  renderInfoPanel(title, data) {
+    const maxKeyLength = Math.max(...data.map(([key]) => this._visualWidth(key)));
+    const rows = data.map(([key, value]) => `${this._padToWidth(key, maxKeyLength)}   ${value}`);
+    return this._renderBoxPanel(title, rows);
+  }
+
+  /**
    * Renders a titled menu panel with indexed options.
    * @param {string} title - The title of the menu.
    * @param {string[]} items - The list of options to display.
    * @returns {string} The rendered menu string.
    */
   renderMenu(title, items) {
-    const indexed = items.map((item, i) => `${chalk.cyan(`${i}.`)} ${item}`);
-    const contentWidth = Math.max(
-      this._visualWidth(title),
-      ...indexed.map((item) => this._visualWidth(item)),
-    );
-    const totalWidth = contentWidth + 2;
-    const paddedRows = indexed.map(
-      (item) => `${chalk.blue("│")} ${this._padToWidth(item, contentWidth)} ${chalk.blue("│")}`,
-    );
-    const paddedTitle = `${chalk.blue("│")} ${this._padToWidth(chalk.bold(title), contentWidth)} ${chalk.blue("│")}`;
-    let output = `\n${chalk.blue(`┌${"─".repeat(totalWidth)}┐`)}\n`;
-    output += `${paddedTitle}\n`;
-    output += `${chalk.blue(`├${"─".repeat(totalWidth)}┤`)}\n`;
-    output += `${paddedRows.join("\n")}\n`;
-    output += `${chalk.blue(`└${"─".repeat(totalWidth)}┘`)}\n`;
-    return output;
+    const rows = items.map((item, i) => `${chalk.cyan(`${i}.`)} ${item}`);
+    return this._renderBoxPanel(title, rows);
   }
 
   /**

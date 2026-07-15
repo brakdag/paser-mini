@@ -3,6 +3,11 @@ import path from "path";
 import fs from "fs/promises";
 import PathValidator from "../utils/pathValidator.js";
 
+const MAX_STDOUT_SIZE = 50 * 1024; // 50KB limit to prevent context overflow
+const MAX_GREP_RESULTS = 10;
+const MAX_GREP_LINES = 50;
+const GREP_TIMEOUT_MS = 80000;
+
 /**
  * Tools for searching files and text within the project.
  */
@@ -40,7 +45,7 @@ export default class SearchTools {
     };
 
     await walk(".");
-    return JSON.stringify(results.slice(0, 10));
+    return JSON.stringify(results.slice(0, MAX_GREP_RESULTS));
   }
 
   /**
@@ -92,7 +97,6 @@ export default class SearchTools {
       ]);
 
       let stdoutData = "";
-      const MAX_STDOUT_SIZE = 50 * 1024; // 50KB limit to prevent context overflow
 
       child.stdout.on("data", (data) => {
         stdoutData += data.toString();
@@ -106,7 +110,7 @@ export default class SearchTools {
 
         const currentLines = stdoutData.split("\n").filter(Boolean).length;
 
-        if (currentLines >= 50) {
+        if (currentLines >= MAX_GREP_LINES) {
           child.kill("SIGKILL");
           resolve(this.#parseGrepOutput(stdoutData, rootPath));
         }
@@ -127,7 +131,7 @@ export default class SearchTools {
       setTimeout(() => {
         child.kill("SIGKILL");
         resolve(this.#parseGrepOutput(stdoutData, rootPath));
-      }, 80000);
+      }, GREP_TIMEOUT_MS);
     });
   }
 
@@ -147,7 +151,7 @@ export default class SearchTools {
     const parsedResults = stdout
       .split("\n")
       .filter((line) => line)
-      .slice(0, 10)
+      .slice(0, MAX_GREP_RESULTS)
       .map((line) => {
         const parts = line.split(":");
         if (parts.length < 3) {

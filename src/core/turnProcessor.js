@@ -4,8 +4,8 @@ import ApiCommunicator from './ApiCommunicator.js';
 import ThoughtExtractor from './thoughtExtractor.js';
 import ToolExecutor from './toolExecutor.js';
 
-const MAX_TOOL_ITERATIONS = 50;
-const MAX_CONSECUTIVE_ERRORS = 5;
+const MAX_TOOL_ITERATIONS = 500;
+const MAX_CONSECUTIVE_ERRORS = 50;
 
 /**
  * Orchestrates the processing of a single turn, including input handling, 
@@ -130,7 +130,7 @@ class TurnProcessor {
       if (typeof r === 'string') return r;
       return r.result && r.result.mime_type ? r.result : r.response;
     });
-    const sep = String.fromCharCode(10, 10);
+    const sep = "\n\n";
     return mapped.every((item) => typeof item === 'string') ? mapped.join(sep) : mapped;
   }
 

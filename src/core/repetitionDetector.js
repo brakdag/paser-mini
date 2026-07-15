@@ -33,12 +33,15 @@ class RepetitionDetector {
       }
 
       if (this.buffer.length >= this.n * 2) {
-        // Extract current and previous n-grams
-        const currentNgram = this.buffer.slice(-this.n).join(" ");
-        const previousNgram = this.buffer.slice(-this.n * 2, -this.n).join(" ");
+        const currentNgramStart = this.buffer.length - this.n;
+        const currentNgramEnd = this.buffer.length;
+        const previousNgramStart = this.buffer.length - (this.n * 2);
+        const previousNgramEnd = this.buffer.length - this.n;
+
+        const currentNgram = this.buffer.slice(currentNgramStart, currentNgramEnd).join(" ");
+        const previousNgram = this.buffer.slice(previousNgramStart, previousNgramEnd).join(" ");
 
         if (currentNgram === previousNgram) {
-          // Count how many times this n-gram appears in the current buffer
           let count = 0;
           for (let j = 0; j <= this.buffer.length - this.n; j += this.n) {
             const segment = this.buffer.slice(j, j + this.n).join(" ");

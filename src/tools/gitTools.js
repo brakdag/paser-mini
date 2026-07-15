@@ -58,9 +58,7 @@ export default class GitTools {
    */
   async applyPatch(p) {
     const patch = typeof p === 'object' ? p.patch : p;
-    if (!patch) {
-      throw new Error("Patch content is required.");
-    }
+    if (!patch) throw new Error("Patch content is required.");
 
     const tempFileName = `git_patch_${Date.now()}.patch`;
     const tempFilePath = path.join(process.cwd(), tempFileName);
@@ -92,7 +90,7 @@ export default class GitTools {
    * @throws {Error} If the file path is missing.
    */
   async restoreFile(f) {
-    const filepath = typeof f === 'object' ? f.path : f;
+    const filepath = typeof f === 'object' ? f.filepath : f;
     if (!filepath) throw new Error("File path is required.");
     return this.#run(["restore", filepath]);
   }

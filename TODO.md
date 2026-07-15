@@ -1,1 +1,2 @@
-Check if all the code in src/ is aligned with docs/cleanCode.md.
+- [x] Check if all the code in src/ is aligned with docs/cleanCode.md.
+- [ ] always check eslint in modified files.

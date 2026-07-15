@@ -19,7 +19,8 @@ class ThoughtExtractor {
       logger.sessionLog(thought);
       return response.replace(match[0], "").trim();
     }
-    const firstCallIndex = response.indexOf("SchwaSymbol");
+    const OPEN = "\u018f"; // Latin Capital Schwa
+    const firstCallIndex = response.indexOf(OPEN);
     if (firstCallIndex > 0) {
       const thought = response.substring(0, firstCallIndex).trim();
       if (thought) {

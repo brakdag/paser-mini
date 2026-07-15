@@ -3,6 +3,8 @@
  */
 const RETRYABLE_NETWORK_ERRORS = ['ECONNABORTED', 'ETIMEDOUT', 'ECONNRESET', 'ERR_NETWORK', 'ENOTFOUND', 'EAI_AGAIN', 'EHOSTUNREACH', 'ENETUNREACH', 'ECONNREFUSED', 'EPIPE'];
 const RETRYABLE_SERVER_STATUSES = [429, 500, 502, 503, 504];
+const MAX_RETRIES = 5;
+const BASE_DELAY_MS = 1000;
 
 /**
  * Handles communication with the API, including retry logic and error recovery.
@@ -16,8 +18,8 @@ class ApiCommunicator {
   constructor(assistant, ui) {
     this.assistant = assistant;
     this.ui = ui;
-    this.maxRetries = 5;
-    this.baseDelay = 1000;
+    this.maxRetries = MAX_RETRIES;
+    this.baseDelay = BASE_DELAY_MS;
   }
 
   /**

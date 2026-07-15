@@ -45,35 +45,17 @@ class Logger {
   }
 
   /**
-   * Core logging method that writes messages to the appropriate log file based on the level.
-   * @param {string} level - The log level (e.g., 'INFO', 'WARN', 'ERROR', 'THOUGHT', 'DEBUG').
+   * Core logging method that writes messages to the system log file.
+   * @param {string} level - The log level (e.g., 'INFO', 'WARN', 'ERROR', 'DEBUG').
    * @param {string} message - The message to be logged.
    * @param {unknown} [data] - Optional additional data to be logged as JSON.
    * @returns {void}
    */
   log(level, message, data = null) {
     const timestamp = new Date().toISOString();
-    let targetFile = this.logFile;
-    if (level === "THOUGHT") {
-      targetFile = this.sessionFile;
-    }
-
-    if (level === "THOUGHT") {
-      const time = new Date().toLocaleTimeString("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: false,
-      });
-      const nick = this.agentNickname || "agent";
-      const logEntry = `[${time}] <${nick}> * thought: ${message}\n`;
-      fs.appendFileSync(targetFile, logEntry, "utf8");
-      return;
-    }
-
     const safeData = data ? JSON.stringify(data, circularReplacer()) : "";
     const logEntry = `[${timestamp}] [${level}] ${message} ${safeData}\n`;
-    fs.appendFileSync(targetFile, logEntry, "utf8");
+    fs.appendFileSync(this.logFile, logEntry, "utf8");
   }
 
   /**
@@ -121,7 +103,15 @@ class Logger {
    * @returns {void}
    */
   sessionLog(msg) {
-    this.log("THOUGHT", msg);
+    const time = new Date().toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+    const nick = this.agentNickname || "agent";
+    const logEntry = `[${time}] <${nick}> * thought: ${msg}\n`;
+    fs.appendFileSync(this.sessionFile, logEntry, "utf8");
   }
 
   /**

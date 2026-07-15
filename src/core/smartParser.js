@@ -58,13 +58,15 @@ class SmartToolParser {
     if (trimmed === "true") return true;
     if (trimmed === "false") return false;
     if (trimmed === "null") return null;
-    try {
-      if (trimmed.startsWith("[") && trimmed.endsWith("]"))
+    if (
+      (trimmed.startsWith("[") && trimmed.endsWith("]")) ||
+      (trimmed.startsWith("{") && trimmed.endsWith("}"))
+    ) {
+      try {
         return JSON.parse(trimmed.replace(/'/g, '"'));
-      if (trimmed.startsWith("{") && trimmed.endsWith("}"))
-        return JSON.parse(trimmed.replace(/'/g, '"'));
-    } catch (e) {
-      logger.error(`JSON Parse Error in _castValue: ${e.message}`);
+      } catch (e) {
+        logger.error(`JSON Parse Error in _castValue: ${e.message}`);
+      }
     }
     return trimmed;
   }
