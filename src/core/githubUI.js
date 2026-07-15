@@ -1,6 +1,8 @@
 import GithubTools from "../tools/githubTools.js";
 import logger from "./logger.js";
 
+const GITHUB_API_CLIENT = new GithubTools();
+
 /**
  * Provides a UI implementation for interacting with GitHub issues, acting as a bridge
  * between the ChatManager and the GitHub API.
@@ -15,6 +17,7 @@ class GitHubUI {
     this.issueNumber = issueNumber;
     this.repo = repo;
     this.bashEnabled = false;
+    this.githubApi = GITHUB_API_CLIENT;
   }
 
   /**
@@ -34,8 +37,7 @@ class GitHubUI {
   async displayMessage(text) {
     logger.info(`[GitHubUI] Posting to Issue #${this.issueNumber}: ${text}`);
     try {
-      const githubApi = new GithubTools();
-      await githubApi.postComment(this.issueNumber, text, this.repo);
+      await this.githubApi.postComment(this.issueNumber, text, this.repo);
     } catch (e) {
       logger.error(`[GitHubUI] Error in displayMessage: ${e.message}`);
     }

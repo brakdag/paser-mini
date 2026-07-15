@@ -5,9 +5,9 @@ class RetryHandler {
   /**
    * Creates an instance of RetryHandler.
    * @param {number} maxRetries - Maximum number of retry attempts.
-   * @param {number} maxDelay - Maximum delay between retries in milliseconds.
+   * @param {number} maxDelay - Maximum delay between retries in milliseconds (default: 5 minutes).
    */
-  constructor(maxRetries = 15, maxDelay = 28800000) {
+  constructor(maxRetries = 15, maxDelay = 300000) {
     this.maxRetries = maxRetries;
     this.maxDelay = maxDelay;
   }

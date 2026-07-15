@@ -81,7 +81,7 @@ class SystemPromptManager {
 
     const currentMtimes = await this._getMtimes(dependencies);
 
-    // 1. Attempt to read from cache (unless a rebuild is forced)
+
     if (!this._forceRebuild) {
       try {
         const cacheData = JSON.parse(await fsp.readFile(CACHE_FILE, "utf8"));
@@ -97,7 +97,7 @@ class SystemPromptManager {
             )
           );
           
-          this._pendingCache = null; // No hay nada nuevo que guardar
+          this._pendingCache = null;
 
           return {
             systemInstruction: cacheData.systemInstruction,
@@ -109,7 +109,6 @@ class SystemPromptManager {
       }
     }
 
-    // 2. Build from scratch
     let injection = "";
     let filteredTools = { ...AVAILABLE_TOOLS };
 
@@ -143,7 +142,6 @@ class SystemPromptManager {
       ? `PERSON AND ROLE:\n${injection}\n\nCORE OPERATIONAL PROTOCOLS:\n${baseInstr}`
       : baseInstr;
 
-    // 3. Save payload in memory
     this._pendingCache = {
       mtimes: currentMtimes,
       options: {
@@ -154,7 +152,6 @@ class SystemPromptManager {
       systemInstruction: finalInstruction
     };
 
-    // Reset the flag if it was forced
     this._forceRebuild = false;
 
     return {
@@ -187,7 +184,7 @@ class SystemPromptManager {
         fs.mkdirSync(CACHE_DIR, { recursive: true });
       }
       fs.writeFileSync(CACHE_FILE, JSON.stringify(this._pendingCache), "utf8");
-      this._pendingCache = null; // Clear after saving
+      this._pendingCache = null;
     } catch (err) {
       logger.warn(`Could not write startup cache on exit: ${err.message}`);
     }

@@ -1,121 +1,45 @@
 [
   ["read", "Read file content", { "path": "string" }],
-  [
-    "tail",
-    "Read last N lines of a file",
-    { "path": "string", "tail": "number" }
-  ],
+  ["tail", "Read last N lines of a file", { "path": "string", "tail": "number" }],
   ["write", "Write content to file", { "path": "string", "content": "string" }],
   ["remove", "Remove file", { "path": "string" }],
   ["sed", "Regex search and replace in file", { "path": "string", "pattern": "string", "replacement": "string", "flags": "string" }],
   ["list", "List directory", { "path": "string" }],
-  [
-    "replace",
-    "Search and replace string",
-    { "path": "string", "search_text": "string", "replace_text": "string" }
-  ],
+  ["replace", "Search and replace string", { "path": "string", "search_text": "string", "replace_text": "string" }],
   ["analysis", "Run static analysis for JS/TS codebase", { "path": "string" }],
   ["eslint", "Run ESLint", { "path": "string" }],
-  [
-    "doc",
-    "Generate HTML documentation using JSDoc",
-    { "path": "string", "outputDir": "string" }
-  ],
+  ["doc", "Generate HTML documentation using JSDoc", { "path": "string", "outputDir": "string" }],
   ["execute", "Execute a bash", { "command": "string" }],
   ["grep", "Search string in path", { "query": "string", "path": "string" }],
   ["glob", "Search files by pattern", { "pattern": "string" }],
-  [
-    "rename",
-    "Move or rename path",
-    { "origin": "string", "destination": "string" }
-  ],
+  ["rename", "Move or rename path", { "origin": "string", "destination": "string" }],
   ["copy", "Copy file", { "origin": "string", "destination": "string" }],
-  [
-    "validate",
-    "Validates if a string is a valid JSON",
-    { "json_string": "string" }
-  ],
+  ["validate", "Validates if a string is a valid JSON", { "json_string": "string" }],
   ["nickname", "Changes nickname", { "newNickname": "string" }],
   ["push", "Stores in memento.log", "string"],
   ["token", "Current token count", {}],
   ["tree", "Get the repository file tree", {}],
   ["diff", "Show differences of a file using git diff", { "path": "string" }],
   ["restore", "Restore a file using git restore", { "filepath": "string" }],
-  [
-    "concat",
-    "Concatenates source file to destination file",
-    { "destination": "string", "source": "string" }
-  ],
-  [
-    "structure",
-    "Returns keys and structure of a JSON node",
-    { "file_path": "string", "path": "string" }
-  ],
-  [
-    "node",
-    "Retrieves content of a specific JSON node",
-    { "file_path": "string", "path": "string" }
-  ],
-  [
-    "arrange",
-    "Returns length and item type of a JSON array",
-    { "file_path": "string", "path": "string" }
-  ],
-  [
-    "update",
-    "Updates a specific JSON node",
-    { "file_path": "string", "path": "string", "value": "any" }
-  ],
+  ["concat", "Concatenates source file to destination file", { "destination": "string", "source": "string" }],
+  ["structure", "Returns keys and structure of a JSON node", { "file_path": "string", "path": "string" }],
+  ["node", "Retrieves content of a specific JSON node", { "file_path": "string", "path": "string" }],
+  ["arrange", "Returns length and item type of a JSON array", { "file_path": "string", "path": "string" }],
+  ["update", "Updates a specific JSON node", { "file_path": "string", "path": "string", "value": "any" }],
   ["issues", "List issues in GitHub", { "repo": "string" }],
-  [
-    "create",
-    "Create a new GitHub issue",
-    { "title": "string", "body": "string", "repo": "string" }
-  ],
-  [
-    "edit",
-    "Edit an existing issue",
-    {
-      "issue_number": "integer",
-      "repo": "string",
-      "title": "string",
-      "body": "string"
-    }
-  ],
+  ["create", "Create a new GitHub issue", { "title": "string", "body": "string", "repo": "string" }],
+  ["edit", "Edit an existing issue", { "issue_number": "integer", "repo": "string", "title": "string", "body": "string" }],
   ["close", "Close an issue", { "issue_number": "integer", "repo": "string" }],
-  [
-    "post",
-    "Post a comment to a GitHub issue",
-    { "issue_number": "integer", "body": "string", "repo": "string" }
-  ],
+  ["post", "Post a comment to a GitHub issue", { "issue_number": "integer", "body": "string", "repo": "string" }],
   ["remote", "Get the current Git repository name", {}],
   ["patch", "Apply a git patch", { "patch": "string" }],
-  [
-    "notify",
-    "Sends a non stop notification to the user",
-    { "message": "string" }
-  ],
-  [
-    "scene",
-    "Insert a Fountain scene",
-    { "scene": "string", "action": "string" }
-  ],
+  ["notify", "Sends a non stop notification to the user", { "message": "string" }],
+  ["scene", "Insert a Fountain scene", { "scene": "string", "action": "string" }],
   ["zip", "Lists all files in a ZIP archive", { "filePath": "string" }],
-  [
-    "bin",
-    "Perform binary analysis on a file",
-    {
-      "action": "string",
-      "filePath": "string",
-      "offset": "number",
-      "length": "number",
-      "end": "number",
-      "endianness": "string"
-    }
-  ],
+  ["bin", "Perform binary analysis on a file", { "action": "string", "filePath": "string", "offset": "number", "length": "number", "end": "number", "endianness": "string", "outputFile": "string", "pattern": "string", "hexString": "string", "type": "string" }],
   ["search", "Search the web using DuckDuckGo. Use this tool for any general information query, research, or when you need to find URLs. This is the primary web search tool.", { "query": "string" }],
   ["url", "Render webpage using elinks or PDF content as text via pdftotext", { "url": "string" }],
-  ["fetch", "Download raw HTML content from a specific URL. The searchQuery parameter filters the downloaded content by exact string match only — it is NOT a web search. For general information queries, use the search tool instead.", { "url": "string", "searchQuery": "string?", "headers": "json string" }],
+  ["fetch", "Download raw HTML content from a specific URL. The searchQuery parameter filters the downloaded content by exact string match only — it is NOT a web search. For general information queries, use the search tool instead.", { "url": "string", "searchQuery": "string?", "headers": "string" }],
   ["run", "Execute raw JavaScript in a secure sandbox", { "code": "string" }],
   ["img", "Visualizes an image.", { "path": "string" }],
   ["inspect", "Debug NodeJS code using built-in inspect repl", { "path": "string", "command": "string" }],

@@ -98,26 +98,24 @@ export class SystemTools {
 
   /**
    * Generates documentation using jsdoc.
-   * @param {string|object} targetPathOrOptions - Path to the file or options object.
-   * @param {string} [outputDir] - Directory for the generated docs.
+   * @param {object|string} options - The target path string or an options object.
+   * @param {string} [options.path] - Path to the file to document.
+   * @param {string} [options.targetPath] - Alternative key for path.
+   * @param {string} [options.outputDir] - Directory for the generated docs.
+   * @param {string} [outputDirFallback] - Fallback directory if not provided in options.
    * @returns {Promise<string>} Confirmation of the generation.
-   * @throws {Error} If the documentation process fails.
+   * @throws {Error} If the documentation process fails or arguments are missing.
    */
-  async generateDocs(targetPathOrOptions, outputDir) {
-    let targetPath = targetPathOrOptions;
-    let finalOutputDir = outputDir;
+  async generateDocs(options, outputDirFallback) {
+    const targetPath = options?.path || options?.targetPath || (typeof options === 'string' ? options : null);
+    const outputDir = options?.outputDir || outputDirFallback;
 
-    if (typeof targetPathOrOptions === 'object' && targetPathOrOptions !== null) {
-      targetPath = targetPathOrOptions.targetPath;
-      finalOutputDir = targetPathOrOptions.outputDir || outputDir;
-    }
-
-    if (!targetPath || !finalOutputDir) {
-      throw new Error(`Missing required arguments for generateDocs. targetPath: ${targetPath}, outputDir: ${finalOutputDir}`);
+    if (!targetPath || !outputDir) {
+      throw new Error(`Missing required arguments for generateDocs. targetPath: ${targetPath}, outputDir: ${outputDir}`);
     }
 
     const safeTargetPath = PathValidator.getSafePath(targetPath);
-    const safeOutputDir = PathValidator.getSafePath(finalOutputDir);
+    const safeOutputDir = PathValidator.getSafePath(outputDir);
 
     await fs.mkdir(safeOutputDir, { recursive: true });
     await this.#execFilePromise("npx", ["jsdoc", safeTargetPath, "-d", safeOutputDir], {

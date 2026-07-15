@@ -25,7 +25,6 @@ class ConfigManager {
    * Initializes the ConfigManager and loads configurations from both layers.
    */
   constructor() {
-    // Global Layer
     const globalDir = path.join(os.homedir(), ".paser-mini");
     if (!fs.existsSync(globalDir)) {
       fs.mkdirSync(globalDir, { recursive: true });
@@ -33,7 +32,6 @@ class ConfigManager {
     this.globalPath = path.join(globalDir, "config.json");
     this.globalConfig = this._loadConfig(this.globalPath);
 
-    // Local Layer
     const localDir = path.join(process.cwd(), ".paser-mini/config");
     if (!fs.existsSync(localDir)) {
       fs.mkdirSync(localDir, { recursive: true });
@@ -41,7 +39,6 @@ class ConfigManager {
     this.localPath = path.join(localDir, "config.json");
     this.localConfig = this._loadConfig(this.localPath);
 
-    // Automatic migration: if global keys exist in the local file, they are moved to the global one.
     this._migrateGlobalKeys();
   }
 
@@ -57,7 +54,6 @@ class ConfigManager {
 
     GLOBAL_KEYS.forEach((key) => {
       if (key in this.localConfig) {
-        // Only migrate if it does not already exist globally (prevents overwriting more recent data)
         if (!(key in this.globalConfig)) {
           this.globalConfig[key] = this.localConfig[key];
           needsGlobalSave = true;
@@ -118,7 +114,6 @@ class ConfigManager {
     }
 
     if (key in this.localConfig) return this.localConfig[key];
-    // Fallback in case a local key is searched that does not exist locally but does globally
     if (key in this.globalConfig) return this.globalConfig[key];
     
     return defaultValue;
