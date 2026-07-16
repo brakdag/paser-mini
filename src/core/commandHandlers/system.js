@@ -1,3 +1,5 @@
+import fsp from "fs/promises";
+import path from "path";
 import SmartToolParser from "../smartParser.js";
 import promptManager from "../systemPromptManager.js";
 
@@ -231,6 +233,91 @@ class SystemCommands {
     } catch (e) {
       ui.displayError(`Execution Error: ${e.message}`);
     }
+    return true;
+  }
+
+  /**
+   * Lists or removes MCP servers configured in mcp.json.
+   * @param {object} chatManager The chat manager instance.
+   * @param {object} ui The terminal UI instance.
+   * @param {string} payload The arguments (e.g., '-1' to remove server at index 1).
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
+  static async handleMcp(chatManager, ui, payload) {
+    const configPath = path.join(process.cwd(), "mcp.json");
+    let config;
+
+    try {
+      const content = await fsp.readFile(configPath, "utf8");
+      config = JSON.parse(content);
+    } catch (e) {
+      ui.displayError(`Could not read mcp.json: ${e.message}`);
+      return true;
+    }
+
+    const serverNames = Object.keys(config.mcpServers || {});
+
+    if (payload && payload.startsWith("-")) {
+      const index = parseInt(payload.substring(1), 10) - 1; // 0-indexed
+      if (Number.isNaN(index) || index < 0 || index >= serverNames.length) {
+        ui.displayError("Invalid index. Use /mcp to list available servers.");
+        return true;
+      }
+
+      const targetServer = serverNames[index];
+      delete config.mcpServers[targetServer];
+
+      try {
+        await fsp.writeFile(configPath, JSON.stringify(config, null, 2), "utf8");
+        ui.displayInfo(`Removed MCP server '${targetServer}' from configuration. Please restart the agent to apply changes.`);
+      } catch (e) {
+        ui.displayError(`Failed to save mcp.json: ${e.message}`);
+      }
+      return true;
+    }
+
+    if (serverNames.length === 0) {
+      ui.displayInfo("No MCP servers configured.");
+      return true;
+    }
+
+    ui.displayInfo("--- MCP Servers ---");
+    serverNames.forEach((name, i) => {
+      const server = config.mcpServers[name];
+      ui.displayMessage(`[${i + 1}] ${name} (${server.command} ${(server.args || []).join(" ")})`);
+    });
+    ui.displayInfo("-------------------");
+    return true;
+  }
+
+  /**
+   * Lists all available tools (native and MCP).
+   * @param {object} chatManager The chat manager instance.
+   * @param {object} ui The terminal UI instance.
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
+  static async handleTools(chatManager, ui) {
+    const tools = Object.keys(chatManager.tools);
+    const nativeTools = tools.filter((t) => !t.startsWith("mcp_")).sort();
+    const mcpTools = tools.filter((t) => t.startsWith("mcp_")).sort();
+
+    ui.displayInfo("--- Available Tools ---");
+
+    if (nativeTools.length > 0) {
+      ui.displayMessage("\n[Native]");
+      nativeTools.forEach((t) => ui.displayMessage(`- ${t}`));
+    }
+
+    if (mcpTools.length > 0) {
+      ui.displayMessage("\n[MCP]");
+      mcpTools.forEach((t) => ui.displayMessage(`- ${t}`));
+    }
+
+    if (nativeTools.length === 0 && mcpTools.length === 0) {
+      ui.displayMessage("No tools available.");
+    }
+
+    ui.displayInfo("-----------------------");
     return true;
   }
 }

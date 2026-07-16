@@ -130,6 +130,18 @@ const COMMAND_MAP = {
    * @returns {Promise<boolean>} Always true.
    */
   "/cache": (cm, ui) => SystemCommands.handleCache(cm, ui),
+  /**
+   * @param {import("../chatManager.js").default} cm The chat manager.
+   * @param {object} ui The UI.
+   * @returns {Promise<boolean>} Always true.
+   */
+  "/tools": (cm, ui) => SystemCommands.handleTools(cm, ui),
+  /**
+   * @param {import("../chatManager.js").default} cm The chat manager.
+   * @param {object} ui The UI.
+   * @returns {Promise<boolean>} Always true.
+   */
+  "/mcp": (cm, ui) => SystemCommands.handleMcp(cm, ui, ""),
 };
 
 /**
@@ -231,6 +243,12 @@ const PREFIX_COMMANDS = {
    */
   "/execute ": ({ cm, ui, payload }) =>
     SystemCommands.handleExecute(cm, ui, payload),
+  /**
+   * @param {CommandContext} args The context.
+   * @returns {Promise<boolean>} Always true.
+   */
+  "/mcp ": ({ cm, ui, payload }) =>
+    SystemCommands.handleMcp(cm, ui, payload),
 };
 
 /**
