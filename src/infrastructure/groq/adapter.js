@@ -29,6 +29,7 @@ class GroqAdapter extends BaseAdapter {
     this.currentModel = DEFAULT_MODEL;
     this.systemInstruction = null;
     this.temperature = DEFAULT_TEMPERATURE;
+    this.lastRequestTime = 0;
 
     this.client = axios.create({
       baseURL: BASE_URL,
@@ -128,6 +129,29 @@ class GroqAdapter extends BaseAdapter {
       }
       throw error;
     }
+  }
+
+  /**
+   * Ensures the request rate does not exceed the defined RPM limit.
+   * This strict override guarantees Groq adherence to the configured limits.
+   * @returns {Promise<void>}
+   */
+  async _applyRateLimit() {
+    const rpmLimit = Math.max(1, parseInt(this.configManager.get("rpm_limit", 15), 10) || 1);
+    const minInterval = 60000 / rpmLimit;
+    const now = Date.now();
+    const elapsed = now - this.lastRequestTime;
+
+    if (elapsed < minInterval) {
+      const waitTime = minInterval - elapsed;
+      logger.debug(
+        `[GroqAdapter] Rate Limit: Waiting ${waitTime / 1000}s to maintain ${rpmLimit} RPM`,
+      );
+      await new Promise((resolve) => {
+        setTimeout(resolve, waitTime);
+      });
+    }
+    this.lastRequestTime = Date.now();
   }
 
   /**
