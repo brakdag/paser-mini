@@ -2,6 +2,7 @@ import fsp from "fs/promises";
 import path from "path";
 import SmartToolParser from "../smartParser.js";
 import promptManager from "../systemPromptManager.js";
+import mcpManager from "../../infrastructure/McpManager.js";
 import APP_ROOT from "../../utils/appRoot.js";
 
 /**
@@ -238,10 +239,10 @@ class SystemCommands {
   }
 
   /**
-   * Lists or removes MCP servers configured in mcp.json.
+   * Lists, enables, disables, or removes MCP servers configured in mcp.json.
    * @param {object} chatManager The chat manager instance.
    * @param {object} ui The terminal UI instance.
-   * @param {string} payload The arguments (e.g., '-1' to remove server at index 1).
+   * @param {string} payload The arguments (e.g., '-1', 'on 1', 'off 2').
    * @returns {Promise<boolean>} True if the operation succeeded.
    */
   static async handleMcp(chatManager, ui, payload) {
@@ -258,23 +259,76 @@ class SystemCommands {
 
     const serverNames = Object.keys(config.mcpServers || {});
 
-    if (payload && payload.startsWith("-")) {
-      const index = parseInt(payload.substring(1), 10) - 1; // 0-indexed
-      if (Number.isNaN(index) || index < 0 || index >= serverNames.length) {
-        ui.displayError("Invalid index. Use /mcp to list available servers.");
+    if (payload) {
+      const parts = payload.split(/\s+/);
+      const action = parts[0].toLowerCase();
+      
+      if (action === "on" || action === "off") {
+        if (parts.length < 2) {
+          ui.displayError("Usage: /mcp <on|off> <index>");
+          return true;
+        }
+        const index = parseInt(parts[1], 10) - 1;
+        if (Number.isNaN(index) || index < 0 || index >= serverNames.length) {
+          ui.displayError("Invalid index. Use /mcp to list available servers.");
+          return true;
+        }
+
+        const targetServer = serverNames[index];
+        const targetConfig = config.mcpServers[targetServer];
+        const desiredState = action === "on";
+        const isCurrentlyEnabled = targetConfig.enabled !== false;
+
+        if (isCurrentlyEnabled === desiredState) {
+          ui.displayInfo(`MCP server '${targetServer}' is already ${desiredState ? "ENABLED" : "DISABLED"}.`);
+          return true;
+        }
+
+        targetConfig.enabled = desiredState;
+
+        try {
+          await fsp.writeFile(configPath, JSON.stringify(config, null, 2), "utf8");
+          
+          if (desiredState) {
+            await mcpManager.connectServer(targetServer, targetConfig);
+          } else {
+            await mcpManager.disconnectServer(targetServer);
+          }
+
+          // Force hot-reload of system prompt and tools
+          const { systemInstruction, filteredTools } = await promptManager.rebuildCache();
+          chatManager.updateSystemContext(systemInstruction, filteredTools);
+          promptManager.saveCache();
+
+          ui.displayInfo(`MCP server '${targetServer}' is now ${desiredState ? "ENABLED" : "DISABLED"}.`);
+        } catch (e) {
+          ui.displayError(`Failed to toggle MCP server: ${e.message}`);
+        }
         return true;
       }
+      
+      if (action.startsWith("-")) {
+        const index = parseInt(action.substring(1), 10) - 1; // 0-indexed
+        if (Number.isNaN(index) || index < 0 || index >= serverNames.length) {
+          ui.displayError("Invalid index. Use /mcp to list available servers.");
+          return true;
+        }
 
-      const targetServer = serverNames[index];
-      delete config.mcpServers[targetServer];
+        const targetServer = serverNames[index];
+        delete config.mcpServers[targetServer];
 
-      try {
-        await fsp.writeFile(configPath, JSON.stringify(config, null, 2), "utf8");
-        ui.displayInfo(`Removed MCP server '${targetServer}' from configuration. Please restart the agent to apply changes.`);
-      } catch (e) {
-        ui.displayError(`Failed to save mcp.json: ${e.message}`);
+        try {
+          await fsp.writeFile(configPath, JSON.stringify(config, null, 2), "utf8");
+          await mcpManager.disconnectServer(targetServer);
+          const { systemInstruction, filteredTools } = await promptManager.rebuildCache();
+          chatManager.updateSystemContext(systemInstruction, filteredTools);
+          promptManager.saveCache();
+          ui.displayInfo(`Removed MCP server '${targetServer}' from configuration.`);
+        } catch (e) {
+          ui.displayError(`Failed to save mcp.json: ${e.message}`);
+        }
+        return true;
       }
-      return true;
     }
 
     if (serverNames.length === 0) {
@@ -285,7 +339,8 @@ class SystemCommands {
     ui.displayInfo("--- MCP Servers ---");
     serverNames.forEach((name, i) => {
       const server = config.mcpServers[name];
-      ui.displayMessage(`[${i + 1}] ${name} (${server.command} ${(server.args || []).join(" ")})`);
+      const status = server.enabled === false ? "[OFF]" : "[ON]";
+      ui.displayMessage(`[${i + 1}] ${status} ${name} (${server.command} ${(server.args || []).join(" ")})`);
     });
     ui.displayInfo("-------------------");
     return true;

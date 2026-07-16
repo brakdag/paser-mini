@@ -38,6 +38,11 @@ class McpManager {
 
       await Promise.all(
         Object.entries(config.mcpServers).map(async ([serverName, serverConfig]) => {
+          if (this.clients.has(serverName)) return; // Idempotency check
+          if (serverConfig.enabled === false) {
+            logger.info(`[McpManager] Server '${serverName}' is disabled. Skipping.`);
+            return;
+          }
           await this.connectServer(serverName, serverConfig);
         })
       );
@@ -47,6 +52,35 @@ class McpManager {
       } else {
         logger.error(`[McpManager] Failed to initialize MCP servers: ${err.message}`);
       }
+    }
+  }
+
+  /**
+   * Gracefully terminates a specific MCP server connection and removes its tools.
+   * @param {string} serverName - The logical name of the server.
+   * @returns {Promise<void>}
+   */
+  async disconnectServer(serverName) {
+    const client = this.clients.get(serverName);
+    if (!client) return;
+
+    const safeServerName = serverName.replace(/[^a-zA-Z0-9_]/g, '_');
+    const prefix = `mcp_${safeServerName}_`;
+
+    // Remove tools and schemas
+    Object.keys(this.tools).forEach((toolName) => {
+      if (toolName.startsWith(prefix)) {
+        delete this.tools[toolName];
+        delete this.schemas[toolName];
+      }
+    });
+
+    try {
+      await client.close();
+      this.clients.delete(serverName);
+      logger.info(`[McpManager] Disconnected from ${serverName}.`);
+    } catch (err) {
+      logger.warn(`[McpManager] Error disconnecting from ${serverName}: ${err.message}`);
     }
   }
 
@@ -63,11 +97,17 @@ class McpManager {
       const transport = new StdioClientTransport({
         command: serverConfig.command,
         args: serverConfig.args || [],
+        stderr: "pipe",
+      });
+
+      transport.stderr.on("data", (chunk) => {
+        const msg = chunk.toString().trim();
+        if (msg) logger.warn(`[MCP:${serverName}] ${msg}`);
       });
 
       const client = new Client(
         { name: `paser-mini-${serverName}`, version: "1.0.0" },
-        { capabilities: {} }
+        { capabilities: { roots: {} } }
       );
 
       await client.connect(transport);
