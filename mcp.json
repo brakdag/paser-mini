@@ -1,13 +1,11 @@
 {
   "mcpServers": {
-    "memory": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-memory"]
-    },
     "chrome-devtools": {
       "command": "npx",
-      "args": ["-y", "chrome-devtools-mcp"]
+      "args": [
+        "-y",
+        "chrome-devtools-mcp"
+      ]
     }
   }
 }
-
