@@ -361,9 +361,10 @@ const systemInstrData = JSON.parse(
 /**
  * Generates system instructions for the LLM agent based on the available tools.
  * @param {string[]} availableToolNames Array of names of tools that are currently available.
+ * @param {object} [mcpSchemas] Optional map of dynamic JSON schemas for MCP tools.
  * @returns {string} The formatted system instruction string containing the tool catalog.
  */
-export function generateSystemInstruction(availableToolNames) {
+export function generateSystemInstruction(availableToolNames, mcpSchemas = {}) {
   const filteredCatalog = fullCatalog
     .filter((t) => t[0] !== "execute" && availableToolNames.includes(t[0]))
     .map((t) => {
@@ -379,10 +380,24 @@ export function generateSystemInstruction(availableToolNames) {
     })
     .join("\n");
 
+  const mcpCatalog = availableToolNames
+    .filter((name) => name.startsWith("mcp_"))
+    .map((name) => {
+      const schema = mcpSchemas[name];
+      if (!schema || !schema.properties) return "";
+      const args = Object.keys(schema.properties).join(",");
+      const desc = schema.description ? schema.description.split(". ")[0] : "status";
+      return `${name}(${args}) ${desc}`;
+    })
+    .filter(Boolean)
+    .join("\n");
+
+  const combinedCatalog = [filteredCatalog, mcpCatalog].filter(Boolean).join("\n");
+
   return systemInstrData.instruction
     .replace(
       "{TOOL_CATALOG}",
-      filteredCatalog ? ` ${filteredCatalog} ` : "No tools available.",
+      combinedCatalog ? ` ${combinedCatalog} ` : "No tools available.",
     )
     .replaceAll("[[S]]", _S)
     .replaceAll("[[E]]", _E);

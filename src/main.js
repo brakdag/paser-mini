@@ -6,6 +6,7 @@ import ConfigManager from "./core/configManager.js";
 import ProviderManager from "./infrastructure/providerManager.js";
 import promptManager from "./core/systemPromptManager.js";
 import { getToolInstance } from "./infrastructure/registry.js";
+import mcpManager from "./infrastructure/McpManager.js";
 import logger from "./core/logger.js";
 
 /**
@@ -116,7 +117,19 @@ process.on("uncaughtException", (err) => {
   logger.error("Uncaught Exception thrown:", err);
 });
 
-// Save system prompt cache on application exit
+/**
+ * Gracefully terminates all active connections and saves caches.
+ * Triggered on normal exits, SIGINT (Ctrl+C), and SIGTERM.
+ */
+async function gracefulShutdown() {
+  promptManager.saveCache();
+  await mcpManager.shutdown();
+  process.exit(0);
+}
+
+process.on("SIGINT", gracefulShutdown);
+process.on("SIGTERM", gracefulShutdown);
+
 process.on("exit", () => {
   promptManager.saveCache();
 });

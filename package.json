@@ -3,18 +3,18 @@
   "version": "3.5.0",
   "versionCode": 33,
   "type": "module",
-  "main": "src/index.js",
+  "main": "src/main.js",
   "bin": {
-    "paser_mini": "src/index.js"
+    "paser_mini": "src/main.js"
   },
   "scripts": {
-    "start": "node src/index.js",
+    "start": "node src/main.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@buger/notepad": "*",
     "@eslint/eslintrc": "^3.1.0",
     "@google/generative-ai": "^0.16.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "acorn": "^8.12.1",
     "axios": "^1.7.4",
     "axios-retry": "^4.4.0",
@@ -22,11 +22,16 @@
     "cohere-ai": "^7.14.0",
     "commander": "^12.1.0",
     "dotenv": "^16.3.1",
-    "elinks": "^0.0.1-security",
     "eslint": "^9.9.0",
     "globals": "^15.9.0",
     "jszip": "^3.10.1",
     "ora": "^7.0.0",
     "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-jsdoc": "^63.0.13"
   }
 }

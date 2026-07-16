@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import * as acorn from "acorn";
 import logger from "./logger.js";
 import validator from "./schemaRegistry.js";
+import mcpManager from "../infrastructure/McpManager.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -128,18 +129,25 @@ class SmartToolParser {
         this._evaluateAST(arg, rawContent),
       );
       const toolDef = this.toolMap[name];
-      if (!toolDef) return { data: null, error: `Unknown tool: ${name}` };
-      const schema = toolDef[2];
+      const mcpSchema = mcpManager.getSchemas()[name];
+      
+      if (!toolDef && !mcpSchema) {
+        return { data: null, error: `Unknown tool: ${name}` };
+      }
+      
+      const schema = toolDef ? toolDef[2] : mcpSchema;
       let finalArgs = {};
       if (typeof schema === "object" && schema !== null) {
-        const keys = Object.keys(schema);
+        const keySource = mcpSchema ? (mcpSchema.properties || schema) : schema;
+        const keys = Object.keys(keySource);
         args.forEach((val, i) => {
           if (keys[i]) finalArgs[keys[i]] = val;
         });
       } else {
         finalArgs = { data: args.join(" ") };
       }
-      const validation = this.validator.validate(name, finalArgs);
+      // Bypass local Zod validation for MCP tools; the remote server will validate.
+      const validation = mcpSchema ? { isValid: true, errors: [] } : this.validator.validate(name, finalArgs);
       if (!validation.isValid)
         return {
           data: null,

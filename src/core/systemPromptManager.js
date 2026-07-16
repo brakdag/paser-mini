@@ -5,6 +5,7 @@ import {
   generateSystemInstruction,
   AVAILABLE_TOOLS,
 } from "../infrastructure/registry.js";
+import mcpManager from "../infrastructure/McpManager.js";
 import logger from "./logger.js";
 
 const CACHE_DIR = path.join(process.cwd(), ".paser-mini/cache");
@@ -70,12 +71,20 @@ class SystemPromptManager {
       return { systemInstruction: "", filteredTools: {} };
     }
 
+    // --- MCP Integration ---
+    await mcpManager.initialize();
+    const mcpTools = mcpManager.getTools();
+    Object.assign(AVAILABLE_TOOLS, mcpTools);
+    const mcpSchemas = mcpManager.getSchemas();
+    // -----------------------
+
     const defaultPath = ".paser-mini/staff/default.log";
     const injectionFile = options.fileSystemInstruction || (await this._exists(defaultPath) ? defaultPath : null);
 
     const dependencies = [
       "src/infrastructure/registry_positional.json",
       "src/infrastructure/system_instruction.json",
+      "mcp.json",
       ...(injectionFile ? [injectionFile] : [])
     ];
 
@@ -93,7 +102,7 @@ class SystemPromptManager {
         if (isCacheValid && optionsMatch) {
           const filteredTools = Object.fromEntries(
             Object.entries(AVAILABLE_TOOLS).filter(([name]) =>
-              cacheData.filteredToolNames.includes(name)
+              cacheData.filteredToolNames.includes(name) || name.startsWith("mcp_")
             )
           );
           
@@ -123,7 +132,7 @@ class SystemPromptManager {
           const availableList = JSON.parse(toolsMatch[1]);
           filteredTools = Object.fromEntries(
             Object.entries(AVAILABLE_TOOLS).filter(([name]) =>
-              availableList.includes(name)
+              availableList.includes(name) || name.startsWith("mcp_")
             )
           );
         } catch (e) {
@@ -136,7 +145,7 @@ class SystemPromptManager {
 
     const baseInstr =
       options.systemInstruction ||
-      generateSystemInstruction(Object.keys(filteredTools));
+      generateSystemInstruction(Object.keys(filteredTools), mcpSchemas);
 
     const finalInstruction = injection
       ? `PERSON AND ROLE:\n${injection}\n\nCORE OPERATIONAL PROTOCOLS:\n${baseInstr}`
