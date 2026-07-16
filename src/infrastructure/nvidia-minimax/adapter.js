@@ -135,9 +135,12 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
       });
     });
 
+    // THE ABSOLUTE WALL: Hard-trim the final payload to prevent API bans
+    const strictlyTrimmedMessages = this._enforcePayloadLimit(messages);
+
     return {
       model: this.currentModel,
-      messages,
+      messages: strictlyTrimmedMessages,
       temperature: this.temperature,
       stream: false, // Force no-stream until the endpoint stabilizes
       max_tokens: 8192, // M3 requires an explicit limit to avoid truncated responses
@@ -189,6 +192,7 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
     });
 
     this.state.addMessage("model", content);
+    this._enforceContextLimit(); // Apply strict context boundary AFTER receiving response
     return content;
   }
 
@@ -249,6 +253,7 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
    */
   injectMessage(role, content, timestamp = null) {
     this.state.addMessage(role, content, timestamp);
+    this._enforceContextLimit(); // Ensure strict boundary on manual injection
   }
 
   /**
@@ -315,31 +320,11 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
   }
 
   /**
-   * Enforces strict context window boundaries specific to the MiniMax M3 token heuristic.
-   * Overrides the base implementation to ensure exact FIFO purging based on 3 chars/token.
-   * @private
+   * Retrieves the specific character-to-token heuristic for the M3 model.
+   * @returns {number} The characters per token.
    */
-  _enforceContextLimit() {
-    const limit = parseInt(this.configManager.get("context_window_limit", 0), 10);
-    if (!limit || limit <= 0) return; // 0 means disabled
-
-    const history = this.state.getRawHistory();
-    if (!history || history.length === 0) return;
-
-    // M3 heuristic: ~3 characters per token for mixed content
-    const maxChars = limit * 3;
-    const systemChars = this.systemInstruction ? this.systemInstruction.length : 0;
-    
-    let totalChars = history.reduce((acc, msg) => acc + (msg.text ? msg.text.length : 0), 0) + systemChars;
-
-    if (totalChars <= maxChars) return;
-
-    // Start removing from the oldest message (FIFO) until we are within the limit
-    while (totalChars > maxChars && history.length > 1) {
-      const removed = history.shift();
-      totalChars -= removed.text ? removed.text.length : 0;
-      logger.warn("[NvidiaMiniMaxAdapter] Context limit exceeded. Purged 1 older message to maintain strict limit.");
-    }
+  getCharsPerToken() {
+    return 3.0; // M3 uses a different tokenizer heuristic than Llama-3
   }
 
   /**

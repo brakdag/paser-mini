@@ -113,6 +113,10 @@ class NvidiaAdapter extends BaseAdapter {
       this.systemInstruction,
       this.temperature,
     );
+    
+    // THE ABSOLUTE WALL: Hard-trim the final payload to prevent API bans
+    payload.messages = this._enforcePayloadLimit(payload.messages);
+    
     return { ...payload, model: this.currentModel };
   }
 
@@ -132,6 +136,7 @@ class NvidiaAdapter extends BaseAdapter {
 
     logger.info("NvidiaAdapter: Response received", { length: content.length });
     this.state.addMessage("model", content);
+    this._enforceContextLimit(); // Apply strict context boundary AFTER receiving response
     return content;
   }
 
@@ -171,6 +176,7 @@ class NvidiaAdapter extends BaseAdapter {
    */
   injectMessage(role, content, timestamp = null) {
     this.state.addMessage(role, content, timestamp);
+    this._enforceContextLimit(); // Ensure strict boundary on manual injection
   }
 
   /**

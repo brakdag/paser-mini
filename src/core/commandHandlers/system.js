@@ -98,6 +98,11 @@ class SystemCommands {
     chatManager.configManager.save("context_window_limit", limit);
     chatManager.setContextWindowLimit(limit);
 
+    // Apply strict context boundary IMMEDIATELY to sync the state with the new config
+    if (limit > 0 && chatManager.assistant && typeof chatManager.assistant._enforceContextLimit === "function") {
+      chatManager.assistant._enforceContextLimit();
+    }
+
     if (limit === 0) {
       ui.displayInfo("Context truncation DISABLED. Context window is now infinite.");
     } else {

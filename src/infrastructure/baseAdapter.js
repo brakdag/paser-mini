@@ -131,8 +131,18 @@ export default class BaseAdapter {
   }
 
   /**
+   * Retrieves the specific character-to-token heuristic for the model.
+   * Subclasses can override this to match their specific tokenizers.
+   * @returns {number} The characters per token.
+   */
+  getCharsPerToken() {
+    return 3.5; // Default heuristic for OpenAI/Gemini/Llama3
+  }
+
+  /**
    * The Guardian of Context. Trims the conversation history to fit within the configured token limit.
-   * Preserves system instructions and the most recent messages, purging the oldest (FIFO).
+   * Preserves the initial system instruction and purges the oldest messages (FIFO) implacably.
+   * @private
    */
   _enforceContextLimit() {
     const limit = parseInt(this.configManager.get("context_window_limit", 0), 10);
@@ -141,35 +151,97 @@ export default class BaseAdapter {
     const history = this.getHistory();
     if (!history || history.length === 0) return;
 
-    // Check if the system instruction is already inside the history (e.g. OpenAI style adapters)
-    const historyHasSystem = history.some(msg => msg.role === 'system' || msg.role === 'server');
+    const charsPerToken = this.getCharsPerToken();
+    const maxChars = limit * charsPerToken;
     let systemChars = 0;
+    
+    // Calculate system instruction chars only if it's not already in history (OpenAI style)
+    const historyHasSystem = history.some(msg => msg.role === 'system' || msg.role === 'server');
     if (!historyHasSystem && typeof this.systemInstruction === 'string') {
       systemChars = this.systemInstruction.length;
     }
-    const maxChars = limit * 3.5; // 3.5 chars per token heuristic
+
     let totalChars = history.reduce((acc, msg) => acc + this._getMessageLength(msg), 0) + systemChars;
 
     if (totalChars <= maxChars) return;
 
+    // Implacable purge: Start from index 1 (preserving the initial system prompt at index 0)
+    const currentIndex = history.length > 1 && (history[0].role === 'system' || history[0].role === 'server') ? 1 : 0;
+
+    // Keep purging as long as we exceed the limit and have more than one message to remove
+    while (totalChars > maxChars && history.length > currentIndex + 1) {
+      const removed = history.splice(currentIndex, 1)[0];
+      totalChars -= this._getMessageLength(removed);
+      logger.debug(`[${this.constructor.name}] Context limit exceeded. Purged 1 older message to maintain strict ${limit} token limit.`);
+    }
+
+    // Surgical truncation as a last resort if a single message paralyzes the limit
+    if (totalChars > maxChars && history.length > 0) {
+      const overflowChars = totalChars - maxChars;
+      const lastMsg = history[history.length - 1];
+      const msgLength = this._getMessageLength(lastMsg);
+      if (msgLength > overflowChars) {
+        if (typeof lastMsg.text === 'string') {
+          lastMsg.text = lastMsg.text.slice(0, lastMsg.text.length - overflowChars);
+        } else if (typeof lastMsg.content === 'string') {
+          lastMsg.content = lastMsg.content.slice(0, lastMsg.content.length - overflowChars);
+        }
+        logger.error(`[${this.constructor.name}] CRITICAL: Single message exceeded the strict limit. Applied surgical truncation.`);
+      }
+    }
+  }
+
+  /**
+   * The Absolute Wall. Trims the final payload to ensure it strictly respects the token limit before network transmission.
+   * This operates on the formatted messages to account for any overhead added during payload preparation.
+   * @param {Array<object>} messages - The formatted messages ready to be sent to the API.
+   * @returns {Array<object>} The strictly trimmed messages array.
+   */
+  _enforcePayloadLimit(messages) {
+    const limit = parseInt(this.configManager.get("context_window_limit", 0), 10);
+    if (!limit || limit <= 0) return messages; // 0 means disabled
+    if (!messages || messages.length === 0) return messages;
+
+    const charsPerToken = this.getCharsPerToken();
+    const maxChars = limit * charsPerToken;
+    
+    // Calculate total characters based on the formatted 'content' field
+    let totalChars = messages.reduce((acc, msg) => {
+      const content = typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content || "");
+      return acc + content.length;
+    }, 0);
+
+    if (totalChars <= maxChars) return messages;
+
     // Find the first non-system message index to start the purge
     let firstNonSystemIndex = 0;
     while (
-      firstNonSystemIndex < history.length && 
-      (history[firstNonSystemIndex].role === "system" || history[firstNonSystemIndex].role === "server")
+      firstNonSystemIndex < messages.length && 
+      (messages[firstNonSystemIndex].role === "system" || messages[firstNonSystemIndex].role === "server")
     ) {
       firstNonSystemIndex += 1;
     }
 
-    // If it's all system messages or we only have system + 1 message, do nothing
-    if (firstNonSystemIndex >= history.length - 1) return;
-
-    // Start removing from the first non-system message (FIFO)
-    while (totalChars > maxChars && firstNonSystemIndex < history.length - 1) {
-      const removed = history.splice(firstNonSystemIndex, 1)[0];
-      totalChars -= this._getMessageLength(removed);
-      logger.debug(`[${this.constructor.name}] Context limit exceeded. Purged 1 older message to maintain strict ${limit} token limit.`);
+    // Implacable purge on the formatted payload
+    while (totalChars > maxChars && firstNonSystemIndex < messages.length - 1) {
+      const removed = messages.splice(firstNonSystemIndex, 1)[0];
+      const removedContent = typeof removed.content === "string" ? removed.content : JSON.stringify(removed.content || "");
+      totalChars -= removedContent.length;
+      logger.warn(`[${this.constructor.name}] PAYLOAD LIMIT: Hard-trimmed 1 formatted message to prevent API ban. Limit: ${limit}t`);
     }
+
+    // Surgical Truncation on the formatted payload
+    if (totalChars > maxChars && messages.length > 0) {
+      const lastMsg = messages[messages.length - 1];
+      const overflowChars = totalChars - maxChars;
+      
+      if (typeof lastMsg.content === "string" && lastMsg.content.length > overflowChars) {
+        lastMsg.content = lastMsg.content.slice(0, lastMsg.content.length - overflowChars);
+        logger.error(`[${this.constructor.name}] CRITICAL PAYLOAD LIMIT: Applied surgical truncation to final message content.`);
+      }
+    }
+
+    return messages;
   }
 
   /**

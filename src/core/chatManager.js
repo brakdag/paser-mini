@@ -302,7 +302,6 @@ class ChatManager {
 
   /**
    * Calculates the total token count from the system instruction and history.
-   * Uses the assistant's token counter if available, otherwise falls back to a heuristic.
    * @returns {number} The calculated token count.
    * @private
    */
@@ -319,7 +318,8 @@ class ChatManager {
       return acc + (typeof content === "string" ? content.length : JSON.stringify(content).length);
     }, 0);
 
-    return Math.ceil((systemInstruction.length + historyChars) / 4);
+    const charsPerToken = typeof this.assistant.getCharsPerToken === "function" ? this.assistant.getCharsPerToken() : 3.5;
+    return Math.ceil((systemInstruction.length + historyChars) / charsPerToken);
   }
 
   /**
