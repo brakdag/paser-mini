@@ -79,7 +79,8 @@ class McpManager {
       
       if (toolsResponse && toolsResponse.tools) {
         toolsResponse.tools.forEach((tool) => {
-          const namespacedToolName = `mcp_${serverName}_${tool.name}`;
+          const safeServerName = serverName.replace(/[^a-zA-Z0-9_]/g, '_');
+          const namespacedToolName = `mcp_${safeServerName}_${tool.name}`;
           
           /**
            * Executes the remote tool via the MCP client.
