@@ -340,7 +340,10 @@ class SystemCommands {
     serverNames.forEach((name, i) => {
       const server = config.mcpServers[name];
       const status = server.enabled === false ? "[OFF]" : "[ON]";
-      ui.displayMessage(`[${i + 1}] ${status} ${name} (${server.command} ${(server.args || []).join(" ")})`);
+      const connectionInfo = server.type === "http" 
+        ? server.url 
+        : `${server.command} ${(server.args || []).join(" ")}`;
+      ui.displayMessage(`[${i + 1}] ${status} ${name} (${connectionInfo})`);
     });
     ui.displayInfo("-------------------");
     return true;

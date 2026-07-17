@@ -1,5 +1,6 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import fsp from "fs/promises";
 import path from "path";
 import logger from "../core/logger.js";
@@ -85,29 +86,76 @@ class McpManager {
   }
 
   /**
+   * Recursively resolves ${ENV_VAR} patterns in strings using process.env.
+   * @param {string | object | unknown[]} value - Any config value.
+   * @returns {string | object | unknown[]} The resolved value.
+   * @private
+   */
+  _resolveEnvVars(value) {
+    if (typeof value === "string") {
+      return value.replace(/\$\{([^}]+)\}/g, (match, varName) => {
+        const resolved = process.env[varName];
+        if (resolved === undefined) {
+          logger.warn(`[McpManager] Environment variable '${varName}' is not set. Leaving literal.`);
+          return match;
+        }
+        return resolved;
+      });
+    }
+    if (Array.isArray(value)) {
+      return value.map((v) => this._resolveEnvVars(v));
+    }
+    if (value !== null && typeof value === "object") {
+      return Object.entries(value).reduce((acc, [k, v]) => {
+        acc[k] = this._resolveEnvVars(v);
+        return acc;
+      }, {});
+    }
+    return value;
+  }
+
+  /**
    * Connects to a single MCP server, performs the handshake, and registers its tools.
+   * Supports both Stdio (local processes) and Streamable HTTP (remote servers).
    * @param {string} serverName - The logical name of the server from mcp.json.
-   * @param {object} serverConfig - The configuration object (command, args).
+   * @param {object} serverConfig - The configuration object.
    * @returns {Promise<void>}
    */
   async connectServer(serverName, serverConfig) {
     try {
-      logger.info(`[McpManager] Spawning MCP server: ${serverName}...`);
+      const resolvedConfig = this._resolveEnvVars(serverConfig);
+      let transport;
       
-      const transport = new StdioClientTransport({
-        command: serverConfig.command,
-        args: serverConfig.args || [],
-        stderr: "pipe",
-      });
+      if (resolvedConfig.type === "http" && resolvedConfig.url) {
+        logger.info(`[McpManager] Connecting to HTTP MCP server: ${serverName} at ${resolvedConfig.url}...`);
+        
+        const requestInit = {};
+        if (resolvedConfig.headers) {
+          requestInit.headers = resolvedConfig.headers;
+        }
+        
+        transport = new StreamableHTTPClientTransport(
+          new URL(resolvedConfig.url),
+          { requestInit }
+        );
+      } else {
+        logger.info(`[McpManager] Spawning stdio MCP server: ${serverName}...`);
+        
+        transport = new StdioClientTransport({
+          command: resolvedConfig.command,
+          args: resolvedConfig.args || [],
+          stderr: "pipe",
+        });
 
-      transport.stderr.on("data", (chunk) => {
-        const msg = chunk.toString().trim();
-        if (msg) logger.warn(`[MCP:${serverName}] ${msg}`);
-      });
+        transport.stderr.on("data", (chunk) => {
+          const msg = chunk.toString().trim();
+          if (msg) logger.warn(`[MCP:${serverName}] ${msg}`);
+        });
+      }
 
       const client = new Client(
         { name: `paser-mini-${serverName}`, version: "1.0.0" },
-        { capabilities: { roots: {} } }
+        { capabilities: {} }
       );
 
       await client.connect(transport);

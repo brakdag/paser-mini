@@ -7,6 +7,11 @@
         "chrome-devtools-mcp"
       ],
       "enabled": false
+    },
+    "android-phone": {
+      "type": "http",
+      "url": "http://192.168.100.223:8080/mcp",
+      "headers": { "Authorization": "Bearer ${CELULAR_API_TOKEN}" }
     }
   }
 }
