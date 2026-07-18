@@ -1,30 +1,29 @@
-import { FlatCompat } from "@eslint/eslintrc";
-import path from "path";
-import { fileURLToPath } from "url";
+import { configs as airbnbConfigs } from "eslint-config-airbnb-extended";
+import importX from "eslint-plugin-import-x";
+import stylistic from "@stylistic/eslint-plugin";
 import prettierConfig from "eslint-config-prettier";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
+import jsdoc from "eslint-plugin-jsdoc";
+import globals from "globals";
 
 export default [
-  ...compat.extends("airbnb-base"),
-  ...compat.extends("plugin:jsdoc/recommended"),
+  {
+    plugins: {
+      "import-x": importX,
+      "@stylistic": stylistic,
+    },
+  },
+  ...airbnbConfigs.base.recommended,
+  jsdoc.configs["flat/recommended"],
   prettierConfig,
   {
     languageOptions: {
-      ecmaVersion: "latest",
-      sourceType: "module",
+      parserOptions: {
+        ecmaVersion: 2022,
+        sourceType: "module",
+      },
       globals: {
-        console: "readonly",
-        process: "readonly",
-        __dirname: "readonly",
-        __filename: "readonly",
-        module: "readonly",
-        require: "readonly",
+        ...globals.node,
+        ...globals.es2021,
       },
     },
     rules: {
@@ -37,16 +36,16 @@ export default [
       "no-empty-function": "error",
       "no-shadow": "warn",
       "prefer-destructuring": "error",
-      "import/no-unresolved": "off",
+      "import-x/no-unresolved": "off",
       "no-restricted-syntax": ["error", "ForInStatement", "ForOfStatement"],
-      "import/extensions": "off",
-      "import/prefer-default-export": "error",
+      "import-x/extensions": "off",
+      "import-x/prefer-default-export": "error",
       "no-underscore-dangle": "off",
       "class-methods-use-this": "off",
       "no-console": "off",
       "no-param-reassign": "error",
       "no-cond-assign": "error",
-      "import/no-extraneous-dependencies": "error",
+      "import-x/no-extraneous-dependencies": "error",
       "jsdoc/require-param-description": "error",
       "jsdoc/require-returns-description": "error",
       "jsdoc/require-jsdoc": ["error", {

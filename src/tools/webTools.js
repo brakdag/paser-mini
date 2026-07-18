@@ -95,7 +95,7 @@ export default class WebTools {
         ) {
           return stdout;
         }
-      } catch (error) {
+      } catch {
         // Silently fail and try next provider to ensure maximum availability
       }
     }

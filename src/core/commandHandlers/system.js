@@ -3,7 +3,7 @@ import path from "path";
 import SmartToolParser from "../smartParser.js";
 import promptManager from "../systemPromptManager.js";
 import mcpManager from "../../infrastructure/McpManager.js";
-import APP_ROOT from "../../utils/appRoot.js";
+import __dirname from "../../utils/appRoot.js";
 
 /**
  * Handles system-level commands such as clearing the terminal, 
@@ -246,7 +246,7 @@ class SystemCommands {
    * @returns {Promise<boolean>} True if the operation succeeded.
    */
   static async handleMcp(chatManager, ui, payload) {
-    const configPath = path.join(APP_ROOT, "mcp.json");
+    const configPath = path.join(__dirname, "mcp.json");
     let config;
 
     try {

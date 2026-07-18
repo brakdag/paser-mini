@@ -55,7 +55,7 @@ class MementoManager {
   async #incrementReferencedRanks(text) {
     try {
       await fs.access(this.#LOG_FILE);
-    } catch (error) {
+    } catch {
       // Log file does not exist yet, no ranks to increment
       return;
     }
@@ -100,7 +100,7 @@ class MementoManager {
     try {
       const content = await fs.readFile(this.#LOG_FILE, "utf8");
       return content.trim().split("\n").filter(Boolean);
-    } catch (error) {
+    } catch {
       return [];
     }
   }

@@ -142,7 +142,7 @@ export class AstTools {
     if (query === "Identifier" || query === "Literal") {
       try {
         resultsData = this.#analyzeWithTokenizer(code, query, limit);
-      } catch (error) {
+      } catch {
         // Fallback to AST if tokenizer fails due to syntax errors
       }
     }

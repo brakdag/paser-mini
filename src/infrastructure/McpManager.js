@@ -4,7 +4,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import fsp from "fs/promises";
 import path from "path";
 import logger from "../core/logger.js";
-import APP_ROOT from "../utils/appRoot.js";
+import __dirname from "../utils/appRoot.js";
 
 /**
  * McpManager orchestrates the lifecycle and communication of external MCP servers.
@@ -26,7 +26,7 @@ class McpManager {
    * @returns {Promise<void>}
    */
   async initialize() {
-    const configPath = path.join(APP_ROOT, "mcp.json");
+    const configPath = path.join(__dirname, "mcp.json");
     
     try {
       const configContent = await fsp.readFile(configPath, "utf8");
