@@ -172,6 +172,16 @@ class TerminalUI {
   }
 
   /**
+   * Displays a raw message bypassing the markdown renderer to preserve formatting and default color.
+   * @param {string} text The message to display.
+   */
+  displayRawMessage(text) {
+    input.clearCurrentLine();
+    process.stdout.write(`${text}\n`);
+    this.writeToLog(this.activePlugin.formatSystem(text));
+  }
+
+  /**
    * Displays a thought message in a specific style.
    * @param {string} text The thought text to display.
    */

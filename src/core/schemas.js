@@ -85,6 +85,7 @@ const SCHEMAS = {
     filter: z.string().optional(),
   }).strict(),
   load: z.object({ ids: z.string() }).strict(),
+  qr: z.object({ text: z.string() }).strict(),
 };
 
 export default SCHEMAS;

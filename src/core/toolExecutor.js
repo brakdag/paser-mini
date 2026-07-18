@@ -7,6 +7,12 @@ import { UserInterruptException } from "./exceptions.js";
 const FOUNTAIN_INJECTION_TYPE = "FOUNTAIN_INJECTION";
 
 /**
+ * Constant for the special QR display result type.
+ * Used by the qr tool to bypass AI context and draw directly to the user's terminal.
+ */
+const QR_DISPLAY_TYPE = "QR_DISPLAY";
+
+/**
  * Handles the execution of tool calls and manages their interaction with the system.
  */
 class ToolExecutor {
@@ -46,7 +52,15 @@ class ToolExecutor {
           return { results: [], errorCount: 0, terminate: true };
         }
 
-        toolResults.push({ response, result });
+        if (result && result.type === QR_DISPLAY_TYPE) {
+          ui.displayRawMessage(result.content);
+          toolResults.push({
+            response: parser.formatToolResponse("qr", "QR code displayed successfully on user terminal.", true),
+            result: null,
+          });
+        } else {
+          toolResults.push({ response, result });
+        }
       } else if (call.error) {
         errorCount += 1;
         toolResults.push(`ERR: ${call.error}`);

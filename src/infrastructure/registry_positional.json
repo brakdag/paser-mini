@@ -48,5 +48,6 @@
   ["snapshot", "Create a V8 heap snapshot", { "path": "string" }],
   ["reset", "Resets the conversation context", { "user_message": "string" }],
   ["index", "Scan directory tree and assign sequential numeric IDs to each file", { "path": "string?", "filter": "string?" }],
-  ["load", "Load files by their index IDs (comma-separated string, e.g. \"0,1,2\") as MIME multipart", { "ids": "string" }]
+  ["load", "Load files by their index IDs (comma-separated string, e.g. \"0,1,2\") as MIME multipart", { "ids": "string" }],
+  ["qr", "Render text or URL as a scannable QR code in the terminal", { "text": "string" }]
 ]

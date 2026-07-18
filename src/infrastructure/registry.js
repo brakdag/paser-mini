@@ -24,6 +24,7 @@ const MODULE_MAP = {
   perfTools: "../tools/perfTools.js",
   inspectTools: "../tools/inspectTools.js",
   loadTools: "../tools/loadTools.js",
+  qrTools: "../tools/qrTools.js",
 };
 
 let toolCache = {};
@@ -331,6 +332,11 @@ export const AVAILABLE_TOOLS = {
    * @returns {Promise<unknown>} Result.
    */
   reset: async (...args) => (await getTool("systemTools", "reset"))(...args),
+  /**
+   * @param {unknown[]} args Arguments.
+   * @returns {Promise<unknown>} Result.
+   */
+  qr: async (...args) => (await getTool("qrTools", "generateQr"))(...args),
   /**
    * @param {unknown[]} args Arguments.
    * @returns {Promise<unknown>} Result.
