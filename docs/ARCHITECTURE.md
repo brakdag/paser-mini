@@ -2,42 +2,40 @@
 
 # Detailed Technical Architecture
 
-This project follows a modular ReAct (Reasoning and Acting) architecture. Below is the detailed breakdown of the components:
+This project follows a modular ReAct (Reasoning and Acting) architecture designed for extreme token efficiency and zero-overhead execution. Below is the conceptual breakdown of the system:
 
 ### ⚙️ Core Engine (`src/core/`)
 
-- **`chatManager.js`**: The central orchestrator. It manages the conversation loop and prevents infinite loops via `RepetitionDetector`.
-- **`turnProcessor.js`**: Implements the ReAct loop. It coordinates between the API, the tool engine, and the UI to process a single user turn.
-- **`ApiCommunicator.js`**: Handles the resilient communication with the LLM, implementing exponential backoff and error recovery.
-- **`systemPromptManager.js`**: Encapsulates the logic for constructing the system prompt, handling CLI injections (`-isi`, `-fsi`), and filtering available tools based on persona requirements.
-- **`FountainAdapter.js`**: Manages the specific logic for Screenplay (Fountain) mode, including message injection and formatting.
-- **`terminalUI.js`**: The UI facade. It delegates to `TerminalRenderer` for output, `TerminalInput` for input, and `SessionLogger` for persistence.
-- **`TerminalRenderer.js`**: Pure rendering logic. Handles Markdown, Tables, and Fountain layouts.
-- **`TerminalInput.js`**: Manages the terminal input stream and user confirmations.
-- **`SessionLogger.js`**: Handles the writing of session and history logs to disk.
-- **`commandHandler.js`**: Implements the internal command system (e.g., `/models`, `/s`, `/fav`) to modify agent state without affecting the chat history.
-- **`smartParser.js`**: The Smart Tool Parser. It extracts tool calls from LLM responses using AST evaluation and regex matching, casting arguments to their correct types.
-- **`executionEngine.js`**: The tool execution orchestrator. Validates tool calls, prevents infinite loops via `ToolAttemptTracker`, and enforces security constraints before invoking tool functions.
-- **`configManager.js`**: Handles the persistence of user preferences in `./.paser-mini/config/config.json`.
+The "Brain" of the agent. It handles the conversation loop, state management, and internal commands without coupling to specific LLM APIs or UI implementations.
+- **Pattern**: Central Orchestrator (`ChatManager`) delegating to specialized processors (Turn, API, UI).
+- **Resilience**: Implements exponential backoff, repetition detection, and strict schema validation.
 
 ### 💠 Infrastructure (`src/infrastructure/`)
 
-- **`providerManager.js`**: Central registry and factory for LLM providers. Decouples the core engine from specific adapter implementations to ensure scalability.
-- **`gemini/adapter.js`**: The `GeminiAdapter` class abstracts the Google Google GenAI API, managing chat sessions, history, and model configuration.
-- **`nvidia/`**: Hardware-specific integrations for optimized LLM execution.
-- **`openrouter/adapter.js`**: Abstracts the OpenRouter API, providing access to a wide array of models.
-- **`groq/adapter.js`**: High-performance inference adapter for Llama-3 and Mixtral models.
-- **`cohere/adapter.js`**: Integrates the Cohere Command models via the v1 Chat API.
-
+The "Nerves". Decouples the core engine from external services.
+- **Multi-Provider**: Uses a factory pattern (`ProviderManager`) to seamlessly switch between LLMs (Gemini, OpenRouter, Groq, Cohere, etc.).
+- **Identity**: Hosts the `system_instruction.json` which defines the agent's persona, cognitive protocols, and tool usage rules.
 
 ### 💡 Toolbox (`src/tools/`)
 
-- **`registry.js`**: The source of truth for available tools and the `SYSTEM_INSTRUCTION` that defines the agent's persona and protocol.
-- **`fileTools.js`**: Implements secure file operations (read, write, replace, delete) restricted to the project root.
-- **`searchTools.js`**: Wraps system utilities for efficient global searching.
-- **`systemTools.js`**: Integrates `pyright` for static type analysis of the JS/TS codebase.
+The "Hands". A minimalist, schema-driven toolset.
+- **Dynamic Loading**: Tools are loaded dynamically and exposed via central schemas (Zod).
+- **Surgicality**: Each tool is designed to perform the smallest possible change to minimize token consumption.
 
-- **`memoryTools.js`**: Implements the Memento system for persistent, distilled memory using a ranked log file.
+### 🛡️ Containment & Security Strategy
+
+The agent operates within a strict sandbox to ensure freedom of action without risking the host system:
+- **Process Control**: CPU cycles and execution timeouts are restricted to prevent infinite loops.
+- **Resource Limits**: Strict memory (`mem_limit`) and swap limits are enforced via Docker to prevent RAM exhaustion.
+- **Network Isolation**: `network_mode: none` is applied by default. Network access is selectively enabled only when required.
+- **File System**: The project volume is mounted as `read-write` for persistence, while the rest of the container remains `read-only`.
+
+### ⏱️ Temporal Context Protocol
+
+To ensure absolute transparency, the data presented to the user is identical to the data sent to the LLM.
+- **Information Symmetry**: No filtering of timestamps or nicknames is allowed in the communication layer.
+- **Semantic Structure**: Messages follow the `[HH:mm] <Nickname> Content` format, leveraging the model's understanding of chat logs.
+- **Forensic Auditing**: The `/s` command captures the exact raw payload dispatched to the server.
 
 ### ↻ Data Flow
 

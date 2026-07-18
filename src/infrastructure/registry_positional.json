@@ -16,7 +16,7 @@
   ["copy", "Copy file", { "origin": "string", "destination": "string" }],
   ["validate", "Validates if a string is a valid JSON", { "json_string": "string" }],
   ["nickname", "Changes nickname", { "newNickname": "string" }],
-  ["push", "Stores in memento.log", "string"],
+  ["push", "Stores distilled insight in memento.log. Format: '[ID: X] [Timestamp] [Rank: Y] <Category> Content'. To cite an existing memory and increase its importance rank, use the #ID format inside the new memory's content (e.g., #12).", "string"],
   ["token", "Current token count", {}],
   ["tree", "Get the repository file tree", {}],
   ["diff", "Show differences of a file using git diff", { "path": "string" }],

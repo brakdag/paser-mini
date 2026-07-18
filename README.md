@@ -35,7 +35,31 @@ Furthermore, the system embraces an **AI-native interface**: a terminal-based en
 ---
 
 ## 📈 Technical Documentation
-For installation guides, CLI arguments, and technical specifications, please refer to the [Technical Documentation](./docs/TECHNICAL.md).
+
+### Installation
+```bash
+curl -fsSL https://raw.githubusercontent.com/brakdag/paser-mini/main/install.sh | bash
+```
+Or clone manually:
+```bash
+git clone https://github.com/brakdag/paser-mini.git && cd paser-mini && chmod +x install.sh && ./install.sh
+```
+
+### Credentials Configuration
+Configure your API key in your `.bashrc` or `.zshrc`:
+```bash
+export GOOGLE_API_KEY="your_google_api_key_here"
+```
+
+### Command Line Arguments
+| Argument | Short | Description |
+| :--- | :--- | :--- |
+| `--message` | `-m` | Initial message to send |
+| `--system-instruction` | `-si` | Provide custom system instructions |
+| `--inject-system-instruction` | `-isi` | Inject instruction at the start of system prompt |
+| `--file-system-instruction` | `-fsi` | Path to file for system instruction injection |
+| `--no-system-instruction` | `-nsi` | Run without system instructions |
+| `--github-mode` | | Run in GitHub mode (process issues with #ai-assistance) |
 
 ## 🜰 Ecosystem Alignment
 For the narrative history of this pod and the character breakdowns of the team, see the [Staff Directory](./docs/staff/).
