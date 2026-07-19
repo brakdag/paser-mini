@@ -50,10 +50,11 @@ export default class QrTools {
       }
 
       const qrText = rows.join("\n");
-      const content = `QR Content: ${text}\n\n${qrText}\n`;
+      const content = `${text}\n\n${qrText}\n`;
       return { type: QR_DISPLAY_TYPE, content };
     } catch (e) {
       throw new Error(`QR generation failed: ${e.message}`);
     }
   }
 }
+
