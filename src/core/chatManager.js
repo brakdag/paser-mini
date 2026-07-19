@@ -5,6 +5,7 @@ import RepetitionDetector from "./repetitionDetector.js";
 import logger from "./logger.js";
 import ConfigManager from "./configManager.js";
 import TurnProcessor from "./turnProcessor.js";
+import { countTokensHeuristic } from "../infrastructure/historyNormalizer.js";
 
 const MAX_CONTEXT_TOKENS = 250000;
 
@@ -313,13 +314,8 @@ class ChatManager {
       return this.assistant.countTokens(systemInstruction, history);
     }
 
-    const historyChars = history.reduce((acc, msg) => {
-      const content = msg.content || msg.text || "";
-      return acc + (typeof content === "string" ? content.length : JSON.stringify(content).length);
-    }, 0);
-
     const charsPerToken = typeof this.assistant.getCharsPerToken === "function" ? this.assistant.getCharsPerToken() : 3.5;
-    return Math.ceil((systemInstruction.length + historyChars) / charsPerToken);
+    return countTokensHeuristic(systemInstruction, history, charsPerToken);
   }
 
   /**
