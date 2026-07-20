@@ -240,9 +240,8 @@ class ChatManager {
       const welcomeMsg = "System initialized. Ready for input.";
       const combinedMsg = `${logMsg}\n${welcomeMsg}`;
 
+      // Mostramos el mensaje visualmente en la UI, pero NO se inyecta al historial del modelo para evitar contaminar el contexto.
       this.ui.displayChatMessage("system", combinedMsg);
-      this.assistant.injectMessage("server", combinedMsg);
-
       this.logOpened = true;
       await this.processTurn(initialInput);
     }
@@ -257,9 +256,9 @@ class ChatManager {
         if (input) {
           if (!this.logOpened && this.systemInstruction) {
             const logMsg = this.ui.getLogOpenedString();
+            // Mostramos el mensaje visualmente en la UI, pero NO se inyecta al historial del modelo para evitar contaminar el contexto.
             this.ui.displayChatMessage("system", logMsg);
             this.logOpened = true;
-            this.assistant.injectMessage("server", logMsg);
           }
 
           const handled = await this.commandHandler.handle(input);

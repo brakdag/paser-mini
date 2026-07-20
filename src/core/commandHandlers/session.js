@@ -51,7 +51,19 @@ class SessionCommands {
     }
     return true;
   }
-}
 
+  /**
+   * Injects a predefined context-recovery prompt into the chat.
+   * @param {object} chatManager The chat manager instance.
+   * @param {object} ui The terminal UI instance.
+   * @returns {Promise<boolean>} True if the operation succeeded.
+   */
+  static async handleInjectContext(chatManager, ui) {
+    const contextPrompt = "Read the last messages from the log ./.paser-mini/log/session.log to get into context.";
+    ui.displayChatMessage(chatManager.user.nickname, contextPrompt);
+    await chatManager.processTurn(contextPrompt);
+    return true;
+  }
+}
 
 export default SessionCommands;

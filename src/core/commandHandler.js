@@ -69,6 +69,12 @@ const COMMAND_MAP = {
    * @param {object} ui The UI.
    * @returns {Promise<boolean>} Always true.
    */
+  "/c": (cm, ui) => SessionCommands.handleInjectContext(cm, ui),
+  /**
+   * @param {import("./chatManager.js").default} cm The chat manager.
+   * @param {object} ui The UI.
+   * @returns {Promise<boolean>} Always true.
+   */
   "/execute": (cm, ui) => SystemCommands.handleExecute(cm, ui, ""),
   /**
    * @param {import("./chatManager.js").default} cm The chat manager.
