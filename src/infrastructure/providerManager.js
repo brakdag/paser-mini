@@ -59,6 +59,11 @@ class ProviderManager {
       defaultModel: "glm-5.2",
       path: "./zai/adapter.js",
     },
+    GITHUB: {
+      name: "GitHub Models",
+      defaultModel: "openai/gpt-4.1",
+      path: "./github/adapter.js",
+    },
   };
 
   /**

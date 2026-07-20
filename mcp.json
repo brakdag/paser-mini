@@ -7,6 +7,13 @@
         "chrome-devtools-mcp"
       ],
       "enabled": false
+    },
+    "freecad": {
+      "command": "uvx",
+      "args": [
+        "freecad-mcp"
+      ],
+      "enabled": false
     }
   }
 }
