@@ -89,12 +89,12 @@ class SystemCommands {
    * @returns {Promise<boolean>} True if the operation succeeded.
    */
   static async handleTrunc(chatManager, ui, input) {
-    const parts = input.split(/\s+/);
-    if (parts.length !== 2) {
+    const args = input.trim().split(/\s+/).filter(Boolean);
+    if (args.length !== 1) {
       ui.displayError("Usage: /trunc <limit_in_tokens> (use 0 to disable)");
       return true;
     }
-    const limit = parseInt(parts[1], 10);
+    const limit = parseInt(args[0], 10);
     if (Number.isNaN(limit) || limit < 0) {
       ui.displayError("Truncation limit must be a positive integer, or 0 to disable.");
       return true;

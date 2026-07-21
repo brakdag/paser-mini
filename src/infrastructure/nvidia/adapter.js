@@ -277,8 +277,7 @@ class NvidiaAdapter extends BaseAdapter {
   countTokens(systemInstruction, history) {
     const systemChars = systemInstruction?.length || 0;
     const historyChars = history.reduce((acc, msg) => acc + (msg.text?.length || 0), 0);
-    // Llama-3 heuristic: ~3.5 characters per token for mixed content
-    return Math.ceil((systemChars + historyChars) / 3.5);
+    return Math.ceil((systemChars + historyChars) / this.getCharsPerToken());
   }
 }
 

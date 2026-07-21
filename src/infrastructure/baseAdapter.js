@@ -185,6 +185,14 @@ export default class BaseAdapter {
           lastMsg.text = lastMsg.text.slice(0, lastMsg.text.length - overflowChars);
         } else if (typeof lastMsg.content === 'string') {
           lastMsg.content = lastMsg.content.slice(0, lastMsg.content.length - overflowChars);
+        } else if (Array.isArray(lastMsg.parts)) {
+          // Handle Gemini/Anthropic parts format: truncate the last text part precisely
+          for (let i = lastMsg.parts.length - 1; i >= 0; i -= 1) {
+            if (typeof lastMsg.parts[i].text === 'string' && lastMsg.parts[i].text.length >= overflowChars) {
+              lastMsg.parts[i].text = lastMsg.parts[i].text.slice(0, lastMsg.parts[i].text.length - overflowChars);
+              break;
+            }
+          }
         }
         logger.error(`[${this.constructor.name}] CRITICAL: Single message exceeded the strict limit. Applied surgical truncation.`);
       }
@@ -238,6 +246,14 @@ export default class BaseAdapter {
       if (typeof lastMsg.content === "string" && lastMsg.content.length > overflowChars) {
         lastMsg.content = lastMsg.content.slice(0, lastMsg.content.length - overflowChars);
         logger.error(`[${this.constructor.name}] CRITICAL PAYLOAD LIMIT: Applied surgical truncation to final message content.`);
+      } else if (Array.isArray(lastMsg.parts)) {
+        for (let i = lastMsg.parts.length - 1; i >= 0; i -= 1) {
+          if (typeof lastMsg.parts[i].text === "string" && lastMsg.parts[i].text.length > overflowChars) {
+            lastMsg.parts[i].text = lastMsg.parts[i].text.slice(0, lastMsg.parts[i].text.length - overflowChars);
+            logger.error(`[${this.constructor.name}] CRITICAL PAYLOAD LIMIT: Applied surgical truncation to final message part.`);
+            break;
+          }
+        }
       }
     }
 

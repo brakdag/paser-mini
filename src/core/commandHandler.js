@@ -213,12 +213,12 @@ const PREFIX_COMMANDS = {
    * @param {CommandContext} args The context.
    * @returns {Promise<boolean>} Always true.
    */
-  "/trunc ": ({ cm, ui, input }) => SystemCommands.handleTrunc(cm, ui, input),
+  "/trunc ": ({ cm, ui, payload }) => SystemCommands.handleTrunc(cm, ui, payload),
   /**
    * @param {CommandContext} args The context.
    * @returns {Promise<boolean>} Always true.
    */
-  "/rpm ": ({ cm, ui, input }) => SystemCommands.handleRpm(cm, ui, input),
+  "/rpm ": ({ cm, ui, payload }) => SystemCommands.handleRpm(cm, ui, payload),
   /**
    * @param {CommandContext} args The context.
    * @returns {Promise<boolean>} Always true.
