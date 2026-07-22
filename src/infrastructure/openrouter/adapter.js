@@ -132,13 +132,43 @@ class OpenRouterAdapter extends BaseAdapter {
    * @returns {object} The formatted payload.
    */
   _preparePayload() {
+    // Surgical Extraction: Isolate system messages to enforce strict API structural rules
+    const systemMessages = this.history.filter(m => m.role === 'system' || m.role === 'server');
+    const conversationMessages = this.history.filter(m => m.role !== 'system' && m.role !== 'server');
+
+    const formattedSystem = systemMessages.map(m => {
+      const content = this.formatTextForPayload(m.role, m.content, m.timestamp);
+      return typeof content === 'string' ? content.trim() : '';
+    }).filter(Boolean).join('\n\n');
+
+    const payloadMessages = [];
+
+    if (formattedSystem) {
+      payloadMessages.push({ 
+        role: 'system', 
+        content: formattedSystem 
+      });
+    }
+
+    conversationMessages.forEach(({ role: msgRole, content, timestamp }) => {
+      let formattedContent = this.formatTextForPayload(msgRole, content, timestamp);
+      
+      // Adaptation: OpenRouter providers throw opaque 500 errors if content is strictly empty
+      if (typeof formattedContent === 'string' && formattedContent.trim() === '') {
+        formattedContent = ' '; // Inject space to prevent provider crash
+      }
+      
+      payloadMessages.push({ 
+        role: msgRole, 
+        content: formattedContent 
+      });
+    });
+
     return {
       model: this.currentModel,
-      messages: this.history.map(({ role: msgRole, content, timestamp }) => ({
-        role: msgRole,
-        content: this.formatTextForPayload(msgRole, content, timestamp)
-      })),
+      messages: payloadMessages,
       temperature: this.temperature,
+      max_tokens: parseInt(this.configManager.get("max_tokens", 4096), 10),
     };
   }
 
@@ -168,7 +198,21 @@ class OpenRouterAdapter extends BaseAdapter {
    * @returns {Error} A formatted Error object with name "APIError".
    */
   _handleApiError(error) {
-    const errorMsg = error.response?.data?.error?.message || error.message;
+    // OpenRouter wraps provider errors deep within its response structure.
+    const errorData = error.response?.data?.error;
+    const providerName = errorData?.metadata?.provider_name || 'Unknown Provider';
+    
+    // Absolute Extraction: Combine HTTP Status Code and Raw Provider Error for maximum clarity
+    const rawProviderError = errorData?.metadata?.raw || errorData?.message;
+    const httpStatus = error.response?.status || errorData?.code || 'Unknown';
+    const errorMsg = `[HTTP ${httpStatus}] ${rawProviderError || error.message}`;
+    
+    // Reveal the exact cause of the provider's rejection in the logs
+    logger.error(`[OpenRouterAdapter] RAW API ERROR DETECTED: ${JSON.stringify(error.response?.data)}`);
+    if (rawProviderError) {
+      logger.error(`[OpenRouterAdapter] PROVIDER '${providerName}' RAW REJECTION: ${rawProviderError}`);
+    }
+
     const apiError = new Error(errorMsg);
     apiError.name = "APIError";
     apiError.response = error.response;
