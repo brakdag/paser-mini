@@ -123,12 +123,12 @@ class SystemCommands {
    * @returns {Promise<boolean>} True if the operation succeeded.
    */
   static async handleRpm(chatManager, ui, input) {
-    const parts = input.split(/\s+/);
-    if (parts.length !== 2) {
+    const parts = input.trim().split(/\s+/).filter(Boolean);
+    if (parts.length !== 1) {
       ui.displayError("Usage: /rpm <limit>");
       return true;
     }
-    const rpm = parseInt(parts[1], 10);
+    const rpm = parseInt(parts[0], 10);
     if (Number.isNaN(rpm) || rpm < 1) {
       ui.displayError("RPM limit must be a positive integer.");
       return true;
