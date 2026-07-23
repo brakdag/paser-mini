@@ -37,6 +37,35 @@ export default class WebTools {
   #fetchBuffer = { url: null, data: null };
 
   /**
+   * Filters out boilerplate text from DuckDuckGo search results.
+   * Extracts only the meaningful content between the pagination links.
+   * @param {string} stdout - The raw output from elinks.
+   * @param {string} url - The URL that was searched.
+   * @returns {string} The filtered text, or the original text if the pattern is not found.
+   */
+  #filterDuckDuckGoResults(stdout, url) {
+    if (!url.includes("duckduckgo.com")) {
+      return stdout;
+    }
+
+    const keyword = "Next Page >";
+    const firstIndex = stdout.indexOf(keyword);
+    const lastIndex = stdout.lastIndexOf(keyword);
+
+    // If there are top and bottom pagination blocks, we extract the middle content.
+    if (firstIndex !== -1 && lastIndex !== -1 && firstIndex !== lastIndex) {
+      const closingBracketFirst = stdout.indexOf("]", firstIndex);
+      const openingBracketLast = stdout.lastIndexOf("[", lastIndex);
+
+      if (closingBracketFirst !== -1 && openingBracketLast !== -1 && closingBracketFirst < openingBracketLast) {
+        return stdout.substring(closingBracketFirst + 1, openingBracketLast).trim();
+      }
+    }
+
+    return stdout;
+  }
+
+  /**
    * Normalizes a URL by ensuring it has a protocol.
    * @param {string} url - The URL to normalize.
    * @returns {string} The normalized URL.
@@ -64,40 +93,86 @@ export default class WebTools {
   }
 
   /**
+   * Fetches a specific page of DuckDuckGo search results.
+   * @param {string} encodedQuery - The URL-encoded search query.
+   * @param {number} offset - The result offset for pagination (e.g., 1, 11, 21).
+   * @returns {Promise<string>} The filtered text of the requested page.
+   * @throws {Error} If the fetch fails or is blocked.
+   */
+  async #fetchDuckDuckGoPage(encodedQuery, offset) {
+    const url = `https://lite.duckduckgo.com/lite/?q=${encodedQuery}&dc=${offset}`;
+    const { stdout } = await this.#execFilePromise(
+      "elinks",
+      ["-dump", "-no-numbering", "-no-references", "-force-html", url],
+      {
+        timeout: SEARCH_TIMEOUT_MS,
+      },
+    );
+
+    if (
+      stdout.includes("captcha") ||
+      stdout.includes("anomaly-modal") ||
+      stdout.includes("Robot Check") ||
+      stdout.trim() === ""
+    ) {
+      throw new Error("DuckDuckGo page fetch failed or blocked.");
+    }
+
+    return this.#filterDuckDuckGoResults(stdout, url);
+  }
+
+  /**
    * Searches the web using multiple providers.
+   * Paginates DuckDuckGo up to 3 times (approx. 30 results) before falling back.
    * @param {string} query - The search query.
    * @returns {Promise<string>} The search results as text.
    * @throws {Error} If all search methods fail.
    */
   async searchWeb(query) {
     const encodedQuery = encodeURIComponent(query);
-    const searchUrls = [
-      `https://lite.duckduckgo.com/lite/?q=${encodedQuery}`,
-      `https://search.brave.com/search?q=${encodedQuery}`,
-    ];
+    const DDG_PAGES = 3;
+    const RESULTS_PER_PAGE = 10;
 
-    for (let i = 0; i < searchUrls.length; i += 1) {
-      const url = searchUrls[i];
-      try {
-        const { stdout } = await this.#execFilePromise(
-          "elinks",
-          ["-dump", "-no-numbering", "-no-references", "-force-html", url],
-          {
-            timeout: SEARCH_TIMEOUT_MS,
-          },
-        );
-
-        if (
-          !stdout.includes("captcha") &&
-          !stdout.includes("anomaly-modal") &&
-          !stdout.includes("Robot Check") &&
-          stdout.trim() !== ""
-        ) {
-          return stdout;
+    const ddgResults = [];
+    try {
+      for (let p = 0; p < DDG_PAGES; p += 1) {
+        const offset = p * RESULTS_PER_PAGE + 1;
+        const result = await this.#fetchDuckDuckGoPage(encodedQuery, offset);
+        
+        // If the page has content, add it. Stop if no more results are found.
+        if (result && result.trim() !== "") {
+          ddgResults.push(result);
+        } else {
+          break;
         }
-      } catch {
-        // Silently fail and try next provider to ensure maximum availability
       }
+      if (ddgResults.length > 0) {
+        return ddgResults.join("\n\n---\n\n");
+      }
+    } catch {
+      // Silently fail and try next provider to ensure maximum availability
+    }
+
+    const braveUrl = `https://search.brave.com/search?q=${encodedQuery}`;
+    try {
+      const { stdout } = await this.#execFilePromise(
+        "elinks",
+        ["-dump", "-no-numbering", "-no-references", "-force-html", braveUrl],
+        {
+          timeout: SEARCH_TIMEOUT_MS,
+        },
+      );
+
+      if (
+        !stdout.includes("captcha") &&
+        !stdout.includes("anomaly-modal") &&
+        !stdout.includes("Robot Check") &&
+        stdout.trim() !== ""
+      ) {
+        return stdout;
+      }
+    } catch {
+      // Silently fail
     }
 
     throw new Error("All search methods failed or returned empty results.");
