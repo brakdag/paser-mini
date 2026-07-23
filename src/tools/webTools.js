@@ -66,6 +66,104 @@ export default class WebTools {
   }
 
   /**
+   * Parses a DuckDuckGo results page (from elinks text) into structured results.
+   * @param {string} text - The filtered DuckDuckGo page text.
+   * @returns {{ zeroClick: string|null, results: Array<{title: string, snippet: string, url: string}> }} The parsed results and zero-click info.
+   */
+  #parseDuckDuckGoPage(text) {
+    const trimmed = text.trim();
+    let zeroClick = null;
+    let body = trimmed;
+
+    if (trimmed.startsWith("Zero-click info:")) {
+      const firstResult = trimmed.match(/\n\s+\d+\./);
+      if (firstResult) {
+        zeroClick = trimmed.substring(0, firstResult.index).trim();
+        body = trimmed.substring(firstResult.index).trim();
+      }
+    }
+
+    const lines = body.split("\n");
+    const results = [];
+    let current = null;
+
+    for (let i = 0; i < lines.length; i += 1) {
+      const line = lines[i];
+      const numMatch = line.match(/^\s+(\d+)\.\s+(.+)/);
+      if (numMatch) {
+        if (current) results.push(current);
+        current = { title: numMatch[2].trim(), snippet: "", url: "" };
+      } else if (current) {
+        const t = line.trim();
+        if (t && !t.startsWith("[")) {
+          if (!t.includes(" ") && /\.\w/.test(t)) {
+            current.url = t;
+          } else {
+            current.snippet = current.snippet
+              ? `${current.snippet} ${t}`
+              : t;
+          }
+        }
+      }
+    }
+    if (current) results.push(current);
+
+    return { zeroClick, results };
+  }
+
+  /**
+   * Deduplicates search results by URL.
+   * @param {Array<{title: string, snippet: string, url: string}>} allResults - Results from all pages.
+   * @returns {Array<{title: string, snippet: string, url: string}>} Deduplicated results.
+   */
+  #deduplicateResults(allResults) {
+    const seen = new Set();
+    const unique = [];
+
+    for (let i = 0; i < allResults.length; i += 1) {
+      const r = allResults[i];
+      const key = r.url || r.title.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        unique.push(r);
+      }
+    }
+
+    return unique;
+  }
+
+  /**
+   * Formats structured search results into clean text output.
+   * @param {Array<{title: string, snippet: string, url: string}>} results - Deduplicated results.
+   * @param {string|null} zeroClick - Zero-click info block, if any.
+   * @returns {string} Formatted text.
+   */
+  #formatSearchResults(results, zeroClick) {
+    const parts = [];
+
+    if (zeroClick) {
+      parts.push(zeroClick);
+    }
+
+    const formatted = results
+      .map((r, i) => {
+        const num = i + 1;
+        const lines = [`${num}.  ${r.title}`];
+        if (r.snippet) {
+          lines.push(`     ${r.snippet}`);
+        }
+        if (r.url) {
+          lines.push(`     ${r.url}`);
+        }
+        return lines.join("\n");
+      })
+      .join("\n\n");
+
+    parts.push(formatted);
+    return parts.join("\n\n");
+  }
+
+  /**
    * Normalizes a URL by ensuring it has a protocol.
    * @param {string} url - The URL to normalize.
    * @returns {string} The normalized URL.
@@ -133,21 +231,24 @@ export default class WebTools {
     const DDG_PAGES = 3;
     const RESULTS_PER_PAGE = 10;
 
-    const ddgResults = [];
+    let zeroClickInfo = null;
+    const allResults = [];
     try {
       for (let p = 0; p < DDG_PAGES; p += 1) {
         const offset = p * RESULTS_PER_PAGE + 1;
-        const result = await this.#fetchDuckDuckGoPage(encodedQuery, offset);
-        
-        // If the page has content, add it. Stop if no more results are found.
-        if (result && result.trim() !== "") {
-          ddgResults.push(result);
-        } else {
-          break;
+        const raw = await this.#fetchDuckDuckGoPage(encodedQuery, offset);
+
+        if (!raw || raw.trim() === "") break;
+
+        const { zeroClick, results } = this.#parseDuckDuckGoPage(raw);
+        if (zeroClick && !zeroClickInfo) {
+          zeroClickInfo = zeroClick;
         }
+        allResults.push(...results);
       }
-      if (ddgResults.length > 0) {
-        return ddgResults.join("\n\n---\n\n");
+      if (allResults.length > 0) {
+        const unique = this.#deduplicateResults(allResults);
+        return this.#formatSearchResults(unique, zeroClickInfo);
       }
     } catch {
       // Silently fail and try next provider to ensure maximum availability
