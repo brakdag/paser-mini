@@ -6,21 +6,21 @@ import path from "path";
 
 const ROOT_DIR = process.cwd();
 
-const CHUNK_SIZE = 10000; // 10KB limit for initial context window
+const CHUNK_SIZE = 10000;
 const SEARCH_TIMEOUT_MS = 20000;
 const FETCH_TIMEOUT_MS = 15000;
 const RENDER_TIMEOUT_MS = 30000;
 const MAX_PDF_BUFFER = 10 * 1024 * 1024;
+
+const LF = String.fromCharCode(10);
 
 /**
  * Tools for web interaction, searching, and rendering pages to text.
  */
 export default class WebTools {
   #BROWSER_HEADERS = {
-    "User-Agent":
-      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-    Accept:
-      "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
     "Accept-Language": "en-US,en;q=0.9",
     "Accept-Encoding": "gzip, deflate, br",
     Connection: "keep-alive",
@@ -52,7 +52,6 @@ export default class WebTools {
     const firstIndex = stdout.indexOf(keyword);
     const lastIndex = stdout.lastIndexOf(keyword);
 
-    // If there are top and bottom pagination blocks, we extract the middle content.
     if (firstIndex !== -1 && lastIndex !== -1 && firstIndex !== lastIndex) {
       const closingBracketFirst = stdout.indexOf("]", firstIndex);
       const openingBracketLast = stdout.lastIndexOf("[", lastIndex);
@@ -63,104 +62,6 @@ export default class WebTools {
     }
 
     return stdout;
-  }
-
-  /**
-   * Parses a DuckDuckGo results page (from elinks text) into structured results.
-   * @param {string} text - The filtered DuckDuckGo page text.
-   * @returns {{ zeroClick: string|null, results: Array<{title: string, snippet: string, url: string}> }} The parsed results and zero-click info.
-   */
-  #parseDuckDuckGoPage(text) {
-    const trimmed = text.trim();
-    let zeroClick = null;
-    let body = trimmed;
-
-    if (trimmed.startsWith("Zero-click info:")) {
-      const firstResult = trimmed.match(/\n\s+\d+\./);
-      if (firstResult) {
-        zeroClick = trimmed.substring(0, firstResult.index).trim();
-        body = trimmed.substring(firstResult.index).trim();
-      }
-    }
-
-    const lines = body.split("\n");
-    const results = [];
-    let current = null;
-
-    for (let i = 0; i < lines.length; i += 1) {
-      const line = lines[i];
-      const numMatch = line.match(/^\s+(\d+)\.\s+(.+)/);
-      if (numMatch) {
-        if (current) results.push(current);
-        current = { title: numMatch[2].trim(), snippet: "", url: "" };
-      } else if (current) {
-        const t = line.trim();
-        if (t && !t.startsWith("[")) {
-          if (!t.includes(" ") && /\.\w/.test(t)) {
-            current.url = t;
-          } else {
-            current.snippet = current.snippet
-              ? `${current.snippet} ${t}`
-              : t;
-          }
-        }
-      }
-    }
-    if (current) results.push(current);
-
-    return { zeroClick, results };
-  }
-
-  /**
-   * Deduplicates search results by URL.
-   * @param {Array<{title: string, snippet: string, url: string}>} allResults - Results from all pages.
-   * @returns {Array<{title: string, snippet: string, url: string}>} Deduplicated results.
-   */
-  #deduplicateResults(allResults) {
-    const seen = new Set();
-    const unique = [];
-
-    for (let i = 0; i < allResults.length; i += 1) {
-      const r = allResults[i];
-      const key = r.url || r.title.toLowerCase();
-      if (!seen.has(key)) {
-        seen.add(key);
-        unique.push(r);
-      }
-    }
-
-    return unique;
-  }
-
-  /**
-   * Formats structured search results into clean text output.
-   * @param {Array<{title: string, snippet: string, url: string}>} results - Deduplicated results.
-   * @param {string|null} zeroClick - Zero-click info block, if any.
-   * @returns {string} Formatted text.
-   */
-  #formatSearchResults(results, zeroClick) {
-    const parts = [];
-
-    if (zeroClick) {
-      parts.push(zeroClick);
-    }
-
-    const formatted = results
-      .map((r, i) => {
-        const num = i + 1;
-        const lines = [`${num}.  ${r.title}`];
-        if (r.snippet) {
-          lines.push(`     ${r.snippet}`);
-        }
-        if (r.url) {
-          lines.push(`     ${r.url}`);
-        }
-        return lines.join("\n");
-      })
-      .join("\n\n");
-
-    parts.push(formatted);
-    return parts.join("\n\n");
   }
 
   /**
@@ -191,20 +92,17 @@ export default class WebTools {
   }
 
   /**
-   * Fetches a specific page of DuckDuckGo search results.
+   * Fetches the first page of DuckDuckGo search results.
    * @param {string} encodedQuery - The URL-encoded search query.
-   * @param {number} offset - The result offset for pagination (e.g., 1, 11, 21).
-   * @returns {Promise<string>} The filtered text of the requested page.
+   * @returns {Promise<string>} The filtered text of the first page.
    * @throws {Error} If the fetch fails or is blocked.
    */
-  async #fetchDuckDuckGoPage(encodedQuery, offset) {
-    const url = `https://lite.duckduckgo.com/lite/?q=${encodedQuery}&dc=${offset}`;
+  async #fetchDuckDuckGoPage(encodedQuery) {
+    const url = `https://lite.duckduckgo.com/lite/?q=${encodedQuery}`;
     const { stdout } = await this.#execFilePromise(
       "elinks",
       ["-dump", "-no-numbering", "-no-references", "-force-html", url],
-      {
-        timeout: SEARCH_TIMEOUT_MS,
-      },
+      { timeout: SEARCH_TIMEOUT_MS }
     );
 
     if (
@@ -221,37 +119,20 @@ export default class WebTools {
 
   /**
    * Searches the web using multiple providers.
-   * Paginates DuckDuckGo up to 3 times (approx. 30 results) before falling back.
    * @param {string} query - The search query.
    * @returns {Promise<string>} The search results as text.
    * @throws {Error} If all search methods fail.
    */
   async searchWeb(query) {
     const encodedQuery = encodeURIComponent(query);
-    const DDG_PAGES = 3;
-    const RESULTS_PER_PAGE = 10;
 
-    let zeroClickInfo = null;
-    const allResults = [];
     try {
-      for (let p = 0; p < DDG_PAGES; p += 1) {
-        const offset = p * RESULTS_PER_PAGE + 1;
-        const raw = await this.#fetchDuckDuckGoPage(encodedQuery, offset);
-
-        if (!raw || raw.trim() === "") break;
-
-        const { zeroClick, results } = this.#parseDuckDuckGoPage(raw);
-        if (zeroClick && !zeroClickInfo) {
-          zeroClickInfo = zeroClick;
-        }
-        allResults.push(...results);
-      }
-      if (allResults.length > 0) {
-        const unique = this.#deduplicateResults(allResults);
-        return this.#formatSearchResults(unique, zeroClickInfo);
+      const raw = await this.#fetchDuckDuckGoPage(encodedQuery);
+      if (raw && raw.trim() !== "") {
+        return raw;
       }
     } catch {
-      // Silently fail and try next provider to ensure maximum availability
+      // Silently fail and try next provider
     }
 
     const braveUrl = `https://search.brave.com/search?q=${encodedQuery}`;
@@ -259,9 +140,7 @@ export default class WebTools {
       const { stdout } = await this.#execFilePromise(
         "elinks",
         ["-dump", "-no-numbering", "-no-references", "-force-html", braveUrl],
-        {
-          timeout: SEARCH_TIMEOUT_MS,
-        },
+        { timeout: SEARCH_TIMEOUT_MS }
       );
 
       if (
@@ -307,7 +186,6 @@ export default class WebTools {
     const contentType = response.headers["content-type"] || "";
     const bufferData = Buffer.from(response.data);
 
-    // PDF detection via Content-Type or Magic Bytes (%PDF)
     const isPdf =
       contentType.includes("application/pdf") ||
       bufferData.slice(0, 4).toString("latin1") === "%PDF";
@@ -319,10 +197,7 @@ export default class WebTools {
         const { stdout } = await this.#execFilePromise(
           "pdftotext",
           ["-layout", "-htmlmeta", tempPath, "-"],
-          {
-            timeout: RENDER_TIMEOUT_MS,
-            maxBuffer: MAX_PDF_BUFFER,
-          },
+          { timeout: RENDER_TIMEOUT_MS, maxBuffer: MAX_PDF_BUFFER }
         );
         return stdout;
       } catch (e) {
@@ -336,9 +211,7 @@ export default class WebTools {
       const { stdout } = await this.#execFilePromise(
         "elinks",
         ["-dump", "-force-html", normalizedUrl],
-        {
-          timeout: RENDER_TIMEOUT_MS,
-        },
+        { timeout: RENDER_TIMEOUT_MS }
       );
       return stdout;
     } catch (e) {
@@ -388,7 +261,7 @@ export default class WebTools {
       const SEARCH_WINDOW_CHARS = 500;
       const MAX_MATCHES_PER_QUERY = 3;
       const MAX_TOTAL_LENGTH = 10000;
-      const queries = searchQuery.split(/\s+/).filter(Boolean);
+      const queries = searchQuery.split(/s+/).filter(Boolean);
       const allMatches = [];
 
       queries.forEach((q) => {
@@ -407,17 +280,19 @@ export default class WebTools {
         return "No matches found.";
       }
 
-      let result = allMatches.join("\n---\n");
+      let result = allMatches.join(`${LF}---${LF}`);
       if (result.length > MAX_TOTAL_LENGTH) {
         result = result.substring(0, MAX_TOTAL_LENGTH);
-        result +=
-          "\n\n[TRUNCATED: Too many matches. Refine your search query.]";
+        result += `${LF}${LF}[TRUNCATED: Too many matches. Refine your search query.]`;
       }
 
       return result;
     }
-    return data.length > CHUNK_SIZE
-      ? `${data.substring(0, CHUNK_SIZE)}\n\n[TRUNCATED: Content exceeds context limit. Use 'searchQuery' to access the remaining content.]`
-      : data;
+    
+    if (data.length > CHUNK_SIZE) {
+      return `${data.substring(0, CHUNK_SIZE)}${LF}${LF}[TRUNCATED: Content exceeds context limit. Use 'searchQuery' to access the remaining content.]`;
+    }
+    
+    return data;
   }
 }
