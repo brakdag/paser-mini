@@ -18,11 +18,12 @@ const circularReplacer = () => {
 };
 
 /**
- * Handles application logging, managing both a general system log and a session-specific log.
+ * Handles application logging using high-performance streams.
+ * Manages both a general system log and a session-specific log.
  */
 class Logger {
   /**
-   * Initializes the Logger, ensures the log directory exists, and marks the start of a new session.
+   * Initializes the Logger, ensures the log directory exists, and opens write streams.
    * @returns {void}
    */
   constructor() {
@@ -35,18 +36,21 @@ class Logger {
       fs.mkdirSync(logDir, { recursive: true });
     }
 
-    fs.appendFileSync(
-      this.logFile,
-      `\n--- Session Started: ${new Date().toISOString()} ---\n`,
-    );
-    fs.appendFileSync(
-      this.sessionFile,
-      `\n--- Session Started: ${new Date().toISOString()} ---\n`,
-    );
+    // Use append mode (flags: 'a') for efficient, non-blocking writes
+    this.logStream = fs.createWriteStream(this.logFile, { flags: "a", encoding: "utf8" });
+    this.sessionStream = fs.createWriteStream(this.sessionFile, { flags: "a", encoding: "utf8" });
+
+    // Handle stream errors to prevent uncaught exceptions
+    this.logStream.on("error", (err) => console.error("Log Stream Error:", err));
+    this.sessionStream.on("error", (err) => console.error("Session Stream Error:", err));
+
+    const startMessage = `\n--- Session Started: ${new Date().toISOString()} ---\n`;
+    this.logStream.write(startMessage);
+    this.sessionStream.write(startMessage);
   }
 
   /**
-   * Core logging method that writes messages to the system log file.
+   * Core logging method that writes messages to the system log file asynchronously.
    * @param {string} level - The log level (e.g., 'INFO', 'WARN', 'ERROR', 'DEBUG').
    * @param {string} message - The message to be logged.
    * @param {unknown} [data] - Optional additional data to be logged as JSON.
@@ -56,7 +60,7 @@ class Logger {
     const timestamp = new Date().toISOString();
     const safeData = data ? JSON.stringify(data, circularReplacer()) : "";
     const logEntry = `[${timestamp}] [${level}] ${message} ${safeData}\n`;
-    fs.appendFileSync(this.logFile, logEntry, "utf8");
+    this.logStream.write(logEntry);
   }
 
   /**
@@ -99,7 +103,17 @@ class Logger {
   }
 
   /**
-   * Logs a message to the session log as a thought.
+   * Logs a debug message.
+   * @param {string} msg - The message to log.
+   * @param {unknown} [data] - Optional additional data.
+   * @returns {void}
+   */
+  debug(msg, data) {
+    this.log("DEBUG", msg, data);
+  }
+
+  /**
+   * Writes a formatted message to the session log as a thought.
    * @param {string} msg - The message to log.
    * @returns {void}
    */
@@ -111,21 +125,30 @@ class Logger {
     });
     const nick = this.agentNickname || "agent";
     const logEntry = `[${time}] <${nick}> * thought: ${msg}\n`;
-    fs.appendFileSync(this.sessionFile, logEntry, "utf8");
+    this.sessionStream.write(logEntry);
   }
 
   /**
-   * Logs a debug message.
-   * @param {string} msg - The message to log.
-   * @param {unknown} [data] - Optional additional data.
+   * Writes raw text directly to the session log stream.
+   * Used by external loggers like SessionLogger to maintain a single I/O point.
+   * @param {string} text - The raw text to write.
    * @returns {void}
    */
-  debug(msg, data) {
-    this.log("DEBUG", msg, data);
+  writeRawToSession(text) {
+    this.sessionStream.write(`${text}\n`);
+  }
+
+  /**
+   * Gracefully terminates the write streams, ensuring all buffered data is flushed to disk.
+   * Must be called during application shutdown to prevent data loss.
+   * @returns {void}
+   */
+  shutdownStreams() {
+    this.logStream.end();
+    this.sessionStream.end();
   }
 }
 
 const logger = new Logger();
 
 export default logger;
-
