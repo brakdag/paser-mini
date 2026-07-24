@@ -6,6 +6,7 @@ import RetryHandler from "../../utils/retryHandler.js";
 import { normalizeRole, normalizeContent } from "../historyNormalizer.js";
 
 const BASE_URL = "https://api.cohere.com/v2";
+const SCHWA = String.fromCharCode(399); // Uso el codigo Unicode para evitar que el parser local colapse
 
 /**
  * Adapter for the Cohere AI API, providing chat capabilities and history management.
@@ -30,7 +31,7 @@ class CohereAdapter extends BaseAdapter {
     this._configureClient();
     this.retryHandler = new RetryHandler();
     this.recoverableErrors = ["Empty response from Cohere"];
-    this.lastPayload = null; // Propiedad expuesta para depuración (comando /s)
+    this.lastPayload = null;
   }
 
   /**
@@ -81,7 +82,6 @@ class CohereAdapter extends BaseAdapter {
     try {
       return await this.retryHandler.execute(async () => {
         try {
-          // Guardamos el payload estáticamente para depuración y observabilidad
           this.lastPayload = payload;
           logger.info(`[CohereAdapter] Requesting: ${this.client.defaults.baseURL}/v2/chat`);
           logger.info(`[CohereAdapter] Payload: ${JSON.stringify(payload)}`);
@@ -94,11 +94,10 @@ class CohereAdapter extends BaseAdapter {
       }, {
         recoverableErrors: this.recoverableErrors,
         /**
-         * Callback executed when a retry is attempted.
-         * @param {number} attempt - The current attempt number.
+         * Handles retry attempts by logging and displaying information.
+         * @param {number} attempt - The current retry attempt number.
          * @param {Error} error - The error that triggered the retry.
-         * @param {string} formattedDelay - The formatted delay string.
-         * @returns {void}
+         * @param {string} formattedDelay - The formatted delay string for display.
          */
         onRetry: (attempt, error, formattedDelay) => {
           logger.warn(`[CohereAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`);
@@ -123,35 +122,31 @@ class CohereAdapter extends BaseAdapter {
   _preparePayload() {
     const messages = [];
 
-    // En la v2 de Cohere, el system prompt se envía como el primer mensaje con rol 'system'.
     if (this.systemInstruction) {
+      // Purga absoluta del token nativo en el system prompt para evitar que Cohere arroje 422
+      const cleanInstruction = this.systemInstruction.split(SCHWA).join('execute:');
       messages.push({
         role: 'system',
-        content: this.systemInstruction
+        content: cleanInstruction
       });
     }
 
-    // Mapeamos todo el historial al formato estándar exigido por la v2.
     const mappedHistory = this.history
-      .filter(msg => msg.content && String(msg.content).trim()) // Purgamos posibles vacíos que rompen la semántica
+      .filter(msg => msg.content && String(msg.content).trim())
       .map(msg => ({
         role: msg.role === 'assistant' ? 'assistant' : 'user',
         content: this.formatTextForPayload(msg.role, msg.content, msg.timestamp)
       }));
 
-    // Cohere arroja 422 'No valid response generated' si la secuencia de roles no es perfectamente alternante.
-    // Sanitizamos la estructura mediante reducción funcional pura para garantizar una alternancia inmaculada.
     const { sanitizedHistory } = mappedHistory.reduce((acc, msg) => {
       if (msg.role === acc.expectedRole) {
         acc.sanitizedHistory.push(msg);
         acc.expectedRole = acc.expectedRole === 'user' ? 'assistant' : 'user';
       } else {
-        // Si se rompe la secuencia, fusionamos el texto en el último mensaje válido para no perder contexto.
         const lastMsg = acc.sanitizedHistory[acc.sanitizedHistory.length - 1];
         if (lastMsg) {
           lastMsg.content += `\n${msg.content}`;
         } else {
-          // Caso extremo: el historial arranca con 'assistant'. Forzamos su inclusión cambiando la expectativa.
           acc.sanitizedHistory.push(msg);
           acc.expectedRole = 'user';
         }
@@ -177,16 +172,32 @@ class CohereAdapter extends BaseAdapter {
    * @throws {Error} If the response text is empty.
    */
   _handleResponse(response) {
-    // En la API v2, la respuesta llega en un arreglo de contenidos dentro de 'message.content'.
-    const contentParts = response.data?.message?.content;
-    if (Array.isArray(contentParts) && contentParts.length > 0) {
-      const textContent = contentParts.map(part => part.text || '').join('\n');
-      
-      if (textContent.trim()) {
-        const msgTimestamp = IRCFormatter.getTimestamp();
-        this.injectMessage("assistant", textContent, msgTimestamp);
-        return textContent;
-      }
+    const message = response.data?.message;
+    let textContent = '';
+    let toolCallText = '';
+    
+    if (Array.isArray(message?.content) && message?.content.length > 0) {
+      textContent = message.content.map(part => part.text || '').join('\n');
+    }
+
+    if (Array.isArray(message?.tool_calls) && message.tool_calls.length > 0) {
+      const toolNames = message.tool_calls.map(call => {
+        try {
+          const args = typeof call.function.arguments === 'string' ? JSON.parse(call.function.arguments) : call.function.arguments;
+          return `${call.function.name}(${JSON.stringify(args)})`;
+        } catch {
+          return `${call.function.name}(${call.function.arguments || ''})`;
+        }
+      });
+      toolCallText = `[TOOL_EXEC] ${toolNames.join('\n[TOOL_EXEC] ')}`;
+    }
+
+    const finalText = `${textContent}${textContent && toolCallText ? '\n' : ''}${toolCallText}`.trim();
+
+    if (finalText) {
+      const msgTimestamp = IRCFormatter.getTimestamp();
+      this.injectMessage("assistant", finalText, msgTimestamp);
+      return finalText;
     }
 
     throw new Error("Empty response from Cohere");
@@ -206,15 +217,13 @@ class CohereAdapter extends BaseAdapter {
     apiError.name = "APIError";
     apiError.status = error.response?.status;
     apiError.code = error.code;
-    apiError.payload = payload; // Preservamos el payload para depuración y guardado
+    apiError.payload = payload;
     apiError.response = error.response;
     return apiError;
   }
 
   /**
    * Normalizes and injects a message into the chat history.
-   * Aplica una Fusión Sintáctica en la Raíz: si el mensaje entrante pertenece al mismo rol
-   * que el último en el historial, los fusiona para mantener una secuencia estrictamente alternante.
    * @param {string} role - The role of the message sender.
    * @param {string|object|Array} content - The content of the message.
    * @param {string|null} [timestamp] - The timestamp of the message.
@@ -224,15 +233,22 @@ class CohereAdapter extends BaseAdapter {
     const finalContent = normalizeContent(content, apiRole);
     const lastMessage = this.history[this.history.length - 1];
 
-    if (lastMessage && lastMessage.role === apiRole) {
-      // Fusión de mensajes consecutivos del mismo rol (ej. logs automáticos + input del usuario)
-      lastMessage.content += `\n${finalContent}`;
-      // Mantenemos el timestamp original del primer mensaje de la secuencia fusionada
+    const safeRole = apiRole === 'assistant' ? 'assistant' : 'user';
+    let safeContent = typeof finalContent === 'string' ? finalContent : JSON.stringify(finalContent);
+
+    if (safeRole === 'assistant') {
+      // Purga infalible de tokens locales para evitar fallos de codificacion
+      safeContent = safeContent.split(SCHWA).join('Action: ');
+      safeContent = safeContent.split('[TOOL_EXEC]').join('[Executing Action]');
+    }
+
+    if (lastMessage && lastMessage.role === safeRole) {
+      lastMessage.content += `\n${safeContent}`;
       lastMessage.timestamp = lastMessage.timestamp || timestamp || IRCFormatter.getTimestamp();
     } else {
       this.history.push({
-        role: apiRole,
-        content: finalContent,
+        role: safeRole,
+        content: safeContent,
         timestamp: timestamp || IRCFormatter.getTimestamp(),
       });
     }
@@ -248,8 +264,8 @@ class CohereAdapter extends BaseAdapter {
   }
 
   /**
-   * Resets the chat history, optionally with a new history array.
-   * @param {Array|null} [historyOverride] - The new history to set.
+   * Performs a hard reset of the chat history.
+   * @param {Array|null} [historyOverride] - Optional array to override the history.
    */
   hardReset(historyOverride = null) {
     this.history = historyOverride || [];
@@ -258,7 +274,7 @@ class CohereAdapter extends BaseAdapter {
 
   /**
    * Retrieves the current chat history.
-   * @returns {Array} The history array.
+   * @returns {Array} The chat history array.
    */
   getHistory() {
     return this.history;
@@ -266,7 +282,7 @@ class CohereAdapter extends BaseAdapter {
 
   /**
    * Fetches the list of available models from the Cohere API.
-   * @returns {Promise<string[]>} A list of model names.
+   * @returns {Promise<Array<string>>} A list of available model names.
    */
   async getAvailableModels() {
     try {
@@ -279,13 +295,12 @@ class CohereAdapter extends BaseAdapter {
   }
 
   /**
-   * Checks if a specific model is available and responding.
+   * Checks if a specific model is available and responsive.
    * @param {string} modelName - The name of the model to check.
-   * @returns {Promise<boolean>} True if available, false otherwise.
+   * @returns {Promise<boolean>} True if the model is available, false otherwise.
    */
   async checkAvailability(modelName) {
     try {
-      // El endpoint v2 exige el uso del arreglo 'messages' en lugar de un string 'message' directo.
       await this.client.post("/chat", {
         model: modelName,
         messages: [{ role: "user", content: "hi" }],
