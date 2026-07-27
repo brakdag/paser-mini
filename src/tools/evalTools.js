@@ -139,17 +139,23 @@ class EvalTools {
 
   /**
    * Executes JavaScript code within the VM context.
+   * Automatically wraps code in an async IIFE if top-level await is detected.
    * @param {string} code - The JavaScript code to execute.
-   * @returns {{trace: string[], result: unknown}} The execution result and trace.
+   * @returns {Promise<{trace: string[], result: unknown}>} The execution result and trace.
    * @throws {Error} If the code execution fails catastrophically.
    */
-  #execute(code) {
+  async #execute(code) {
     this.#trace = [];
     let result;
     try {
-      // We use runInContext. Note: if the code uses await at top level,
-      // it will fail unless wrapped in an async IIFE.
-      result = vm.runInContext(code, this.#context, { timeout: 1000 });
+      const wrappedCode = code.includes('await') ? `(async () => { ${code} })()` : code;
+      result = vm.runInContext(wrappedCode, this.#context, { timeout: 1000 });
+      
+      // Duck typing para Promesas a través de límites de VM
+      if (result && typeof result.then === 'function') {
+        result = await result;
+      }
+
       if (result !== undefined) {
         const safeResult = typeof result === "object" ? this.#safeStringify(result) : result;
         this.#log("RETURN", safeResult);
@@ -164,10 +170,10 @@ class EvalTools {
   /**
    * Public interface to execute JavaScript code.
    * @param {string} code - The JavaScript code to execute.
-   * @returns {string} The JSON string containing the result and trace.
+   * @returns {Promise<string>} The JSON string containing the result and trace.
    */
-  executeJS(code) {
-    const output = this.#execute(code);
+  async executeJS(code) {
+    const output = await this.#execute(code);
     return JSON.stringify(
       { result: output.result, trace: output.trace },
       null,

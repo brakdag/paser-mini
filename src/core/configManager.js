@@ -126,6 +126,25 @@ class ConfigManager {
    * @param {unknown} value - The value to associate with the key.
    * @returns {void}
    */
+  /**
+   * Sets a configuration value in memory without persisting it to disk.
+   * @param {string} key - The configuration key to set.
+   * @param {unknown} value - The value to associate with the key.
+   * @returns {void}
+   */
+  setTemporary(key, value) {
+    const isGlobal = GLOBAL_KEYS.has(key);
+    const config = isGlobal ? this.globalConfig : this.localConfig;
+    config[key] = value;
+  }
+
+  /**
+   * Saves a configuration value and persists it to the appropriate layer.
+   * Determines the layer based on the GLOBAL_KEYS whitelist.
+   * @param {string} key - The configuration key to save.
+   * @param {unknown} value - The value to associate with the key.
+   * @returns {void}
+   */
   save(key, value) {
     const isGlobal = GLOBAL_KEYS.has(key);
     const config = isGlobal ? this.globalConfig : this.localConfig;

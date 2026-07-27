@@ -1,7 +1,5 @@
 import { execFile } from "child_process";
 import { promisify } from "util";
-import fs from "fs/promises";
-import path from "path";
 
 /**
  * Git operations wrapper providing a clean interface for repository management.
@@ -12,12 +10,13 @@ export default class GitTools {
   /**
    * Executes a git command and returns the trimmed output.
    * @param {string[]} args - Command arguments for the git binary.
+   * @param {string} [input] - Optional string to pass to stdin.
    * @returns {Promise<string>} The trimmed standard output of the command.
    * @throws {Error} If the git command fails.
    */
-  async #run(args) {
+  async #run(args, input) {
     try {
-      const { stdout } = await this.#execFilePromise("git", args);
+      const { stdout } = await this.#execFilePromise("git", args, { input });
       return stdout.trim();
     } catch (e) {
       throw new Error(`Git error (${args.join(" ")}): ${e.stderr || e.message}`);
@@ -51,7 +50,7 @@ export default class GitTools {
   }
 
   /**
-   * Applies a patch file to the repository.
+   * Applies a patch directly via stdin to avoid temporary file management.
    * @param {string|{patch: string}} p - Patch content or object containing the patch string.
    * @returns {Promise<string>} The result of the apply command.
    * @throws {Error} If the patch content is missing or the application fails.
@@ -60,17 +59,10 @@ export default class GitTools {
     const patch = typeof p === 'object' ? p.patch : p;
     if (!patch) throw new Error("Patch content is required.");
 
-    const tempFileName = `git_patch_${Date.now()}.patch`;
-    const tempFilePath = path.join(process.cwd(), tempFileName);
-
     try {
-      await fs.writeFile(tempFilePath, patch, "utf8");
-      await fs.access(tempFilePath);
-      return this.#run(["apply", tempFilePath]);
+      return await this.#run(["apply", "--whitespace=nowarn", "-"], patch);
     } catch (e) {
       throw new Error(`Patch application failed: ${e.message}`);
-    } finally {
-      await fs.unlink(tempFilePath).catch(() => {});
     }
   }
 

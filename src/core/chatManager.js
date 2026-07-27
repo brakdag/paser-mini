@@ -107,11 +107,12 @@ class ChatManager {
 
   /**
    * Switches the current AI provider, model, and temperature dynamically.
-   * @param {string} providerId - The target provider ID.
-   * @param {string} modelName - The target model name.
-   * @param {number} temp - The target temperature.
+   * @param {object} params - The switch parameters object.
+   * @param {string} params.providerId - The target provider ID.
+   * @param {string} params.modelName - The target model name.
+   * @param {number} params.temp - The target temperature.
    */
-  async switchProvider(providerId, modelName, temp) {
+  async switchProvider({ providerId, modelName, temp }) {
     this.assistant = await this.providerManager.createAdapter({
       providerId,
       ui: this.ui,
@@ -194,7 +195,7 @@ class ChatManager {
    */
   saveConfig(key, value) {
     if (this.instanceMode) {
-      this.configManager.config[key] = value;
+      this.configManager.setTemporary(key, value);
       return;
     }
     this.configManager.save(key, value);

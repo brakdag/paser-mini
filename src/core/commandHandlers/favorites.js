@@ -70,7 +70,7 @@ class FavoriteCommands {
         );
 
         if (providerName !== currentProvider) {
-          await chatManager.switchProvider(providerName, fav.model, fav.temp);
+          await chatManager.switchProvider({ providerId: providerName, modelName: fav.model, temp: fav.temp });
           chatManager.configManager.save("provider", providerName);
         }
 

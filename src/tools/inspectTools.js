@@ -71,6 +71,10 @@ export default class InspectTools {
     let p = path;
     let c = command;
 
+    if (!p && !c) {
+      throw new Error("Either 'path' to start or 'command' to interact must be provided.");
+    }
+
     // If session active, treat first arg as command if no command given,
     // or ignore path if both are provided (session already running)
     if (this.#inspectProcess) {

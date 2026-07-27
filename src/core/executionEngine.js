@@ -52,6 +52,24 @@ class ExecutionEngine {
   }
 
   /**
+   * Validates if a tool call can proceed based on security and configuration.
+   * @param {string} toolName - The name of the tool.
+   * @returns {string|null} An error message if invalid, otherwise null.
+   */
+  _validateToolExecution(toolName) {
+    if (this.strictPureMode) {
+      return "Pure Mode active. Tool execution is strictly disabled.";
+    }
+    if (toolName === "execute" && !this.ui.bashEnabled) {
+      return "Bash access is disabled for security. Please ask the user to run /execute to activate it.";
+    }
+    if (!(toolName in this.tools)) {
+      return `Unknown tool: ${toolName}`;
+    }
+    return null;
+  }
+
+  /**
    * Executes a specific tool call after performing security and validity checks.
    * @param {string} name - The name of the tool to be executed.
    * @param {object} args - The arguments passed to the tool.
@@ -66,14 +84,11 @@ class ExecutionEngine {
     let monitoringStarted = false;
 
     try {
-      if (this.strictPureMode) {
-        result = "Pure Mode active. Tool execution is strictly disabled.";
+      const validationError = this._validateToolExecution(toolName);
+      if (validationError) {
+        result = validationError;
       } else if (!this.toolTracker.recordAttempt(toolName, args)) {
         result = `Tool loop detected: ${toolName} called too many times.`;
-      } else if (toolName === "execute" && !this.ui.bashEnabled) {
-        result = "Bash access is disabled for security. Please ask the user to run /execute to activate it.";
-      } else if (!(toolName in this.tools)) {
-        result = `Unknown tool: ${toolName}`;
       } else {
         detail = this._getToolDetail(toolName, args);
 
