@@ -98,7 +98,7 @@ export default class WebTools {
    * @throws {Error} If the fetch fails or is blocked.
    */
   async #fetchDuckDuckGoPage(encodedQuery) {
-    const url = `https://lite.duckduckgo.com/lite/?q=${encodedQuery}`;
+    const url = `https://lite.duckduckgo.com/lite/?q=${encodedQuery}&kl=us-en`;
     const { stdout } = await this.#execFilePromise(
       "elinks",
       ["-dump", "-no-numbering", "-no-references", "-force-html", url],

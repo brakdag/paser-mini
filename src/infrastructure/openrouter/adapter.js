@@ -23,6 +23,7 @@ class OpenRouterAdapter extends BaseAdapter {
     super({ ui, configManager, userNickname, agentNickname });
     this.apiKey = process.env.OPENROUTER_API_KEY;
     this.history = [];
+    this.lastPayload = null;
     this.currentModel = "openai/gpt-3.5-turbo";
     this.systemInstruction = null;
     this.temperature = 0.7;
@@ -86,6 +87,7 @@ class OpenRouterAdapter extends BaseAdapter {
     const historyLengthBefore = this.history.length;
 
     const payload = this._preparePayload();
+    this.lastPayload = payload;
 
     await this._applyRateLimit();
 
