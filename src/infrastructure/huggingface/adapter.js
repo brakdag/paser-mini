@@ -139,6 +139,7 @@ class HuggingFaceAdapter extends BaseAdapter {
         content: this.formatTextForPayload(msgRole, content, timestamp)
       })),
       temperature: this.temperature,
+      max_tokens: this.getMaxOutputTokens(),
     };
   }
 

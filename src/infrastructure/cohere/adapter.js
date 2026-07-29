@@ -160,6 +160,7 @@ class CohereAdapter extends BaseAdapter {
       model: this.currentModel,
       messages: finalMessages,
       temperature: this.temperature,
+      max_tokens: this.getMaxOutputTokens(),
       stream: false,
     };
   }

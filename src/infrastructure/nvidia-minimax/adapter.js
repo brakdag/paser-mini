@@ -320,6 +320,14 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
   }
 
   /**
+   * Retrieves the specific token output limit required for the M3 model.
+   * @returns {number} The maximum output tokens.
+   */
+  getMaxOutputTokens() {
+    return 8192; // M3 requires an explicit limit to avoid truncated responses
+  }
+
+  /**
    * Retrieves the specific character-to-token heuristic for the M3 model.
    * @returns {number} The characters per token.
    */

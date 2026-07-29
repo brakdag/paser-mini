@@ -261,6 +261,14 @@ class OpenRouterAdapter extends BaseAdapter {
   }
 
   /**
+   * Retrieves the specific token output limit configured for OpenRouter.
+   * @returns {number} The maximum output tokens.
+   */
+  getMaxOutputTokens() {
+    return parseInt(this.configManager.get("max_tokens", 4096), 10);
+  }
+
+  /**
    * Retrieves the current chat history.
    * @returns {Array} The history array.
    */

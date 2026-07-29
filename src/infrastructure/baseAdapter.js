@@ -140,6 +140,15 @@ export default class BaseAdapter {
   }
 
   /**
+   * Retrieves the reserved token space for the model's output (max_tokens).
+   * Subclasses can override this to enforce their specific limits.
+   * @returns {number} The number of tokens to reserve for the response.
+   */
+  getMaxOutputTokens() {
+    return parseInt(this.configManager.get("max_tokens", 4096), 10);
+  }
+
+  /**
    * The Guardian of Context. Trims the conversation history to fit within the configured token limit.
    * Preserves the initial system instruction and purges the oldest messages (FIFO) implacably.
    * @private
@@ -151,8 +160,12 @@ export default class BaseAdapter {
     const history = this.getHistory();
     if (!history || history.length === 0) return;
 
+    // Architectural Correction: Reserve space for output tokens + 500 safety margin to prevent API overflow
+    const outputBufferTokens = this.getMaxOutputTokens() + 500;
+    const effectiveLimit = Math.max(0, limit - outputBufferTokens);
+
     const charsPerToken = this.getCharsPerToken();
-    const maxChars = limit * charsPerToken;
+    const maxChars = effectiveLimit * charsPerToken;
     let systemChars = 0;
     
     // Calculate system instruction chars only if it's not already in history (OpenAI style)
@@ -210,8 +223,12 @@ export default class BaseAdapter {
     if (!limit || limit <= 0) return messages; // 0 means disabled
     if (!messages || messages.length === 0) return messages;
 
+    // Architectural Correction: Reserve space for output tokens + 500 safety margin to prevent API overflow
+    const outputBufferTokens = this.getMaxOutputTokens() + 500;
+    const effectiveLimit = Math.max(0, limit - outputBufferTokens);
+
     const charsPerToken = this.getCharsPerToken();
-    const maxChars = limit * charsPerToken;
+    const maxChars = effectiveLimit * charsPerToken;
     
     // Calculate total characters based on the formatted 'content' field
     let totalChars = messages.reduce((acc, msg) => {

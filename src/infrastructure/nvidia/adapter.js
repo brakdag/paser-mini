@@ -108,16 +108,17 @@ class NvidiaAdapter extends BaseAdapter {
       text: this.formatTextForPayload(m.role, typeof m.text === 'string' ? m.text : JSON.stringify(m.text), m.timestamp),
     }));
 
-    const payload = PayloadMapper.toNvidia(
-      processedHistory,
-      this.systemInstruction,
-      this.temperature,
-    );
+    const payload = PayloadMapper.toNvidia({
+      history: processedHistory,
+      systemInstruction: this.systemInstruction,
+      temperature: this.temperature,
+      maxTokens: this.getMaxOutputTokens(),
+    });
     
     // THE ABSOLUTE WALL: Hard-trim the final payload to prevent API bans
     payload.messages = this._enforcePayloadLimit(payload.messages);
     
-    return { ...payload, model: this.currentModel };
+    return { ...payload, model: this.currentModel, max_tokens: this.getMaxOutputTokens() };
   }
 
   /**

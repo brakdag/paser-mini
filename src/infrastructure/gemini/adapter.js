@@ -101,6 +101,7 @@ class GeminiAdapter extends BaseAdapter {
         temperature: this.temperature,
         top_p: 0.95,
         top_k: 64,
+        maxOutputTokens: this.getMaxOutputTokens(),
       },
     };
 

@@ -291,6 +291,14 @@ class ZaiAdapter extends BaseAdapter {
   }
 
   /**
+   * Retrieves the specific token output limit configured for ZAI.
+   * @returns {number} The maximum output tokens.
+   */
+  getMaxOutputTokens() {
+    return MAX_TOKENS;
+  }
+
+  /**
    * Retrieves the current chat history.
    * @returns {Array} The history array.
    */
