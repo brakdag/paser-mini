@@ -64,6 +64,11 @@ class ProviderManager {
       defaultModel: "openai/gpt-4.1",
       path: "./github/adapter.js",
     },
+    POOLSIDE: {
+      name: "Poolside",
+      defaultModel: "poolside/laguna-s-2.1",
+      path: "./poolside/adapter.js",
+    },
   };
 
   /**

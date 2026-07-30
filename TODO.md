@@ -10,3 +10,4 @@
   [x] Check if the code in src is aligned with docs/cleanCode.md
   [x] Check if the code in src is aligned with docs/maintainable_software_principles.md
   [x] Eslint in src.
+- [x] Agregar adaptador para poolside.ai (POOLSIDE_API_KEY)
