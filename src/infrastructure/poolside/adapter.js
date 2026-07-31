@@ -5,7 +5,7 @@ import IRCFormatter from "../../utils/ircFormatter.js";
 import RetryHandler from "../../utils/retryHandler.js";
 import { normalizeRole, normalizeContent } from "../historyNormalizer.js";
 
-const BASE_URL = "https://api.poolside.ai/v1";
+const BASE_URL = "https://inference.poolside.ai/v1";
 const DEFAULT_MODEL = "poolside/laguna-s-2.1";
 const DEFAULT_TEMPERATURE = 0.7;
 
