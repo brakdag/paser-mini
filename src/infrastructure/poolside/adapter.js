@@ -8,6 +8,9 @@ import { normalizeRole, normalizeContent } from "../historyNormalizer.js";
 const BASE_URL = "https://inference.poolside.ai/v1";
 const DEFAULT_MODEL = "poolside/laguna-s-2.1";
 const DEFAULT_TEMPERATURE = 0.7;
+const REQUEST_TIMEOUT_MS = 10 * 60 * 1000;
+const MAX_RETRY_ATTEMPTS = 15;
+const FALLBACK_MODELS = ["poolside/laguna-s-2.1", "poolside/laguna-xs-2.1"];
 
 /**
  * Adapter for the Poolside AI API, providing chat capabilities and history management.
@@ -36,13 +39,12 @@ class PoolsideAdapter extends BaseAdapter {
   }
 
   /**
-   * Configures the axios client with base URL, timeout, and headers required by Poolside.
    * @private
    */
   _configureClient() {
     this.client = axios.create({
       baseURL: BASE_URL,
-      timeout: 600000,
+      timeout: REQUEST_TIMEOUT_MS,
       headers: {
         "Authorization": `Bearer ${this.apiKey}`,
         "Content-Type": "application/json",
@@ -60,18 +62,7 @@ class PoolsideAdapter extends BaseAdapter {
     this.currentModel = modelName || this.currentModel;
     this.systemInstruction = systemInstruction;
     this.temperature = temperature;
-
-    if (!this.systemInstruction) return;
-
-    if (this.history.length > 0 && this.history[0].role === "system") {
-      this.history[0].content = this.systemInstruction;
-    } else {
-      this.history.unshift({
-        role: "system",
-        content: this.systemInstruction,
-        timestamp: IRCFormatter.getTimestamp(),
-      });
-    }
+    this._updateSystemInstruction();
   }
 
   /**
@@ -87,94 +78,12 @@ class PoolsideAdapter extends BaseAdapter {
     this._enforceContextLimit();
     const historyLengthBefore = this.history.length;
 
-    const payload = this._preparePayload();
-
-    await this._applyRateLimit();
-
     try {
-      return await this.retryHandler.execute(async () => {
-        try {
-          logger.info(`[PoolsideAdapter] Requesting: ${this.client.defaults.baseURL}/chat/completions`);
-          logger.debug(`[PoolsideAdapter] Payload: ${JSON.stringify(payload)}`);
-
-          const response = await this.client.post("/chat/completions", payload);
-          return this._handleResponse(response);
-        } catch (error) {
-          throw this._handleApiError(error);
-        }
-      }, {
-        recoverableErrors: this.recoverableErrors,
-        /**
-         * Callback executed when a retry is attempted.
-         * @param {number} attempt - The current attempt number.
-         * @param {Error} error - The error that triggered the retry.
-         * @param {string} formattedDelay - The formatted delay string.
-         * @returns {void}
-         */
-        onRetry: (attempt, error, formattedDelay) => {
-          logger.warn(`[PoolsideAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`);
-          if (this.ui && this.ui.displayInfo) {
-            this.ui.displayInfo(`Retrying Poolside in ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`);
-          }
-        }
-      });
+      return await this._dispatchMessage();
     } catch (error) {
-      if (this.history.length === historyLengthBefore) {
-        this.popLastMessage();
-      }
+      this._rollbackOnFailure(historyLengthBefore);
       throw error;
     }
-  }
-
-  /**
-   * Prepares the payload for the Poolside /chat/completions endpoint.
-   * @private
-   * @returns {object} The formatted payload.
-   */
-  _preparePayload() {
-    return {
-      model: this.currentModel,
-      messages: this.history.map(({ role: msgRole, content, timestamp }) => ({
-        role: msgRole,
-        content: this.formatTextForPayload(msgRole, content, timestamp)
-      })),
-      temperature: this.temperature,
-      max_tokens: this.getMaxOutputTokens(),
-    };
-  }
-
-  /**
-   * Processes the API response and injects the assistant's message into history.
-   * @param {object} response - The axios response object.
-   * @private
-   * @returns {string} The extracted text content.
-   * @throws {Error} If the response text is empty.
-   */
-  _handleResponse(response) {
-    const textContent = response.data.choices[0].message.content;
-
-    if (textContent) {
-      const msgTimestamp = IRCFormatter.getTimestamp();
-      this.injectMessage("assistant", textContent, msgTimestamp);
-      return textContent;
-    }
-
-    throw new Error("Empty response from Poolside");
-  }
-
-  /**
-   * Formats an API error into a standardized Error object.
-   * @param {Error} error - The caught error object.
-   * @private
-   * @returns {Error} A formatted Error object with name "APIError".
-   */
-  _handleApiError(error) {
-    const errorMsg = error.response?.data?.error?.message || error.message;
-    const apiError = new Error(errorMsg);
-    apiError.name = "APIError";
-    apiError.response = error.response;
-    apiError.code = error.code;
-    return apiError;
   }
 
   /**
@@ -233,7 +142,10 @@ class PoolsideAdapter extends BaseAdapter {
       return response.data.data.map((m) => m.id).sort();
     } catch (error) {
       logger.error(`[PoolsideAdapter] Error fetching models: ${error.message}`);
-      return ["poolside/laguna-s-2.1", "poolside/laguna-xs-2.1"];
+      if (this.ui && this.ui.displayInfo) {
+        this.ui.displayInfo(`Could not fetch Poolside models (${error.message}). Using fallback list.`);
+      }
+      return [...FALLBACK_MODELS];
     }
   }
 
@@ -253,11 +165,143 @@ class PoolsideAdapter extends BaseAdapter {
     } catch (error) {
       const status = error.response?.status;
       if (status === 404 || status === 400) return false;
-      logger.warn(
-        `[PoolsideAdapter] Availability check failed for ${modelName}: ${error.message}`,
-      );
       throw error;
     }
+  }
+
+  /**
+   * Replaces or inserts the system instruction at the head of the history.
+   * @private
+   * @returns {void}
+   */
+  _updateSystemInstruction() {
+    if (!this.systemInstruction) return;
+
+    const hasSystemAtStart = this.history[0]?.role === "system";
+    if (hasSystemAtStart) {
+      this.history[0].content = this.systemInstruction;
+      return;
+    }
+
+    this.history.unshift({
+      role: "system",
+      content: this.systemInstruction,
+      timestamp: IRCFormatter.getTimestamp(),
+    });
+  }
+
+  /**
+   * Applies rate limiting, prepares the payload, and dispatches the request with retry semantics.
+   * @private
+   * @returns {Promise<string>} The assistant's text response.
+   */
+  async _dispatchMessage() {
+    await this._applyRateLimit();
+    const payload = this._preparePayload();
+
+    return this.retryHandler.execute(
+      () => this._executeRequest(payload),
+      {
+        recoverableErrors: this.recoverableErrors,
+        onRetry: this._logRetry.bind(this),
+      },
+    );
+  }
+
+  /**
+   * Executes a single HTTP request against the chat completions endpoint.
+   * @private
+   * @param {object} payload - The request payload to send.
+   * @returns {Promise<string>} The assistant's text response.
+   */
+  async _executeRequest(payload) {
+    logger.info(`[PoolsideAdapter] Requesting: ${this.client.defaults.baseURL}/chat/completions`);
+    logger.debug(`[PoolsideAdapter] Payload: ${JSON.stringify(payload)}`);
+
+    try {
+      const response = await this.client.post("/chat/completions", payload);
+      return this._handleResponse(response);
+    } catch (error) {
+      throw this._handleApiError(error);
+    }
+  }
+
+  /**
+   * Logs a retry attempt and surfaces it to the UI when available.
+   * @private
+   * @param {number} attempt - The current attempt number (1-indexed).
+   * @param {Error} error - The error that triggered the retry.
+   * @param {string} formattedDelay - The human-readable delay before the next attempt.
+   * @returns {void}
+   */
+  _logRetry(attempt, error, formattedDelay) {
+    logger.warn(`[PoolsideAdapter] Retrying in ${formattedDelay}... (${attempt}/${MAX_RETRY_ATTEMPTS}) due to: ${error.message}`);
+    if (this.ui && this.ui.displayInfo) {
+      this.ui.displayInfo(`Retrying Poolside in ${formattedDelay}... (${attempt}/${MAX_RETRY_ATTEMPTS}) | Error: ${error.message}`);
+    }
+  }
+
+  /**
+   * Rolls back the most recently injected message when the request fails before any history mutation.
+   * @private
+   * @param {number} historyLengthBefore - The history length captured before the request was dispatched.
+   * @returns {void}
+   */
+  _rollbackOnFailure(historyLengthBefore) {
+    if (this.history.length === historyLengthBefore) {
+      this.popLastMessage();
+    }
+  }
+
+  /**
+   * Builds the payload for the /chat/completions endpoint from the current history.
+   * @private
+   * @returns {object} The formatted payload ready for transmission.
+   */
+  _preparePayload() {
+    return {
+      model: this.currentModel,
+      messages: this.history.map(({ role: msgRole, content, timestamp }) => ({
+        role: msgRole,
+        content: this.formatTextForPayload(msgRole, content, timestamp),
+      })),
+      temperature: this.temperature,
+      max_tokens: this.getMaxOutputTokens(),
+    };
+  }
+
+  /**
+   * Extracts the assistant text from the API response and injects it into history.
+   * @private
+   * @param {object} response - The axios response object.
+   * @returns {string} The extracted text content.
+   * @throws {Error} If the response text is empty.
+   */
+  _handleResponse(response) {
+    const textContent = response.data.choices[0].message.content;
+
+    if (textContent) {
+      const msgTimestamp = IRCFormatter.getTimestamp();
+      this.injectMessage("assistant", textContent, msgTimestamp);
+      return textContent;
+    }
+
+    throw new Error("Empty response from Poolside");
+  }
+
+  /**
+   * Normalizes an API error into a standardized Error object with the APIError name.
+   * @private
+   * @param {Error} error - The caught error object.
+   * @returns {Error} A formatted Error object with name "APIError".
+   */
+  _handleApiError(error) {
+    const errorMsg = error.response?.data?.error?.message || error.message;
+    const apiError = new Error(errorMsg);
+    apiError.name = "APIError";
+    apiError.response = error.response;
+    apiError.code = error.code;
+    return apiError;
   }
 }
 
