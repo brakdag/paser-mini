@@ -20,8 +20,20 @@ class ModelCommands {
     }
 
     try {
-      const idx = parseInt(parts[1], 10);
-      const modelName = models[idx];
+      const arg = parts[1].replace(/^["']|["']$/g, "");
+      let modelName;
+
+      const idx = Number.parseInt(arg, 10);
+      if (!Number.isNaN(idx) && models[idx] !== undefined) {
+        modelName = models[idx];
+      } else {
+        modelName = models.find((m) => m.toLowerCase() === arg.toLowerCase());
+      }
+
+      if (!modelName) {
+        throw new Error("Invalid model identifier.");
+      }
+
       const newTemp = parts[2] ? parseFloat(parts[2]) : chatManager.temperature;
 
       chatManager.configManager.save("model_name", modelName);
@@ -34,8 +46,8 @@ class ModelCommands {
       );
 
       ui.displayInfo(`Model changed to ${modelName} | Temperature: ${newTemp}`);
-    } catch {
-      ui.displayError("Invalid model index or temperature.");
+    } catch (error) {
+      ui.displayError(error.message || "Invalid model index or temperature.");
     }
     return true;
   }
