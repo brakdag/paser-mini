@@ -23,7 +23,12 @@ class GeminiAdapter extends BaseAdapter {
    * @param {string} [params.userNickname] - The nickname of the user.
    * @param {string} [params.agentNickname] - The nickname of the agent.
    */
-  constructor({ ui, configManager, userNickname = "user", agentNickname = "assistant" }) {
+  constructor({
+    ui,
+    configManager,
+    userNickname = "user",
+    agentNickname = "assistant",
+  }) {
     super({ ui, configManager, userNickname, agentNickname });
     this.apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     this.history = [];
@@ -198,35 +203,42 @@ class GeminiAdapter extends BaseAdapter {
      * @returns {Promise<string>} The processed response text.
      */
     try {
-      return await this.retryHandler.execute(async () => {
-        try {
-          const payload = this._buildPayload();
-          this.lastPayload = payload;
+      return await this.retryHandler.execute(
+        async () => {
+          try {
+            const payload = this._buildPayload();
+            this.lastPayload = payload;
 
-          const modelName = this.currentModel.replace(/^models\//, "");
-          const url = `${BASE_URL}/models/${modelName}:generateContent?key=${this.apiKey}`;
+            const modelName = this.currentModel.replace(/^models\//, "");
+            const url = `${BASE_URL}/models/${modelName}:generateContent?key=${this.apiKey}`;
 
-          const response = await this.client.post(url, payload);
-          return this._processApiResponse(response.data);
-        } catch (error) {
-          throw this._wrapApiError(error);
-        }
-      }, {
-        recoverableErrors: this.recoverableErrors,
-        /**
-         * Callback executed when a retry is attempted.
-         * @param {number} attempt - The current attempt number.
-         * @param {Error} error - The error that triggered the retry.
-         * @param {string} formattedDelay - The formatted delay string.
-         * @returns {void}
-         */
-        onRetry: (attempt, error, formattedDelay) => {
-          logger.warn(`[GeminiAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`);
-          if (this.ui && this.ui.displayInfo) {
-            this.ui.displayInfo(`Retrying Gemini in ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`);
+            const response = await this.client.post(url, payload);
+            return this._processApiResponse(response.data);
+          } catch (error) {
+            throw this._wrapApiError(error);
           }
-        }
-      });
+        },
+        {
+          recoverableErrors: this.recoverableErrors,
+          /**
+           * Callback executed when a retry is attempted.
+           * @param {number} attempt - The current attempt number.
+           * @param {Error} error - The error that triggered the retry.
+           * @param {string} formattedDelay - The formatted delay string.
+           * @returns {void}
+           */
+          onRetry: (attempt, error, formattedDelay) => {
+            logger.warn(
+              `[GeminiAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`,
+            );
+            if (this.ui && this.ui.displayInfo) {
+              this.ui.displayInfo(
+                `Retrying Gemini in ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`,
+              );
+            }
+          },
+        },
+      );
     } catch (error) {
       if (this.history.length === historyLengthBefore) {
         this.popLastMessage();
@@ -355,7 +367,7 @@ class GeminiAdapter extends BaseAdapter {
       return data.models.map((m) => m.name);
     } catch (error) {
       logger.error(`Error fetching models: ${error.message}`);
-      return ["models/gemini-2.0-flash", "models/gemini-1.5-flash"];
+      return ["models/gemini-flash-lite-latest", "models/gemini-flash-latest"];
     }
   }
 
