@@ -11,12 +11,12 @@ class ProviderManager {
   static PROVIDERS = {
     GEMINI: {
       name: "Gemini",
-      defaultModel: "gemini-2.0-flash",
+      defaultModel: "gemini-flash-lite-latest",
       path: "./gemini/adapter.js",
     },
     NVIDIA: {
       name: "NVIDIA",
-      defaultModel: "meta/llama-3.1-405b-instruct",
+      defaultModel: "z-ai/glm-5.2",
       path: "./nvidia/adapter.js",
     },
     NVIDIA_MINIMAX: {
@@ -31,7 +31,7 @@ class ProviderManager {
     },
     OPENROUTER: {
       name: "OpenRouter",
-      defaultModel: "openai/gpt-4o",
+      defaultModel: "inclusionai/ling-3.0-flash:free",
       path: "./openrouter/adapter.js",
     },
     GROQ: {
@@ -100,7 +100,13 @@ class ProviderManager {
    * @returns {Promise<object>} The instantiated adapter instance.
    * @throws {Error} If the providerId is not supported.
    */
-  async createAdapter({ providerId, ui, configManager, userNickname, agentNickname }) {
+  async createAdapter({
+    providerId,
+    ui,
+    configManager,
+    userNickname,
+    agentNickname,
+  }) {
     const provider = this.providers[providerId];
     if (!provider) {
       throw new Error(`Unsupported provider: ${providerId}`);
@@ -119,3 +125,4 @@ class ProviderManager {
 }
 
 export default ProviderManager;
+
