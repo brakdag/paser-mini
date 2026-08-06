@@ -19,7 +19,12 @@ class OpenRouterAdapter extends BaseAdapter {
    * @param {string} [params.userNickname] - The user's nickname.
    * @param {string} [params.agentNickname] - The agent's nickname.
    */
-  constructor({ ui, configManager, userNickname = "user", agentNickname = "assistant" }) {
+  constructor({
+    ui,
+    configManager,
+    userNickname = "user",
+    agentNickname = "assistant",
+  }) {
     super({ ui, configManager, userNickname, agentNickname });
     this.apiKey = process.env.OPENROUTER_API_KEY;
     this.history = [];
@@ -42,7 +47,7 @@ class OpenRouterAdapter extends BaseAdapter {
       baseURL: BASE_URL,
       timeout: 600000,
       headers: {
-        "Authorization": `Bearer ${this.apiKey}`,
+        Authorization: `Bearer ${this.apiKey}`,
         "HTTP-Referer": "https://paser-mini.local",
         "X-Title": "Paser Mini",
         "Content-Type": "application/json",
@@ -96,30 +101,44 @@ class OpenRouterAdapter extends BaseAdapter {
      * @returns {Promise<string>} The response text.
      */
     try {
-      return await this.retryHandler.execute(async () => {
-        try {
-          logger.info(`[OpenRouterAdapter] Requesting: ${this.client.defaults.baseURL}/chat/completions`);
-          logger.info(`[OpenRouterAdapter] Payload: ${JSON.stringify(payload)}`);
+      return await this.retryHandler.execute(
+        async () => {
+          try {
+            logger.info(
+              `[OpenRouterAdapter] Requesting: ${this.client.defaults.baseURL}/chat/completions`,
+            );
+            logger.info(
+              `[OpenRouterAdapter] Payload: ${JSON.stringify(payload)}`,
+            );
 
-          const response = await this.client.post("/chat/completions", payload);
-          return this._handleResponse(response);
-        } catch (error) {
-          throw this._handleApiError(error);
-        }
-      }, {
-        recoverableErrors: this.recoverableErrors,
-        /**
-         * @param {number} attempt - The current attempt number.
-         * @param {Error} error - The error that triggered the retry.
-         * @param {string} formattedDelay - The formatted delay string.
-         */
-        onRetry: (attempt, error, formattedDelay) => {
-          logger.warn(`[OpenRouterAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`);
-          if (this.ui && this.ui.displayInfo) {
-            this.ui.displayInfo(`Retrying OpenRouter in ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`);
+            const response = await this.client.post(
+              "/chat/completions",
+              payload,
+            );
+            return this._handleResponse(response);
+          } catch (error) {
+            throw this._handleApiError(error);
           }
-        }
-      });
+        },
+        {
+          recoverableErrors: this.recoverableErrors,
+          /**
+           * @param {number} attempt - The current attempt number.
+           * @param {Error} error - The error that triggered the retry.
+           * @param {string} formattedDelay - The formatted delay string.
+           */
+          onRetry: (attempt, error, formattedDelay) => {
+            logger.warn(
+              `[OpenRouterAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`,
+            );
+            if (this.ui && this.ui.displayInfo) {
+              this.ui.displayInfo(
+                `Retrying OpenRouter in ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`,
+              );
+            }
+          },
+        },
+      );
     } catch (error) {
       if (this.history.length === historyLengthBefore) {
         this.popLastMessage();
@@ -135,34 +154,52 @@ class OpenRouterAdapter extends BaseAdapter {
    */
   _preparePayload() {
     // Surgical Extraction: Isolate system messages to enforce strict API structural rules
-    const systemMessages = this.history.filter(m => m.role === 'system' || m.role === 'server');
-    const conversationMessages = this.history.filter(m => m.role !== 'system' && m.role !== 'server');
+    const systemMessages = this.history.filter(
+      (m) => m.role === "system" || m.role === "server",
+    );
+    const conversationMessages = this.history.filter(
+      (m) => m.role !== "system" && m.role !== "server",
+    );
 
-    const formattedSystem = systemMessages.map(m => {
-      const content = this.formatTextForPayload(m.role, m.content, m.timestamp);
-      return typeof content === 'string' ? content.trim() : '';
-    }).filter(Boolean).join('\n\n');
+    const formattedSystem = systemMessages
+      .map((m) => {
+        const content = this.formatTextForPayload(
+          m.role,
+          m.content,
+          m.timestamp,
+        );
+        return typeof content === "string" ? content.trim() : "";
+      })
+      .filter(Boolean)
+      .join("\n\n");
 
     const payloadMessages = [];
 
     if (formattedSystem) {
-      payloadMessages.push({ 
-        role: 'system', 
-        content: formattedSystem 
+      payloadMessages.push({
+        role: "system",
+        content: formattedSystem,
       });
     }
 
     conversationMessages.forEach(({ role: msgRole, content, timestamp }) => {
-      let formattedContent = this.formatTextForPayload(msgRole, content, timestamp);
-      
+      let formattedContent = this.formatTextForPayload(
+        msgRole,
+        content,
+        timestamp,
+      );
+
       // Adaptation: OpenRouter providers throw opaque 500 errors if content is strictly empty
-      if (typeof formattedContent === 'string' && formattedContent.trim() === '') {
-        formattedContent = ' '; // Inject space to prevent provider crash
+      if (
+        typeof formattedContent === "string" &&
+        formattedContent.trim() === ""
+      ) {
+        formattedContent = " "; // Inject space to prevent provider crash
       }
-      
-      payloadMessages.push({ 
-        role: msgRole, 
-        content: formattedContent 
+
+      payloadMessages.push({
+        role: msgRole,
+        content: formattedContent,
       });
     });
 
@@ -170,6 +207,7 @@ class OpenRouterAdapter extends BaseAdapter {
       model: this.currentModel,
       messages: payloadMessages,
       temperature: this.temperature,
+      reasoning: { effort: "max" },
       max_tokens: parseInt(this.configManager.get("max_tokens", 4096), 10),
     };
   }
@@ -202,17 +240,22 @@ class OpenRouterAdapter extends BaseAdapter {
   _handleApiError(error) {
     // OpenRouter wraps provider errors deep within its response structure.
     const errorData = error.response?.data?.error;
-    const providerName = errorData?.metadata?.provider_name || 'Unknown Provider';
-    
+    const providerName =
+      errorData?.metadata?.provider_name || "Unknown Provider";
+
     // Absolute Extraction: Combine HTTP Status Code and Raw Provider Error for maximum clarity
     const rawProviderError = errorData?.metadata?.raw || errorData?.message;
-    const httpStatus = error.response?.status || errorData?.code || 'Unknown';
+    const httpStatus = error.response?.status || errorData?.code || "Unknown";
     const errorMsg = `[HTTP ${httpStatus}] ${rawProviderError || error.message}`;
-    
+
     // Reveal the exact cause of the provider's rejection in the logs
-    logger.error(`[OpenRouterAdapter] RAW API ERROR DETECTED: ${JSON.stringify(error.response?.data)}`);
+    logger.error(
+      `[OpenRouterAdapter] RAW API ERROR DETECTED: ${JSON.stringify(error.response?.data)}`,
+    );
     if (rawProviderError) {
-      logger.error(`[OpenRouterAdapter] PROVIDER '${providerName}' RAW REJECTION: ${rawProviderError}`);
+      logger.error(
+        `[OpenRouterAdapter] PROVIDER '${providerName}' RAW REJECTION: ${rawProviderError}`,
+      );
     }
 
     const apiError = new Error(errorMsg);
@@ -229,7 +272,11 @@ class OpenRouterAdapter extends BaseAdapter {
    * @param {string|null} [timestamp] - The timestamp of the message.
    */
   injectMessage(role, content, timestamp = null) {
-    const apiRole = normalizeRole(role, this.user.nickname, this.model.nickname);
+    const apiRole = normalizeRole(
+      role,
+      this.user.nickname,
+      this.model.nickname,
+    );
     const finalContent = normalizeContent(content, apiRole);
 
     this.history.push({
@@ -287,7 +334,9 @@ class OpenRouterAdapter extends BaseAdapter {
         .filter((m) => m.id.includes(":free"))
         .map((m) => m.id);
     } catch (error) {
-      logger.error(`[OpenRouterAdapter] Error fetching models: ${error.message}`);
+      logger.error(
+        `[OpenRouterAdapter] Error fetching models: ${error.message}`,
+      );
       return ["openai/gpt-3.5-turbo", "anthropic/claude-3-opus"];
     }
   }
