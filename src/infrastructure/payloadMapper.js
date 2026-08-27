@@ -12,7 +12,12 @@ class PayloadMapper {
    * @param {number} config.maxOutputTokens - The maximum tokens to generate.
    * @returns {object} The Gemini-formatted payload.
    */
-  static toGemini({ history, systemInstruction, temperature, maxOutputTokens }) {
+  static toGemini({
+    history,
+    systemInstruction,
+    temperature,
+    maxOutputTokens,
+  }) {
     const contents = history.map((m) => ({
       role: m.role === "model" ? "model" : "user",
       parts: [{ text: m.text }],
@@ -63,8 +68,12 @@ class PayloadMapper {
       messages,
       temperature,
       max_tokens: maxTokens,
+      top_p: 0.95,
+      chat_template_kwargs: { thinking: true, reasoning_effort: "high" },
+      stream: false,
     };
   }
 }
 
 export default PayloadMapper;
+
