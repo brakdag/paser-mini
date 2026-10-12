@@ -40,7 +40,7 @@ class SystemPromptManager {
         } catch {
           return 0;
         }
-      })
+      }),
     );
   }
 
@@ -79,38 +79,45 @@ class SystemPromptManager {
     // -----------------------
 
     const defaultPath = ".paser-mini/staff/default.log";
-    const injectionFile = options.fileSystemInstruction || (await this._exists(defaultPath) ? defaultPath : null);
+    const injectionFile =
+      options.fileSystemInstruction ||
+      ((await this._exists(defaultPath)) ? defaultPath : null);
 
     const dependencies = [
       "src/infrastructure/registry_positional.json",
       "src/infrastructure/system_instruction.json",
       path.join(".paser-mini", "config", "mcp.json"),
-      ...(injectionFile ? [injectionFile] : [])
+      ...(injectionFile ? [injectionFile] : []),
     ];
 
     const currentMtimes = await this._getMtimes(dependencies);
 
-
     if (!this._forceRebuild) {
       try {
         const cacheData = JSON.parse(await fsp.readFile(CACHE_FILE, "utf8"));
-        const isCacheValid = dependencies.every((_, i) => cacheData.mtimes[i] === currentMtimes[i]);
-        
-        const optionsMatch = cacheData.options.injectSystemInstruction === options.injectSystemInstruction && 
-                             cacheData.options.systemInstruction === options.systemInstruction;
+        const isCacheValid = dependencies.every(
+          (_, i) => cacheData.mtimes[i] === currentMtimes[i],
+        );
+
+        const optionsMatch =
+          cacheData.options.injectSystemInstruction ===
+            options.injectSystemInstruction &&
+          cacheData.options.systemInstruction === options.systemInstruction;
 
         if (isCacheValid && optionsMatch) {
           const filteredTools = Object.fromEntries(
-            Object.entries(AVAILABLE_TOOLS).filter(([name]) =>
-              cacheData.filteredToolNames.includes(name) || name.startsWith("mcp_")
-            )
+            Object.entries(AVAILABLE_TOOLS).filter(
+              ([name]) =>
+                cacheData.filteredToolNames.includes(name) ||
+                name.startsWith("mcp_"),
+            ),
           );
-          
+
           this._pendingCache = null;
 
           return {
             systemInstruction: cacheData.systemInstruction,
-            filteredTools
+            filteredTools,
           };
         }
       } catch (err) {
@@ -131,13 +138,14 @@ class SystemPromptManager {
         try {
           const availableList = JSON.parse(toolsMatch[1]);
           filteredTools = Object.fromEntries(
-            Object.entries(AVAILABLE_TOOLS).filter(([name]) =>
-              availableList.includes(name) || name.startsWith("mcp_")
-            )
+            Object.entries(AVAILABLE_TOOLS).filter(
+              ([name]) =>
+                availableList.includes(name) || name.startsWith("mcp_"),
+            ),
           );
         } catch (e) {
           logger.warn(
-            `Could not parse TOOLS_AVAILABLE array in ${injectionFile}: ${e.message}`
+            `Could not parse TOOLS_AVAILABLE array in ${injectionFile}: ${e.message}`,
           );
         }
       }
@@ -148,7 +156,7 @@ class SystemPromptManager {
       generateSystemInstruction(Object.keys(filteredTools), mcpSchemas);
 
     const finalInstruction = injection
-      ? `PERSON AND ROLE:\n${injection}\n\nCORE OPERATIONAL PROTOCOLS:\n${baseInstr}`
+      ? `PERSON AND ROLE:\n${injection}\n\nCORE OPERATIONAL PROTOCOLS:\n${baseInstr}\n\n DATE:${new Date().toDateString()}`
       : baseInstr;
 
     this._pendingCache = {
@@ -158,14 +166,14 @@ class SystemPromptManager {
         systemInstruction: options.systemInstruction,
       },
       filteredToolNames: Object.keys(filteredTools),
-      systemInstruction: finalInstruction
+      systemInstruction: finalInstruction,
     };
 
     this._forceRebuild = false;
 
     return {
       systemInstruction: finalInstruction,
-      filteredTools
+      filteredTools,
     };
   }
 
@@ -176,7 +184,9 @@ class SystemPromptManager {
   async rebuildCache() {
     this._forceRebuild = true;
     if (!this._options) {
-      throw new Error("Cannot rebuild cache: SystemPromptManager was not initialized with options.");
+      throw new Error(
+        "Cannot rebuild cache: SystemPromptManager was not initialized with options.",
+      );
     }
     return this.buildPrompt(this._options);
   }

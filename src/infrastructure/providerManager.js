@@ -31,7 +31,7 @@ class ProviderManager {
     },
     OPENROUTER: {
       name: "OpenRouter",
-      defaultModel: "inclusionai/ling-3.0-flash:free",
+      defaultModel: "inclusionai/ling-3.1-flash",
       path: "./openrouter/adapter.js",
     },
     GROQ: {
@@ -56,7 +56,7 @@ class ProviderManager {
     },
     ZAI: {
       name: "Z.AI",
-      defaultModel: "glm-5.2",
+      defaultModel: "glm-4.7-flash",
       path: "./zai/adapter.js",
     },
     GITHUB: {
@@ -125,4 +125,3 @@ class ProviderManager {
 }
 
 export default ProviderManager;
-

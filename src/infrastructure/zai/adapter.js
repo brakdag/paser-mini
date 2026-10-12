@@ -52,8 +52,8 @@ class ZaiAdapter extends BaseAdapter {
    * @returns {string} The resolved base URL.
    */
   _resolveBaseUrl() {
-    const STANDARD = "https://api.z.ai/api/coding/paas/v4";
-    const CODING = "https://api.z.ai/api/paas/v4";
+    const CODING = "https://api.z.ai/api/coding/paas/v4";
+    const STANDARD = "https://api.z.ai/api/paas/v4";
 
     if (process.env.ZAI_BASE_URL) return process.env.ZAI_BASE_URL.trim();
 
