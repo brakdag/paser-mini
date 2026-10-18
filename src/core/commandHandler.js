@@ -281,6 +281,18 @@ class CommandHandler {
   }
 
   /**
+   * Interrupts a pending Gemini request before queuing model selection.
+   * @param {string} input - The terminal input.
+   * @returns {boolean} Whether model selection should take priority.
+   */
+  interruptForModelChange(input) {
+    if (!/^\/models(?:\s|$)/i.test(input.trim())) return false;
+    if (this.chatManager.assistant.providerId !== "GEMINI") return false;
+    this.chatManager.turnProcessor.api.cancelPendingRequest();
+    return true;
+  }
+
+  /**
    * Processes the user input to determine if it is a command and executes it.
    * @param {string} userInput - The raw input from the user.
    * @returns {Promise<boolean|void>} True if a command was handled, false if it should be treated as a message.

@@ -1,3 +1,5 @@
+import { setTimeout as delay } from "node:timers/promises";
+
 /**
  * Handles exponential backoff retries with a maximum cap.
  */
@@ -69,16 +71,19 @@ class RetryHandler {
    * @param {object} options - Retry options.
    * @param {Array<string>} [options.recoverableErrors] - Error messages that trigger a retry.
    * @param {(attempt: number, error: Error, formattedDelay: string) => void} [options.onRetry] - Callback executed on each retry.
+   * @param {AbortSignal} [options.signal] - Cancels requests and retry waits.
    * @returns {Promise<string>} The result of the function if successful.
    * @throws {Error} The last error encountered if all retries fail.
    */
-  async execute(fn, { recoverableErrors = [], onRetry = null } = {}) {
+  async execute(fn, { recoverableErrors = [], onRetry = null, signal } = {}) {
     let lastError = null;
 
     for (let attempt = 1; attempt <= this.maxRetries; attempt += 1) {
+      signal?.throwIfAborted();
       try {
         return await fn();
       } catch (error) {
+        signal?.throwIfAborted();
         lastError = error;
         
         const isRecoverable = this._isRecoverable(error, recoverableErrors);
@@ -87,16 +92,14 @@ class RetryHandler {
           throw error;
         }
 
-        const delay = this._getExponentialDelay(attempt);
-        const formattedDelay = this._formatDelay(delay);
+        const delayMs = this._getExponentialDelay(attempt);
+        const formattedDelay = this._formatDelay(delayMs);
         
         if (onRetry) {
           onRetry(attempt, error, formattedDelay);
         }
 
-        await new Promise((resolve) => {
-          setTimeout(resolve, delay);
-        });
+        await delay(delayMs, undefined, { signal });
       }
     }
 

@@ -61,5 +61,13 @@ export GOOGLE_API_KEY="your_google_api_key_here"
 | `--no-system-instruction` | `-nsi` | Run without system instructions |
 | `--github-mode` | | Run in GitHub mode (process issues with #ai-assistance) |
 
+### Switching models during Gemini retries
+
+Use `/models` to interrupt a pending Gemini request or retry wait and list models.
+Select one with `/models <index>`, or switch directly with
+`/models models/<model-name> [temperature]`. Switching by name does not require
+fetching the model list. The pending request is cancelled; send your next message
+after switching. Earlier conversation history remains available.
+
 ## 🜰 Ecosystem Alignment
 For the narrative history of this pod and the character breakdowns of the team, see the [Staff Directory](./docs/staff/).

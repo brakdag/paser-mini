@@ -189,11 +189,14 @@ class GeminiAdapter extends BaseAdapter {
    * Sends a message to the Gemini API and returns the response.
    * @param {string|Array|object} message - The message to send.
    * @param {string} [role] - The role of the sender.
+   * @param {object} [options] - Request options.
+   * @param {AbortSignal} [options.signal] - Cancels the request and retry waits.
    * @returns {Promise<string>} The processed response text.
    * @throws {Error} If the API request fails.
    */
-  async sendMessage(message, role = "user") {
-    await this._applyRateLimit();
+  async sendMessage(message, role = "user", { signal } = {}) {
+    await this._applyRateLimit(signal);
+    signal?.throwIfAborted();
     this._recordMessage(role, message);
     this._enforceContextLimit(); // Apply strict context boundary before API call
     const historyLengthBefore = this.history.length;
@@ -212,13 +215,15 @@ class GeminiAdapter extends BaseAdapter {
             const modelName = this.currentModel.replace(/^models\//, "");
             const url = `${BASE_URL}/models/${modelName}:generateContent?key=${this.apiKey}`;
 
-            const response = await this.client.post(url, payload);
+            const response = await this.client.post(url, payload, { signal });
+            signal?.throwIfAborted();
             return this._processApiResponse(response.data);
           } catch (error) {
             throw this._wrapApiError(error);
           }
         },
         {
+          signal,
           recoverableErrors: this.recoverableErrors,
           /**
            * Callback executed when a retry is attempted.
@@ -362,7 +367,7 @@ class GeminiAdapter extends BaseAdapter {
   async getAvailableModels() {
     try {
       const url = `${BASE_URL}/models?key=${this.apiKey}`;
-      const response = await this.client.get(url);
+      const response = await this.client.get(url, { timeout: 10000 });
       const { data } = response;
       return data.models.map((m) => m.name);
     } catch (error) {

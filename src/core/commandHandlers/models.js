@@ -10,24 +10,24 @@ class ModelCommands {
    * @returns {Promise<boolean>} True if the operation succeeded.
    */
   static async handleModels(chatManager, ui, parts) {
-    const allModels = await chatManager.assistant.getAvailableModels();
-    const unavailable = chatManager.configManager.get("unavailable_models", []);
-    const models = allModels.filter((m) => !unavailable.includes(m));
-
-    if (parts.length === 1) {
-      ui.displayMenu("Available Models", models);
-      return true;
-    }
-
     try {
-      const arg = parts[1].replace(/^["']|["']$/g, "");
-      let modelName;
+      const arg = parts[1]?.replace(/^["']|["']$/g, "");
+      const isIndex = arg !== undefined && /^\d+$/.test(arg);
+      let modelName = arg;
 
-      const idx = Number.parseInt(arg, 10);
-      if (!Number.isNaN(idx) && models[idx] !== undefined) {
-        modelName = models[idx];
-      } else {
-        modelName = models.find((m) => m.toLowerCase() === arg.toLowerCase());
+      if (arg === undefined || isIndex || chatManager.assistant.providerId !== "GEMINI") {
+        const allModels = await chatManager.assistant.getAvailableModels();
+        const unavailable = chatManager.configManager.get("unavailable_models", []);
+        const models = allModels.filter((m) => !unavailable.includes(m));
+
+        if (arg === undefined) {
+          ui.displayMenu("Available Models", models);
+          return true;
+        }
+
+        modelName = isIndex
+          ? models[Number(arg)]
+          : models.find((m) => m.toLowerCase() === arg.toLowerCase());
       }
 
       if (!modelName) {
@@ -38,7 +38,8 @@ class ModelCommands {
 
       chatManager.configManager.save("model_name", modelName);
       chatManager.configManager.save("default_temperature", newTemp);
-      chatManager.setTemperature(newTemp);
+      chatManager.model.name = modelName;
+      chatManager.model.temperature = newTemp;
       chatManager.assistant.startChat(
         modelName,
         chatManager.systemInstruction,

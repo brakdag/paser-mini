@@ -236,6 +236,10 @@ class ChatManager {
     this.assistant.setIdentities(this.user, this.model);
     this.assistant.startChat(this.model.name, this.systemInstruction, this.model.temperature);
 
+    if (this.ui.initInput) {
+      this.ui.initInput();
+    }
+
     if (initialInput) {
       const logMsg = this.ui.getLogOpenedString();
       const welcomeMsg = "System initialized. Ready for input.";
@@ -244,11 +248,12 @@ class ChatManager {
       // Mostramos el mensaje visualmente en la UI, pero NO se inyecta al historial del modelo para evitar contaminar el contexto.
       this.ui.displayChatMessage("system", combinedMsg);
       this.logOpened = true;
-      await this.processTurn(initialInput);
-    }
-
-    if (this.ui.initInput) {
-      this.ui.initInput();
+      try {
+        await this.processTurn(initialInput);
+      } catch (error) {
+        if (error.name !== "UserInterruptException") throw error;
+        this.ui.displayInfo("Agent interrupted. Processing new request...");
+      }
     }
 
     while (!this.stopRequested) {

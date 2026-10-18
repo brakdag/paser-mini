@@ -2,6 +2,7 @@ import IRCFormat from "../formats/IRCFormat.js";
 import CleanFormat from "../formats/CleanFormat.js";
 import FountainFormat from "../formats/FountainFormat.js";
 import logger from "../core/logger.js";
+import { setTimeout as delay } from "node:timers/promises";
 
 /**
  * Base class for AI adapters. This class is abstract and cannot be instantiated directly.
@@ -43,9 +44,11 @@ export default class BaseAdapter {
 
   /**
    * Ensures the request rate does not exceed the defined RPM limit.
+   * @param {AbortSignal} [signal] - Cancels the rate-limit wait.
    * @returns {Promise<void>}
    */
-  async _applyRateLimit() {
+  async _applyRateLimit(signal) {
+    signal?.throwIfAborted();
     const rpmLimit = Math.max(1, parseInt(this.configManager.get("rpm_limit", 15), 10) || 1);
     const minInterval = 60000 / rpmLimit;
     const now = Date.now();
@@ -56,9 +59,7 @@ export default class BaseAdapter {
       logger.debug(
         `[${this.constructor.name}] Rate Limit: Waiting ${waitTime / 1000}s to maintain ${rpmLimit} RPM`,
       );
-      await new Promise((resolve) => {
-        setTimeout(resolve, waitTime);
-      });
+      await delay(waitTime, undefined, { signal });
     }
     this.lastRequestTime = Date.now();
   }

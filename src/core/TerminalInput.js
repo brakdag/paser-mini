@@ -36,12 +36,15 @@ class TerminalInput {
         return;
       }
 
+      const modelChange = this.commandHandler?.interruptForModelChange(trimmed);
+
       if (this.inputResolver) {
         const resolve = this.inputResolver;
         this.inputResolver = null;
         resolve(trimmed);
       } else {
-        this.inputQueue.push(trimmed);
+        if (modelChange) this.inputQueue.unshift(trimmed);
+        else this.inputQueue.push(trimmed);
       }
     });
   }
