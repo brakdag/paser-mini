@@ -31,8 +31,13 @@ class ProviderManager {
     },
     OPENROUTER: {
       name: "OpenRouter",
-      defaultModel: "inclusionai/ling-3.1-flash",
+      defaultModel: "dots-studio/dots-3-note-preview:free",
       path: "./openrouter/adapter.js",
+    },
+    ZENMUX: {
+      name: "ZenMux",
+      defaultModel: "google/gemini-3.1-pro-preview",
+      path: "./zenmux/adapter.js",
     },
     GROQ: {
       name: "Groq",
@@ -58,11 +63,6 @@ class ProviderManager {
       name: "Z.AI",
       defaultModel: "glm-4.7-flash",
       path: "./zai/adapter.js",
-    },
-    GITHUB: {
-      name: "GitHub Models",
-      defaultModel: "openai/gpt-4.1",
-      path: "./github/adapter.js",
     },
     POOLSIDE: {
       name: "Poolside",
