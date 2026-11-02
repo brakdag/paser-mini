@@ -3,7 +3,19 @@ import path from "path";
 import vm from "vm";
 
 /**
- * Provides a secure sandbox for executing raw JavaScript code.
+ * Executes JavaScript in a separate V8 context (`node:vm`).
+ *
+ * SECURITY MODEL, stated plainly:
+ * `vm` is an isolation-of-scope facility, NOT a security boundary. Code run
+ * here shares the host process's intrinsics, so it can reach the real
+ * `process` and the host filesystem with the user's own permissions (for
+ * example via a constructor chain from an exposed function). Treat this tool
+ * as "run code as the user", exactly like a shell. Use an operating-system
+ * sandbox (container, unprivileged user, seccomp) if genuine isolation is
+ * required; no amount of global-hiding inside this file provides it.
+ *
+ * The timeouts below bound how long a call may block, not the lifetime of
+ * asynchronous work the analysed code may have started.
  */
 class EvalTools {
   #ROOT_DIR = process.cwd();
@@ -55,7 +67,14 @@ class EvalTools {
    */
   #getSafeSandboxPath(filename) {
     const resolvedPath = path.resolve(this.#ROOT_DIR, filename);
-    if (!resolvedPath.startsWith(this.#ROOT_DIR)) {
+    // path.relative, not startsWith: the latter accepts sibling directories
+    // such as "<root>-evil" whose name merely begins with the root path.
+    const relative = path.relative(this.#ROOT_DIR, resolvedPath);
+    const escapes =
+      relative === ".." ||
+      relative.startsWith(`..${path.sep}`) ||
+      path.isAbsolute(relative);
+    if (escapes) {
       throw new Error(`SECURITY_ERR: Access denied to ${filename}`);
     }
     return resolvedPath;
@@ -73,7 +92,9 @@ class EvalTools {
   }
 
   /**
-   * Creates a secure VM context with a limited sandbox.
+   * Creates the VM context and the small API surface exposed to it.
+   * This controls convenience and naming only; it is not a security
+   * boundary (see the class documentation).
    * @returns {vm.Context} The created VM context.
    */
   #createContext() {
@@ -103,6 +124,37 @@ class EvalTools {
       navigator: { userAgent: "eval()-V8-Surgical-Sandbox/1.0" },
     };
     return vm.createContext(sandbox);
+  }
+
+  /**
+   * Awaits a sandbox-produced promise with a hard deadline.
+   * @param {Promise<unknown>} promise - The promise returned by sandboxed code.
+   * @returns {Promise<unknown>} The settled value.
+   * @throws {Error} If the deadline elapses first.
+   */
+  async #awaitWithDeadline(promise) {
+    const ASYNC_TIMEOUT_MS = 5000;
+    let timer;
+    const deadline = new Promise((_, reject) => {
+      timer = setTimeout(() => {
+        reject(
+          new Error(
+            `ASYNC_TIMEOUT: sandboxed code did not settle within ${ASYNC_TIMEOUT_MS}ms. ` +
+              "The wait has been abandoned; the underlying work may still be running.",
+          ),
+        );
+      }, ASYNC_TIMEOUT_MS);
+      // The timer is deliberately NOT unref'd. Unref'd timers let Node exit
+      // before the deadline fires when nothing else keeps the loop alive,
+      // which would abandon the caller without settling its promise. The
+      // timer stays referenced until the race settles, then is cleared.
+    });
+
+    try {
+      return await Promise.race([promise, deadline]);
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   /**
@@ -150,10 +202,15 @@ class EvalTools {
     try {
       const wrappedCode = code.includes('await') ? `(async () => { ${code} })()` : code;
       result = vm.runInContext(wrappedCode, this.#context, { timeout: 1000 });
-      
-      // Duck typing para Promesas a través de límites de VM
+
+      // Duck typing para Promesas a través de límites de VM.
+      // vm's timeout covers only synchronous execution, so an awaiting caller
+      // would otherwise wait forever on a promise that never settles. The
+      // deadline below bounds the *wait*: the sandboxed async work cannot be
+      // forcibly cancelled from inside this process, and the error says so
+      // rather than implying the code was stopped.
       if (result && typeof result.then === 'function') {
-        result = await result;
+        result = await this.#awaitWithDeadline(result);
       }
 
       if (result !== undefined) {

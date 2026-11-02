@@ -1,26 +1,63 @@
 import { execFile } from "child_process";
-import { promisify } from "util";
 
 /**
  * Git operations wrapper providing a clean interface for repository management.
  */
 export default class GitTools {
-  #execFilePromise = promisify(execFile);
+  #cwd;
+
+  #timeoutMs;
+
+  /**
+   * Creates a Git wrapper bound to a working directory.
+   * @param {object} [options] - Construction options.
+   * @param {string} [options.cwd] - Repository directory. Defaults to the
+   *   process working directory; tests pass a throwaway repository so they
+   *   never mutate the checkout they run in.
+   * @param {number} [options.timeoutMs] - Per-command timeout.
+   */
+  constructor({ cwd = process.cwd(), timeoutMs = 30000 } = {}) {
+    this.#cwd = cwd;
+    this.#timeoutMs = timeoutMs;
+  }
 
   /**
    * Executes a git command and returns the trimmed output.
+   * child_process.execFile has no `input` option, so stdin is written and
+   * closed explicitly. Without this, `git apply -` waits forever.
    * @param {string[]} args - Command arguments for the git binary.
    * @param {string} [input] - Optional string to pass to stdin.
    * @returns {Promise<string>} The trimmed standard output of the command.
-   * @throws {Error} If the git command fails.
+   * @throws {Error} If the git command fails or times out.
    */
   async #run(args, input) {
-    try {
-      const { stdout } = await this.#execFilePromise("git", args, { input });
-      return stdout.trim();
-    } catch (e) {
-      throw new Error(`Git error (${args.join(" ")}): ${e.stderr || e.message}`);
-    }
+    return new Promise((resolve, reject) => {
+      const child = execFile(
+        "git",
+        args,
+        { cwd: this.#cwd, timeout: this.#timeoutMs, maxBuffer: 10 * 1024 * 1024 },
+        (error, stdout, stderr) => {
+          if (error) {
+            const detail = stderr && stderr.trim() ? stderr.trim() : error.message;
+            reject(new Error(`Git error (${args.join(" ")}): ${detail}`));
+            return;
+          }
+          // Success is defined by the exit code, never by stdout content:
+          // `git apply` and `git restore` legitimately print nothing.
+          resolve(stdout.trim());
+        },
+      );
+
+      child.stdin.on("error", (err) => {
+        reject(new Error(`Git error (${args.join(" ")}): stdin ${err.message}`));
+      });
+
+      if (input !== undefined) {
+        child.stdin.end(input);
+      } else {
+        child.stdin.end();
+      }
+    });
   }
 
   /**
@@ -84,6 +121,6 @@ export default class GitTools {
   async restoreFile(f) {
     const filepath = typeof f === 'object' ? f.filepath : f;
     if (!filepath) throw new Error("File path is required.");
-    return this.#run(["restore", filepath]);
+    return this.#run(["restore", "--", filepath]);
   }
 }

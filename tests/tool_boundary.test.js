@@ -5,12 +5,13 @@ import path from "node:path";
 import FileTools from "../src/tools/fileTools.js";
 
 const fileTools = new FileTools();
-const testDir = path.resolve(process.cwd(), "tests/temp_boundary");
 const LIMIT = 100 * 1024;
 
 describe("FileTools Boundary Evaluation", () => {
+  let testDir;
+
   before(async () => {
-    await fs.mkdir(testDir, { recursive: true });
+    testDir = await fs.mkdtemp(path.join(process.cwd(), "tests", "tmp-boundary-"));
   });
 
   after(async () => {
@@ -34,11 +35,14 @@ describe("FileTools Boundary Evaluation", () => {
     );
   });
 
-  test("tail should not throw for valid large files", async () => {
+  test("tail should return the requested lines for large files", async () => {
     const filePath = path.join(testDir, "tail_test.txt");
-    await fs.writeFile(filePath, "A\n".repeat(10000));
+    const lines = [];
+    for (let i = 0; i < 10000; i += 1) {
+      lines.push(`row-${i}`);
+    }
+    await fs.writeFile(filePath, `${lines.join("\n")}\n`);
     const result = await fileTools.tail(filePath, 10);
-    assert.ok(typeof result === "string");
-    assert.ok(result.length > 0);
+    assert.strictEqual(result, lines.slice(-10).join("\n"));
   });
 });

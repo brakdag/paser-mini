@@ -55,16 +55,60 @@ class FileTools {
     }
 
     const stats = await fs.stat(safePath);
-    const bufferSize = 64 * 1024;
-    const start = Math.max(0, stats.size - bufferSize);
-    const length = stats.size - start;
+    if (stats.size === 0) {
+      return "";
+    }
 
     const handle = await fs.open(safePath, "r");
     try {
-      const buffer = Buffer.alloc(length);
-      await handle.read(buffer, 0, length, start);
-      const content = buffer.toString("utf8");
-      const result = content.split("\n").slice(-numericTail).join("\n");
+      // Grow the window until it holds enough lines or reaches the file start.
+      // A fixed window would return a fragment of a line when the file is
+      // larger than the window.
+      const bufferSize = 64 * 1024;
+      let length = Math.min(stats.size, bufferSize);
+      let lines = [];
+      let reachedStart = false;
+
+      for (;;) {
+        const start = stats.size - length;
+        reachedStart = start === 0;
+
+        const buffer = Buffer.alloc(length);
+        const { bytesRead } = await handle.read(buffer, 0, length, start);
+        let content = buffer.subarray(0, bytesRead).toString("utf8");
+
+        if (!reachedStart) {
+          // The window began mid-line; discard that partial line. If the
+          // window holds no newline at all, it is entirely partial.
+          const firstBreak = content.indexOf("\n");
+          if (firstBreak === -1) {
+            content = "";
+          } else {
+            content = content.slice(firstBreak + 1);
+          }
+        }
+
+        // Remove only the final terminator before splitting. A complete empty
+        // line must remain [""], while an empty window has no lines.
+        lines = content === "" ? [] : content.replace(/\n$/, "").split("\n");
+
+        if (reachedStart || lines.length >= numericTail) {
+          break;
+        }
+        // Bound the window. The result may not exceed FILE_SIZE_LIMIT, and at
+        // most one chunk of the window is a discarded partial leading line, so
+        // a window larger than FILE_SIZE_LIMIT + chunk cannot be needed: if
+        // the requested lines do not fit, the result is over the limit.
+        // Without this cap a large newline-free file was fully buffered before
+        // the size check rejected it.
+        const maxWindow = FILE_SIZE_LIMIT + bufferSize;
+        if (length >= maxWindow) {
+          throw new Error("Tail result too large");
+        }
+        length = Math.min(stats.size, Math.min(length * 2, maxWindow));
+      }
+
+      const result = lines.slice(-numericTail).join("\n");
 
       if (Buffer.byteLength(result, "utf8") > FILE_SIZE_LIMIT) {
         throw new Error("Tail result too large");
@@ -87,6 +131,10 @@ class FileTools {
 
   /**
    * Reads the last N lines of a file.
+   *
+   * Omits the final line terminator and preserves empty lines, so "a\nb\n"
+   * tailed by 1 yields "b", while "a\n\n" tailed by 2 yields "a\n".
+   * Asking for more lines than exist returns all lines within the size limit.
    * @param {string} filepath The path to the file.
    * @param {string|number} tail Number of lines to tail from the end.
    * @returns {Promise<string>} The tailed content.
@@ -125,7 +173,11 @@ class FileTools {
    * @param {string} filepath The path to remove.
    */
   async remove(filepath) {
-    await fs.rm(PathValidator.getSafePath(filepath), { recursive: true });
+    const safePath = PathValidator.getSafePath(filepath);
+    if (PathValidator.isRoot(safePath)) {
+      throw new Error("Security Error: refusing to remove the project root");
+    }
+    await fs.rm(safePath, { recursive: true });
   }
 
   /**
@@ -134,10 +186,15 @@ class FileTools {
    * @param {string} destination The target path.
    */
   async rename(origin, destination) {
-    await fs.rename(
-      PathValidator.getSafePath(origin),
-      PathValidator.getSafePath(destination),
-    );
+    const safeOrigin = PathValidator.getSafePath(origin);
+    const safeDestination = PathValidator.getSafePath(destination);
+    if (PathValidator.isRoot(safeOrigin)) {
+      throw new Error("Security Error: refusing to move the project root");
+    }
+    if (PathValidator.isRoot(safeDestination)) {
+      throw new Error("Security Error: refusing to overwrite the project root");
+    }
+    await fs.rename(safeOrigin, safeDestination);
   }
 
   /**

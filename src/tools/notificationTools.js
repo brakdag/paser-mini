@@ -7,7 +7,18 @@ import logger from "../core/logger.js";
  * Notification utility tools for providing auditory and visual feedback.
  */
 export default class NotificationTools {
-  #execPromise = promisify(exec);
+  #execPromise;
+
+  /**
+   * Creates a notification tool.
+   * @param {object} [options] - Construction options.
+   * @param {(cmd: string) => Promise<unknown>} [options.executor] - Command runner.
+   *   Defaults to the real shell executor; tests inject a stub so the suite
+   *   never spawns audio processes or requires a sound device.
+   */
+  constructor({ executor } = {}) {
+    this.#execPromise = executor || promisify(exec);
+  }
 
   /**
    * Notify the user with a sound and a log entry.

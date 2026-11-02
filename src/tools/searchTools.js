@@ -27,7 +27,14 @@ export default class SearchTools {
      * @param {string} dir - The directory to walk.
      */
     const walk = async (dir) => {
-      const files = await fs.readdir(dir, { withFileTypes: true });
+      let files;
+      try {
+        files = await fs.readdir(dir, { withFileTypes: true });
+      } catch (error) {
+        // Entries may be deleted after their parent directory was listed.
+        if (error.code === "ENOENT" && dir !== ".") return;
+        throw error;
+      }
       await Promise.all(
         files.map(async (file) => {
           if (file.name === ".git" || file.name === "node_modules") {
