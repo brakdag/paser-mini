@@ -182,6 +182,51 @@ describe("pathValidator", () => {
     );
   });
 
+  it("checks literal '..' after a symlink in both relative and absolute inputs", async () => {
+    const bridge = path.join(fixtureDir, "literal-bridge");
+    await fs.symlink(path.join(externalDir, "deep"), bridge, "dir");
+    const absolute = `${bridge}/../secret.txt`;
+    const relative = `${path.relative(process.cwd(), bridge)}/../secret.txt`;
+
+    [relative, absolute].forEach((input) => {
+      assert.throws(() => PathValidator.getSafePath(input), /outside of project root/);
+    });
+    await assert.rejects(() => fileTools.write(absolute, "changed"), /outside of project root/);
+    assert.strictEqual(await fs.readFile(path.join(externalDir, "secret.txt"), "utf8"), "secret");
+  });
+
+  it("preserves traversal semantics for an internal symlink followed by '..'", async () => {
+    const target = path.join(fixtureDir, "internal-parent", "deep");
+    await fs.mkdir(target, { recursive: true });
+    await fs.writeFile(path.join(fixtureDir, "internal-parent", "value.txt"), "actual");
+    await fs.writeFile(path.join(fixtureDir, "value.txt"), "lexical");
+    const bridge = path.join(fixtureDir, "internal-bridge");
+    await fs.symlink(target, bridge, "dir");
+
+    assert.strictEqual(await fileTools.read(`${bridge}/../value.txt`), "actual");
+    await fileTools.write(`${bridge}/../value.txt`, "updated");
+    assert.strictEqual(await fs.readFile(path.join(fixtureDir, "internal-parent", "value.txt"), "utf8"), "updated");
+    assert.strictEqual(await fs.readFile(path.join(fixtureDir, "value.txt"), "utf8"), "lexical");
+  });
+
+  it("rechecks existing links after walking back from a missing component", async () => {
+    await fs.symlink(externalDir, path.join(fixtureDir, "missing-escape"), "dir");
+    const compound = path.join(fixtureDir, "missing-compound");
+    await fs.symlink("absent/../missing-escape/secret.txt", compound, "file");
+
+    assert.throws(() => PathValidator.getSafePath(compound), /outside of project root/);
+    await assert.rejects(() => fileTools.write(compound, "changed"), /outside of project root/);
+    assert.strictEqual(await fs.readFile(path.join(externalDir, "secret.txt"), "utf8"), "secret");
+  });
+
+  it("recognizes the root reached through a symlink and parent segment", async () => {
+    const bridge = path.join(fixtureDir, "root-bridge");
+    await fs.symlink(path.join(process.cwd(), "tests"), bridge, "dir");
+    assert.ok(PathValidator.isRoot(PathValidator.getSafePath(`${bridge}/..`)));
+    assert.ok(PathValidator.isRoot("."));
+    assert.ok(!PathValidator.isRoot(fixtureDir));
+  });
+
   it("accepts a symlink that stays inside the root", async () => {
     const realDir = path.join(fixtureDir, "real");
     await fs.mkdir(realDir, { recursive: true });

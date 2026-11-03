@@ -1,4 +1,5 @@
 import { spawn } from "child_process";
+import PathValidator from "../utils/pathValidator.js";
 
 const PROMPT = "debug> ";
 const TIMEOUT_MS = 5000;
@@ -11,6 +12,17 @@ export default class InspectTools {
   #inspectProcess = null;
 
   #buffer = "";
+
+  #spawnProcess;
+
+  /**
+   * Creates an inspector with an injectable process launcher.
+   * @param {object} [options] - Process dependencies.
+   * @param {typeof spawn} [options.spawnProcess] - Child process launcher.
+   */
+  constructor({ spawnProcess = spawn } = {}) {
+    this.#spawnProcess = spawnProcess;
+  }
 
   /**
    * Resolves when the debug prompt appears in the buffer.
@@ -85,8 +97,9 @@ export default class InspectTools {
     }
 
     if (p && !this.#inspectProcess) {
+      const safePath = PathValidator.getSafePath(p);
       this.#buffer = "";
-      this.#inspectProcess = spawn("node", ["inspect", p]);
+      this.#inspectProcess = this.#spawnProcess("node", ["inspect", safePath]);
 
       /**
        * Handles incoming data from stdout/stderr.

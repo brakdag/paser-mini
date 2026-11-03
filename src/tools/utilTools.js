@@ -4,6 +4,7 @@ import fs from "fs/promises";
 import path from "path";
 import os from "os";
 import ConfigManager from "../core/configManager.js";
+import PathValidator from "../utils/pathValidator.js";
 
 const execFilePromise = promisify(execFile);
 const AGENT_NICKNAME_CONFIG_KEY = "agent_nickname";
@@ -15,6 +16,17 @@ const IMAGE_QUALITY = "75";
  */
 export default class UtilTools {
   #model = null;
+
+  #executor;
+
+  /**
+   * Creates utilities with an injectable image command executor.
+   * @param {object} [options] - Command dependencies.
+   * @param {typeof execFilePromise} [options.executor] - Promise-based execFile implementation.
+   */
+  constructor({ executor = execFilePromise } = {}) {
+    this.#executor = executor;
+  }
 
   /**
    * Injects the shared model identity object.
@@ -79,12 +91,14 @@ export default class UtilTools {
   async seeImage(imagePath, crop) {
     if (!imagePath) throw new Error("The 'path' parameter is required.");
 
-    const tempFile = path.join(os.tmpdir(), `seeImage_${Date.now()}.jpg`);
+    const safePath = PathValidator.getSafePath(imagePath);
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "paser-image-"));
+    const tempFile = path.join(tempDir, "image.jpg");
 
     try {
-      await this.#processImage(imagePath, tempFile, crop);
+      await this.#processImage(safePath, tempFile, crop);
       const base64Data = (await fs.readFile(tempFile)).toString("base64");
-      const resolution = await this.#getImageResolution(imagePath);
+      const resolution = await this.#getImageResolution(safePath);
 
       return {
         mime_type: "image/jpeg",
@@ -94,7 +108,7 @@ export default class UtilTools {
     } catch (error) {
       throw new Error(`Vision Tool Error: ${error.message}`);
     } finally {
-      await this.#cleanupTempFile(tempFile);
+      await fs.rm(tempDir, { recursive: true, force: true });
     }
   }
 
@@ -122,7 +136,7 @@ export default class UtilTools {
     }
 
     args.push("-resize", IMAGE_RESIZE_DIMENSION, "-colorspace", "sRGB", "-quality", IMAGE_QUALITY, imagePath, tempFile);
-    await execFilePromise("convert", args);
+    await this.#executor("convert", args);
   }
 
   /**
@@ -131,20 +145,7 @@ export default class UtilTools {
    * @returns {Promise<string>} Resolution string (WxH).
    */
   async #getImageResolution(imagePath) {
-    const { stdout } = await execFilePromise("identify", ["-format", "%wx%h", imagePath]);
+    const { stdout } = await this.#executor("identify", ["-format", "%wx%h", imagePath]);
     return stdout.trim();
-  }
-
-  /**
-   * Internal method to remove temporary files.
-   * @param {string} filePath - Path to file to remove.
-   * @returns {Promise<void>}
-   */
-  async #cleanupTempFile(filePath) {
-    try {
-      await fs.unlink(filePath);
-    } catch {
-      // Silent failure for cleanup
-    }
   }
 }

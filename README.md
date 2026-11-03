@@ -94,3 +94,9 @@ re-registers bundled schemas; loading edited modules requires restarting.
 `bin` preserves its flat public signature and adapts its last four parameters
 into the implementation's options object. Its schema requires fields according
 to the selected action.
+
+AST analysis, ZIP listing, image inputs and the inspector's initial script follow
+the same project-root path validation as file tools. External paths and symlinks
+resolving outside the project are rejected. Internal symlinks remain supported,
+including parent segments after a link. Image conversions use a separate temporary
+directory per call and clean it up after success or failure.

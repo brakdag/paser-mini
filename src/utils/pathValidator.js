@@ -94,7 +94,7 @@ function splitAbsolute(absolute) {
  * target segments onto the front of that queue rather than resolving them
  * textually, so both of the above hold transitively. Once a component is known
  * not to exist, no deeper component can exist and therefore none can be a
- * link, so the remainder is applied lexically to the resolved prefix.
+ * link, until ".." returns to an existing ancestor and inspection resumes.
  *
  * Known limitation: this is a check-then-use design. A concurrent filesystem
  * change between validation and the subsequent open/write can still redirect
@@ -105,16 +105,15 @@ function splitAbsolute(absolute) {
  * @returns {string} Canonical path.
  */
 function canonicalize(inputPath) {
-  const absolute = path.resolve(inputPath);
-  const initial = splitAbsolute(absolute);
+  // The caller supplies an absolute path with its original segments intact.
+  const initial = splitAbsolute(inputPath);
 
   let current = initial.root;
   /** @type {string[]} */
   const queue = initial.segments.slice();
   let hops = 0;
-  // Once a component is missing, deeper components cannot exist and cannot be
-  // links; the remainder is applied lexically.
-  let missingTail = false;
+  // Track depth so inspection resumes if ".." returns to an existing parent.
+  let missingDepth = 0;
 
   while (queue.length > 0) {
     const segment = queue.shift();
@@ -123,10 +122,12 @@ function canonicalize(inputPath) {
       // Applied to the resolved prefix, never to an unresolved string.
       const parent = path.dirname(current);
       current = parent === current ? current : parent;
+      if (missingDepth > 0) missingDepth -= 1;
     } else if (segment !== "" && segment !== ".") {
       const next = path.join(current, segment);
 
-      if (missingTail) {
+      if (missingDepth > 0) {
+        missingDepth += 1;
         current = next;
       } else {
         let stats = null;
@@ -136,7 +137,7 @@ function canonicalize(inputPath) {
           if (error.code !== "ENOENT") {
             throw error;
           }
-          missingTail = true;
+          missingDepth = 1;
           current = next;
         }
 
@@ -195,7 +196,8 @@ export default class PathValidator {
    * @returns {boolean} True when the path is the root.
    */
   static isRoot(resolvedPath) {
-    return path.resolve(resolvedPath) === ROOT;
+    const absolute = path.isAbsolute(resolvedPath) ? resolvedPath : `${ROOT}${path.sep}${resolvedPath}`;
+    return canonicalize(absolute) === getRealRoot();
   }
 
   /**
@@ -204,7 +206,7 @@ export default class PathValidator {
    * followed even when their targets do not exist, and ".." is applied to the
    * resolved prefix so an intermediate link cannot redirect it.
    * @param {string} inputPath - The path to resolve.
-   * @returns {string} The resolved absolute path.
+   * @returns {string} Absolute path, preserving parent segments for OS traversal.
    * @throws {Error} If the path is invalid or outside of the project root.
    */
   static getSafePath(inputPath) {
@@ -220,11 +222,15 @@ export default class PathValidator {
       throw new Error("Security Error: Path is outside of project root");
     }
 
-    const canonical = canonicalize(resolved);
+    // path.join/resolve would discard ".." before inspecting symlinks.
+    const absolute = path.isAbsolute(inputPath) ? inputPath : `${ROOT}${path.sep}${inputPath}`;
+    const canonical = canonicalize(absolute);
     if (!isInside(getRealRoot(), canonical)) {
       throw new Error("Security Error: Path resolves outside of project root");
     }
 
-    return resolved;
+    // Keep the final symlink intact for unlink/rename semantics. Preserve ".."
+    // so the operation follows the same traversal that was validated.
+    return absolute.split(path.sep).includes("..") ? absolute : resolved;
   }
 }

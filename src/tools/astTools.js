@@ -1,5 +1,6 @@
 import fs from "fs/promises";
 import * as acorn from "acorn";
+import PathValidator from "../utils/pathValidator.js";
 
 /**
  * Provides utilities for analyzing JavaScript Abstract Syntax Trees (AST).
@@ -136,7 +137,7 @@ export class AstTools {
       throw new Error("Query parameter is required.");
     }
 
-    const code = await fs.readFile(filepath, "utf8");
+    const code = await fs.readFile(PathValidator.getSafePath(filepath), "utf8");
     let resultsData;
 
     if (query === "Identifier" || query === "Literal") {
