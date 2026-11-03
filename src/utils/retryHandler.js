@@ -36,8 +36,8 @@ class RetryHandler {
    * @private
    */
   _getExponentialDelay(attempt) {
-    const delay = 2 ** attempt * 1000;
-    return Math.min(delay, this.maxDelay);
+    const delayMs = 2 ** attempt * 1000;
+    return Math.min(delayMs, this.maxDelay);
   }
 
   /**
@@ -67,12 +67,13 @@ class RetryHandler {
 
   /**
    * Executes an asynchronous function with retry logic.
-   * @param {() => Promise<string>} fn - The asynchronous function to execute.
+   * @template T
+   * @param {() => Promise<T>} fn - The asynchronous function to execute.
    * @param {object} options - Retry options.
    * @param {Array<string>} [options.recoverableErrors] - Error messages that trigger a retry.
    * @param {(attempt: number, error: Error, formattedDelay: string) => void} [options.onRetry] - Callback executed on each retry.
    * @param {AbortSignal} [options.signal] - Cancels requests and retry waits.
-   * @returns {Promise<string>} The result of the function if successful.
+   * @returns {Promise<T>} The result of the function if successful.
    * @throws {Error} The last error encountered if all retries fail.
    */
   async execute(fn, { recoverableErrors = [], onRetry = null, signal } = {}) {

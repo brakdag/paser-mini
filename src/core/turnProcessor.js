@@ -98,11 +98,10 @@ class TurnProcessor {
    */
   async #sendInitialRequest(processedInput) {
     try {
-      return this.api.send(processedInput);
+      return await this.api.send(processedInput);
     } catch (e) {
       if (e instanceof GeminiSafetyError || e instanceof GeminiEmptyResponseError) {
         this.ui.displayError(`Model Error: ${e.message}. Last message removed.`);
-        this.assistant.popLastMessage();
         return this.api.send('Model Error: Safety or Empty response. Please rephrase.', { role: 'user' });
       }
       throw e;
@@ -141,11 +140,10 @@ class TurnProcessor {
    */
   async #sendToolResults(resultsPayload) {
     try {
-      return this.api.send(resultsPayload, { role: 'user' });
+      return await this.api.send(resultsPayload, { role: 'user' });
     } catch (e) {
       if (e instanceof GeminiSafetyError || e instanceof GeminiEmptyResponseError) {
         this.ui.displayError(`Model Error during tool execution: ${e.message}`);
-        this.assistant.popLastMessage();
         return this.api.send('Model Error during tool execution. Please rephrase.', { role: 'user' });
       }
       throw e;

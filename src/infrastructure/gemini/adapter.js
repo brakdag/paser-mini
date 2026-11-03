@@ -6,6 +6,7 @@ import RetryHandler from "../../utils/retryHandler.js";
 import {
   GeminiSafetyError,
   GeminiEmptyResponseError,
+  UserInterruptException,
 } from "../../core/exceptions.js";
 
 const BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
@@ -43,12 +44,6 @@ class GeminiAdapter extends BaseAdapter {
       timeout: 600000,
     });
     this.retryHandler = new RetryHandler();
-    this.recoverableErrors = [
-      "Empty response from Gemini",
-      "No response candidates returned",
-      "No content parts returned",
-      "Response blocked by safety filters.",
-    ];
   }
 
   /**
@@ -197,16 +192,13 @@ class GeminiAdapter extends BaseAdapter {
   async sendMessage(message, role = "user", { signal } = {}) {
     await this._applyRateLimit(signal);
     signal?.throwIfAborted();
-    this._recordMessage(role, message);
-    this._enforceContextLimit(); // Apply strict context boundary before API call
-    const historyLengthBefore = this.history.length;
+    const historyBefore = this.history.slice();
 
-    /**
-     * Executes the API request with retry logic.
-     * @returns {Promise<string>} The processed response text.
-     */
+    // The adapter owns rollback, including history removed while preparing context.
     try {
-      return await this.retryHandler.execute(
+      this._recordMessage(role, message);
+      this._enforceContextLimit();
+      const responseData = await this.retryHandler.execute(
         async () => {
           try {
             const payload = this._buildPayload();
@@ -217,14 +209,13 @@ class GeminiAdapter extends BaseAdapter {
 
             const response = await this.client.post(url, payload, { signal });
             signal?.throwIfAborted();
-            return this._processApiResponse(response.data);
+            return response.data;
           } catch (error) {
             throw this._wrapApiError(error);
           }
         },
         {
           signal,
-          recoverableErrors: this.recoverableErrors,
           /**
            * Callback executed when a retry is attempted.
            * @param {number} attempt - The current attempt number.
@@ -244,10 +235,11 @@ class GeminiAdapter extends BaseAdapter {
           },
         },
       );
+      signal?.throwIfAborted();
+      // Domain failures go to turn recovery without transport retries.
+      return this._processApiResponse(responseData);
     } catch (error) {
-      if (this.history.length === historyLengthBefore) {
-        this.popLastMessage();
-      }
+      this.history = historyBefore;
       throw error;
     }
   }
@@ -289,14 +281,19 @@ class GeminiAdapter extends BaseAdapter {
   }
 
   /**
-   * Wraps API errors into a standardized APIError format.
+   * Preserves domain/interruption errors and wraps transport errors with their cause.
    * @private
    * @param {Error} error - The original error.
-   * @returns {Error} The wrapped APIError.
+   * @returns {Error} The original domain/interruption error or wrapped APIError.
    */
   _wrapApiError(error) {
+    if (error instanceof GeminiSafetyError ||
+        error instanceof GeminiEmptyResponseError ||
+        error instanceof UserInterruptException) {
+      return error;
+    }
     const errorMsg = error.response?.data?.error?.message || error.message;
-    const wrappedError = new Error(errorMsg);
+    const wrappedError = new Error(errorMsg, { cause: error });
     wrappedError.name = "APIError";
     wrappedError.response = error.response;
     wrappedError.code = error.code;

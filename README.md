@@ -69,6 +69,11 @@ Select one with `/models <index>`, or switch directly with
 fetching the model list. The pending request is cancelled; send your next message
 after switching. Earlier conversation history remains available.
 
+Gemini restores the history from before a failed send. Safety and empty responses
+show an error in the UI and trigger one rephrase request. A failed rephrase is
+propagated without further recovery. Transport errors retain their original
+cause, HTTP response and error code; interruptions propagate without rephrasing.
+
 ## 🜰 Ecosystem Alignment
 For the narrative history of this pod and the character breakdowns of the team, see the [Staff Directory](./docs/staff/).
 
