@@ -1,8 +1,6 @@
 import GithubTools from "../tools/githubTools.js";
 import logger from "./logger.js";
 
-const GITHUB_API_CLIENT = new GithubTools();
-
 /**
  * Provides a UI implementation for interacting with GitHub issues, acting as a bridge
  * between the ChatManager and the GitHub API.
@@ -12,21 +10,24 @@ class GitHubUI {
    * Initializes the GitHubUI instance.
    * @param {number} issueNumber - The GitHub issue number to interact with.
    * @param {string|null} [repo] - The repository name, if different from the default.
+   * @param {object} [githubApi] - Injectable GitHub client.
    */
-  constructor(issueNumber, repo = null) {
+  constructor(issueNumber, repo = null, githubApi = new GithubTools()) {
     this.issueNumber = issueNumber;
     this.repo = repo;
     this.bashEnabled = false;
-    this.githubApi = GITHUB_API_CLIENT;
+    this.githubApi = githubApi;
+    this.pending = Promise.resolve();
+    this.publicationErrors = [];
   }
 
   /**
-   * Requests input from the user. In GitHub mode, this is not supported and returns an empty string.
+   * Rejects interactive input; the orchestrator must use a single turn.
    * @param {string} _prompt - The prompt to display (unused in GitHub mode).
-   * @returns {Promise<string>} A promise that resolves to an empty string.
+   * @returns {Promise<string>} Always rejects because this UI has no input source.
    */
   async requestInput(_prompt) {
-    return "";
+    throw new Error("GitHub mode accepts one turn; interactive input is unavailable.");
   }
 
   /**
@@ -34,13 +35,21 @@ class GitHubUI {
    * @param {string} text - The text to post as a comment.
    * @returns {Promise<void>}
    */
-  async displayMessage(text) {
-    logger.info(`[GitHubUI] Posting to Issue #${this.issueNumber}: ${text}`);
-    try {
-      await this.githubApi.postComment(this.issueNumber, text, this.repo);
-    } catch (e) {
-      logger.error(`[GitHubUI] Error in displayMessage: ${e.message}`);
-    }
+  displayMessage(text) {
+    const publication = this.pending.then(() => this.githubApi.postComment(this.issueNumber, text, this.repo));
+    // Synchronous tool/UI callers may ignore the returned promise. Capture rejection immediately.
+    this.pending = publication.catch((error) => { this.publicationErrors.push(error); });
+    return publication;
+  }
+
+  /**
+   * Waits for every queued comment and propagates publication failures.
+   * @returns {Promise<void>} Resolves when all comments have settled.
+   */
+  async flush() {
+    await this.pending;
+    const errors = this.publicationErrors.splice(0);
+    if (errors.length) throw new AggregateError(errors, "GitHub comment publication failed");
   }
 
   /**
@@ -147,32 +156,32 @@ class GitHubUI {
   }
 
   /**
-   * Sets the command handler (no-op for GitHub mode).
-   * @param {object} _handler - The command handler instance.
+   * Stores the command handler for tools that access the session.
+   * @param {object} handler - The command handler instance.
    * @returns {void}
    */
-  setCommandHandler(_handler) {}
+  setCommandHandler(handler) { this.commandHandler = handler; }
 
   /**
-   * Sets the shared user and model identity objects (no-op for GitHub mode).
-   * @param {object} _user - The user identity object.
-   * @param {object} _model - The model identity object.
+   * Stores the shared identities used by the turn processor.
+   * @param {object} user - The user identity object.
+   * @param {object} model - The model identity object.
    * @returns {void}
    */
-  setIdentities(_user, _model) {}
+  setIdentities(user, model) { this.user = user; this.model = model; }
 
   /**
-   * Sets the rendering mode (no-op for GitHub mode).
-   * @param {string} _mode - The rendering mode to set.
+   * Stores the session rendering mode.
+   * @param {string} mode - The rendering mode to set.
    * @returns {void}
    */
-  setRenderingMode(_mode) {}
+  setRenderingMode(mode) { this.renderingMode = mode; }
 
   /**
-   * Initializes the terminal input handler (no-op for GitHub mode).
+   * Rejects terminal initialization in the batch UI.
    * @returns {void}
    */
-  initInput() {}
+  initInput() { throw new Error("GitHub mode does not initialize terminal input."); }
 
   /**
    * Generates the log session resumption string.
@@ -183,12 +192,21 @@ class GitHubUI {
   }
 
   /**
+   * Publishes raw tool output using the same ordered queue as chat messages.
+   * @param {string} text - The raw tool output.
+   * @returns {Promise<void>} The queued publication.
+   */
+  displayRawMessage(text) {
+    return this.displayMessage(text);
+  }
+
+  /**
    * Displays a chat message by posting it to the GitHub issue.
    * @param {string} _nickname - The nickname of the sender.
    * @param {string} text - The message text.
    * @returns {Promise<void>}
    */
-  async displayChatMessage(_nickname, text) {
+  displayChatMessage(_nickname, text) {
     return this.displayMessage(text);
   }
 }

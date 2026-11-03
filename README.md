@@ -73,6 +73,31 @@ history; it does not undo file changes, commands or other tool side effects.
 Imported, reset or manually changed history requires a new completed turn before
 rewriting is available.
 
+### GitHub batch mode
+
+`--github-mode` takes one snapshot of open issues containing `#ai-assistance`,
+processes each eligible issue through one complete agent turn, and exits. It uses
+`GITHUB_TOKEN` and the repository's Git remote. Pull requests and issues already
+labeled `paser-processing` are skipped. Issues and comments are paginated.
+
+Sessions use the configured provider, model, temperature and identities; without
+`model_name`, the selected provider's bundled default is used. Tool contexts are
+initialized as in terminal mode. `--no-system-instruction` also disables tools
+in GitHub mode. No terminal input is requested.
+
+Comments finish publishing before the processing label is removed. Success adds
+a completion receipt based on the issue title/body and comments from accounts
+other than the authenticated bot. Unchanged completed inputs are skipped on
+later runs; edits or new comments allow another turn. Use a dedicated bot account
+so human discussion is included. Failures receive an error comment when possible,
+release the label and cause a nonzero exit after the remaining issues are tried.
+
+Receipts prevent repeat processing after completed publications. They do not make
+tool effects transactional: a failed publication or interrupted run can leave
+partial work that is retried. Processing labels are advisory, so run one worker
+per repository. API requests have a 30-second timeout; list traversal fails
+explicitly after 1,000 pages rather than silently dropping further results.
+
 ### Switching models during Gemini retries
 
 Use `/models` to interrupt a pending Gemini request or retry wait and list models.

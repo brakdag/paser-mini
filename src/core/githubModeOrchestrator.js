@@ -1,97 +1,109 @@
+import { createHash } from "node:crypto";
 import GithubTools from "../tools/githubTools.js";
 import GitHubUI from "./githubUI.js";
-import ChatManager from "./chatManager.js";
 import ConfigManager from "./configManager.js";
-import ProviderManager from "../infrastructure/providerManager.js";
-
-const githubApi = new GithubTools();
+import createSession from "./sessionFactory.js";
 
 /**
- * Orchestrates the AI's interaction with GitHub issues, monitoring for specific hashtags
- * and processing issues using the ChatManager.
+ * Processes a finite snapshot of triggered issues, recording completed input versions.
  */
 class GitHubModeOrchestrator {
   /**
-   * Initializes the GitHubModeOrchestrator.
-   * @param {string} systemInstruction - The system prompt/instructions for the AI assistant.
-   * @param {object} tools - The map of available tools for the AI to use.
-   * @param {boolean} [pureMode] - Whether tool execution is explicitly disabled.
+   * Initializes the finite GitHub runner with injectable external dependencies.
+   * @param {string} systemInstruction - The session prompt.
+   * @param {object} tools - Available tools.
+   * @param {boolean} [pureMode] - Whether tools are disabled.
+   * @param {object} [options] - Client, configuration and session factory overrides.
+   * @param {object} [options.githubApi] - GitHub API client.
+   * @param {object} [options.configManager] - Configuration storage.
+   * @param {(options: object) => Promise<object>} [options.sessionFactory] - Configured session factory.
+   * @param {string|null} [options.repo] - Explicit target repository.
    */
-  constructor(systemInstruction, tools, pureMode = false) {
-    this.systemInstruction = systemInstruction;
-    this.tools = tools;
-    this.pureMode = pureMode;
+  constructor(systemInstruction, tools, pureMode = false, {
+    githubApi = new GithubTools(), configManager = null, sessionFactory = createSession, repo = null,
+  } = {}) {
+    Object.assign(this, { systemInstruction, tools, pureMode, githubApi, configManager, sessionFactory, repo });
     this.processingLabel = "paser-processing";
     this.triggerHashtag = "#ai-assistance";
     this.botLogin = null;
+    this.activeIssues = new Set();
   }
 
   /**
-   * Scans GitHub issues for the trigger hashtag and processes any that are not already being handled.
-   * @returns {Promise<void>}
+   * Takes one snapshot and attempts each eligible issue once; no polling is started.
+   * @returns {Promise<void>} Resolves after all issues and publications settle.
    */
   async run() {
-    if (!this.botLogin) {
-      const userData = await githubApi.getAuthenticatedUser();
-      this.botLogin = userData.login;
+    this.botLogin = (await this.githubApi.getAuthenticatedUser()).login;
+    const issues = await this.githubApi.listIssues(this.repo);
+    const failures = [];
+    for (let index = 0; index < issues.length; index += 1) {
+      const issue = issues[index];
+      if (!issue.pull_request && issue.state !== "closed" &&
+          (issue.body || "").includes(this.triggerHashtag) &&
+          !(issue.labels || []).some((label) => (label.name || label) === this.processingLabel)) {
+        try {
+          await this.processIssue(issue);
+        } catch (error) {
+          failures.push(error);
+        }
+      }
     }
-    const issues = await githubApi.listIssues();
-    const filtered = issues.filter(
-      (i) =>
-        (i.body || "").includes(this.triggerHashtag) &&
-        !(i.labels || []).some((l) => l.name === this.processingLabel),
-    );
-
-    await filtered.reduce(async (promise, issue) => {
-      await promise;
-      return this.processIssue(issue);
-    }, Promise.resolve());
+    if (failures.length) throw new AggregateError(failures, "GitHub issue processing failed");
   }
 
   /**
-   * Processes a single GitHub issue by adding a processing label, initializing a chat session,
-   * and removing the label upon completion.
-   * @param {object} issue - The GitHub issue object to process.
-   * @returns {Promise<void>}
+   * Runs one issue turn, publishes completion or error, and always releases its label.
+   * Completion receipts prevent repeating unchanged inputs across invocations.
+   * Labels are advisory and do not provide a distributed lock.
+   * @param {object} issue - The issue to process.
+   * @returns {Promise<void>} Resolves after comment publication and label removal.
    */
   async processIssue(issue) {
-    const { number: issueNumber, body: issueBody = "" } = issue;
-    await githubApi.addLabel(issueNumber, this.processingLabel);
+    const { number } = issue;
+    if (this.activeIssues.has(number)) return;
+    this.activeIssues.add(number);
+    let labeled = false;
+    const failures = [];
     try {
-      const configManager = new ConfigManager();
-      const providerManager = new ProviderManager();
-      const providerId = configManager.get("provider", "GEMINI");
-
-      const ui = new GitHubUI(issueNumber);
-      const assistant = await providerManager.createAdapter({
-        providerId,
-        ui,
-        configManager,
-        userNickname: "user",
-        agentNickname: "assistant",
+      if (!this.botLogin) this.botLogin = (await this.githubApi.getAuthenticatedUser()).login;
+      const comments = await this.githubApi.getIssueComments(number, this.repo);
+      const inputs = comments.filter((comment) => comment.user?.login !== this.botLogin);
+      const version = createHash("sha256").update(JSON.stringify([
+        issue.title || "", issue.body || "", inputs.map((comment) => [comment.id, comment.body || ""]),
+      ])).digest("hex");
+      const marker = `<!-- paser-mini:completed:${version} -->`;
+      if (comments.some((comment) => comment.user?.login === this.botLogin && (comment.body || "").includes(marker))) return;
+      await this.githubApi.addLabel(number, this.processingLabel, this.repo);
+      labeled = true;
+      const ui = new GitHubUI(number, this.repo, this.githubApi);
+      const session = await this.sessionFactory({
+        ui, configManager: this.configManager || new ConfigManager(),
+        systemInstruction: this.systemInstruction, tools: this.tools, pureMode: this.pureMode,
+        instanceMode: true,
       });
-
-      // Provide dummy identity objects to satisfy ChatManager requirements
-      const user = { nickname: "user" };
-      const model = { nickname: "assistant", temperature: 1.0, name: "model" };
-
-      const chatManager = new ChatManager({
-        assistant,
-        tools: this.tools,
-        systemInstruction: this.systemInstruction,
-        pureMode: this.pureMode,
-        ui,
-        user,
-        model,
-        configManager,
-      });
-
-      await chatManager.run(
-        `SYSTEM: GitHub Issue #${issueNumber}.\n${issueBody}`,
-      );
+      const discussion = inputs.map((comment) => `${comment.user?.login || "user"}: ${comment.body || ""}`).join("\n\n");
+      await session.runOnce(`GitHub Issue #${number}: ${issue.title || ""}\n${issue.body || ""}\n\n${discussion}`);
+      await ui.flush();
+      await this.githubApi.postComment(number, `Processing completed.\n\n${marker}`, this.repo);
+    } catch (error) {
+      failures.push(error);
+      try {
+        await this.githubApi.postComment(number, `Paser Mini could not complete this issue: ${error.message}`, this.repo);
+      } catch (publicationError) {
+        failures.push(publicationError);
+      }
     } finally {
-      await githubApi.removeLabel(issueNumber, this.processingLabel);
+      if (labeled) {
+        try {
+          await this.githubApi.removeLabel(number, this.processingLabel, this.repo);
+        } catch (labelError) {
+          failures.push(labelError);
+        }
+      }
+      this.activeIssues.delete(number);
     }
+    if (failures.length) throw new AggregateError(failures, `Issue #${number} failed`);
   }
 }
 

@@ -234,6 +234,36 @@ class ChatManager {
   }
 
   /**
+   * Initializes the adapter without opening terminal input or requesting another turn.
+   */
+  initializeSession() {
+    this.assistant.setIdentities(this.user, this.model);
+    this.assistant.startChat(this.model.name, this.systemInstruction, this.model.temperature);
+  }
+
+  /**
+   * Runs one complete conversation turn and waits for asynchronous UI publications.
+   * @param {string} input - The initial issue or message.
+   * @returns {Promise<void>} Resolves after the turn and its publications finish.
+   */
+  async runOnce(input) {
+    this.initializeSession();
+    const failures = [];
+    try {
+      await this.processTurn(input);
+    } catch (error) {
+      failures.push(error);
+    }
+    try {
+      await this.ui.flush?.();
+    } catch (error) {
+      failures.push(error);
+    }
+    if (failures.length === 1) throw failures[0];
+    if (failures.length > 1) throw new AggregateError(failures, "Turn and UI publication failed");
+  }
+
+  /**
    * Starts the main chat loop and initializes memory/system contexts.
    * @param {string|null} [initialInput] - Optional initial message to process.
    * @returns {Promise<void>}
@@ -241,8 +271,7 @@ class ChatManager {
   async run(initialInput = null) {
     logger.info("Initializing ChatManager.run");
 
-    this.assistant.setIdentities(this.user, this.model);
-    this.assistant.startChat(this.model.name, this.systemInstruction, this.model.temperature);
+    this.initializeSession();
 
     if (this.ui.initInput) {
       this.ui.initInput();

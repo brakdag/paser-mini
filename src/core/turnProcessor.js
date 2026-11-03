@@ -46,7 +46,7 @@ class TurnProcessor {
 
     if (this.engine.strictPureMode) {
       if (currentResponse.trim()) {
-        this.ui.displayChatMessage(this.ui.model.nickname, currentResponse);
+        await this.ui.displayChatMessage(this.ui.model.nickname, currentResponse);
       }
       return;
     }
@@ -94,7 +94,7 @@ class TurnProcessor {
 
     const finalResponse = this.parser.cleanResponse(currentResponse);
     if (finalResponse.trim()) {
-      this.ui.displayChatMessage(this.ui.model.nickname, finalResponse);
+      await this.ui.displayChatMessage(this.ui.model.nickname, finalResponse);
     }
   }
 

@@ -13,17 +13,21 @@ export default class GithubTools {
   #gitTools;
 
   /**
-   * Initializes the GithubTools instance and configures the axios client with retry logic.
+   * Initializes a GitHub client with finite request timeouts.
+   * @param {object} [options] - Injectable transport and repository resolver.
+   * @param {object} [options.client] - Offline or custom HTTP transport.
+   * @param {object} [options.gitTools] - Repository resolver.
    */
-  constructor() {
-    this.#client = axios.create({
+  constructor({ client, gitTools } = {}) {
+    this.#client = client || axios.create({
+      timeout: 30000,
       baseURL: this.#GITHUB_API_URL,
       headers: {
         Accept: "application/vnd.github.v3+json",
       },
     });
 
-    axiosRetry(this.#client, {
+    if (!client) axiosRetry(this.#client, {
       retries: 3,
       retryDelay: axiosRetry.exponentialDelay,
       /**
@@ -36,7 +40,7 @@ export default class GithubTools {
         error.response?.status === 429,
     });
 
-    this.#gitTools = new GitTools();
+    this.#gitTools = gitTools || new GitTools();
   }
 
   /**
@@ -100,8 +104,26 @@ export default class GithubTools {
    */
   async listIssues(repo) {
     const { targetRepo, headers } = await this.#prepareRequest(repo);
-    const response = await this.#client.get(`/repos/${targetRepo}/issues`, { headers });
-    return response.data;
+    return this.#getPages(`/repos/${targetRepo}/issues`, headers, { state: "open", sort: "created", direction: "asc" });
+  }
+
+  /**
+   * Collects paginated list results, refusing unbounded or malformed responses.
+   * @param {string} url - The fixed API resource path.
+   * @param {object} headers - Authentication headers.
+   * @param {object} [params] - Additional list parameters.
+   * @returns {Promise<Array>} All entries from the finite traversal.
+   */
+  async #getPages(url, headers, params = {}) {
+    const entries = [];
+    for (let page = 1; page <= 1000; page += 1) {
+      const response = await this.#client.get(url, { headers, params: { ...params, per_page: 100, page } });
+      if (!Array.isArray(response.data)) throw new Error("Invalid GitHub list response");
+      entries.push(...response.data);
+      const link = response.headers?.link;
+      if (link ? !/rel="next"/.test(link) : response.data.length < 100) return entries;
+    }
+    throw new Error("GitHub pagination exceeded 1000 pages");
   }
 
   /**
@@ -231,10 +253,6 @@ export default class GithubTools {
    */
   async getIssueComments(issueNumber, repo) {
     const { targetRepo, headers } = await this.#prepareRequest(repo);
-    const response = await this.#client.get(
-      `/repos/${targetRepo}/issues/${issueNumber}/comments`,
-      { headers },
-    );
-    return response.data;
+    return this.#getPages(`/repos/${targetRepo}/issues/${issueNumber}/comments`, headers);
   }
 }

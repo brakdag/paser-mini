@@ -1,11 +1,9 @@
 import "dotenv/config";
 import parseCliOptions from "./core/cliOptions.js";
 import TerminalUI from "./core/terminalUI.js";
-import ChatManager from "./core/chatManager.js";
+import createSession from "./core/sessionFactory.js";
 import ConfigManager from "./core/configManager.js";
-import ProviderManager from "./infrastructure/providerManager.js";
 import promptManager from "./core/systemPromptManager.js";
-import { getToolInstance } from "./infrastructure/registry.js";
 import mcpManager from "./infrastructure/McpManager.js";
 import logger from "./core/logger.js";
 
@@ -18,66 +16,23 @@ async function main() {
   const options = parseCliOptions();
   const configManager = new ConfigManager();
 
-  if (options.githubMode) {
-    const { GitHubModeOrchestrator } =
-      await import("./core/githubModeOrchestrator.js");
-    
-    const { systemInstruction, filteredTools, pureMode } = await promptManager.buildPrompt(options);
+  const { systemInstruction, filteredTools, pureMode } = await promptManager.buildPrompt(options);
 
-    const orchestrator = new GitHubModeOrchestrator(
-      systemInstruction,
-      filteredTools,
-      pureMode,
-    );
-    await orchestrator.run();
+  if (options.githubMode) {
+    const { default: GitHubModeOrchestrator } = await import("./core/githubModeOrchestrator.js");
+    try {
+      const orchestrator = new GitHubModeOrchestrator(systemInstruction, filteredTools, pureMode, { configManager });
+      await orchestrator.run();
+    } finally {
+      promptManager.saveCache();
+      await mcpManager.shutdown();
+    }
     return;
   }
 
-  const [ui, providerManager, memoryToolsInstance, systemToolsInstance, utilToolsInstance] = await Promise.all([
-    new TerminalUI(),
-    new ProviderManager(),
-    getToolInstance("memoryTools"),
-    getToolInstance("systemTools"),
-    getToolInstance("utilTools"),
-  ]);
-
-  const { systemInstruction, filteredTools, pureMode } = await promptManager.buildPrompt(options);
-
-  const providerId = configManager.get("provider", "GEMINI");
-  const userNick = configManager.get("user_nickname", "user");
-  const agentNick = configManager.get("agent_nickname", "assistant");
-  const modelName = configManager.get("model_name", "gemini-2.0-flash");
-  const temperature = parseFloat(configManager.get("default_temperature", 0.7));
-
-  const user = { nickname: userNick };
-  const model = { nickname: agentNick, name: modelName, temperature };
-
-  logger.info(`Startup: Loading adapter for provider ${providerId}...`);
-
-  const assistant = await providerManager.createAdapter({
-    providerId,
-    ui,
-    configManager,
-    userNickname: userNick,
-    agentNickname: agentNick,
+  const chatManager = await createSession({
+    ui: new TerminalUI(), configManager, systemInstruction, tools: filteredTools, pureMode,
   });
-
-  const chatManager = new ChatManager({
-    assistant,
-    tools: filteredTools,
-    systemInstruction,
-    pureMode,
-    ui,
-    user,
-    model,
-    configManager,
-  });
-
-  chatManager.providerManager = providerManager;
-
-  memoryToolsInstance.setMemoryContext(assistant, chatManager);
-  systemToolsInstance.setContext(assistant, chatManager);
-  utilToolsInstance.setIdentityContext(model);
 
   logger.info("Startup: Initialization complete. Handing off to ChatManager.\n");
   
