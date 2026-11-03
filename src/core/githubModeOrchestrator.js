@@ -15,10 +15,12 @@ class GitHubModeOrchestrator {
    * Initializes the GitHubModeOrchestrator.
    * @param {string} systemInstruction - The system prompt/instructions for the AI assistant.
    * @param {object} tools - The map of available tools for the AI to use.
+   * @param {boolean} [pureMode] - Whether tool execution is explicitly disabled.
    */
-  constructor(systemInstruction, tools) {
+  constructor(systemInstruction, tools, pureMode = false) {
     this.systemInstruction = systemInstruction;
     this.tools = tools;
+    this.pureMode = pureMode;
     this.processingLabel = "paser-processing";
     this.triggerHashtag = "#ai-assistance";
     this.botLogin = null;
@@ -77,6 +79,7 @@ class GitHubModeOrchestrator {
         assistant,
         tools: this.tools,
         systemInstruction: this.systemInstruction,
+        pureMode: this.pureMode,
         ui,
         user,
         model,

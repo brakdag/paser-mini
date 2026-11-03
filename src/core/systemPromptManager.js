@@ -15,7 +15,7 @@ const CACHE_FILE = path.join(CACHE_DIR, "startup.json");
  * SystemPromptManager handles the construction of the system prompt,
  * incorporating CLI injections, filtering tools, and caching the result for fast startup.
  */
-class SystemPromptManager {
+export class SystemPromptManager {
   /**
    * Initializes the SystemPromptManager.
    */
@@ -62,13 +62,14 @@ class SystemPromptManager {
   /**
    * Loads the system prompt from cache if valid, otherwise builds a new one.
    * @param {object} options - The parsed CLI options from commander.
-   * @returns {Promise<{systemInstruction: string, filteredTools: object}>} An object containing the final system instruction and the filtered tools.
+   * @returns {Promise<{systemInstruction: string, filteredTools: object, pureMode: boolean}>} The prompt, tools and explicit execution mode.
    */
   async buildPrompt(options) {
     this._options = options;
 
-    if (options.noSystemInstruction) {
-      return { systemInstruction: "", filteredTools: {} };
+    if (options.pureMode) {
+      this._pendingCache = null;
+      return { systemInstruction: "", filteredTools: {}, pureMode: true };
     }
 
     // --- MCP Integration ---
@@ -101,6 +102,7 @@ class SystemPromptManager {
         );
 
         const optionsMatch =
+          cacheData.options.pureMode === false &&
           cacheData.options.injectSystemInstruction ===
             options.injectSystemInstruction &&
           cacheData.options.systemInstruction === options.systemInstruction;
@@ -119,6 +121,7 @@ class SystemPromptManager {
           return {
             systemInstruction: cacheData.systemInstruction,
             filteredTools,
+            pureMode: false,
           };
         }
       } catch (err) {
@@ -153,7 +156,7 @@ class SystemPromptManager {
     }
 
     const baseInstr =
-      options.systemInstruction ||
+      options.systemInstruction ??
       generateSystemInstruction(Object.keys(filteredTools), mcpSchemas);
 
     const finalInstruction = injection
@@ -163,6 +166,7 @@ class SystemPromptManager {
     this._pendingCache = {
       mtimes: currentMtimes,
       options: {
+        pureMode: false,
         injectSystemInstruction: options.injectSystemInstruction,
         systemInstruction: options.systemInstruction,
       },
@@ -175,12 +179,13 @@ class SystemPromptManager {
     return {
       systemInstruction: finalInstruction,
       filteredTools,
+      pureMode: false,
     };
   }
 
   /**
    * Forces a bypass of the cache, reads files from disk, and returns the fresh prompt.
-   * @returns {Promise<{systemInstruction: string, filteredTools: object}>} The fresh system prompt and tools.
+   * @returns {Promise<{systemInstruction: string, filteredTools: object, pureMode: boolean}>} The fresh prompt, tools and execution mode.
    */
   async rebuildCache() {
     this._forceRebuild = true;

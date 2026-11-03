@@ -159,12 +159,6 @@ const PREFIX_COMMANDS = {
    * @param {CommandContext} args The context.
    * @returns {Promise<boolean>} Always true.
    */
-  "/r ": ({ cm, ui, payload }) =>
-    SessionCommands.handleRewrite(cm, ui, payload),
-  /**
-   * @param {CommandContext} args The context.
-   * @returns {Promise<boolean>} Always true.
-   */
   "/s ": ({ cm, ui, payload }) =>
     SessionCommands.handleSavePayload(cm, ui, payload || "last_request.json"),
   /**
@@ -300,6 +294,10 @@ class CommandHandler {
   async handle(userInput) {
     const input = userInput.trim();
     const lowerInput = input.toLowerCase();
+
+    if (/^\/(?:rewrite|r)(?:\s|$)/i.test(input)) {
+      return SessionCommands.handleRewrite(this.chatManager, this.ui, input.replace(/^\/\S+\s*/, ""));
+    }
 
     if (COMMAND_MAP[lowerInput])
       return COMMAND_MAP[lowerInput](this.chatManager, this.ui);

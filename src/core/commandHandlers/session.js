@@ -6,22 +6,15 @@ import fs from "fs/promises";
  */
 class SessionCommands {
   /**
-   * Removes the last interaction from history and reprompts the model with a new message.
+   * Rewrites the last complete turn through the session's transactional operation.
    * @param {object} chatManager The chat manager instance.
    * @param {object} ui The terminal UI instance.
    * @param {string} newMessage The new message to send after rewriting.
    * @returns {Promise<boolean>} True if the operation succeeded.
    */
   static async handleRewrite(chatManager, ui, newMessage) {
-    const history = chatManager.assistant.getHistory();
-    if (history.length >= 2) {
-      history.pop();
-      history.pop();
-      ui.displayInfo("Last interaction removed. Reprompting...");
-      chatManager.toolTracker.reset();
-      await chatManager.processTurn(newMessage);
-    } else {
-      ui.displayError("No interaction to remove.");
+    if (await chatManager.rewriteLastTurn(newMessage)) {
+      ui.displayInfo("Last turn rewritten.");
     }
     return true;
   }

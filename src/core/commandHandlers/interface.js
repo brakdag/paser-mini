@@ -183,7 +183,7 @@ class InterfaceCommands {
       ["/cache", "Rebuild system prompt and tools cache"],
       ["/fav", "Manage favorite models (/fav, /fav+, /fav -<idx>, /fav <idx>)"],
       ["/reset", "Hard Reset: Clear history and Leap via Bridge Block"],
-      ["/r <msg>", "Rewrite: Remove last interaction and re-prompt"],
+      ["/rewrite <msg> | /r <msg>", "Replace the last turn, including tool exchanges"],
       ["/rpm <n>", "Set RPM (Requests Per Minute) limit"],
       ["/clear", "Clear terminal"],
       ["/tools", "List all available tools (Native + MCP)"],

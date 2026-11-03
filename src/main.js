@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { Command } from "commander";
+import parseCliOptions from "./core/cliOptions.js";
 import TerminalUI from "./core/terminalUI.js";
 import ChatManager from "./core/chatManager.js";
 import ConfigManager from "./core/configManager.js";
@@ -15,43 +15,19 @@ import logger from "./core/logger.js";
  * @returns {Promise<void>}
  */
 async function main() {
-  const program = new Command();
-
-  program
-    .name("paser-mini")
-    .description("Minimalist Autonomous Agent (JS Port)")
-    .option("-m, --message <message>", "Initial message to send")
-    .option(
-      "-si, --system-instruction <instruction>",
-      "Custom system instructions",
-    )
-    .option(
-      "-isi, --inject-system-instruction <instruction>",
-      "Inject instruction at the start of system prompt",
-    )
-    .option(
-      "-fsi, --file-system-instruction <path>",
-      "Path to file for system instruction injection",
-    )
-    .option("-nsi, --no-system-instruction", "Run without system instructions")
-    .option(
-      "--github-mode",
-      "Run in GitHub mode: process issues with #ai-assistance",
-    )
-    .parse(process.argv);
-
-  const options = program.opts();
+  const options = parseCliOptions();
   const configManager = new ConfigManager();
 
   if (options.githubMode) {
     const { GitHubModeOrchestrator } =
       await import("./core/githubModeOrchestrator.js");
     
-    const { systemInstruction, filteredTools } = await promptManager.buildPrompt(options);
+    const { systemInstruction, filteredTools, pureMode } = await promptManager.buildPrompt(options);
 
     const orchestrator = new GitHubModeOrchestrator(
       systemInstruction,
       filteredTools,
+      pureMode,
     );
     await orchestrator.run();
     return;
@@ -65,7 +41,7 @@ async function main() {
     getToolInstance("utilTools"),
   ]);
 
-  const { systemInstruction, filteredTools } = await promptManager.buildPrompt(options);
+  const { systemInstruction, filteredTools, pureMode } = await promptManager.buildPrompt(options);
 
   const providerId = configManager.get("provider", "GEMINI");
   const userNick = configManager.get("user_nickname", "user");
@@ -90,6 +66,7 @@ async function main() {
     assistant,
     tools: filteredTools,
     systemInstruction,
+    pureMode,
     ui,
     user,
     model,

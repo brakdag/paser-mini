@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from "node:util";
 import SmartToolParser from "./smartParser.js";
 import ExecutionEngine from "./executionEngine.js";
 import CommandHandler from "./commandHandler.js";
@@ -21,16 +22,18 @@ class ChatManager {
    * @param {object} params.assistant - The AI assistant adapter.
    * @param {{[key: string]: (...args: unknown[]) => unknown}} params.tools - The available tools map.
    * @param {string} params.systemInstruction - The system prompt/instructions.
+   * @param {boolean} [params.pureMode] - Whether tool execution is explicitly disabled.
    * @param {object} params.ui - The user interface handler.
    * @param {object} params.user - The shared user identity object.
    * @param {object} params.model - The shared model identity object.
    * @param {boolean} [params.instanceMode] - Whether this is a sub-instance of the agent.
    * @param {ConfigManager|null} [params.configManager] - Optional injected configuration manager.
    */
-  constructor({ assistant, tools, systemInstruction, ui, user, model, instanceMode = false, configManager = null }) {
+  constructor({ assistant, tools, systemInstruction, pureMode = false, ui, user, model, instanceMode = false, configManager = null }) {
     this.assistant = assistant;
     this.tools = tools;
     this.systemInstruction = systemInstruction;
+    this.pureMode = pureMode;
     this.ui = ui;
     this.user = user;
     this.model = model;
@@ -56,7 +59,7 @@ class ChatManager {
       this.ui,
       this.instanceMode,
       null,
-      this.systemInstruction === "",
+      this.pureMode,
     );
     this.commandHandler = new CommandHandler(this, this.ui);
     this.ui.setCommandHandler(this.commandHandler);
@@ -80,6 +83,8 @@ class ChatManager {
     }
     this.stopRequested = false;
     this.logOpened = false;
+    this._lastTurn = null;
+    this._turnInProgress = false;
   }
 
   /**
@@ -144,11 +149,14 @@ class ChatManager {
    * Updates the system instruction and tools registry dynamically.
    * @param {string} systemInstruction - The new system prompt.
    * @param {object} tools - The new tools object.
+   * @param {boolean} [pureMode] - The explicit execution mode, retained when omitted.
    */
-  updateSystemContext(systemInstruction, tools) {
+  updateSystemContext(systemInstruction, tools, pureMode = this.pureMode) {
     this.systemInstruction = systemInstruction;
+    this.pureMode = pureMode;
     this.tools = tools;
     this.engine.tools = tools;
+    this.engine.strictPureMode = pureMode;
     this.turnProcessor.tools = tools;
     
     if (this.assistant && this.assistant.updateSystemInstruction) {
@@ -296,7 +304,55 @@ class ChatManager {
    * @returns {Promise<unknown>} The result of the turn processing.
    */
   async processTurn(userInput) {
-    return this.turnProcessor.process(userInput);
+    if (!userInput?.trim()) return undefined;
+    const { assistant } = this;
+    const before = structuredClone(assistant.getHistory());
+    this._turnInProgress = true;
+    try {
+      const result = await this.turnProcessor.process(userInput);
+      this._lastTurn = { assistant, before, after: structuredClone(assistant.getHistory()) };
+      return result;
+    } finally {
+      this._turnInProgress = false;
+    }
+  }
+
+  /**
+   * Replaces the last tracked turn, including tool exchanges, restoring history on failure.
+   * Tool side effects outside conversation history are not reverted.
+   * @param {string} userInput - The replacement user message.
+   * @returns {Promise<boolean>} Whether a tracked turn was rewritten successfully.
+   */
+  async rewriteLastTurn(userInput) {
+    if (!userInput?.trim()) {
+      this.ui.displayError("Usage: /rewrite <message> (or /r <message>).");
+      return false;
+    }
+    if (this._turnInProgress) {
+      this.ui.displayError("Wait for the active turn to finish before rewriting.");
+      return false;
+    }
+    const previous = this._lastTurn;
+    if (!previous || previous.assistant !== this.assistant || !isDeepStrictEqual(previous.after, this.assistant.getHistory())) {
+      this.ui.displayError("No unchanged tracked turn to rewrite. Send a new message first.");
+      return false;
+    }
+
+    const historyBefore = structuredClone(this.assistant.getHistory());
+    const repetitionBefore = structuredClone(this.repetitionDetector.buffer);
+    try {
+      const history = this.assistant.getHistory();
+      history.splice(0, history.length, ...structuredClone(previous.before));
+      this.repetitionDetector.reset();
+      await this.processTurn(userInput);
+      return true;
+    } catch (error) {
+      const history = this.assistant.getHistory();
+      history.splice(0, history.length, ...historyBefore);
+      this.repetitionDetector.buffer = repetitionBefore;
+      this._lastTurn = previous;
+      throw error;
+    }
   }
 
   /**

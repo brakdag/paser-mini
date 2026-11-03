@@ -44,6 +44,13 @@ class TurnProcessor {
 
     let currentResponse = await this.#sendInitialRequest(userInput);
 
+    if (this.engine.strictPureMode) {
+      if (currentResponse.trim()) {
+        this.ui.displayChatMessage(this.ui.model.nickname, currentResponse);
+      }
+      return;
+    }
+
     let turnComplete = false;
     let iterations = 0;
     let consecutiveErrors = 0;

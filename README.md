@@ -58,8 +58,20 @@ export GOOGLE_API_KEY="your_google_api_key_here"
 | `--system-instruction` | `-si` | Provide custom system instructions |
 | `--inject-system-instruction` | `-isi` | Inject instruction at the start of system prompt |
 | `--file-system-instruction` | `-fsi` | Path to file for system instruction injection |
-| `--no-system-instruction` | `-nsi` | Run without system instructions |
+| `--no-system-instruction` | `-nsi` | Pure chat: no system prompt, tools or MCP startup |
 | `--github-mode` | | Run in GitHub mode (process issues with #ai-assistance) |
+
+`--no-system-instruction` skips prompt injections and MCP initialization. Tool
+syntax in replies is displayed as text. An explicitly empty custom prompt
+(`--system-instruction ""`) keeps tools enabled. If both positive and negative
+system instruction flags are present, the last one wins.
+
+Use `/rewrite <message>` (or `/r <message>`) to replace the latest completed
+turn, including its tool exchanges. If the replacement fails or is interrupted,
+the previous conversation history is restored. Rewriting changes conversation
+history; it does not undo file changes, commands or other tool side effects.
+Imported, reset or manually changed history requires a new completed turn before
+rewriting is available.
 
 ### Switching models during Gemini retries
 
