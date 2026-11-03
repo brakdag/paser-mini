@@ -209,7 +209,7 @@ class BinaryTools {
       throw new Error(`Unsupported action: ${  action}`);
     }
     const safeInput = PathValidator.getSafePath(filePath);
-    const safeOutput = action === "extract" ? PathValidator.getSafePath(params.outputFile) : undefined;
+    const safeOutput = action === "extract" ? PathValidator.getSafeMutationPath(params.outputFile) : undefined;
     return this.#executeHexCommand({ ...params, filePath: safeInput, outputFile: safeOutput });
   }
 

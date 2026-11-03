@@ -8,6 +8,17 @@ const FILE_SIZE_LIMIT = 100 * 1024;
  * Provides tools for file operations.
  */
 class FileTools {
+  #paths;
+
+  /**
+   * Binds file operations to one project path policy.
+   * @param {object} [options] - Tool dependencies.
+   * @param {PathValidator|typeof PathValidator} [options.pathValidator] - Project policy.
+   */
+  constructor({ pathValidator = PathValidator } = {}) {
+    this.#paths = pathValidator;
+  }
+
   /**
    * Pure logic for text replacement.
    * @param {string} content The content to search in.
@@ -125,7 +136,7 @@ class FileTools {
    * @returns {Promise<string>} The file contents.
    */
   async read(filepath) {
-    const safePath = PathValidator.getSafePath(filepath);
+    const safePath = this.#paths.getSafePath(filepath);
     return this.#readFull(safePath);
   }
 
@@ -140,7 +151,7 @@ class FileTools {
    * @returns {Promise<string>} The tailed content.
    */
   async tail(filepath, tail) {
-    const safePath = PathValidator.getSafePath(filepath);
+    const safePath = this.#paths.getSafePath(filepath);
     return this.#readTail(safePath, tail);
   }
 
@@ -153,7 +164,7 @@ class FileTools {
     if (Buffer.byteLength(content, "utf8") > FILE_SIZE_LIMIT) {
       throw new Error("Content too large");
     }
-    const safePath = PathValidator.getSafePath(filepath);
+    const safePath = this.#paths.getSafeMutationPath(filepath);
     await fs.mkdir(path.dirname(safePath), { recursive: true });
     await fs.writeFile(safePath, content, "utf8");
   }
@@ -164,7 +175,7 @@ class FileTools {
    * @returns {Promise<string>} A newline-separated string of contents.
    */
   async list(dirPath = ".") {
-    const files = await fs.readdir(PathValidator.getSafePath(dirPath));
+    const files = await fs.readdir(this.#paths.getSafePath(dirPath));
     return files.join("\n");
   }
 
@@ -173,10 +184,7 @@ class FileTools {
    * @param {string} filepath The path to remove.
    */
   async remove(filepath) {
-    const safePath = PathValidator.getSafePath(filepath);
-    if (PathValidator.isRoot(safePath)) {
-      throw new Error("Security Error: refusing to remove the project root");
-    }
+    const safePath = this.#paths.getSafeMutationPath(filepath, { operation: "remove", recursive: true });
     await fs.rm(safePath, { recursive: true });
   }
 
@@ -186,14 +194,8 @@ class FileTools {
    * @param {string} destination The target path.
    */
   async rename(origin, destination) {
-    const safeOrigin = PathValidator.getSafePath(origin);
-    const safeDestination = PathValidator.getSafePath(destination);
-    if (PathValidator.isRoot(safeOrigin)) {
-      throw new Error("Security Error: refusing to move the project root");
-    }
-    if (PathValidator.isRoot(safeDestination)) {
-      throw new Error("Security Error: refusing to overwrite the project root");
-    }
+    const safeOrigin = this.#paths.getSafeMutationPath(origin, { operation: "move", recursive: true });
+    const safeDestination = this.#paths.getSafeMutationPath(destination, { operation: "overwrite", recursive: true });
     await fs.rename(safeOrigin, safeDestination);
   }
 
@@ -202,7 +204,7 @@ class FileTools {
    * @param {string} dirPath The directory path to create.
    */
   async mkdir(dirPath) {
-    await fs.mkdir(PathValidator.getSafePath(dirPath), { recursive: true });
+    await fs.mkdir(this.#paths.getSafeMutationPath(dirPath), { recursive: true });
   }
 
   /**
@@ -212,7 +214,7 @@ class FileTools {
    * @param {string} replaceText The text to replace it with.
    */
   async replace(filepath, searchText, replaceText) {
-    const safePath = PathValidator.getSafePath(filepath);
+    const safePath = this.#paths.getSafeMutationPath(filepath);
     const content = await fs.readFile(safePath, "utf8");
     const newContent = this.#performReplace(content, searchText, replaceText);
     await fs.writeFile(safePath, newContent, "utf8");
@@ -224,8 +226,8 @@ class FileTools {
    * @param {string} source The source file path.
    */
   async concat(destination, source) {
-    const safeDestination = PathValidator.getSafePath(destination);
-    const safeSource = PathValidator.getSafePath(source);
+    const safeDestination = this.#paths.getSafeMutationPath(destination);
+    const safeSource = this.#paths.getSafePath(source);
     const sourceStats = await fs.stat(safeSource);
     let destinationStats;
     try {
@@ -250,7 +252,7 @@ class FileTools {
    * @param {string} flags The regular expression flags.
    */
   async sed(filepath, pattern, replacement = "", flags = "g") {
-    const safePath = PathValidator.getSafePath(filepath);
+    const safePath = this.#paths.getSafeMutationPath(filepath);
     const content = await fs.readFile(safePath, "utf8");
     const regex = new RegExp(pattern, flags);
     const newContent = content.replace(regex, replacement);
@@ -267,8 +269,8 @@ class FileTools {
    */
   async copy(origin, destination) {
     await fs.copyFile(
-      PathValidator.getSafePath(origin),
-      PathValidator.getSafePath(destination),
+      this.#paths.getSafePath(origin),
+      this.#paths.getSafeMutationPath(destination),
     );
   }
 }

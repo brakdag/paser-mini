@@ -253,16 +253,22 @@ describe("pathValidator", () => {
   });
 
   it("refuses to remove the project root", async () => {
-    await assert.rejects(() => fileTools.remove("."), /refusing to remove the project root/);
-    // The disposable checkout must still be here.
-    await fs.access(path.resolve(process.cwd()));
+    const root = path.join(fixtureDir, "remove-root");
+    await fs.mkdir(root);
+    const tools = new FileTools({ pathValidator: new PathValidator({ root }) });
+    await assert.rejects(() => tools.remove("."), /refusing to remove the project root/);
+    await fs.access(root);
   });
 
   it("refuses to move the project root", async () => {
+    const root = path.join(fixtureDir, "move-root");
+    await fs.mkdir(root);
+    const tools = new FileTools({ pathValidator: new PathValidator({ root }) });
     await assert.rejects(
-      () => fileTools.rename(".", rel("moved")),
+      () => tools.rename(".", "moved"),
       /refusing to move the project root/,
     );
+    await fs.access(root);
   });
 
   it("exposes a stable root identity", () => {

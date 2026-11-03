@@ -1,4 +1,6 @@
 import { execFile } from "child_process";
+import PathValidator from "../utils/pathValidator.js";
+import gitPatchPaths from "../utils/gitPatchPaths.js";
 
 /**
  * Git operations wrapper providing a clean interface for repository management.
@@ -12,11 +14,13 @@ export default class GitTools {
 
   #executableArgs;
 
+  #paths;
+
   /**
    * Creates a Git wrapper bound to a working directory.
    * @param {object} [options] - Construction options.
    * @param {string} [options.cwd] - Repository directory. Defaults to the
-   *   process working directory; tests pass a throwaway repository so they
+   *   stable project root; tests pass a throwaway repository so they
    *   never mutate the checkout they run in.
    * @param {number} [options.timeoutMs] - Per-command timeout.
    * @param {string} [options.executable] - Git executable or test executable.
@@ -24,12 +28,13 @@ export default class GitTools {
    *   invocation, useful when injecting a deterministic test executable.
    */
   constructor({
-    cwd = process.cwd(),
+    cwd = PathValidator.getRoot(),
     timeoutMs = 30000,
     executable = "git",
     executableArgs = [],
   } = {}) {
-    this.#cwd = cwd;
+    this.#paths = new PathValidator({ root: cwd });
+    this.#cwd = this.#paths.getRoot();
     this.#timeoutMs = timeoutMs;
     this.#executable = executable;
     this.#executableArgs = executableArgs;
@@ -41,10 +46,12 @@ export default class GitTools {
    * closed explicitly. Without this, `git apply -` waits forever.
    * @param {string[]} args - Command arguments for the git binary.
    * @param {string} [input] - Optional string to pass to stdin.
+   * @param {object} [options] - Output handling.
+   * @param {boolean} [options.trim] - Whether to trim human-readable output.
    * @returns {Promise<string>} The trimmed standard output of the command.
    * @throws {Error} If the git command fails or times out.
    */
-  async #run(args, input) {
+  async #run(args, input, { trim = true } = {}) {
     return new Promise((resolve, reject) => {
       let commandComplete = false;
       let stdinError;
@@ -76,7 +83,7 @@ export default class GitTools {
           }
           // Success is defined by the exit code, never by stdout content:
           // `git apply` and `git restore` legitimately print nothing.
-          resolve(stdout.trim());
+          resolve(trim ? stdout.trim() : stdout);
         },
       );
 
@@ -125,7 +132,7 @@ export default class GitTools {
    * @returns {Promise<string>} The diff output or a message indicating no changes.
    */
   async gitDiffAll(filepath) {
-    const args = filepath === undefined ? ["diff"] : ["diff", "--", filepath];
+    const args = filepath === undefined ? ["diff"] : ["--literal-pathspecs", "diff", "--", this.#paths.getSafePath(filepath)];
     const stdout = await this.#run(args);
     return stdout || "No changes found in the repository.";
   }
@@ -141,6 +148,36 @@ export default class GitTools {
     if (!patch) throw new Error("Patch content is required.");
 
     try {
+      // Ask Git for exact destination names, including binary patches and
+      // quoted filenames. This is read-only; validate every path before apply.
+      const stats = await this.#run(["apply", "--numstat", "-z", "-"], patch, { trim: false });
+      let prefix = "";
+      try {
+        const output = await this.#run(["rev-parse", "--show-prefix"], undefined, { trim: false });
+        prefix = output.replace(/\n$/, "");
+      } catch (error) {
+        // git apply also works outside repositories, where names are relative
+        // to cwd directly. Other discovery failures must not be swallowed.
+        if (!error.message.includes("not a git repository")) throw error;
+      }
+      /**
+       * Converts repository patch names into paths under the project cwd.
+       * @param {string} filename - Path reported by Git or a patch header.
+       * @returns {string} Project-relative path.
+       */
+      const relativePath = (filename) => {
+        if (!filename.startsWith(prefix)) throw new Error("Security Error: patch path is outside of project root");
+        return filename.slice(prefix.length);
+      };
+      stats.split("\0").filter(Boolean).forEach((record) => {
+        const fields = record.match(/^[^\t]+\t[^\t]+\t([\s\S]*)$/);
+        if (!fields) throw new Error("Cannot determine patch destination");
+        this.#paths.getSafeMutationPath(relativePath(fields[1]), { recursive: true });
+      });
+      gitPatchPaths(patch).forEach((source) => {
+        if (source.mutation) this.#paths.getSafeMutationPath(relativePath(source.path), { recursive: true });
+        else this.#paths.getSafePath(relativePath(source.path));
+      });
       return await this.#run(["apply", "--whitespace=nowarn", "-"], patch);
     } catch (e) {
       const wrappedError = new Error(`Patch application failed: ${e.message}`, { cause: e });
@@ -168,6 +205,7 @@ export default class GitTools {
   async restoreFile(f) {
     const filepath = typeof f === 'object' ? f.filepath : f;
     if (!filepath) throw new Error("File path is required.");
-    return this.#run(["restore", "--", filepath]);
+    const safePath = this.#paths.getSafeMutationPath(filepath, { recursive: true });
+    return this.#run(["--literal-pathspecs", "restore", "--", safePath]);
   }
 }

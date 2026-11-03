@@ -13,6 +13,17 @@ class LoadTools {
 
   #cachedDir = null;
 
+  #paths;
+
+  /**
+   * Binds indexing and loading to one stable project root.
+   * @param {object} [options] - Tool dependencies.
+   * @param {PathValidator|typeof PathValidator} [options.pathValidator] - Project policy.
+   */
+  constructor({ pathValidator = PathValidator } = {}) {
+    this.#paths = pathValidator;
+  }
+
   /**
    * Parses .gitignore and returns a set of ignore patterns.
    * @param {string} baseDir The directory containing .gitignore.
@@ -21,13 +32,14 @@ class LoadTools {
   async #parseGitignore(baseDir) {
     const gitignorePath = path.join(baseDir, ".gitignore");
     try {
-      const content = await fs.readFile(gitignorePath, "utf8");
+      const content = await fs.readFile(this.#paths.getSafePath(gitignorePath), "utf8");
       return content
         .split("\n")
         .map((l) => l.trim())
         .filter((l) => l && !l.startsWith("#"));
-    } catch {
-      return [];
+    } catch (error) {
+      if (error.code === "ENOENT") return [];
+      throw error;
     }
   }
 
@@ -117,10 +129,15 @@ class LoadTools {
    * @returns {Promise<string>} JSON string with file index and total count.
    */
   async index(dirPath = ".", filter = null) {
-    const safePath = PathValidator.getSafePath(dirPath);
-    const patterns = await this.#parseGitignore(process.cwd());
+    const safePath = this.#paths.getSafePath(dirPath);
+    // Resolve the directory before path.join constructs descendant paths;
+    // joining an unresolved symlink/.. would change its traversal semantics.
+    const directory = await fs.realpath(safePath);
+    const root = this.#paths.getRoot();
+    const realRoot = await fs.realpath(root);
+    const patterns = await this.#parseGitignore(root);
     const extensions = this.#parseFilter(filter);
-    const { files } = await this.#scanDirectory(safePath, process.cwd(), patterns, 0, extensions);
+    const { files } = await this.#scanDirectory(directory, realRoot, patterns, 0, extensions);
     this.#cachedIndex = files;
     this.#cachedDir = safePath;
     return JSON.stringify({ total: files.length, files });
@@ -155,7 +172,7 @@ class LoadTools {
           `${BOUNDARY}\nContent-ID: ${id}\nContent-Type: text/plain\nContent-Description: File not found\n\nError: File with ID ${id} not found in index.`
         );
       } else {
-        const safePath = PathValidator.getSafePath(fileEntry.path);
+        const safePath = this.#paths.getSafePath(fileEntry.path);
         const stats = await fs.stat(safePath);
 
         if (stats.size > FILE_SIZE_LIMIT) {

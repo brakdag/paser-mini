@@ -149,7 +149,7 @@ export default class JsonTools {
     const data = await this.#loadJson(filePath);
     const parts = this.#parsePath(pathStr);
     const updatedData = this.#setByPathImmutable(data, parts, value);
-    const safePath = PathValidator.getSafePath(filePath);
+    const safePath = PathValidator.getSafeMutationPath(filePath);
     await fs.writeFile(safePath, JSON.stringify(updatedData, null, 2), "utf8");
   }
 }

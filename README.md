@@ -100,3 +100,30 @@ the same project-root path validation as file tools. External paths and symlinks
 resolving outside the project are rejected. Internal symlinks remain supported,
 including parent segments after a link. Image conversions use a separate temporary
 directory per call and clean it up after success or failure.
+
+The project root is fixed when the path policy is created; changing the process
+working directory does not change it. Tests and embedded callers can create an
+explicit policy with `new PathValidator({ root })`; `FileTools`, `SearchTools`,
+`LoadTools` and `EvalTools` accept it as `{ pathValidator }`.
+
+File mutations preserve the project root and any `.git`, `.paser-mini`, `.codex`,
+`.agents` or `.aws` subtree, including aliases to those paths. Removing or moving
+a parent containing such metadata is also refused before changing anything.
+Other dot-prefixed names such as `..cache`, `.gitignore` and `.github` remain
+editable. The same checks apply to JSON updates, binary extraction, heap snapshot
+and documentation destinations, and the `BrowserFS` convenience helpers.
+Mutation paths resolve parent components before use, preserving the final symlink,
+so recursive parent creation does not create directories discarded by `..`.
+
+Git `diff(path)` and `restore(path)` accept literal paths, including names with
+wildcards; Git pathspec expressions are not expanded. Patches are parsed by Git
+and their source/destination paths are validated before applying any changes.
+Metadata changes and paths outside a project started in a repository subdirectory
+are rejected. Git's own repository bookkeeping remains managed by Git.
+
+This policy checks filesystem paths before use. It does not provide operating
+system isolation against concurrent path changes or inode aliases such as hard
+links. Application-owned persistence writes its own state directly. JavaScript,
+shell commands, debugger commands and code launched by analysis/documentation
+tools still run with the user's permissions; `run` isolation remains tracked in
+T02 of `TODO.md`.

@@ -115,7 +115,7 @@ export class SystemTools {
     }
 
     const safeTargetPath = PathValidator.getSafePath(targetPath);
-    const safeOutputDir = PathValidator.getSafePath(outputDir);
+    const safeOutputDir = PathValidator.getSafeMutationPath(outputDir, { recursive: true });
 
     await fs.mkdir(safeOutputDir, { recursive: true });
     await this.#execFilePromise("npx", ["jsdoc", safeTargetPath, "-d", safeOutputDir], {

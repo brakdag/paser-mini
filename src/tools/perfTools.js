@@ -45,7 +45,7 @@ export default class PerfTools {
       throw new Error("The 'filepath' parameter is required for heap snapshots.");
     }
 
-    const safePath = PathValidator.getSafePath(filepath);
+    const safePath = PathValidator.getSafeMutationPath(filepath);
     const snapshotStream = v8.getHeapSnapshot();
     const fileStream = fs.createWriteStream(safePath);
 

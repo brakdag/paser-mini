@@ -1,6 +1,6 @@
 import fs from "fs/promises";
-import path from "path";
 import vm from "vm";
+import PathValidator from "../utils/pathValidator.js";
 
 /**
  * Executes JavaScript in a separate V8 context (`node:vm`).
@@ -18,7 +18,7 @@ import vm from "vm";
  * asynchronous work the analysed code may have started.
  */
 class EvalTools {
-  #ROOT_DIR = process.cwd();
+  #paths;
 
   /**
    * Virtual File System provided to the sandbox.
@@ -31,7 +31,7 @@ class EvalTools {
      * @returns {Promise<void>}
      */
     write: async (filename, content) => {
-      const resolvedPath = this.#getSafeSandboxPath(filename);
+      const resolvedPath = this.#getSafeSandboxPath(filename, true);
       await fs.writeFile(resolvedPath, content, "utf8");
     },
     /**
@@ -47,37 +47,32 @@ class EvalTools {
      * Lists files in the sandbox root directory.
      * @returns {Promise<string[]>} A list of filenames.
      */
-    list: async () => fs.readdir(this.#ROOT_DIR),
+    list: async () => fs.readdir(this.#paths.getRoot()),
     /**
      * Deletes a file within the sandbox root.
      * @param {string} filename - The name of the file to delete.
      * @returns {Promise<void>}
      */
     delete: async (filename) => {
-      const resolvedPath = this.#getSafeSandboxPath(filename);
+      const resolvedPath = this.#getSafeSandboxPath(filename, true);
       await fs.unlink(resolvedPath);
     },
   };
 
   /**
-   * Validates and resolves a filename within the secure sandbox root.
+   * Applies the project policy to BrowserFS convenience helpers only.
+   * This does not constrain arbitrary JavaScript (see the class documentation).
    * @param {string} filename - The filename to validate.
+   * @param {boolean} [mutation] - Whether the helper changes the filesystem.
    * @returns {string} The absolute, safe path.
    * @throws {Error} If the path attempts to traverse outside the sandbox root.
    */
-  #getSafeSandboxPath(filename) {
-    const resolvedPath = path.resolve(this.#ROOT_DIR, filename);
-    // path.relative, not startsWith: the latter accepts sibling directories
-    // such as "<root>-evil" whose name merely begins with the root path.
-    const relative = path.relative(this.#ROOT_DIR, resolvedPath);
-    const escapes =
-      relative === ".." ||
-      relative.startsWith(`..${path.sep}`) ||
-      path.isAbsolute(relative);
-    if (escapes) {
-      throw new Error(`SECURITY_ERR: Access denied to ${filename}`);
+  #getSafeSandboxPath(filename, mutation = false) {
+    try {
+      return mutation ? this.#paths.getSafeMutationPath(filename) : this.#paths.getSafePath(filename);
+    } catch (error) {
+      throw new Error(`SECURITY_ERR: ${error.message}`, { cause: error });
     }
-    return resolvedPath;
   }
 
   #trace = [];
@@ -86,8 +81,11 @@ class EvalTools {
 
   /**
    * Initializes the EvalTools instance and creates the VM context.
+   * @param {object} [options] - Tool dependencies.
+   * @param {PathValidator|typeof PathValidator} [options.pathValidator] - Project policy.
    */
-  constructor() {
+  constructor({ pathValidator = PathValidator } = {}) {
+    this.#paths = pathValidator;
     this.#context = this.#createContext();
   }
 

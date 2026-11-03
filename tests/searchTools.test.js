@@ -2,6 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert";
 import fs from "node:fs/promises";
 import SearchTools from "../src/tools/searchTools.js";
+import PathValidator from "../src/utils/pathValidator.js";
 
 const searchTools = new SearchTools();
 
@@ -19,7 +20,7 @@ describe("searchTools", () => {
 
   it("continues matching when a listed directory disappears", async (t) => {
     t.mock.method(fs, "readdir", async (dir) => {
-      if (dir === ".") {
+      if (dir === PathValidator.getRoot()) {
         return [
           {
             name: "gone",

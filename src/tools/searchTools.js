@@ -12,6 +12,17 @@ const GREP_TIMEOUT_MS = 80000;
  * Tools for searching files and text within the project.
  */
 export default class SearchTools {
+  #paths;
+
+  /**
+   * Binds searches to one stable project root.
+   * @param {object} [options] - Tool dependencies.
+   * @param {PathValidator|typeof PathValidator} [options.pathValidator] - Project policy.
+   */
+  constructor({ pathValidator = PathValidator } = {}) {
+    this.#paths = pathValidator;
+  }
+
   /**
    * Searches for files matching a glob-like pattern.
    * @param {string} pattern - The search pattern.
@@ -21,6 +32,7 @@ export default class SearchTools {
   async searchFilesPatternFixed(pattern) {
     const results = [];
     const regex = this.#globToRegex(pattern);
+    const root = this.#paths.getRoot();
 
     /**
      * Recursively walks through directories to find matching files.
@@ -32,7 +44,7 @@ export default class SearchTools {
         files = await fs.readdir(dir, { withFileTypes: true });
       } catch (error) {
         // Entries may be deleted after their parent directory was listed.
-        if (error.code === "ENOENT" && dir !== ".") return;
+        if (error.code === "ENOENT" && dir !== root) return;
         throw error;
       }
       await Promise.all(
@@ -42,16 +54,17 @@ export default class SearchTools {
           }
 
           const res = path.join(dir, file.name);
+          const relative = path.relative(root, res);
           if (file.isDirectory()) {
             await walk(res);
-          } else if (regex.test(file.name) || regex.test(res)) {
-            results.push(res.replace(/^\.\//, ""));
+          } else if (regex.test(file.name) || regex.test(relative)) {
+            results.push(relative);
           }
         }),
       );
     };
 
-    await walk(".");
+    await walk(root);
     return JSON.stringify(results.slice(0, MAX_GREP_RESULTS));
   }
 
@@ -91,8 +104,8 @@ export default class SearchTools {
     }
 
     return new Promise((resolve, reject) => {
-      const rootPath = process.cwd();
-      const targetPath = PathValidator.getSafePath(searchPath);
+      const rootPath = this.#paths.getRoot();
+      const targetPath = this.#paths.getSafePath(searchPath);
       const child = spawn("grep", [
         "-rInH",
         "--exclude-dir=.git",
@@ -104,6 +117,7 @@ export default class SearchTools {
       ]);
 
       let stdoutData = "";
+      let timer;
 
       child.stdout.on("data", (data) => {
         stdoutData += data.toString();
@@ -111,6 +125,7 @@ export default class SearchTools {
         // Abort if output exceeds max size
         if (Buffer.byteLength(stdoutData, "utf8") > MAX_STDOUT_SIZE) {
           child.kill("SIGKILL");
+          clearTimeout(timer);
           resolve(this.#parseGrepOutput(stdoutData, rootPath));
           return;
         }
@@ -119,13 +134,18 @@ export default class SearchTools {
 
         if (currentLines >= MAX_GREP_LINES) {
           child.kill("SIGKILL");
+          clearTimeout(timer);
           resolve(this.#parseGrepOutput(stdoutData, rootPath));
         }
       });
 
-      child.on("error", (err) => reject(err));
+      child.on("error", (err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
 
       child.on("close", (code) => {
+        clearTimeout(timer);
         if (code === 1) {
           return resolve(JSON.stringify([]));
         }
@@ -135,7 +155,7 @@ export default class SearchTools {
         return reject(new Error(`Grep process exited with code ${code}`));
       });
 
-      setTimeout(() => {
+      timer = setTimeout(() => {
         child.kill("SIGKILL");
         resolve(this.#parseGrepOutput(stdoutData, rootPath));
       }, GREP_TIMEOUT_MS);

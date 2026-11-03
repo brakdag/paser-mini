@@ -15,27 +15,9 @@ const ROOT = path.resolve(process.cwd());
  */
 const MAX_SYMLINK_DEPTH = 40;
 
-/**
- * Cached real path of the root, resolving any symlinks in the root itself
- * (for example /tmp on platforms where it links to /private/tmp).
- * @type {string|null}
- */
-let cachedRealRoot = null;
-
-/**
- * Returns the real (symlink-resolved) path of the project root.
- * @returns {string} The canonical root path.
- */
-function getRealRoot() {
-  if (cachedRealRoot === null) {
-    try {
-      cachedRealRoot = fs.realpathSync(ROOT);
-    } catch {
-      cachedRealRoot = ROOT;
-    }
-  }
-  return cachedRealRoot;
-}
+// Generic file tools may read these paths but must not mutate their contents.
+// Application-owned persistence and explicit code/shell execution are separate.
+const PROTECTED_NAMES = new Set([".git", ".paser-mini", ".codex", ".agents", ".aws"]);
 
 /**
  * Reports whether a resolved path is inside a base directory.
@@ -178,15 +160,60 @@ function canonicalize(inputPath) {
 }
 
 /**
+ * Refuses removal or movement of directories containing protected metadata.
+ * Does not follow descendant symlinks, matching rm/rename tree semantics.
+ * @param {string} target - Validated path whose descendants may be affected.
+ * @returns {void} Returns when no protected entries would be affected.
+ */
+function checkDescendants(target) {
+  let stats;
+  try {
+    stats = fs.lstatSync(target);
+  } catch (error) {
+    if (error.code === "ENOENT") return;
+    throw error;
+  }
+  if (!stats.isDirectory()) return;
+
+  const pending = [target];
+  while (pending.length) {
+    const directory = pending.pop();
+    const entries = fs.readdirSync(directory, { withFileTypes: true });
+    entries.forEach((entry) => {
+      if (PROTECTED_NAMES.has(entry.name)) {
+        throw new Error(`Security Error: protected metadata: ${entry.name}`);
+      }
+      if (entry.isDirectory()) pending.push(`${directory}${path.sep}${entry.name}`);
+    });
+  }
+}
+
+/**
  * Centralized utility for resolving and validating file paths within the project root.
  */
 export default class PathValidator {
+  #root;
+
+  #realRoot;
+
+  static #default = new PathValidator();
+
+  /**
+   * Creates a policy for an explicit existing project root.
+   * @param {object} [options] - Project boundary options.
+   * @param {string} [options.root] - Root fixed for the policy's lifetime.
+   */
+  constructor({ root = ROOT } = {}) {
+    this.#root = path.resolve(root);
+    this.#realRoot = fs.realpathSync(this.#root);
+  }
+
   /**
    * Absolute project root used as the containment boundary.
    * @returns {string} The root directory.
    */
-  static getRoot() {
-    return ROOT;
+  getRoot() {
+    return this.#root;
   }
 
   /**
@@ -195,9 +222,9 @@ export default class PathValidator {
    * @param {string} resolvedPath - Absolute path to test.
    * @returns {boolean} True when the path is the root.
    */
-  static isRoot(resolvedPath) {
-    const absolute = path.isAbsolute(resolvedPath) ? resolvedPath : `${ROOT}${path.sep}${resolvedPath}`;
-    return canonicalize(absolute) === getRealRoot();
+  isRoot(resolvedPath) {
+    const absolute = path.isAbsolute(resolvedPath) ? resolvedPath : `${this.#root}${path.sep}${resolvedPath}`;
+    return canonicalize(absolute) === this.#realRoot;
   }
 
   /**
@@ -209,7 +236,7 @@ export default class PathValidator {
    * @returns {string} Absolute path, preserving parent segments for OS traversal.
    * @throws {Error} If the path is invalid or outside of the project root.
    */
-  static getSafePath(inputPath) {
+  getSafePath(inputPath) {
     if (typeof inputPath !== "string" || inputPath.length === 0) {
       throw new Error("Security Error: path must be a non-empty string");
     }
@@ -217,20 +244,92 @@ export default class PathValidator {
       throw new Error("Security Error: path contains a null byte");
     }
 
-    const resolved = path.resolve(ROOT, inputPath);
-    if (!isInside(ROOT, resolved)) {
+    const resolved = path.resolve(this.#root, inputPath);
+    if (!isInside(this.#root, resolved)) {
       throw new Error("Security Error: Path is outside of project root");
     }
 
     // path.join/resolve would discard ".." before inspecting symlinks.
-    const absolute = path.isAbsolute(inputPath) ? inputPath : `${ROOT}${path.sep}${inputPath}`;
+    const absolute = path.isAbsolute(inputPath) ? inputPath : `${this.#root}${path.sep}${inputPath}`;
     const canonical = canonicalize(absolute);
-    if (!isInside(getRealRoot(), canonical)) {
+    if (!isInside(this.#realRoot, canonical)) {
       throw new Error("Security Error: Path resolves outside of project root");
     }
 
     // Keep the final symlink intact for unlink/rename semantics. Preserve ".."
     // so the operation follows the same traversal that was validated.
     return absolute.split(path.sep).includes("..") ? absolute : resolved;
+  }
+
+  /**
+   * Validates a generic mutation, preserving the root and critical metadata.
+   * Both the named path and its symlink destination are protected. Recursive
+   * remove/move also checks descendants before making any filesystem change.
+   * @param {string} inputPath - Path to mutate.
+   * @param {object} [options] - Operation semantics.
+   * @param {string} [options.operation] - Verb used in root refusal messages.
+   * @param {boolean} [options.recursive] - Whether descendants may be removed/moved.
+   * @returns {string} Validated path with resolved parents and final symlinks preserved.
+   */
+  getSafeMutationPath(inputPath, { operation = "modify", recursive = false } = {}) {
+    const safePath = this.getSafePath(inputPath);
+    const canonical = canonicalize(safePath);
+    if (canonical === this.#realRoot) {
+      throw new Error(`Security Error: refusing to ${operation} the project root`);
+    }
+    const namedParts = path.relative(this.#root, path.resolve(safePath)).split(path.sep);
+    const realParts = path.relative(this.#realRoot, canonical).split(path.sep);
+    if ([...namedParts, ...realParts].some((part) => PROTECTED_NAMES.has(part))) {
+      throw new Error("Security Error: protected metadata");
+    }
+    // Recursive mkdir on a raw "missing/../file" can create "missing" even
+    // though the validated final target is elsewhere. Resolve parents before
+    // handing mutations to fs, while keeping a final symlink as a link.
+    const leaf = path.basename(safePath);
+    const mutationPath = leaf === "." || leaf === ".." ? canonical : path.join(canonicalize(path.dirname(safePath)), leaf);
+    // unlink/rename act on the entry, not its final symlink target. An entry
+    // in an external parent must not be changed even if it links back inside.
+    if (!isInside(this.#realRoot, path.dirname(mutationPath))) {
+      throw new Error("Security Error: mutation parent is outside of project root");
+    }
+    const entryParts = path.relative(this.#realRoot, mutationPath).split(path.sep);
+    if (entryParts.some((part) => PROTECTED_NAMES.has(part))) {
+      throw new Error("Security Error: protected metadata");
+    }
+    if (recursive) checkDescendants(mutationPath);
+    return mutationPath;
+  }
+
+  /** @returns {string} Default project root. */
+  static getRoot() {
+    return PathValidator.#default.getRoot();
+  }
+
+  /**
+   * Checks root identity using the default policy.
+   * @param {string} resolvedPath - Path to test.
+   * @returns {boolean} Whether the path reaches the root.
+   */
+  static isRoot(resolvedPath) {
+    return PathValidator.#default.isRoot(resolvedPath);
+  }
+
+  /**
+   * Validates a path using the default project policy.
+   * @param {string} inputPath - Path to resolve.
+   * @returns {string} Validated absolute path.
+   */
+  static getSafePath(inputPath) {
+    return PathValidator.#default.getSafePath(inputPath);
+  }
+
+  /**
+   * Validates a mutation using the default project policy.
+   * @param {string} inputPath - Path to mutate.
+   * @param {object} [options] - Operation semantics.
+   * @returns {string} Validated absolute path.
+   */
+  static getSafeMutationPath(inputPath, options) {
+    return PathValidator.#default.getSafeMutationPath(inputPath, options);
   }
 }
