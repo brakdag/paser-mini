@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import TOOL_DEFINITIONS from "./toolDefinitions.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -49,19 +50,6 @@ export async function getToolInstance(moduleKey) {
   return toolCache[moduleKey];
 }
 
-/**
- * Retrieves a specific function bound to its tool instance.
- * @param {string} moduleKey The key of the module containing the tool.
- * @param {string} funcName The name of the function to retrieve.
- * @returns {Promise<(...args: unknown[]) => unknown>} The requested function bound to the tool instance.
- */
-async function getTool(moduleKey, funcName) {
-  const instance = await getToolInstance(moduleKey);
-  const func = instance[funcName];
-  if (!func) throw new Error(`Method ${funcName} not found in ${moduleKey}.`);
-  return func.bind(instance);
-}
-
 export const GITHUB_SYSTEM_INSTRUCTION =
   "## GitHub Mode Protocol\n" +
   "You are operating in GitHub Mode. Your primary interface is GitHub/Issues.\n" +
@@ -71,293 +59,30 @@ export const GITHUB_SYSTEM_INSTRUCTION =
   "4. Transparency: Be explicit about actions.";
 
 /**
- * Map of available tools to their wrapper functions.
- * @type {{[key: string]: (...args: unknown[]) => Promise<unknown>}}
+ * Creates executable wrappers from the shared contracts. Instance resolution is
+ * injectable so contract tests never initialize external clients or sessions.
+ * @param {(moduleKey: string) => Promise<object>} [resolveInstance] - Tool instance resolver.
+ * @returns {object} Tool functions keyed by public name.
  */
-export const AVAILABLE_TOOLS = {
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  read: async (...args) => (await getTool("fileTools", "read"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  tail: async (...args) => (await getTool("fileTools", "tail"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  write: async (...args) => (await getTool("fileTools", "write"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  remove: async (...args) => (await getTool("fileTools", "remove"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  mkdir: async (...args) => (await getTool("fileTools", "mkdir"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  reloadSchemas: async (...args) =>
-    (await getTool("systemTools", "reloadSchemas"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  analysis: async (...args) => (await getTool("systemTools", "analyzeCode"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  list: async (...args) => (await getTool("fileTools", "list"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  replace: async (...args) => (await getTool("fileTools", "replace"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  sed: async (...args) => (await getTool("fileTools", "sed"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  eslint: async (...args) => (await getTool("systemTools", "lintCode"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  doc: async (...args) => (await getTool("systemTools", "generateDocs"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  execute: async (...args) => (await getTool("systemTools", "execute"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  grep: async (...args) =>
-    (await getTool("searchTools", "searchText"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  glob: async (...args) =>
-    (await getTool("searchTools", "searchFilesPatternFixed"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  rename: async (...args) => (await getTool("fileTools", "rename"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  copy: async (...args) => (await getTool("fileTools", "copy"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  tree: async (...args) => (await getTool("gitTools", "getTrackedFiles"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  validate: async (...args) => (await getTool("utilTools", "validateJson"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  nickname: async (...args) => (await getTool("utilTools", "setNickname"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  push: async (...args) => (await getTool("memoryTools", "pushMemory"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  token: async (...args) => (await getTool("memoryTools", "getTokenCount"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  diff: async (...args) => (await getTool("gitTools", "gitDiffAll"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  restore: async (...args) => (await getTool("gitTools", "restoreFile"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  concat: async (...args) => (await getTool("fileTools", "concat"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  structure: async (...args) =>
-    (await getTool("jsonTools", "getJsonStructure"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  node: async (...args) => (await getTool("jsonTools", "getJsonNode"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  arrange: async (...args) =>
-    (await getTool("jsonTools", "getJsonArrayInfo"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  update: async (...args) => (await getTool("jsonTools", "updateJsonNode"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  issues: async (...args) => (await getTool("githubTools", "listIssues"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  create: async (...args) => (await getTool("githubTools", "createIssue"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  edit: async (...args) => (await getTool("githubTools", "editIssue"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  close: async (...args) => (await getTool("githubTools", "closeIssue"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  post: async (...args) => (await getTool("githubTools", "postComment"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  remote: async (...args) => (await getTool("gitTools", "getCurrentRepo"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  patch: async (...args) => (await getTool("gitTools", "applyPatch"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  notify: async (...args) =>
-    (await getTool("notificationTools", "notifyUser"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  scene: async (...args) =>
-    (await getTool("fountainTools", "insertSceneFountain"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  zip: async (...args) => (await getTool("zipTools", "listContents"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  bin: async (...args) => (await getTool("binaryTools", "handleHexCommand"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  search: async (...args) => (await getTool("webTools", "searchWeb"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  url: async (...args) => (await getTool("webTools", "renderWeb"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  fetch: async (...args) => (await getTool("webTools", "fetchRaw"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  run: async (...args) => (await getTool("evalTools", "executeJS"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  ast: async (...args) => (await getTool("astTools", "analyze"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  metrics: async (...args) => (await getTool("perfTools", "metrics"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  snapshot: async (...args) => (await getTool("perfTools", "snapshot"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  img: async (...args) => (await getTool("utilTools", "seeImage"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  inspect: async (...args) => (await getTool("inspectTools", "inspect"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  reset: async (...args) => (await getTool("systemTools", "reset"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  qr: async (...args) => (await getTool("qrTools", "generateQr"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  index: async (...args) => (await getTool("loadTools", "index"))(...args),
-  /**
-   * @param {unknown[]} args Arguments.
-   * @returns {Promise<unknown>} Result.
-   */
-  load: async (...args) => (await getTool("loadTools", "load"))(...args),
-  /**
-   * @returns {Promise<string>} Confirmation message.
-   */
-  reloadTools: async () => {
-    toolCache = {};
-    return "Tool cache purged.";
-  },
-};
+export function createTools(resolveInstance = getToolInstance) {
+  return Object.fromEntries(Object.entries(TOOL_DEFINITIONS).map(([name, definition]) => [
+    name,
+    async (...args) => {
+      if (name === "reloadTools") {
+        toolCache = {};
+        return "Tool cache purged.";
+      }
+      const instance = await resolveInstance(definition.moduleKey);
+      const method = instance[definition.method];
+      if (typeof method !== "function") throw new Error(`Method ${definition.method} not found in ${definition.moduleKey}.`);
+      const implementationArgs = definition.adaptArguments ? definition.adaptArguments(args) : args;
+      return method.apply(instance, implementationArgs);
+    },
+  ]));
+}
 
-const registryPath = path.join(__dirname, "registry_positional.json");
-const fullCatalog = JSON.parse(fs.readFileSync(registryPath, "utf8"));
+export const AVAILABLE_TOOLS = createTools();
+
 const _S = "Ə";
 const _E = "ə";
 const systemInstrData = JSON.parse(
@@ -371,19 +96,9 @@ const systemInstrData = JSON.parse(
  * @returns {string} The formatted system instruction string containing the tool catalog.
  */
 export function generateSystemInstruction(availableToolNames, mcpSchemas = {}) {
-  const filteredCatalog = fullCatalog
-    .filter((t) => t[0] !== "execute" && availableToolNames.includes(t[0]))
-    .map((t) => {
-      const canonicalName = t[0];
-      const args =
-        t[2] && typeof t[2] === "object"
-          ? Object.entries(t[2])
-              .map(([k]) => `${k}`)
-              .join(",")
-          : "data";
-      const returns = t[1].split(". ")[0] || "status";
-      return `${canonicalName}(${args}) ${returns}`;
-    })
+  const filteredCatalog = Object.entries(TOOL_DEFINITIONS)
+    .filter(([name, definition]) => !definition.requiresBash && availableToolNames.includes(name))
+    .map(([name, definition]) => `${name}(${definition.parameters.join(",")}) ${definition.description}`)
     .join("\n");
 
   const mcpCatalog = availableToolNames

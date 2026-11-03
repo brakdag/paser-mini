@@ -31,7 +31,8 @@ describe("gitTools", () => {
     await git(repoDir, ["config", "user.email", "test@example.invalid"]);
     await git(repoDir, ["config", "user.name", "Test"]);
     await fs.writeFile(path.join(repoDir, "base.txt"), "base\n", "utf8");
-    await git(repoDir, ["add", "base.txt"]);
+    await fs.writeFile(path.join(repoDir, "other.txt"), "other\n", "utf8");
+    await git(repoDir, ["add", "base.txt", "other.txt"]);
     await git(repoDir, ["commit", "-m", "initial"]);
     gitTools = new GitTools({ cwd: repoDir });
   });
@@ -47,7 +48,7 @@ describe("gitTools", () => {
 
   it("should list tracked files", async () => {
     const files = await gitTools.getTrackedFiles();
-    assert.deepStrictEqual(files, ["base.txt"]);
+    assert.deepStrictEqual(files, ["base.txt", "other.txt"]);
   });
 
   it("should apply a patch delivered through stdin", async () => {
@@ -84,5 +85,68 @@ index 0000000..f7db191
     await fs.writeFile(target, "corrupted\n", "utf8");
     await gitTools.restoreFile({ filepath: "base.txt" });
     assert.strictEqual(await fs.readFile(target, "utf8"), "base\n");
+  });
+
+  it("should limit a diff to the requested path", async () => {
+    await fs.writeFile(path.join(repoDir, "base.txt"), "changed base\n", "utf8");
+    await fs.writeFile(path.join(repoDir, "other.txt"), "changed other\n", "utf8");
+
+    const result = await gitTools.gitDiffAll("base.txt");
+
+    assert.match(result, /diff --git a\/base\.txt b\/base\.txt/);
+    assert.doesNotMatch(result, /other\.txt/);
+
+    await git(repoDir, ["restore", "--", "base.txt", "other.txt"]);
+  });
+
+  it("should terminate an unresponsive executable when the timeout expires", async () => {
+    const scriptPath = path.join(repoDir, "unresponsive-process.mjs");
+    await fs.writeFile(
+      scriptPath,
+      "process.stdin.resume();\nsetInterval(() => {}, 1000);\n",
+      "utf8",
+    );
+    const timeoutTools = new GitTools({
+      cwd: repoDir,
+      timeoutMs: 100,
+      executable: process.execPath,
+      executableArgs: [scriptPath],
+    });
+
+    await assert.rejects(
+      () => timeoutTools.applyPatch("ignored patch data"),
+      (error) => {
+        assert.strictEqual(error.code, "ETIMEDOUT");
+        assert.strictEqual(error.cause.code, "ETIMEDOUT");
+        assert.ok(error.cause.cause);
+        return true;
+      },
+    );
+
+    await fs.rm(scriptPath, { force: true });
+  });
+
+  it("should preserve the command exit code when stdin closes early", async () => {
+    const scriptPath = path.join(repoDir, "fail-before-reading.mjs");
+    await fs.writeFile(scriptPath, "process.exit(7);\n", "utf8");
+    const failingTools = new GitTools({
+      cwd: repoDir,
+      timeoutMs: 1000,
+      executable: process.execPath,
+      executableArgs: [scriptPath],
+    });
+
+    await assert.rejects(
+      () => failingTools.applyPatch("x".repeat(2 * 1024 * 1024)),
+      (error) => {
+        assert.strictEqual(error.code, 7);
+        assert.strictEqual(error.cause.code, 7);
+        assert.strictEqual(error.cause.stdinError.code, "EPIPE");
+        assert.ok(error.cause.cause);
+        return true;
+      },
+    );
+
+    await fs.rm(scriptPath, { force: true });
   });
 });

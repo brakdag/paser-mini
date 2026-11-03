@@ -63,7 +63,7 @@ class ExecutionEngine {
     if (toolName === "execute" && !this.ui.bashEnabled) {
       return "Bash access is disabled for security. Please ask the user to run /execute to activate it.";
     }
-    if (!(toolName in this.tools)) {
+    if (!Object.hasOwn(this.tools, toolName) || typeof this.tools[toolName] !== "function") {
       return `Unknown tool: ${toolName}`;
     }
     return null;
@@ -97,7 +97,7 @@ class ExecutionEngine {
 
         const toolFunc = this.tools[toolName];
         result = this.toolParser.isPositional(toolName)
-          ? await toolFunc(...Object.values(args))
+          ? await toolFunc(...this.toolParser.buildPositionalArgs(toolName, args))
           : await toolFunc(args);
         success = true;
       }

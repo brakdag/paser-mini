@@ -219,13 +219,27 @@ class FileTools {
   }
 
   /**
-   * Appends content to the end of a file.
-   * @param {string} filepath The file path.
-   * @param {string} content The content to append.
+   * Appends the source file bytes to the destination, within the text tool limit.
+   * @param {string} destination The destination file path.
+   * @param {string} source The source file path.
    */
-  async concat(filepath, content) {
-    const safePath = PathValidator.getSafePath(filepath);
-    await fs.appendFile(safePath, content, "utf8");
+  async concat(destination, source) {
+    const safeDestination = PathValidator.getSafePath(destination);
+    const safeSource = PathValidator.getSafePath(source);
+    const sourceStats = await fs.stat(safeSource);
+    let destinationStats;
+    try {
+      destinationStats = await fs.stat(safeDestination);
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+    }
+    if (destinationStats && sourceStats.dev === destinationStats.dev &&
+        sourceStats.ino === destinationStats.ino) throw new Error("Cannot concatenate a file into itself");
+    if (sourceStats.size + (destinationStats?.size || 0) > FILE_SIZE_LIMIT) {
+      throw new Error("Concatenated file too large");
+    }
+    const content = await fs.readFile(safeSource);
+    await fs.appendFile(safeDestination, content);
   }
 
   /**

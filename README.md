@@ -71,3 +71,26 @@ after switching. Earlier conversation history remains available.
 
 ## 🜰 Ecosystem Alignment
 For the narrative history of this pod and the character breakdowns of the team, see the [Staff Directory](./docs/staff/).
+
+### Local tool call contract
+
+Tool calls need only an opening marker: `Əread("README.md")`. The closing
+parenthesis ends the call; a trailing `ə` is optional for compatibility. Prefix
+each call with `Ə`. Both schwa characters are reserved as markers and must not
+appear inside tool arguments. Arguments are literal values
+(strings, numbers, booleans, null, arrays and objects), with `undefined` for an
+omitted positional parameter. Bare and dotted names remain accepted as strings.
+Expressions, interpolation, spread arguments and incomplete blocks are rejected.
+
+`src/infrastructure/toolDefinitions.js` binds each tool's description, schema,
+parameter order and implementation. It replaces `registry_positional.json`.
+The parser, validator, executable registry and generated prompt use this catalog.
+`execute` remains hidden until `/execute` enables shell access.
+
+`concat(destination, source)` now appends the **source file's contents**, rather
+than treating its path as text. Both paths must be inside the project and the
+result is limited to 100 KiB. `push` accepts one argument. `reloadSchemas()`
+re-registers bundled schemas; loading edited modules requires restarting.
+`bin` preserves its flat public signature and adapts its last four parameters
+into the implementation's options object. Its schema requires fields according
+to the selected action.

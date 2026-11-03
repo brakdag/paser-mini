@@ -8,6 +8,10 @@ export default class GitTools {
 
   #timeoutMs;
 
+  #executable;
+
+  #executableArgs;
+
   /**
    * Creates a Git wrapper bound to a working directory.
    * @param {object} [options] - Construction options.
@@ -15,10 +19,20 @@ export default class GitTools {
    *   process working directory; tests pass a throwaway repository so they
    *   never mutate the checkout they run in.
    * @param {number} [options.timeoutMs] - Per-command timeout.
+   * @param {string} [options.executable] - Git executable or test executable.
+   * @param {string[]} [options.executableArgs] - Arguments prepended to each
+   *   invocation, useful when injecting a deterministic test executable.
    */
-  constructor({ cwd = process.cwd(), timeoutMs = 30000 } = {}) {
+  constructor({
+    cwd = process.cwd(),
+    timeoutMs = 30000,
+    executable = "git",
+    executableArgs = [],
+  } = {}) {
     this.#cwd = cwd;
     this.#timeoutMs = timeoutMs;
+    this.#executable = executable;
+    this.#executableArgs = executableArgs;
   }
 
   /**
@@ -32,14 +46,32 @@ export default class GitTools {
    */
   async #run(args, input) {
     return new Promise((resolve, reject) => {
+      let commandComplete = false;
+      let stdinError;
+      let stdinErrorTimer;
+      let terminatedForStdinError = false;
+
       const child = execFile(
-        "git",
-        args,
+        this.#executable,
+        [...this.#executableArgs, ...args],
         { cwd: this.#cwd, timeout: this.#timeoutMs, maxBuffer: 10 * 1024 * 1024 },
         (error, stdout, stderr) => {
+          commandComplete = true;
+          clearTimeout(stdinErrorTimer);
           if (error) {
             const detail = stderr && stderr.trim() ? stderr.trim() : error.message;
-            reject(new Error(`Git error (${args.join(" ")}): ${detail}`));
+            const wrappedError = new Error(`Git error (${args.join(" ")}): ${detail}`, {
+              cause: error,
+            });
+            // Node may report a timeout with `killed: true` and `code: null`
+            // (the configured timeout sends SIGTERM), so preserve a useful
+            // timeout code for callers as well as the original cause.
+            wrappedError.code = error.code || (
+              error.killed && !terminatedForStdinError ? "ETIMEDOUT" : undefined
+            );
+            wrappedError.signal = error.signal;
+            wrappedError.stdinError = stdinError;
+            reject(wrappedError);
             return;
           }
           // Success is defined by the exit code, never by stdout content:
@@ -49,7 +81,17 @@ export default class GitTools {
       );
 
       child.stdin.on("error", (err) => {
-        reject(new Error(`Git error (${args.join(" ")}): stdin ${err.message}`));
+        // EPIPE commonly means the command has already exited and its real
+        // exit code is about to arrive. Let that callback win; if the child
+        // remains alive, stop it promptly instead of waiting for the command
+        // timeout. A successful exit still counts as success despite EPIPE.
+        stdinError = err;
+        stdinErrorTimer = setTimeout(() => {
+          if (!commandComplete && child.exitCode === null && child.signalCode === null) {
+            terminatedForStdinError = true;
+            child.kill();
+          }
+        }, 50);
       });
 
       if (input !== undefined) {
@@ -79,10 +121,12 @@ export default class GitTools {
 
   /**
    * Gets all changes in the repository compared to the index.
+   * @param {string} [filepath] - Optional path to limit the diff.
    * @returns {Promise<string>} The diff output or a message indicating no changes.
    */
-  async gitDiffAll() {
-    const stdout = await this.#run(["diff"]);
+  async gitDiffAll(filepath) {
+    const args = filepath === undefined ? ["diff"] : ["diff", "--", filepath];
+    const stdout = await this.#run(args);
     return stdout || "No changes found in the repository.";
   }
 
@@ -99,7 +143,10 @@ export default class GitTools {
     try {
       return await this.#run(["apply", "--whitespace=nowarn", "-"], patch);
     } catch (e) {
-      throw new Error(`Patch application failed: ${e.message}`);
+      const wrappedError = new Error(`Patch application failed: ${e.message}`, { cause: e });
+      wrappedError.code = e.code;
+      wrappedError.signal = e.signal;
+      throw wrappedError;
     }
   }
 

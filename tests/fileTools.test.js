@@ -57,11 +57,25 @@ describe("fileTools", () => {
     );
   });
 
-  test("concat appends content", async () => {
+  test("concat appends source file contents and leaves source intact", async () => {
     const filePath = rel("concat_test.txt");
+    const sourcePath = rel("concat_source.txt");
     await fileTools.write(filePath, "first ");
-    await fileTools.concat(filePath, "second");
+    await fileTools.write(sourcePath, "second");
+    await fileTools.concat(filePath, sourcePath);
     assert.strictEqual(await fileTools.read(filePath), "first second");
+    assert.strictEqual(await fileTools.read(sourcePath), "second");
+  });
+
+  test("concat validates source and size before changing destination", async () => {
+    const destination = rel("concat_unchanged.txt");
+    await fileTools.write(destination, "original");
+    await assert.rejects(() => fileTools.concat(destination, rel("missing.txt")), /ENOENT/);
+    await assert.rejects(() => fileTools.concat(destination, destination), /itself/);
+    const source = rel("concat_large.txt");
+    await fileTools.write(source, "x".repeat(100 * 1024));
+    await assert.rejects(() => fileTools.concat(destination, source), /too large/);
+    assert.strictEqual(await fileTools.read(destination), "original");
   });
 
   test("copy", async () => {

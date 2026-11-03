@@ -125,13 +125,13 @@ export class SystemTools {
   }
 
   /**
-   * Reloads schemas from disk into the registry.
+   * Re-registers the bundled schemas into the validator.
    * @returns {Promise<string>} Confirmation of the reload.
    * @throws {Error} If the reload fails.
    */
   async reloadSchemas() {
     await registerSchemas();
-    return "Schemas successfully reloaded from disk.";
+    return "Bundled schemas successfully re-registered.";
   }
 
   /**

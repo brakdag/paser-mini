@@ -84,7 +84,8 @@ class SystemPromptManager {
       ((await this._exists(defaultPath)) ? defaultPath : null);
 
     const dependencies = [
-      "src/infrastructure/registry_positional.json",
+      "src/infrastructure/toolDefinitions.js",
+      "src/core/schemas.js",
       "src/infrastructure/system_instruction.json",
       path.join(".paser-mini", "config", "mcp.json"),
       ...(injectionFile ? [injectionFile] : []),

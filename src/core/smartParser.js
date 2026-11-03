@@ -1,13 +1,8 @@
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
 import * as acorn from "acorn";
-import logger from "./logger.js";
 import validator from "./schemaRegistry.js";
 import mcpManager from "../infrastructure/McpManager.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import TOOL_DEFINITIONS from "../infrastructure/toolDefinitions.js";
 
 const OPEN = "\u018f";       // Latin Capital Schwa
 const CLOSE = "\u0259";      // Latin Small Schwa
@@ -17,18 +12,11 @@ const CLOSE = "\u0259";      // Latin Small Schwa
  */
 class SmartToolParser {
   /**
-   * Initializes the parser, loads positional registry, and binds validator.
+   * Initializes the parser from the shared tool contracts and validator.
    */
   constructor() {
     this.validator = validator;
-    const regPath = path.join(__dirname, "../infrastructure/registry_positional.json");
-    this.positionalRegistry = JSON.parse(fs.readFileSync(regPath, "utf8"));
-    /**
-     * @type {{[key: string]: Array}}
-     */
-    this.toolMap = Object.fromEntries(
-      this.positionalRegistry.map((t) => [t[0], t]),
-    );
+    this.toolMap = TOOL_DEFINITIONS;
   }
 
   /**
@@ -37,71 +25,79 @@ class SmartToolParser {
    * @returns {boolean} True if the tool is positional.
    */
   isPositional(name) {
-    return !!this.toolMap[name];
+    return Object.hasOwn(this.toolMap, name);
   }
 
   /**
-   * Casts a raw string value to its appropriate JS type (string, number, boolean, null, array, object).
-   * @param {string} val - The raw string value.
-   * @returns {unknown} The typed value.
+   * Builds the positional argument list for a tool from its declared key
+   * order, preserving holes for omitted optional parameters. Without this,
+   * invoking with Object.values() would shift every later argument when an
+   * optional middle parameter is absent.
+   * @param {string} name - The tool name.
+   * @param {object} args - The validated arguments keyed by parameter name.
+   * @returns {Array<unknown>} The arguments in declared positional order.
    */
-  _castValue(val) {
-    if (!val) return null;
-    const trimmed = val.trim();
-    if (
-      (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-      (trimmed.startsWith("'") && trimmed.endsWith("'")) ||
-      (trimmed.startsWith("`") && trimmed.endsWith("`"))
-    ) {
-      return trimmed.substring(1, trimmed.length - 1);
+  buildPositionalArgs(name, args) {
+    const toolDef = Object.hasOwn(this.toolMap, name) ? this.toolMap[name] : null;
+    if (!toolDef) return Object.values(args);
+
+    const keys = toolDef.parameters;
+    let lastProvided = -1;
+    keys.forEach((key, index) => {
+      if (Object.hasOwn(args, key)) lastProvided = index;
+    });
+
+    const positional = [];
+    for (let i = 0; i <= lastProvided; i += 1) {
+      positional.push(Object.hasOwn(args, keys[i]) ? args[keys[i]] : undefined);
     }
-    if (!Number.isNaN(Number(trimmed)) && trimmed !== "") return Number(trimmed);
-    if (trimmed === "true") return true;
-    if (trimmed === "false") return false;
-    if (trimmed === "null") return null;
-    if (
-      (trimmed.startsWith("[") && trimmed.endsWith("]")) ||
-      (trimmed.startsWith("{") && trimmed.endsWith("}"))
-    ) {
-      try {
-        return JSON.parse(trimmed.replace(/'/g, '"'));
-      } catch (e) {
-        logger.error(`JSON Parse Error in _castValue: ${e.message}`);
-      }
-    }
-    return trimmed;
+    return positional;
   }
 
   /**
-   * Evaluates an AST node to extract its raw or typed value.
-   * @param {object} node - The AST node.
-   * @param {string} rawContent - The original raw content string.
-   * @returns {unknown} The evaluated value.
+   * Reads literal arguments without executing JavaScript expressions.
+   * Bare names and dotted names remain strings for compatibility with paths.
+   * @param {object} node - Argument syntax node.
+   * @param {string} rawContent - Original call source.
+   * @returns {unknown} Literal argument value.
    */
   _evaluateAST(node, rawContent) {
-    if (node.type === "Literal") return node.value;
-    if (node.type === "TemplateLiteral") {
-      let result = "";
-      for (let i = 0; i < node.quasis.length; i += 1) {
-        result += node.quasis[i].value.cooked;
-        if (node.expressions[i]) {
-          result += `\${${rawContent.substring(node.expressions[i].start, node.expressions[i].end)}}`;
-        }
+    if (!node) throw new Error("Unsupported array hole; use undefined explicitly");
+    if (node.type === "Literal" && !node.regex && !node.bigint) return node.value;
+    if (node.type === "Identifier") {
+      return node.name === "undefined" ? undefined : node.name;
+    }
+    if (node.type === "MemberExpression" && !node.computed && !node.optional) {
+      let current = node;
+      while (current.type === "MemberExpression" && !current.computed && !current.optional) {
+        if (current.property.type !== "Identifier") throw new Error("Unsupported property name");
+        current = current.object;
       }
-      return result;
+      if (current.type === "Identifier") return rawContent.slice(node.start, node.end);
+    }
+    if (node.type === "UnaryExpression" && ["+", "-"].includes(node.operator) &&
+        node.argument.type === "Literal" && typeof node.argument.value === "number") {
+      return node.operator === "-" ? -node.argument.value : node.argument.value;
+    }
+    if (node.type === "TemplateLiteral" && node.expressions.length === 0) {
+      return node.quasis[0].value.cooked;
     }
     if (node.type === "ArrayExpression") {
-      return node.elements.map((e) => this._evaluateAST(e, rawContent));
+      return node.elements.map((element) => this._evaluateAST(element, rawContent));
     }
     if (node.type === "ObjectExpression") {
-      const obj = {};
-      node.properties.forEach((prop) => {
-        const key = prop.key.type === "Identifier" ? prop.key.name : prop.key.value;
-        obj[key] = this._evaluateAST(prop.value, rawContent);
+      const entries = node.properties.map((property) => {
+        if (property.type !== "Property" || property.computed || property.method ||
+            property.shorthand || property.kind !== "init" ||
+            !["Identifier", "Literal"].includes(property.key.type)) {
+          throw new Error("Unsupported object property");
+        }
+        const key = property.key.type === "Identifier" ? property.key.name : property.key.value;
+        return [key, this._evaluateAST(property.value, rawContent)];
       });
-      return obj;
+      return Object.fromEntries(entries);
     }
-    return this._castValue(rawContent.substring(node.start, node.end));
+    throw new Error(`Unsupported argument expression: ${node.type}`);
   }
 
   /**
@@ -111,8 +107,15 @@ class SmartToolParser {
    */
   parseCall(rawContent) {
     try {
+      if (/[Əə]/.test(rawContent)) throw new Error("Schwa is reserved for tool call markers");
       const ast = acorn.parse(rawContent, { ecmaVersion: 2020 });
       if (ast.body.length === 0) return { data: null, error: "Empty call" };
+      if (ast.body.length > 1) {
+        return {
+          data: null,
+          error: "Parse error: expected a single tool call expression",
+        };
+      }
       const stmt = ast.body[0];
       if (
         stmt.type !== "ExpressionStatement" ||
@@ -128,18 +131,26 @@ class SmartToolParser {
       const args = callExpr.arguments.map((arg) =>
         this._evaluateAST(arg, rawContent),
       );
-      const toolDef = this.toolMap[name];
-      const mcpSchema = mcpManager.getSchemas()[name];
+      const toolDef = Object.hasOwn(this.toolMap, name) ? this.toolMap[name] : null;
+      const mcpSchemas = mcpManager.getSchemas();
+      const mcpSchema = Object.hasOwn(mcpSchemas, name) ? mcpSchemas[name] : null;
       
       if (!toolDef && !mcpSchema) {
         return { data: null, error: `Unknown tool: ${name}` };
       }
       
-      const schema = toolDef ? toolDef[2] : mcpSchema;
+      const schema = toolDef ? Object.fromEntries(toolDef.parameters.map((key) => [key, true])) : mcpSchema;
       let finalArgs = {};
       if (typeof schema === "object" && schema !== null) {
         const keySource = mcpSchema ? (mcpSchema.properties || schema) : schema;
         const keys = Object.keys(keySource);
+        if (args.length > keys.length) {
+          return {
+            data: null,
+            error:
+              `Parse error: ${name} accepts at most ${keys.length} arguments, got ${args.length}`,
+          };
+        }
         args.forEach((val, i) => {
           if (keys[i]) finalArgs[keys[i]] = val;
         });
@@ -147,59 +158,64 @@ class SmartToolParser {
         finalArgs = { data: args.join(" ") };
       }
       // Bypass local Zod validation for MCP tools; the remote server will validate.
-      const validation = mcpSchema ? { isValid: true, errors: [] } : this.validator.validate(name, finalArgs);
+      if (mcpSchema) {
+        return { data: { name, args: finalArgs }, error: null };
+      }
+
+      const validation = this.validator.validate(name, finalArgs);
       if (!validation.isValid)
         return {
           data: null,
           error: `Validation: ${validation.errors.join("; ")}`,
         };
-      return { data: { name, args: finalArgs }, error: null };
+
+      return { data: { name, args: validation.correctedArgs }, error: null };
     } catch (e) {
       return { data: null, error: `Parse error: ${e.message}` };
     }
   }
 
   /**
-   * Finds the closing parenthesis of a tool call, tracking depth and string literals.
-   * @param {string} text - The full text to search.
-   * @param {number} start - The index to start searching from.
-   * @returns {number} The index of the closing parenthesis, or -1 if not found.
+   * Reads one call after its opening marker. Schwa is reserved everywhere in
+   * call source, so the next marker always bounds this call, even inside quotes.
+   * The expression's closing parenthesis ends a call without a closing marker.
+   * @param {string} text - Response source.
+   * @param {number} start - First character after the opening marker.
+   * @returns {{end: number, content: string, data: unknown, error: unknown}} Parsed call and boundary.
    */
-  _findCallEnd(text, start) {
-    let i = start;
-    let inString = null;
-    let depth = 0;
-
-    while (i < text.length) {
-      const ch = text[i];
-      if (inString) {
-        if (ch === "\\") {
-          i += 2;
-        } else {
-          if (ch === inString) inString = null;
-          i += 1;
+  _readToolCall(text, start) {
+    const nextOpen = text.indexOf(OPEN, start);
+    const nextClose = text.indexOf(CLOSE, start);
+    const limit = Math.min(
+      nextOpen === -1 ? text.length : nextOpen,
+      nextClose === -1 ? text.length : nextClose,
+    );
+    const closed = text[limit] === CLOSE;
+    const source = text.slice(start, limit);
+    let end = closed ? limit + 1 : limit;
+    let content = source.trim();
+    if (!closed) {
+      try {
+        const expression = acorn.parseExpressionAt(source, 0, { ecmaVersion: 2020 });
+        const suffix = source.slice(expression.end).trimStart();
+        // A second statement or unmatched closing syntax belongs to the same
+        // invalid call; ordinary prose remains visible after a complete call.
+        const hasExtraCode = /^[;)}\]]/.test(suffix) || /^[\p{ID_Start}$_][\p{ID_Continue}$]*\s*\(/u.test(suffix);
+        if (!hasExtraCode) {
+          content = source.slice(0, expression.end).trim();
+          end = start + expression.end;
         }
-      } else if (ch === '"' || ch === "'" || ch === "`") {
-        inString = ch;
-        i += 1;
-      } else if (ch === "(") {
-        depth += 1;
-        i += 1;
-      } else if (ch === ")" && depth > 0) {
-        depth -= 1;
-        if (depth === 0) return i;
-        i += 1;
-      } else {
-        i += 1;
+      } catch {
+        // Pass the complete incomplete/invalid segment to the ordinary parser.
       }
     }
-    return -1;
+    return { ...this.parseCall(content), content, end };
   }
 
   /**
-   * Extracts all tool calls from a given text block.
-   * @param {string} text - The text to parse for tool calls.
-   * @returns {Array<{data: unknown, content: string, error: unknown}>} An array of parsed tool calls.
+   * Extracts calls introduced by schwa; the closing schwa remains optional.
+   * @param {string} text - Model response.
+   * @returns {Array<{data: unknown, content: string, error: unknown}>} Calls or errors.
    */
   extractToolCalls(text) {
     const calls = [];
@@ -207,25 +223,9 @@ class SmartToolParser {
     while (pos < text.length) {
       const openIdx = text.indexOf(OPEN, pos);
       if (openIdx === -1) break;
-      const contentStart = openIdx + 1;
-      const closeIdx = this._findCallEnd(text, contentStart);
-      let content;
-      let endIdx;
-      if (closeIdx === -1) {
-        content = text.substring(contentStart).trim();
-        endIdx = text.length;
-      } else {
-        content = text.substring(contentStart, closeIdx + 1).trim();
-        endIdx = closeIdx + 1;
-        if (text[endIdx] === CLOSE) {
-          endIdx += 1;
-        }
-      }
-      if (content) {
-        const { data, error } = this.parseCall(content);
-        calls.push({ data, content, error });
-      }
-      pos = endIdx;
+      const { end, ...call } = this._readToolCall(text, openIdx + 1);
+      calls.push(call);
+      pos = end;
     }
     return calls;
   }
@@ -260,15 +260,8 @@ class SmartToolParser {
         break;
       }
       result += text.substring(pos, openIdx);
-      const closeIdx = this._findCallEnd(text, openIdx + 1);
-      if (closeIdx === -1) {
-        pos = text.length;
-      } else {
-        pos = closeIdx + 1;
-        if (text[pos] === CLOSE) {
-          pos += 1;
-        }
-      }
+      const { end } = this._readToolCall(text, openIdx + 1);
+      pos = end;
     }
     return result;
   }
