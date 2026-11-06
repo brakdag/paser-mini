@@ -31,7 +31,7 @@ class ProviderManager {
     },
     OPENROUTER: {
       name: "OpenRouter",
-      defaultModel: "dots-studio/dots-3-note-preview:free",
+      defaultModel: "stealth/crouton-alpha",
       path: "./openrouter/adapter.js",
     },
     ZENMUX: {

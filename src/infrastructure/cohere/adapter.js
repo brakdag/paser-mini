@@ -84,7 +84,6 @@ class CohereAdapter extends BaseAdapter {
         try {
           this.lastPayload = payload;
           logger.info(`[CohereAdapter] Requesting: ${this.client.defaults.baseURL}/v2/chat`);
-          logger.info(`[CohereAdapter] Payload: ${JSON.stringify(payload)}`);
 
           const response = await this.client.post("/chat", payload);
           return this._handleResponse(response);

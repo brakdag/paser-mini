@@ -36,6 +36,22 @@ Furthermore, the system embraces an **AI-native interface**: a terminal-based en
 
 ## 📈 Technical Documentation
 
+### Session history and diagnostics
+
+`.paser-mini/log/session.log` keeps the conversation and model tool events for context recovery. Its format and recording behavior are unchanged.
+
+The technical file `.paser-mini/log/paser_mini.log` is **disabled by default**. Existing technical logs are left untouched in normal use. Enable diagnostics explicitly when investigating a problem:
+
+```bash
+PASER_MINI_LOG_LEVEL=debug paser_mini
+```
+
+Available levels: `off` (default), `error`, `warn`, `info`, `debug`. Unknown values disable diagnostics. Set the variable in the launch environment. Diagnostics retain at most three files of 1 MiB each (`paser_mini.log`, `.1`, `.2`), with entries capped at 16 KiB. Enabling diagnostics discards oversized legacy technical logs. Full request payload dumps have been removed from Cohere, OpenRouter, Poolside and ZenMux.
+
+Technical writes are synchronous and bounded, with no pending write queue. Concurrent instances skip diagnostic entries while another writer holds `.paser-mini/log/paser_mini.log.lock`. If a process is forcibly killed while holding that lock, remove the leftover lock only after stopping all Paser Mini instances in that project. Technical I/O failures disable diagnostics for that process and print one warning; session logging continues independently.
+
+To reclaim space from old diagnostics, stop Paser Mini and delete only `paser_mini.log`, `paser_mini.log.1` and `paser_mini.log.2` inside `.paser-mini/log/`. Keep `session.log` and `memento.log` for context and memory.
+
 ### Installation
 ```bash
 curl -fsSL https://raw.githubusercontent.com/brakdag/paser-mini/main/install.sh | bash

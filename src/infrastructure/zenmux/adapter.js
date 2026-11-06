@@ -218,7 +218,6 @@ class ZenMuxAdapter extends BaseAdapter {
    */
   async _executeRequest(payload) {
     logger.info(`[ZenMuxAdapter] Requesting: ${this.client.defaults.baseURL}/chat/completions`);
-    logger.debug(`[ZenMuxAdapter] Payload: ${JSON.stringify(payload)}`);
 
     try {
       const response = await this.client.post("/chat/completions", payload);

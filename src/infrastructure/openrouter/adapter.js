@@ -107,9 +107,6 @@ class OpenRouterAdapter extends BaseAdapter {
             logger.info(
               `[OpenRouterAdapter] Requesting: ${this.client.defaults.baseURL}/chat/completions`,
             );
-            logger.info(
-              `[OpenRouterAdapter] Payload: ${JSON.stringify(payload)}`,
-            );
 
             const response = await this.client.post(
               "/chat/completions",

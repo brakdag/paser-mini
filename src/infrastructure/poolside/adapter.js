@@ -216,7 +216,6 @@ class PoolsideAdapter extends BaseAdapter {
    */
   async _executeRequest(payload) {
     logger.info(`[PoolsideAdapter] Requesting: ${this.client.defaults.baseURL}/chat/completions`);
-    logger.debug(`[PoolsideAdapter] Payload: ${JSON.stringify(payload)}`);
 
     try {
       const response = await this.client.post("/chat/completions", payload);
