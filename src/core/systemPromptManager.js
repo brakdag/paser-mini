@@ -160,7 +160,7 @@ export class SystemPromptManager {
       generateSystemInstruction(Object.keys(filteredTools), mcpSchemas);
 
     const finalInstruction = injection
-      ? `PERSON AND ROLE:\n${injection}\n\nCORE OPERATIONAL PROTOCOLS:\n${baseInstr}\n\n DATE:${new Date().toLocaleString("es-AR", { timeZone: "America/Argentina/Mendoza" })}`
+      ? `PERSON AND ROLE:\n${injection}\n\nCORE OPERATIONAL PROTOCOLS:\n${baseInstr}\n\n DATE:${new Date().toDateString()}`
       : baseInstr;
 
     this._pendingCache = {
