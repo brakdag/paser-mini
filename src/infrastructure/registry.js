@@ -105,8 +105,8 @@ export function generateSystemInstruction(availableToolNames, mcpSchemas = {}) {
     .filter((name) => name.startsWith("mcp_"))
     .map((name) => {
       const schema = mcpSchemas[name];
-      if (!schema || !schema.properties) return "";
-      const args = Object.keys(schema.properties).join(",");
+      if (!schema) return "";
+      const args = Object.keys(schema.properties || {}).join(",");
       const desc = schema.description ? schema.description.split(". ")[0] : "status";
       return `${name}(${args}) ${desc}`;
     })

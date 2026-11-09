@@ -159,6 +159,25 @@ The MCP SDK adds its default inherited variables (including `PATH`); explicit
 keeps the SDK defaults. Unset references remain literal and emit a diagnostic
 warning when warning logs are enabled. HTTP servers use `headers` instead.
 
+MCP connections are reconciled whenever the system prompt is built or rebuilt.
+Disabling or removing a server (including removing `mcp.json`) retires its tools;
+changing its resolved connection settings reconnects it. Invalid configuration
+keeps existing connections and logs a diagnostic. Failed connection or discovery
+attempts close the client and can be retried on the next prompt rebuild. There is
+no background reconnection loop. An unexpected connection close immediately
+retires its executable tools; the prompt catalog refreshes on its next rebuild.
+
+Names exposed to the model use `mcp_<server>_<tool>`, replacing characters outside
+`A-Z`, `a-z`, `0-9` and `_` with `_`. The original remote tool name is used for
+requests. Colliding normalized server names, duplicate tool names and collisions
+across server/tool boundaries reject the new connection without overwriting an
+active one. Servers are initialized in configuration order. Discovery publishes
+all tools together; disconnect and shutdown remove only that connection's tools
+and invalidate previously copied functions. MCP lifecycle operations are
+serialized to prevent duplicate connections and late discovery after disconnect.
+The application-wide shutdown deadline and resource ownership remain separate
+work tracked in `TODO.md` (T20).
+
 ### Command Line Arguments
 | Argument | Short | Description |
 | :--- | :--- | :--- |

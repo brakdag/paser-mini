@@ -15,10 +15,17 @@ class McpManager {
    * Initializes the McpManager with empty maps for clients, tools, and schemas.
    * @param {object} [options] - Injectable transport dependencies.
    * @param {(options: object) => object} [options.createStdioTransport] - Factory for local server transports.
+   * @param {string} [options.configPath] - Configuration path for this project.
    */
-  constructor({ createStdioTransport = (options) => new StdioClientTransport(options) } = {}) {
+  constructor({
+    createStdioTransport = (options) => new StdioClientTransport(options),
+    configPath = path.join(process.cwd(), ".paser-mini", "config", "mcp.json"),
+  } = {}) {
     this.createStdioTransport = createStdioTransport;
+    this.configPath = configPath;
     this.clients = new Map();
+    this.registrations = new Map();
+    this.pending = Promise.resolve();
     this.tools = {};
     this.schemas = {};
   }
@@ -27,61 +34,89 @@ class McpManager {
    * Initializes the manager by reading mcp.json and connecting to all configured servers.
    * @returns {Promise<void>}
    */
-  async initialize() {
-    const configPath = path.join(process.cwd(), ".paser-mini", "config", "mcp.json");
-    
-    try {
-      const configContent = await fsp.readFile(configPath, "utf8");
-      const config = JSON.parse(configContent);
-      
-      if (!config.mcpServers) {
-        logger.info("[McpManager] No 'mcpServers' defined in mcp.json. Skipping initialization.");
-        return;
+  initialize() {
+    return this._enqueue(async () => {
+      let servers;
+      try {
+        const config = JSON.parse(await fsp.readFile(this.configPath, "utf8"));
+        servers = config.mcpServers || {};
+        if (typeof servers !== "object" || Array.isArray(servers)) {
+          throw new Error("mcpServers must be an object");
+        }
+      } catch (err) {
+        if (err.code !== "ENOENT") {
+          logger.error(`[McpManager] Failed to read MCP configuration: ${err.message}`);
+          return;
+        }
+        servers = {};
       }
-
-      await Promise.all(
-        Object.entries(config.mcpServers).map(async ([serverName, serverConfig]) => {
-          if (this.clients.has(serverName)) return; // Idempotency check
-          if (serverConfig.enabled === false) {
-            logger.info(`[McpManager] Server '${serverName}' is disabled. Skipping.`);
-            return;
-          }
-          await this.connectServer(serverName, serverConfig);
-        })
-      );
-    } catch (err) {
-      if (err.code === "ENOENT") {
-        logger.info("[McpManager] No mcp.json found. Running without external MCP tools.");
-      } else {
-        logger.error(`[McpManager] Failed to initialize MCP servers: ${err.message}`);
+      // Reconcile removals, disabled servers and changed connection settings first.
+      await Promise.all(Array.from(this.clients.keys()).map(async (name) => {
+        const config = servers[name];
+        if (!config || config.enabled === false ||
+            this.registrations.get(name)?.config !== JSON.stringify(this._resolveEnvVars(config))) {
+          await this._disconnectServer(name);
+        }
+      }));
+      // Stable configuration order also makes collision diagnostics deterministic.
+      const entries = Object.entries(servers);
+      for (let index = 0; index < entries.length; index += 1) {
+        const [name, config] = entries[index];
+        if (config && config.enabled !== false) await this._connectServer(name, config);
       }
-    }
+    });
   }
 
   /**
-   * Gracefully terminates a specific MCP server connection and removes its tools.
-   * @param {string} serverName - The logical name of the server.
-   * @returns {Promise<void>}
+   * Serializes lifecycle changes so discovery cannot publish after a disconnect.
+   * @param {() => Promise<void>} operation - Lifecycle operation to perform.
+   * @returns {Promise<void>} Completion of this operation.
+   * @private
    */
-  async disconnectServer(serverName) {
+  _enqueue(operation) {
+    const result = this.pending.then(operation);
+    this.pending = result.catch(() => {});
+    return result;
+  }
+
+  /**
+   * Removes exactly the tools owned by this connection.
+   * @param {string} serverName - Registered server name.
+   * @private
+   */
+  _removeRegistration(serverName) {
+    const registration = this.registrations.get(serverName);
+    if (registration) {
+      registration.names.forEach((name) => {
+        delete this.tools[name];
+        delete this.schemas[name];
+      });
+    }
+    this.registrations.delete(serverName);
+    this.clients.delete(serverName);
+  }
+
+  /**
+   * Disconnects a server and invalidates even previously copied tool functions.
+   * @param {string} serverName - Logical server name.
+   * @returns {Promise<void>} Completion of cleanup.
+   */
+  disconnectServer(serverName) {
+    return this._enqueue(() => this._disconnectServer(serverName));
+  }
+
+  /**
+   * Removes registration before attempting transport cleanup, even if close fails.
+   * @param {string} serverName - Logical server name.
+   * @returns {Promise<void>} Completion of cleanup.
+   * @private
+   */
+  async _disconnectServer(serverName) {
     const client = this.clients.get(serverName);
+    this._removeRegistration(serverName);
     if (!client) return;
-
-    const safeServerName = serverName.replace(/[^a-zA-Z0-9_]/g, '_');
-    const prefix = `mcp_${safeServerName}_`;
-
-    // Remove tools and schemas
-    Object.keys(this.tools).forEach((toolName) => {
-      if (toolName.startsWith(prefix)) {
-        delete this.tools[toolName];
-        delete this.schemas[toolName];
-      }
-    });
-
     try {
       await client.close();
-      this.clients.delete(serverName);
-      logger.info(`[McpManager] Disconnected from ${serverName}.`);
     } catch (err) {
       logger.warn(`[McpManager] Error disconnecting from ${serverName}: ${err.message}`);
     }
@@ -123,10 +158,27 @@ class McpManager {
    * @param {object} serverConfig - The configuration object.
    * @returns {Promise<void>}
    */
-  async connectServer(serverName, serverConfig) {
+  connectServer(serverName, serverConfig) {
+    return this._enqueue(() => this._connectServer(serverName, serverConfig));
+  }
+
+  /**
+   * Publishes a connection only after complete discovery and collision validation.
+   * @param {string} serverName - Logical server name.
+   * @param {object} serverConfig - Transport configuration.
+   * @returns {Promise<void>} Completion of connection attempt.
+   * @private
+   */
+  async _connectServer(serverName, serverConfig) {
+    if (this.clients.has(serverName) || serverConfig.enabled === false) return;
+    let client;
+    let transport;
     try {
       const resolvedConfig = this._resolveEnvVars(serverConfig);
-      let transport;
+      const safeServerName = serverName.replace(/[^a-zA-Z0-9_]/g, "_");
+      if (Array.from(this.registrations.values()).some((entry) => entry.safeName === safeServerName)) {
+        throw new Error(`Normalized MCP server name collision: ${safeServerName}`);
+      }
       
       if (resolvedConfig.type === "http" && resolvedConfig.url) {
         logger.info(`[McpManager] Connecting to HTTP MCP server: ${serverName} at ${resolvedConfig.url}...`);
@@ -156,42 +208,58 @@ class McpManager {
         });
       }
 
-      const client = new Client(
+      client = new Client(
         { name: `paser-mini-${serverName}`, version: "1.0.0" },
         { capabilities: {} }
       );
 
+      let closed = false;
+      /** Removes the catalog when the SDK reports a closed connection. */
+      client.onclose = () => {
+        closed = true;
+        if (this.clients.get(serverName) === client) this._removeRegistration(serverName);
+      };
       await client.connect(transport);
-      this.clients.set(serverName, client);
-      
-      logger.info(`[McpManager] Connected to ${serverName}. Discovering tools...`);
-      
       const toolsResponse = await client.listTools();
-      
-      if (toolsResponse && toolsResponse.tools) {
-        toolsResponse.tools.forEach((tool) => {
-          const safeServerName = serverName.replace(/[^a-zA-Z0-9_]/g, '_');
-          const namespacedToolName = `mcp_${safeServerName}_${tool.name}`;
-          
-          /**
-           * Executes the remote tool via the MCP client.
-           * @param {object} args - Arguments matching the tool's input schema.
-           * @returns {Promise<string>} The concatenated text content of the tool's response.
-           * @private
-           */
-          this.tools[namespacedToolName] = async (args) => {
-            const result = await client.callTool({ name: tool.name, arguments: args });
-            return result.content.map((c) => c.text || "").join("\n");
-          };
-          
-          // Store the raw JSON Schema for the schemaRegistry
-          this.schemas[namespacedToolName] = tool.inputSchema;
-          
-          logger.info(`[McpManager] Registered tool: ${namespacedToolName}`);
-        });
-      }
+      const discovered = toolsResponse?.tools;
+      if (!Array.isArray(discovered)) throw new Error("Invalid MCP tool discovery response");
+      const tools = {};
+      const schemas = {};
+      discovered.forEach((tool) => {
+        const safeToolName = tool.name.replace(/[^a-zA-Z0-9_]/g, "_");
+        const name = `mcp_${safeServerName}_${safeToolName}`;
+        if (Object.hasOwn(tools, name) || Object.hasOwn(this.tools, name)) {
+          throw new Error(`Normalized MCP tool name collision: ${name}`);
+        }
+        /**
+         * Executes only while the discovering connection remains registered.
+         * @param {object} args - Remote tool arguments.
+         * @returns {Promise<string>} Text blocks from the remote result.
+         */
+        tools[name] = async (args) => {
+          if (this.clients.get(serverName) !== client) {
+            throw new Error(`MCP server '${serverName}' is disconnected`);
+          }
+          const result = await client.callTool({ name: tool.name, arguments: args });
+          return result.content.map((c) => c.text || "").join("\n");
+        };
+        schemas[name] = tool.inputSchema;
+      });
+      if (closed) throw new Error("MCP connection closed during discovery");
+      this.clients.set(serverName, client);
+      this.registrations.set(serverName, {
+        names: Object.keys(tools), safeName: safeServerName, config: JSON.stringify(resolvedConfig),
+      });
+      Object.assign(this.tools, tools);
+      Object.assign(this.schemas, schemas);
     } catch (err) {
       logger.error(`[McpManager] Failed to connect to ${serverName}: ${err.message}`);
+      try {
+        if (client) await client.close();
+        else if (transport) await transport.close();
+      } catch (closeError) {
+        logger.warn(`[McpManager] Failed to clean up ${serverName}: ${closeError.message}`);
+      }
     }
   }
 
@@ -215,18 +283,10 @@ class McpManager {
    * Gracefully terminates all MCP server connections.
    * @returns {Promise<void>}
    */
-  async shutdown() {
-    const clientEntries = Array.from(this.clients.entries());
-    await Promise.all(
-      clientEntries.map(async ([name, client]) => {
-        try {
-          await client.close();
-          logger.info(`[McpManager] Closed connection with ${name}`);
-        } catch (err) {
-          logger.warn(`[McpManager] Error closing ${name}: ${err.message}`);
-        }
-      })
-    );
+  shutdown() {
+    return this._enqueue(() => Promise.all(
+      Array.from(this.clients.keys()).map((name) => this._disconnectServer(name))
+    ));
   }
 }
 
