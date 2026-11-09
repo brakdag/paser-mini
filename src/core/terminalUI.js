@@ -1,6 +1,5 @@
 import chalk from "chalk";
 import ora from "ora";
-import { toolResultText } from "./toolResult.js";
 import renderer from "./TerminalRenderer.js";
 import IRCFormatter from "../utils/ircFormatter.js";
 import { TerminalInput } from "./TerminalInput.js";
@@ -137,16 +136,6 @@ class TerminalUI {
   setIdentities(user, model) {
     this.user = user;
     this.model = model;
-  }
-
-  /**
-   * Shows structured tool output with explicit terminal limitations for binary blocks.
-   * @param {string} name - Tool name.
-   * @param {object} outcome - Complete normalized result.
-   */
-  displayToolResult(name, outcome) {
-    if (outcome.action && !outcome.isError) return;
-    this.displayChatMessage("system", `[${name}] ${outcome.isError ? "✗ ERROR" : "✓ OK"} ${toolResultText(outcome)}`);
   }
 
   /**

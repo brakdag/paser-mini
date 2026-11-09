@@ -26,10 +26,9 @@ const rich = [{ type: "text", text: "first" }, image, resource, binary, unknown,
  */
 function recordingUI() {
   return {
-    model: { nickname: "agent" }, inputQueue: [], monitored: [], outputs: [], displayed: [],
+    model: { nickname: "agent" }, inputQueue: [], monitored: [], displayed: [],
     startToolMonitoring() {},
     endToolMonitoring(name, success) { this.monitored.push({ name, success }); },
-    displayToolResult(name, outcome) { this.outputs.push({ name, outcome }); },
     displayChatMessage(name, message) { this.displayed.push({ name, message }); },
     displayRawMessage(message) { this.displayed.push(message); },
     displayError(message) { throw new Error(message); },
@@ -84,9 +83,7 @@ test("two MCP tools retain block order and remote errors through the real turn a
   await turn.process("go");
   assert.equal(sent.length, 2);
   assert.deepEqual(ui.monitored.map(entry => entry.success), [true, false]);
-  assert.deepEqual(ui.outputs[0].outcome.content, first.content);
-  assert.deepEqual(ui.outputs[1].outcome.content, rich);
-  assert.equal(ui.outputs[1].outcome.isError, true);
+  assert.deepEqual(ui.displayed, [{ name: "agent", message: "done" }]);
   assert.deepEqual(sent[1], [
     { type: "text", text: "[mcp_fixture_first] ✓ OK" }, ...first.content,
     { type: "text", text: "[mcp_fixture_second] ✗ ERROR" }, ...rich,
@@ -94,15 +91,41 @@ test("two MCP tools retain block order and remote errors through the real turn a
   ]);
 });
 
-test("terminal renders text and resource content and explains unsupported blocks without binary dumps", () => {
-  const displayed = [];
-  TerminalUI.prototype.displayToolResult.call({ displayChatMessage(name, text) { displayed.push({ name, text }); } },
-    "remote", normalizeToolResult({ content: rich, isError: true }));
-  assert.match(displayed[0].text, /ERROR.*first/s);
-  assert.match(displayed[0].text, /resource body/);
-  assert.match(displayed[0].text, /Unsupported content: image/);
-  assert.match(displayed[0].text, /Unsupported content: future/);
-  assert.doesNotMatch(displayed[0].text, /YWJj|ZGVm|\[object Object\]/);
+["success", "remote error", "exception"].forEach(status => {
+  test(`terminal shows only the tool call and status for ${status}, preserving the result for the model`, async (t) => {
+    const ui = new TerminalUI();
+    const output = [];
+    const logged = [];
+    t.after(() => ui.close());
+    t.mock.method(process.stdout, "write", text => { output.push(String(text)); return true; });
+    t.mock.method(ui, "writeToLog", text => { logged.push(text); });
+    const parser = new SmartToolParser();
+    const tools = {
+      async search() {
+        if (status === "exception") throw new Error("private failure body");
+        return { content: rich, isError: status === "remote error", structuredContent: { answer: 42 } };
+      },
+    };
+    const engine = new ExecutionEngine(tools, parser, ui);
+    const sent = [];
+    const assistant = {
+      async sendMessage(message) {
+        sent.push(message);
+        return sent.length === 1 ? 'Əsearch("busqueda")ə' : "done";
+      },
+    };
+    const turn = new TurnProcessor(assistant, tools, parser, engine, ui, new RepetitionDetector());
+    await turn.process("go");
+    const icon = status === "success" ? "✓" : "✗";
+    assert.match(output[0], new RegExp(`search \\(busqueda\\) ${icon}`));
+    assert.equal(output.length, 2);
+    assert.match(output[1], /done/);
+    assert.equal(logged.length, 2);
+    assert.match(logged[0], new RegExp(`search \\(busqueda\\) ${icon}`));
+    assert.doesNotMatch([...output, ...logged].join("\n"), /first|resource body|YWJj|ZGVm|structuredContent|private failure body|Ə|ə/);
+    assert.match(JSON.stringify(sent[1]), status === "exception" ? /private failure body/ : /resource body.*answer/s);
+    assert.equal(ui.activeSpinners.size, 0);
+  });
 });
 
 ["FOUNTAIN_INJECTION", "QR_DISPLAY"].forEach(type => {
@@ -209,7 +232,7 @@ test("Fountain preserves earlier rich tool results and remote metadata cannot tr
     { data: { name: "remote", args: {} } }, { data: { name: "scene", args: { scene: "scene", action: "action" } } },
   ], engine, ui, { injectMessage(role, content) { injected.push({ role, content }); } }, parser);
   assert.equal(result.terminate, true);
-  assert.equal(ui.outputs[0].outcome.action, null);
+  assert.deepEqual(ui.displayed, [{ name: "system", message: "scene" }]);
   assert.deepEqual(injected[0].content.slice(1, 1 + rich.length), rich);
   assert.equal(injected[1].content, "scene");
 });

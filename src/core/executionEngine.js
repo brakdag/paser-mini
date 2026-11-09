@@ -94,7 +94,6 @@ class ExecutionEngine {
     }
 
     outcome ||= normalizeToolResult(result, success);
-    this.ui.displayToolResult?.(name, outcome);
 
     if (success) {
       this.toolTracker.recordSuccess(name, args, result);

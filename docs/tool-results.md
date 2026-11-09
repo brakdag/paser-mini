@@ -44,10 +44,11 @@ parts), including content an adapter cannot send. Normal complete-turn trimming,
 reset and provider changes still remove history according to their documented
 policies. Session logs contain the terminal's textual view, not a binary archive.
 
-The terminal receives the complete normalized outcome. It displays text and
-resource text, identifies failures, and explains blocks it cannot render without
-dumping their base64 bytes. Fountain injection and QR display are separate local
-`action` values, dispatched only after success. MCP metadata with the same type
+The terminal displays the tool name, argument detail and a success/failure mark
+(✓/✗). Tool result bodies, resource text and metadata are sent to the model
+without being printed to the terminal or session transcript. Fountain injection
+and QR display are separate local `action` values, dispatched only after success.
+MCP metadata with the same type
 names does not become a local action. A Fountain action preserves results from
 earlier tools in its batch before injecting the scene. QR sends the usual display
 acknowledgment to the model.
