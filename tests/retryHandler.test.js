@@ -89,3 +89,66 @@ test("a late result is rejected when cancellation occurs during the request", as
     return "late response";
   }, { signal: controller.signal }), (caught) => caught === reason);
 });
+
+test("Retry-After supports HTTP dates, invalid values and delays larger than local backoff", async () => {
+  const handler = new RetryHandler(2, 0);
+  const now = Date.UTC(2026, 10, 9);
+  /** @returns {number} Fixed time for HTTP dates. */
+  handler.wallNow = () => now;
+  const headers = [new Date(now + 9000).toUTCString(), "invalid", "-1", "", new Date(now - 1000).toUTCString(), "0.5"];
+  const waits = [];
+  /**
+   * @param {number} ms - Scheduled delay.
+   * @returns {Promise<void>} Recorded wait.
+   */
+  handler.sleep = async ms => { waits.push(ms); };
+  for (let index = 0; index < headers.length; index += 1) {
+    let count = 0;
+    await handler.execute(async () => {
+      count += 1;
+      if (count === 1) throw Object.assign(new Error("busy"), { response: { status: 503, headers: { "retry-after": headers[index] } } });
+      return "ok";
+    });
+  }
+  assert.deepEqual(waits, [9000, 0, 0, 0, 0, 0]);
+});
+
+test("server delays that exceed remaining time terminate without sleeping or retrying early", async () => {
+  const handler = new RetryHandler(5, 0);
+  handler.maxElapsedMs = 5000;
+  let count = 0;
+  /** @returns {Promise<void>} Simulated wait. */
+  handler.sleep = async () => { assert.fail("cannot fit server delay"); };
+  await assert.rejects(handler.execute(async () => {
+    count += 1;
+    throw Object.assign(new Error("busy"), { response: { status: 429, headers: { "retry-after": "6" } } });
+  }), { name: "TimeoutError" });
+  assert.equal(count, 1);
+});
+
+test("a monotonic deadline covers all attempts and sleeps without resetting", async () => {
+  const handler = new RetryHandler(5, 0);
+  handler.maxElapsedMs = 100;
+  let elapsed = 0;
+  let count = 0;
+  /** @returns {number} Simulated elapsed time. */
+  handler.now = () => elapsed;
+  /** @returns {Promise<void>} Simulated wait. */
+  handler.sleep = async () => { elapsed += 60; };
+  await assert.rejects(handler.execute(async () => {
+    count += 1;
+    elapsed += 30;
+    throw Object.assign(new Error("busy"), { code: "ECONNRESET" });
+  }), { name: "TimeoutError" });
+  assert.equal(count, 2);
+});
+
+test("permanent HTTP errors override recoverable message and network classifications", async () => {
+  const handler = new RetryHandler(3, 0);
+  let count = 0;
+  await assert.rejects(handler.execute(async () => {
+    count += 1;
+    throw Object.assign(new Error("Empty response"), { response: { status: 400 }, code: "ECONNRESET" });
+  }, { recoverableErrors: ["Empty response"] }));
+  assert.equal(count, 1);
+});

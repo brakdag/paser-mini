@@ -66,10 +66,13 @@ class CohereAdapter extends BaseAdapter {
    * Sends a message to the Cohere API and returns the response text.
    * @param {string|object|Array} message - The message content to send.
    * @param {string} [role] - The role of the sender.
+   * @param {object} [options] - Request cancellation and shared retry budget.
+   * @param {AbortSignal} [options.signal] - Cancels requests and waits.
+   * @param {import("../../utils/requestBudget.js").default} [options.budget] - Shared request deadline.
    * @returns {Promise<string>} The response text from the AI.
    * @throws {Error} If the API request fails.
    */
-  async _sendMessage(message, role = "user") {
+  async _sendMessage(message, role = "user", { signal, budget } = {}) {
     const timestamp = IRCFormatter.getTimestamp();
     this.injectMessage(role, message, timestamp);
     this._enforceContextLimit();
@@ -78,7 +81,7 @@ class CohereAdapter extends BaseAdapter {
     const payload = this._preparePayload();
     this._validateContextPayload(payload);
 
-    await this._applyRateLimit();
+    await this._applyRateLimit(signal);
 
     try {
       return await this.retryHandler.execute(async () => {
@@ -86,12 +89,14 @@ class CohereAdapter extends BaseAdapter {
           this.lastPayload = payload;
           logger.info(`[CohereAdapter] Requesting: ${this.client.defaults.baseURL}/v2/chat`);
 
-          const response = await this.client.post("/chat", payload);
+          const response = await this.client.post("/chat", payload, { signal });
+          signal?.throwIfAborted();
           return this._handleResponse(response);
         } catch (error) {
           throw this._handleApiError(error, payload);
         }
       }, {
+        signal, budget,
         recoverableErrors: this.recoverableErrors,
         /**
          * Handles retry attempts by logging and displaying information.
@@ -100,9 +105,9 @@ class CohereAdapter extends BaseAdapter {
          * @param {string} formattedDelay - The formatted delay string for display.
          */
         onRetry: (attempt, error, formattedDelay) => {
-          logger.warn(`[CohereAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`);
+          logger.warn(`[CohereAdapter] Retrying in ${formattedDelay}... (${attempt}/${this.retryHandler.maxRetries}) due to: ${error.message}`);
           if (this.ui && this.ui.displayInfo) {
-            this.ui.displayInfo(`Retrying Cohere in ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`);
+            this.ui.displayInfo(`Retrying Cohere in ${formattedDelay}... (${attempt}/${this.retryHandler.maxRetries}) | Error: ${error.message}`);
           }
         }
       });
@@ -212,6 +217,7 @@ class CohereAdapter extends BaseAdapter {
    * @returns {Error} A formatted Error object with name "APIError".
    */
   _handleApiError(error, payload) {
+    if (["AbortError", "UserInterruptException", "TimeoutError"].includes(error.name) || ("code" in error && error.code === "ERR_CANCELED")) return error;
     const errorData = error.response?.data;
     const errorMsg = errorData?.message || error.message;
     const apiError = new Error(errorMsg);

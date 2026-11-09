@@ -9,7 +9,6 @@ const BASE_URL = "https://inference.poolside.ai/v1";
 const DEFAULT_MODEL = "poolside/laguna-s-2.1";
 const DEFAULT_TEMPERATURE = 0.7;
 const REQUEST_TIMEOUT_MS = 10 * 60 * 1000;
-const MAX_RETRY_ATTEMPTS = 15;
 const FALLBACK_MODELS = ["poolside/laguna-s-2.1", "poolside/laguna-xs-2.1"];
 
 /**
@@ -71,17 +70,20 @@ class PoolsideAdapter extends BaseAdapter {
    * Sends a message to the Poolside API and returns the response text.
    * @param {string|object|Array} message - The message content to send.
    * @param {string} [role] - The role of the sender.
+   * @param {object} [options] - Request cancellation and shared retry budget.
+   * @param {AbortSignal} [options.signal] - Cancels requests and waits.
+   * @param {import("../../utils/requestBudget.js").default} [options.budget] - Shared request deadline.
    * @returns {Promise<string>} The response text from the AI.
    * @throws {Error} If the API request fails.
    */
-  async _sendMessage(message, role = "user") {
+  async _sendMessage(message, role = "user", { signal, budget } = {}) {
     const timestamp = IRCFormatter.getTimestamp();
     this.injectMessage(role, message, timestamp);
     this._enforceContextLimit();
     const historyLengthBefore = this.history.length;
 
     try {
-      return await this._dispatchMessage();
+      return await this._dispatchMessage(signal, budget);
     } catch (error) {
       this._rollbackOnFailure(historyLengthBefore);
       throw error;
@@ -195,16 +197,19 @@ class PoolsideAdapter extends BaseAdapter {
   /**
    * Applies rate limiting, prepares the payload, and dispatches the request with retry semantics.
    * @private
+   * @param {AbortSignal} signal - Shared request cancellation.
+   * @param {import("../../utils/requestBudget.js").default} budget - Shared request deadline.
    * @returns {Promise<string>} The assistant's text response.
    */
-  async _dispatchMessage() {
-    await this._applyRateLimit();
+  async _dispatchMessage(signal, budget) {
+    await this._applyRateLimit(signal);
     const payload = this._preparePayload();
     this._validateContextPayload(payload);
 
     return this.retryHandler.execute(
-      () => this._executeRequest(payload),
+      () => this._executeRequest(payload, signal),
       {
+        signal, budget,
         recoverableErrors: this.recoverableErrors,
         onRetry: this._logRetry.bind(this),
       },
@@ -215,13 +220,15 @@ class PoolsideAdapter extends BaseAdapter {
    * Executes a single HTTP request against the chat completions endpoint.
    * @private
    * @param {object} payload - The request payload to send.
+   * @param {AbortSignal} signal - Cancels the HTTP request.
    * @returns {Promise<string>} The assistant's text response.
    */
-  async _executeRequest(payload) {
+  async _executeRequest(payload, signal) {
     logger.info(`[PoolsideAdapter] Requesting: ${this.client.defaults.baseURL}/chat/completions`);
 
     try {
-      const response = await this.client.post("/chat/completions", payload);
+      const response = await this.client.post("/chat/completions", payload, { signal });
+      signal?.throwIfAborted();
       return this._handleResponse(response);
     } catch (error) {
       throw this._handleApiError(error);
@@ -237,9 +244,9 @@ class PoolsideAdapter extends BaseAdapter {
    * @returns {void}
    */
   _logRetry(attempt, error, formattedDelay) {
-    logger.warn(`[PoolsideAdapter] Retrying in ${formattedDelay}... (${attempt}/${MAX_RETRY_ATTEMPTS}) due to: ${error.message}`);
+    logger.warn(`[PoolsideAdapter] Retrying in ${formattedDelay}... (${attempt}/${this.retryHandler.maxRetries}) due to: ${error.message}`);
     if (this.ui && this.ui.displayInfo) {
-      this.ui.displayInfo(`Retrying Poolside in ${formattedDelay}... (${attempt}/${MAX_RETRY_ATTEMPTS}) | Error: ${error.message}`);
+      this.ui.displayInfo(`Retrying Poolside in ${formattedDelay}... (${attempt}/${this.retryHandler.maxRetries}) | Error: ${error.message}`);
     }
   }
 
@@ -298,6 +305,7 @@ class PoolsideAdapter extends BaseAdapter {
    * @returns {Error} A formatted Error object with name "APIError".
    */
   _handleApiError(error) {
+    if (["AbortError", "UserInterruptException", "TimeoutError"].includes(error.name) || ("code" in error && error.code === "ERR_CANCELED")) return error;
     const errorMsg = error.response?.data?.error?.message || error.message;
     const apiError = new Error(errorMsg);
     apiError.name = "APIError";

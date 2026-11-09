@@ -4,6 +4,7 @@ import IRCFormat from "../formats/IRCFormat.js";
 import CleanFormat from "../formats/CleanFormat.js";
 import FountainFormat from "../formats/FountainFormat.js";
 import logger from "../core/logger.js";
+import RequestBudget from "../utils/requestBudget.js";
 import { contextSettings, estimateContextTokens, planContext } from "./contextBudget.js";
 
 /**
@@ -11,6 +12,9 @@ import { contextSettings, estimateContextTokens, planContext } from "./contextBu
  */
 export default class BaseAdapter {
   systemInstructionInHistory = false;
+
+  /** @type {import("../utils/retryHandler.js").default|undefined} */
+  retryHandler;
 
   /**
    * @param {object} config - Configuration object for the adapter.
@@ -260,18 +264,22 @@ export default class BaseAdapter {
     if (this.#pendingEntries) throw new Error("A context request is already active");
     const history = this.getHistory();
     const before = structuredClone(history);
+    const budget = new RequestBudget(this.retryHandler?.maxElapsedMs ?? 600000, options.signal, this.retryHandler?.now);
     const ownsTurn = !this.#contextTurn;
     if (ownsTurn) this.beginContextTurn();
     this.#pendingEntries = new Set(history);
     try {
-      const response = await this._sendMessage(message, role, options);
+      const response = await this._sendMessage(message, role, { ...options, signal: budget.signal, budget });
+      budget.remaining();
       this._tagContextEntries();
       return response;
     } catch (error) {
       const current = this.getHistory();
       current.splice(0, current.length, ...before);
+      budget.signal.throwIfAborted();
       throw error;
     } finally {
+      budget.close();
       this.#pendingEntries = null;
       if (ownsTurn) this.endContextTurn();
     }

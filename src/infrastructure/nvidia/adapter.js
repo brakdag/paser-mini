@@ -53,9 +53,12 @@ class NvidiaAdapter extends BaseAdapter {
    * Sends a message and returns the filtered response.
    * @param {string} message - The text content to be sent.
    * @param {string} role - The role of the message sender.
+   * @param {object} [options] - Request cancellation and shared retry budget.
+   * @param {AbortSignal} [options.signal] - Cancels requests and waits.
+   * @param {import("../../utils/requestBudget.js").default} [options.budget] - Shared request deadline.
    * @returns {Promise<string>} The processed response text.
    */
-  async _sendMessage(message, role = "user") {
+  async _sendMessage(message, role = "user", { signal, budget } = {}) {
     this.state.addMessage(role, message);
     this._enforceContextLimit(); // Plan complete-turn trimming before building the request
     const historyLengthBefore = this.state.getRawHistory().length;
@@ -64,17 +67,19 @@ class NvidiaAdapter extends BaseAdapter {
     this._validateContextPayload(payload);
     this.lastPayload = payload;
 
-    await this._applyRateLimit();
+    await this._applyRateLimit(signal);
 
     try {
       return await this.retryHandler.execute(async () => {
         try {
-          const data = await this.restClient.chatCompletions(payload);
+          const data = await this.restClient.chatCompletions(payload, false, undefined, { signal });
+          signal?.throwIfAborted();
           return this._handleResponse(data);
         } catch (e) {
           throw this._handleError(e);
         }
       }, {
+        signal, budget,
         recoverableErrors: this.recoverableErrors,
         /**
          * Callback executed when a retry is attempted.
@@ -84,9 +89,9 @@ class NvidiaAdapter extends BaseAdapter {
          * @returns {void}
          */
         onRetry: (attempt, error, formattedDelay) => {
-          logger.warn(`[NvidiaAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`);
+          logger.warn(`[NvidiaAdapter] Retrying in ${formattedDelay}... (${attempt}/${this.retryHandler.maxRetries}) due to: ${error.message}`);
           if (this.ui && this.ui.displayInfo) {
-            this.ui.displayInfo(`Retrying NVIDIA in ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`);
+            this.ui.displayInfo(`Retrying NVIDIA in ${formattedDelay}... (${attempt}/${this.retryHandler.maxRetries}) | Error: ${error.message}`);
           }
         }
       });
@@ -148,6 +153,7 @@ class NvidiaAdapter extends BaseAdapter {
    * @returns {Error} A formatted Error object with name "APIError".
    */
   _handleError(e) {
+    if (["AbortError", "UserInterruptException", "TimeoutError"].includes(e.name) || ("code" in e && e.code === "ERR_CANCELED")) return e;
     const errorMsg = e.response?.data?.error?.message || e.message;
     logger.error("NvidiaAdapter: Request failed", { error: errorMsg });
 

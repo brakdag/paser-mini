@@ -140,17 +140,13 @@ test("Gemini backoff is cancelled without another request or changes to earlier 
   assert.equal(api.pendingRequest, null);
 });
 
-test("cancellation also interrupts the outer API backoff", { timeout: 1000 }, async () => {
-  const retrying = deferred();
+test("the communicator never retries an adapter failure", async () => {
   let attempts = 0;
+  const failure = serviceError();
   const api = new ApiCommunicator({
-    async sendMessage() { attempts += 1; throw serviceError(); },
-  }, { displayError() { retrying.resolve(); } });
-  api.baseDelay = 300000;
-  const rejected = assert.rejects(api.send("Request"), { name: "UserInterruptException" });
-  await retrying.promise;
-  api.cancelPendingRequest();
-  await rejected;
+    async sendMessage() { attempts += 1; throw failure; },
+  }, {});
+  await assert.rejects(api.send("Request"), error => error === failure);
   assert.equal(attempts, 1);
 });
 
@@ -213,7 +209,7 @@ test("/models still lists models and selects a filtered index", async () => {
   assert.deepEqual(errors, []);
 });
 
-test("only /models interrupts Gemini, including arguments and mixed case", () => {
+test("only /models interrupts active requests for every provider, including arguments and mixed case", () => {
   let cancelled = 0;
   const manager = {
     assistant: { providerId: "GEMINI" },
@@ -228,8 +224,8 @@ test("only /models interrupts Gemini, including arguments and mixed case", () =>
   assert.equal(handler.interruptForModelChange("/connect groq"), false);
   assert.equal(handler.interruptForModelChange("ordinary input"), false);
   manager.assistant.providerId = "GROQ";
-  assert.equal(handler.interruptForModelChange("/models"), false);
-  assert.equal(cancelled, 2);
+  assert.equal(handler.interruptForModelChange("/models"), true);
+  assert.equal(cancelled, 3);
 });
 
 test("RetryHandler continues retrying normally when not cancelled", async () => {

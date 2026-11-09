@@ -186,10 +186,11 @@ class GeminiAdapter extends BaseAdapter {
    * @param {string} [role] - The role of the sender.
    * @param {object} [options] - Request options.
    * @param {AbortSignal} [options.signal] - Cancels the request and retry waits.
+   * @param {import("../../utils/requestBudget.js").default} [options.budget] - Shared request deadline.
    * @returns {Promise<string>} The processed response text.
    * @throws {Error} If the API request fails.
    */
-  async _sendMessage(message, role = "user", { signal } = {}) {
+  async _sendMessage(message, role = "user", { signal, budget } = {}) {
     await this._applyRateLimit(signal);
     signal?.throwIfAborted();
     const historyBefore = this.history.slice();
@@ -216,7 +217,7 @@ class GeminiAdapter extends BaseAdapter {
           }
         },
         {
-          signal,
+          signal, budget,
           /**
            * Callback executed when a retry is attempted.
            * @param {number} attempt - The current attempt number.
@@ -226,11 +227,11 @@ class GeminiAdapter extends BaseAdapter {
            */
           onRetry: (attempt, error, formattedDelay) => {
             logger.warn(
-              `[GeminiAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`,
+              `[GeminiAdapter] Retrying in ${formattedDelay}... (${attempt}/${this.retryHandler.maxRetries}) due to: ${error.message}`,
             );
             if (this.ui && this.ui.displayInfo) {
               this.ui.displayInfo(
-                `Retrying Gemini in ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`,
+                `Retrying Gemini in ${formattedDelay}... (${attempt}/${this.retryHandler.maxRetries}) | Error: ${error.message}`,
               );
             }
           },
@@ -288,6 +289,7 @@ class GeminiAdapter extends BaseAdapter {
    * @returns {Error} The original domain/interruption error or wrapped APIError.
    */
   _wrapApiError(error) {
+    if (["AbortError", "TimeoutError"].includes(error.name) || ("code" in error && error.code === "ERR_CANCELED")) return error;
     if (error instanceof GeminiSafetyError ||
         error instanceof GeminiEmptyResponseError ||
         error instanceof UserInterruptException) {

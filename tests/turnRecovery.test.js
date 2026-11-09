@@ -48,8 +48,6 @@ function harness(t, post) {
   const processor = new TurnProcessor(
     adapter, {}, new SmartToolParser(), engine, ui, new RepetitionDetector(),
   );
-  processor.api.maxRetries = 2;
-  processor.api.baseDelay = 0;
   return { adapter, processor, transport, pop, errors, messages, calls };
 }
 
@@ -139,7 +137,7 @@ const invalidResponses = [
     assert.deepEqual(history.slice(0, before.length), before);
     assert.equal(history.length, before.length + (afterTools ? 2 : 0));
     if (afterTools) assert.equal(history.at(-1).parts[0].text, TOOL_CALL);
-    assert.equal(h.transport.mock.callCount(), afterTools ? 5 : 4);
+    assert.equal(h.transport.mock.callCount(), afterTools ? 3 : 2);
     assert.equal(h.errors.filter((message) => message.startsWith("Model Error")).length, 0);
     assert.deepEqual(h.messages, []);
     assert.equal(h.pop.mock.callCount(), 0);

@@ -78,7 +78,6 @@ function harness(options = {}) {
          */
         async (name) => toolInstances[name],
       });
-      session.turnProcessor.api.maxRetries = 1;
       sessions.push(session);
       return session;
     },

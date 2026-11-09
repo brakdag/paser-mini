@@ -321,14 +321,7 @@
       "code": 2339,
       "message": "Property 'response' does not exist on type 'Error'.",
       "source": "response",
-      "count": 5
-    },
-    {
-      "file": "src/infrastructure/zai/adapter.js",
-      "code": 2345,
-      "message": "Argument of type 'Error' is not assignable to parameter of type 'AxiosError<unknown, any>'.\n  Type 'Error' is missing the following properties from type 'AxiosError<unknown, any>': isAxiosError, toJSON",
-      "source": "error",
-      "count": 1
+      "count": 3
     },
     {
       "file": "src/infrastructure/zai/adapter.js",

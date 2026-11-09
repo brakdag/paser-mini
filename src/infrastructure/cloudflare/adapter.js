@@ -74,10 +74,13 @@ class CloudflareAdapter extends BaseAdapter {
    * Sends a message to the Cloudflare API and returns the response.
    * @param {string} message - The message content to send.
    * @param {string} [role] - The role of the sender.
+   * @param {object} [options] - Request cancellation and shared retry budget.
+   * @param {AbortSignal} [options.signal] - Cancels requests and waits.
+   * @param {import("../../utils/requestBudget.js").default} [options.budget] - Shared request deadline.
    * @returns {Promise<string>} The response text from the API.
    * @throws {Error} If the response is empty or the request fails.
    */
-  async _sendMessage(message, role = "user") {
+  async _sendMessage(message, role = "user", { signal, budget } = {}) {
     this.injectMessage(role, message, IRCFormatter.getTimestamp());
     this._enforceContextLimit(); // Plan complete-turn trimming before building the request
     const historyLengthBefore = this.history.length;
@@ -94,12 +97,13 @@ class CloudflareAdapter extends BaseAdapter {
     this._validateContextPayload(payload);
     this.lastPayload = payload;
 
-    await this._applyRateLimit();
+    await this._applyRateLimit(signal);
 
     try {
       return await this.retryHandler.execute(async () => {
         try {
-          const response = await this.client.post("/chat/completions", payload);
+          const response = await this.client.post("/chat/completions", payload, { signal });
+          signal?.throwIfAborted();
           const textContent = response.data.choices[0].message.content;
 
           if (!textContent) {
@@ -112,6 +116,7 @@ class CloudflareAdapter extends BaseAdapter {
           throw this._handleApiError(error);
         }
       }, {
+        signal, budget,
         recoverableErrors: this.recoverableErrors,
         /**
          * Callback executed when a retry is attempted.
@@ -121,9 +126,9 @@ class CloudflareAdapter extends BaseAdapter {
          * @returns {void}
          */
         onRetry: (attempt, error, formattedDelay) => {
-          logger.warn(`[CloudflareAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`);
+          logger.warn(`[CloudflareAdapter] Retrying in ${formattedDelay}... (${attempt}/${this.retryHandler.maxRetries}) due to: ${error.message}`);
           if (this.ui && this.ui.displayInfo) {
-            this.ui.displayInfo(`Retrying Cloudflare in ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`);
+            this.ui.displayInfo(`Retrying Cloudflare in ${formattedDelay}... (${attempt}/${this.retryHandler.maxRetries}) | Error: ${error.message}`);
           }
         }
       });
@@ -142,6 +147,7 @@ class CloudflareAdapter extends BaseAdapter {
    * @returns {Error} A formatted Error object with name "APIError".
    */
   _handleApiError(error) {
+    if (["AbortError", "UserInterruptException", "TimeoutError"].includes(error.name) || ("code" in error && error.code === "ERR_CANCELED")) return error;
     const errorMsg = error.response?.data?.error?.message || error.message;
     const apiError = new Error(errorMsg);
     apiError.name = "APIError";

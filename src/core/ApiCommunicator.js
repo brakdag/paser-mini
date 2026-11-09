@@ -1,13 +1,7 @@
-import { setTimeout as delay } from "node:timers/promises";
 import { UserInterruptException } from "./exceptions.js";
 
-const RETRYABLE_NETWORK_ERRORS = ['ECONNABORTED', 'ETIMEDOUT', 'ECONNRESET', 'ERR_NETWORK', 'ENOTFOUND', 'EAI_AGAIN', 'EHOSTUNREACH', 'ENETUNREACH', 'ECONNREFUSED', 'EPIPE'];
-const RETRYABLE_SERVER_STATUSES = [429, 500, 502, 503, 504];
-const MAX_RETRIES = 5;
-const BASE_DELAY_MS = 1000;
-
 /**
- * Handles communication with the API, including retry logic and error recovery.
+ * Handles communication with the API, including cancellation and domain recovery.
  */
 class ApiCommunicator {
   /**
@@ -18,8 +12,6 @@ class ApiCommunicator {
   constructor(assistant, ui) {
     this.assistant = assistant;
     this.ui = ui;
-    this.maxRetries = MAX_RETRIES;
-    this.baseDelay = BASE_DELAY_MS;
     this.pendingRequest = null;
   }
 
@@ -32,61 +24,26 @@ class ApiCommunicator {
   }
 
   /**
-   * Sends a message to the assistant with exponential backoff retry logic.
+   * Sends a message to the assistant with cancellation; the adapter owns transport retries.
    * @param {string|Array} message - The message to send.
    * @param {object} [options] - The options for the send operation.
    * @param {string} [options.role] - The role of the sender.
-   * @param {number} [options.attempt] - The current attempt number.
    * @returns {Promise<string|object>} The response from the assistant.
    * @throws {Error} If the maximum number of retries is reached or a non-retryable error occurs.
    */
-  async send(message, { role = "user", attempt = 1 } = {}) {
+  async send(message, { role = "user" } = {}) {
+    if (this.pendingRequest) throw new Error("An API request is already active");
     const controller = new AbortController();
     this.pendingRequest = controller;
     try {
-      return await this._sendWithRetries(message, role, attempt, controller.signal);
+      const response = await this.assistant.sendMessage(message, role, { signal: controller.signal });
+      controller.signal.throwIfAborted();
+      return response;
     } catch (error) {
       controller.signal.throwIfAborted();
       throw error;
     } finally {
       this.pendingRequest = null;
-    }
-  }
-
-  /**
-   * Retries a message using the same cancellation signal for every attempt.
-   * @param {string|object|Array} message - The content to send.
-   * @param {string} role - The sender role.
-   * @param {number} attempt - The current attempt.
-   * @param {AbortSignal} signal - Cancels the request and backoff.
-   * @returns {Promise<string|object>} The assistant response.
-   */
-  async _sendWithRetries(message, role, attempt, signal) {
-    signal.throwIfAborted();
-    try {
-      const response = await this.assistant.sendMessage(message, role, { signal });
-      signal.throwIfAborted();
-      return response;
-    } catch (error) {
-      signal.throwIfAborted();
-      if (attempt >= this.maxRetries) throw error;
-
-      const httpStatus = error.response?.status;
-      const isNetworkError = error.code && RETRYABLE_NETWORK_ERRORS.includes(error.code);
-      const isServerError = httpStatus && RETRYABLE_SERVER_STATUSES.includes(httpStatus);
-
-      // Only retry if it is a known network error or a server error (500s)
-      const isRetryable = isNetworkError || isServerError;
-      if (!isRetryable) throw error;
-
-      const statusCode = httpStatus || error.code || (error.name === "ServiceDegradedError" ? 503 : error.message);
-      const delayMs = this.baseDelay * 2 ** (attempt - 1);
-      this.ui.displayError(
-        `API Error ${statusCode}: Retrying in ${delayMs}ms... (Attempt ${attempt}/${this.maxRetries})`,
-      );
-
-      await delay(delayMs, undefined, { signal });
-      return this._sendWithRetries(message, role, attempt + 1, signal);
     }
   }
 

@@ -273,13 +273,12 @@ class CommandHandler {
   }
 
   /**
-   * Interrupts a pending Gemini request before queuing model selection.
+   * Interrupts a pending provider request before queuing model selection.
    * @param {string} input - The terminal input.
    * @returns {boolean} Whether model selection should take priority.
    */
   interruptForModelChange(input) {
     if (!/^\/models(?:\s|$)/i.test(input.trim())) return false;
-    if (this.chatManager.assistant.providerId !== "GEMINI") return false;
     this.chatManager.turnProcessor.cancelPendingTurn();
     return true;
   }

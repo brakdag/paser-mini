@@ -76,10 +76,13 @@ class HuggingFaceAdapter extends BaseAdapter {
    * Sends a message to the HuggingFace API and returns the response text.
    * @param {string|object|Array} message - The message content to send.
    * @param {string} [role] - The role of the sender.
+   * @param {object} [options] - Request cancellation and shared retry budget.
+   * @param {AbortSignal} [options.signal] - Cancels requests and waits.
+   * @param {import("../../utils/requestBudget.js").default} [options.budget] - Shared request deadline.
    * @returns {Promise<string>} The response text from the AI.
    * @throws {Error} If the API request fails.
    */
-  async _sendMessage(message, role = "user") {
+  async _sendMessage(message, role = "user", { signal, budget } = {}) {
     const timestamp = IRCFormatter.getTimestamp();
     this.injectMessage(role, message, timestamp);
     this._enforceContextLimit(); // Plan complete-turn trimming before building the request
@@ -88,7 +91,7 @@ class HuggingFaceAdapter extends BaseAdapter {
     const payload = this._preparePayload();
     this._validateContextPayload(payload);
 
-    await this._applyRateLimit();
+    await this._applyRateLimit(signal);
 
     try {
       /**
@@ -100,12 +103,14 @@ class HuggingFaceAdapter extends BaseAdapter {
           logger.info(`[HuggingFaceAdapter] Requesting: ${this.client.defaults.baseURL}/chat/completions`);
           logger.info(`[HuggingFaceAdapter] Payload: ${JSON.stringify(payload)}`);
 
-          const response = await this.client.post("/chat/completions", payload);
+          const response = await this.client.post("/chat/completions", payload, { signal });
+          signal?.throwIfAborted();
           return this._handleResponse(response);
         } catch (error) {
           throw this._handleApiError(error);
         }
       }, {
+        signal, budget,
         recoverableErrors: this.recoverableErrors,
         /**
          * Callback executed when a retry is attempted.
@@ -115,9 +120,9 @@ class HuggingFaceAdapter extends BaseAdapter {
          * @returns {void}
          */
         onRetry: (attempt, error, formattedDelay) => {
-          logger.warn(`[HuggingFaceAdapter] Retrying in ${formattedDelay}... (${attempt}/15) due to: ${error.message}`);
+          logger.warn(`[HuggingFaceAdapter] Retrying in ${formattedDelay}... (${attempt}/${this.retryHandler.maxRetries}) due to: ${error.message}`);
           if (this.ui && this.ui.displayInfo) {
-            this.ui.displayInfo(`Retrying HuggingFace in ${formattedDelay}... (${attempt}/15) | Error: ${error.message}`);
+            this.ui.displayInfo(`Retrying HuggingFace in ${formattedDelay}... (${attempt}/${this.retryHandler.maxRetries}) | Error: ${error.message}`);
           }
         }
       });
@@ -172,6 +177,7 @@ class HuggingFaceAdapter extends BaseAdapter {
    * @returns {Error} A formatted Error object with name "APIError".
    */
   _handleApiError(error) {
+    if (["AbortError", "UserInterruptException", "TimeoutError"].includes(error.name) || ("code" in error && error.code === "ERR_CANCELED")) return error;
     const errorMsg = error.response?.data?.error?.message || error.message;
     const apiError = new Error(errorMsg);
     apiError.name = "APIError";

@@ -1,5 +1,4 @@
 import axios from "axios";
-import axiosRetry from "axios-retry";
 import BaseAdapter from "../baseAdapter.js";
 import logger from "../../core/logger.js";
 import IRCFormatter from "../../utils/ircFormatter.js";
@@ -8,9 +7,7 @@ import { parseBooleanFlag } from "./utils.js";
 import {
   DEFAULT_MODELS,
   HTTP_TIMEOUT,
-  MAX_RETRIES,
   MAX_TOKENS,
-  RECOVERABLE_STATUS_CODES,
 } from "./constants.js";
 import RetryHandler from "../../utils/retryHandler.js";
 
@@ -83,38 +80,6 @@ class ZaiAdapter extends BaseAdapter {
       },
     });
 
-    axiosRetry(this.client, {
-      retries: MAX_RETRIES,
-      retryDelay: axiosRetry.exponentialDelay,
-      /**
-       * Determines if a request should be retried based on the error.
-       * @param {Error} error - The error object.
-       * @returns {boolean} True if the request should be retried.
-       */
-      retryCondition: (error) => {
-        const status = error.response?.status;
-        return (
-          axiosRetry.isNetworkOrIdempotentRequestError(error) ||
-          RECOVERABLE_STATUS_CODES.includes(status)
-        );
-      },
-      /**
-       * Logs retry attempts and notifies the UI.
-       * @param {number} retryCount - The current retry attempt number.
-       * @param {Error} error - The error that caused the retry.
-       */
-      onRetry: (retryCount, error) => {
-        const time = IRCFormatter.getTimestamp();
-        const errorMsg = error.response?.status || error.message;
-        const msg = `[${time}] -!- [ZaiAdapter] API Retry ${retryCount}/${MAX_RETRIES} due to: ${errorMsg}`;
-        logger.warn(msg);
-        if (this.ui && this.ui.displayInfo) {
-          this.ui.displayInfo(
-            `Retrying Z.AI... (${retryCount}/${MAX_RETRIES}) | Error: ${errorMsg}`,
-          );
-        }
-      },
-    });
   }
 
   /**
@@ -136,10 +101,13 @@ class ZaiAdapter extends BaseAdapter {
    * Sends a message to the Z.AI API and records the interaction in history.
    * @param {string|object|Array} message - The message content to send.
    * @param {string} [role] - The role of the sender.
+   * @param {object} [options] - Request cancellation and shared retry budget.
+   * @param {AbortSignal} [options.signal] - Cancels requests and waits.
+   * @param {import("../../utils/requestBudget.js").default} [options.budget] - Shared request deadline.
    * @returns {Promise<string>} The response text from the AI.
    * @throws {Error} If the API request fails.
    */
-  async _sendMessage(message, role = "user") {
+  async _sendMessage(message, role = "user", { signal, budget } = {}) {
     const timestamp = IRCFormatter.getTimestamp();
     this.injectMessage(role, message, timestamp);
     this._enforceContextLimit();
@@ -149,7 +117,7 @@ class ZaiAdapter extends BaseAdapter {
     this._validateContextPayload(payload);
     this.lastPayload = payload;
 
-    await this._applyRateLimit();
+    await this._applyRateLimit(signal);
 
     try {
       return await this.retryHandler.execute(
@@ -161,13 +129,16 @@ class ZaiAdapter extends BaseAdapter {
             const response = await this.client.post(
               "/chat/completions",
               payload,
+              { signal },
             );
+            signal?.throwIfAborted();
             return this._handleResponse(response);
           } catch (error) {
             throw this._handleApiError(error);
           }
         },
         {
+          signal, budget,
           recoverableErrors: ["Empty response from Z.AI"],
           /**
            * Callback executed on each retry attempt.
@@ -257,6 +228,7 @@ class ZaiAdapter extends BaseAdapter {
    * @returns {Error} A formatted Error object with name "APIError".
    */
   _handleApiError(error) {
+    if (["AbortError", "UserInterruptException", "TimeoutError"].includes(error.name) || ("code" in error && error.code === "ERR_CANCELED")) return error;
     const errorMsg = error.response?.data?.error?.message || error.message;
     const apiError = new Error(errorMsg);
     apiError.name = "APIError";

@@ -51,7 +51,6 @@ function harness(t, options = {}) {
     model: { nickname: "agent", name: "test-model", temperature: 0.7 },
     ...options,
   });
-  manager.turnProcessor.api.maxRetries = 1;
   assistant.startChat(manager.model.name, manager.systemInstruction);
   return { manager, assistant, errors, messages, payloads, answers };
 }

@@ -32,9 +32,11 @@ class NvidiaRestClient {
    * @param {object} payload - The request payload containing model and messages.
    * @param {boolean} stream - Whether to stream the response.
    * @param {number} [timeout] - Optional request timeout in milliseconds.
+   * @param {object} [options] - Transport cancellation options.
+   * @param {AbortSignal} [options.signal] - Cancels the HTTP request.
    * @returns {Promise<object>} The API response data.
    */
-  async chatCompletions(payload, stream = false, timeout = 600000) {
+  async chatCompletions(payload, stream = false, timeout = 600000, { signal } = {}) {
     const url = "/chat/completions";
     const requestPayload = { ...payload, stream };
 
@@ -42,7 +44,7 @@ class NvidiaRestClient {
       throw new Error("Streaming not yet implemented in JS RestClient");
     }
 
-    const response = await this.client.post(url, requestPayload, { timeout });
+    const response = await this.client.post(url, requestPayload, { timeout, signal });
     return response.data;
   }
 

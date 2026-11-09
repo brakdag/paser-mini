@@ -1,4 +1,5 @@
 import { setTimeout as delay } from "node:timers/promises";
+import RequestBudget from "./requestBudget.js";
 
 /**
  * Handles exponential backoff retries with a maximum cap.
@@ -6,12 +7,24 @@ import { setTimeout as delay } from "node:timers/promises";
 class RetryHandler {
   /**
    * Creates an instance of RetryHandler.
-   * @param {number} maxRetries - Maximum number of retry attempts.
+   * @param {number} maxRetries - Maximum total attempts, including the initial request.
    * @param {number} maxDelay - Maximum delay between retries in milliseconds (default: 5 minutes).
    */
-  constructor(maxRetries = 15, maxDelay = 300000) {
+  constructor(maxRetries = 5, maxDelay = 300000) {
     this.maxRetries = maxRetries;
     this.maxDelay = maxDelay;
+    this.maxElapsedMs = 600000;
+    this.now = performance.now.bind(performance);
+    this.wallNow = Date.now;
+  }
+
+  /**
+   * @param {number} ms - Retry delay in milliseconds.
+   * @param {AbortSignal} signal - Shared request cancellation.
+   * @returns {Promise<void>} Completion of the interruptible delay.
+   */
+  async sleep(ms, signal) {
+    await delay(ms, undefined, { signal });
   }
 
   /**
@@ -48,17 +61,15 @@ class RetryHandler {
    * @private
    */
   _isRecoverable(error, recoverableMessages) {
-    if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') return false;
-    if (error.name === 'ServiceDegradedError') return true;
+    if (["AbortError", "TimeoutError", "UserInterruptException"].includes(error.name) || error.code === "ERR_CANCELED") return false;
     
     // Check HTTP status codes (500, 429, 503, etc.) in the wrapped object
     const httpStatus = error.response?.status;
-    if (httpStatus && [429, 500, 502, 503, 504].includes(httpStatus)) {
-      return true;
-    }
+    if (httpStatus) return [429, 500, 502, 503, 504].includes(httpStatus);
+    if (error.name === "ServiceDegradedError") return true;
 
     // Check Axios network error codes
-    const networkErrors = ['ECONNABORTED', 'ETIMEDOUT', 'ECONNRESET', 'ERR_NETWORK'];
+    const networkErrors = ['ECONNABORTED', 'ETIMEDOUT', 'ECONNRESET', 'ERR_NETWORK', 'ENOTFOUND', 'EAI_AGAIN', 'EHOSTUNREACH', 'ENETUNREACH', 'ECONNREFUSED', 'EPIPE'];
     if (error.code && networkErrors.includes(error.code)) {
       return true;
     }
@@ -67,47 +78,63 @@ class RetryHandler {
   }
 
   /**
-   * Executes an asynchronous function with retry logic.
-   * @template T
-   * @param {() => Promise<T>} fn - The asynchronous function to execute.
-   * @param {object} options - Retry options.
-   * @param {Array<string>} [options.recoverableErrors] - Error messages that trigger a retry.
-   * @param {(attempt: number, error: Error, formattedDelay: string) => void} [options.onRetry] - Callback executed on each retry.
-   * @param {AbortSignal} [options.signal] - Cancels requests and retry waits.
-   * @returns {Promise<T>} The result of the function if successful.
-   * @throws {Error} The last error encountered if all retries fail.
+   * Reads Retry-After as delta seconds or an HTTP date, without shortening it.
+   * @param {object} error - Provider error retaining its response headers.
+   * @returns {number} Server delay in milliseconds; zero for an invalid header.
    */
-  async execute(fn, { recoverableErrors = [], onRetry = null, signal } = {}) {
-    let lastError = null;
+  _serverDelay(error) {
+    const headers = error.response?.headers;
+    const value = headers?.get?.("retry-after") ?? headers?.["retry-after"] ?? headers?.["Retry-After"];
+    if (typeof value !== "string" && typeof value !== "number") return 0;
+    const text = String(value).trim();
+    if (/^\d+$/u.test(text)) return Number(text) * 1000;
+    if (!/[a-z]/iu.test(text)) return 0;
+    const date = Date.parse(text);
+    return Number.isFinite(date) ? Math.max(0, date - this.wallNow()) : 0;
+  }
 
-    for (let attempt = 1; attempt <= this.maxRetries; attempt += 1) {
-      signal?.throwIfAborted();
-      try {
-        const result = await fn();
-        signal?.throwIfAborted();
-        return result;
-      } catch (error) {
-        signal?.throwIfAborted();
-        lastError = error;
-        
-        const isRecoverable = this._isRecoverable(error, recoverableErrors);
-
-        if (!isRecoverable || attempt === this.maxRetries) {
-          throw error;
+  /**
+   * Retries only model generation, never tool execution or arbitrary side effects.
+   * @template T
+   * @param {(signal: AbortSignal) => Promise<T>} fn - One transport attempt.
+   * @param {object} [options] - Request policy and cancellation.
+   * @param {Array<string>} [options.recoverableErrors] - Provider domain failures to retry.
+   * @param {(attempt: number, error: Error, formattedDelay: string) => void} [options.onRetry] - Retry notification.
+   * @param {AbortSignal} [options.signal] - Caller cancellation.
+   * @param {RequestBudget} [options.budget] - Deadline including prior rate-limit waits.
+   * @returns {Promise<T>} Successful response.
+   */
+  async execute(fn, { recoverableErrors = [], onRetry = null, signal, budget } = {}) {
+    if (!Number.isSafeInteger(this.maxRetries) || this.maxRetries <= 0) throw new RangeError("Attempt limit must be a positive integer");
+    if (!Number.isSafeInteger(this.maxDelay) || this.maxDelay < 0 || this.maxDelay > 2147483647) throw new RangeError("Backoff cap must be a nonnegative timer-safe integer");
+    const scope = budget || new RequestBudget(this.maxElapsedMs, signal, this.now);
+    try {
+      for (let attempt = 1; attempt <= this.maxRetries; attempt += 1) {
+        scope.remaining();
+        try {
+          const result = await fn(scope.signal);
+          scope.remaining();
+          return result;
+        } catch (error) {
+          scope.remaining();
+          if (attempt === this.maxRetries || !this._isRecoverable(error, recoverableErrors)) throw error;
+          const delayMs = Math.max(this._getExponentialDelay(attempt), this._serverDelay(error));
+          if (delayMs >= scope.remaining()) {
+            scope.expire();
+            scope.signal.throwIfAborted();
+          }
+          onRetry?.(attempt, error, this._formatDelay(delayMs));
+          scope.remaining();
+          await this.sleep(delayMs, scope.signal);
         }
-
-        const delayMs = this._getExponentialDelay(attempt);
-        const formattedDelay = this._formatDelay(delayMs);
-        
-        if (onRetry) {
-          onRetry(attempt, error, formattedDelay);
-        }
-
-        await delay(delayMs, undefined, { signal });
       }
+      throw new Error("Attempt budget exhausted");
+    } catch (error) {
+      scope.signal.throwIfAborted();
+      throw error;
+    } finally {
+      if (!budget) scope.close();
     }
-
-    throw lastError || new Error("Max retries reached without specific error.");
   }
 }
 

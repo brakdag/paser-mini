@@ -279,9 +279,10 @@ partial work that is retried. Processing labels are advisory, so run one worker
 per repository. API requests have a 30-second timeout; list traversal fails
 explicitly after 1,000 pages rather than silently dropping further results.
 
-### Switching models during Gemini retries
+### Switching models and cancelling requests
 
-Use `/models` to interrupt a pending Gemini request or retry wait and list models.
+Use `/models` to interrupt a pending request, rate-limit wait or retry wait with
+any provider and list models.
 Select one with `/models <index>`, or switch directly with
 `/models models/<model-name> [temperature]`. Switching by name does not require
 fetching the model list. The pending request is cancelled; send your next message
@@ -291,6 +292,40 @@ Gemini restores the history from before a failed send. Safety and empty response
 show an error in the UI and trigger one rephrase request. A failed rephrase is
 propagated without further recovery. Transport errors retain their original
 cause, HTTP response and error code; interruptions propagate without rephrasing.
+
+### Request retries and deadlines
+
+`RetryHandler` is the only transport retry layer for all twelve providers;
+`ApiCommunicator` sends once and Z.AI no longer installs Axios retry interceptors.
+Each `sendMessage` permits **five total transport attempts** and **ten minutes
+total**, including rate limiting, requests and backoff. The monotonic budget is
+created before preparing the request and never resets between attempts. The
+existing per-transport timeout may end an individual attempt sooner. Programmatic
+callers can set `adapter.retryHandler.maxRetries` (total attempts), `maxDelay`
+(local backoff cap) and `maxElapsedMs` before sending; time must be a positive
+integer within Node's timer range. These are not CLI/config-file options.
+
+Retryable failures are HTTP 429/500/502/503/504, recognized connection errors and
+provider-specific degraded/empty-response policies. Other HTTP statuses and
+cancellation are terminal, even when their text matches a recoverable error.
+Backoff starts at two seconds and doubles to a five-minute cap. `Retry-After`
+accepts seconds or an HTTP date and is a minimum delay, even beyond that cap.
+If the required delay cannot fit in the remaining budget, the request fails
+with `TimeoutError` immediately, without retrying early or waiting uselessly.
+No retry is announced or delayed after the final attempt.
+
+Cancellation and expiry reach Axios, NVIDIA's REST client, rate limiting and
+backoff. Failed/cancelled requests restore the prior history, including messages
+removed by context preparation; late responses are discarded before committing
+history. A custom transport that ignores `AbortSignal` must settle before the
+adapter is released, so it cannot later overwrite a new request's history.
+Production transports use Axios cancellation. Timers are cleared after settlement.
+
+The retry policy explicitly allows repeating model-generation POST requests:
+a connection failure can leave a generation running remotely, and retrying may
+create another billable generation. Local tool execution is outside this layer
+and is never replayed by transport retries. Model/domain recovery remains a
+separate, bounded model exchange under the turn limits below.
 
 ### Turn limits and interruption
 
@@ -308,12 +343,11 @@ semantic progress: tools that legitimately return identical acknowledgements
 are subject to the same limit. Every new turn starts with fresh counters.
 
 Queued input or explicit turn cancellation prevents the next tool or model
-exchange. `/models` also interrupts Gemini requests and retry waits. The deadline
-is checked before and after exchanges and tool calls; it stops scheduling work
-but cannot forcibly terminate a tool or transport already running. Provider retry
-budgets, cancellation inside transports, and isolation of executed code remain
-separate concerns (T12 and the run policy below). Completed tool effects are not rolled back when a
-turn stops. Programmatic callers can supply positive integer limits and a
+exchange. `/models` also cancels active provider transports and their waits.
+The turn deadline is checked before and after exchanges and tool calls; it stops
+scheduling work. Each model request has the separate transport deadline below;
+`run` has the OS termination policy below. Completed tool effects are not rolled
+back when a turn stops. Programmatic callers can supply positive integer limits and a
 monotonic clock as the final `TurnProcessor` constructor argument.
 
 ## 🜰 Ecosystem Alignment

@@ -146,8 +146,10 @@ that the current adapters actually preserve.
 
 Only `/execute` controls the shell tool; it does not gate every tool that can
 execute code or modify files. Completed effects persist when a turn fails or
-is cancelled. The common result/media contract, retry budgets
-and shutdown ownership remain T15, T12 and T20 respectively. `run` has its own
+is cancelled. Model requests share five total attempts and a ten-minute deadline
+covering transport and waits; `/models` cancels them for every provider. See the
+README request retry policy for programmatic limits and remote generation effects.
+The common result/media contract and shutdown ownership remain T15 and T20. `run` has its own
 terminating OS deadline.
 
 ## Generated files and quality configuration
