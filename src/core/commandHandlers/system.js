@@ -40,8 +40,7 @@ class SystemCommands {
    * @returns {Promise<boolean>} True if the operation succeeded.
    */
   static async handleReset(chatManager, ui) {
-    ui.displayInfo("Performing Hard Reset...");
-    ui.displayInfo("Starting fresh.");
+    ui.displayInfo("Reset");
     chatManager.assistant.hardReset();
     return true;
   }
