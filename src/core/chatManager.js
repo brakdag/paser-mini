@@ -98,6 +98,7 @@ class ChatManager {
   requestExit() {
     this.stopRequested = true;
     this.turnProcessor.cancelPendingTurn();
+    this.ui.close?.();
   }
 
   /**
@@ -344,6 +345,10 @@ class ChatManager {
     while (!this.stopRequested) {
       try {
         const input = await this.ui.requestInput();
+        if (input === null || this.stopRequested) {
+          this.requestExit();
+          break;
+        }
         if (input) {
           if (!this.logOpened && this.systemInstruction) {
             const logMsg = this.ui.getLogOpenedString();

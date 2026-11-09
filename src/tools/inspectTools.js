@@ -13,12 +13,18 @@ export default class InspectTools {
 
   #buffer = "";
 
+  #waiters = new Set();
+
+  #closing = null;
+
+  #generation = 0;
+
   #spawnProcess;
 
   /**
    * Creates an inspector with an injectable process launcher.
    * @param {object} [options] - Process dependencies.
-   * @param {typeof spawn} [options.spawnProcess] - Child process launcher.
+   * @param {(command: string, args: string[], options: object) => object} [options.spawnProcess] - Child process launcher.
    */
   constructor({ spawnProcess = spawn } = {}) {
     this.#spawnProcess = spawnProcess;
@@ -33,6 +39,7 @@ export default class InspectTools {
       let resolved = false;
       let interval;
       let timeout;
+      let cancel;
 
       /**
        * Resolves the promise with the given output.
@@ -42,6 +49,7 @@ export default class InspectTools {
       const done = (output, isTimeout = false) => {
         if (resolved) return;
         resolved = true;
+        this.#waiters.delete(cancel);
         clearInterval(interval);
         clearTimeout(timeout);
         this.#buffer = "";
@@ -67,10 +75,54 @@ export default class InspectTools {
         }
       };
 
+      /**
+       * Completes pending polling when the owner closes the session.
+       * @returns {void}
+       */
+      cancel = () => done(this.#buffer);
+      this.#waiters.add(cancel);
       interval = setInterval(check, POLL_INTERVAL_MS);
 
       timeout = setTimeout(() => done(this.#buffer, true), TIMEOUT_MS);
     });
+  }
+
+  /**
+   * Stops the inspector process group, resolves polling and waits for process exit.
+   * @returns {Promise<void>} Idempotent cleanup completion.
+   */
+  close() {
+    if (this.#closing) return this.#closing;
+    this.#generation += 1;
+    const child = this.#inspectProcess;
+    this.#inspectProcess = null;
+    this.#waiters.forEach(done => done());
+    this.#buffer = "";
+    if (!child) return Promise.resolve();
+    /**
+     * Terminates both the debugger and its debuggee on Unix.
+     * @param {"SIGTERM"|"SIGKILL"} signal - Termination signal.
+     */
+    const kill = (signal) => {
+      try {
+        if (child.pid && process.platform !== "win32") process.kill(-child.pid, signal);
+        else child.kill(signal);
+      } catch (error) {
+        if (error.code !== "ESRCH") throw error;
+      }
+    };
+    this.#closing = new Promise((resolve) => {
+      if (!child.pid || child.exitCode !== null) {
+        kill("SIGKILL");
+        resolve();
+        return;
+      }
+      const timer = setTimeout(() => kill("SIGKILL"), 200);
+      child.once("close", () => { clearTimeout(timer); kill("SIGKILL"); resolve(); });
+      child.stdin.destroy();
+      kill("SIGTERM");
+    });
+    return this.#closing;
   }
 
   /**
@@ -99,7 +151,13 @@ export default class InspectTools {
     if (p && !this.#inspectProcess) {
       const safePath = PathValidator.getSafePath(p);
       this.#buffer = "";
-      this.#inspectProcess = this.#spawnProcess("node", ["inspect", safePath]);
+      const generation = this.#generation;
+      if (this.#closing) await this.#closing;
+      if (this.#inspectProcess) throw new Error("An inspector session is already active");
+      if (generation !== this.#generation) throw new Error("Inspector was closed during startup");
+      this.#closing = null;
+      this.#inspectProcess = this.#spawnProcess("node", ["inspect", safePath], { detached: process.platform !== "win32" });
+      const child = this.#inspectProcess;
 
       /**
        * Handles incoming data from stdout/stderr.
@@ -112,20 +170,17 @@ export default class InspectTools {
       this.#inspectProcess.stdout.on("data", dataHandler);
       this.#inspectProcess.stderr.on("data", dataHandler);
 
-      this.#inspectProcess.on("error", (err) => {
-        this.#inspectProcess = null;
-        throw err;
+      child.on("error", (err) => {
+        this.#buffer += `Inspector error: ${err.message}`;
+        if (this.#inspectProcess === child) this.#inspectProcess = null;
+        this.#waiters.forEach(done => done());
       });
-
-      this.#inspectProcess.on("close", (_code) => {
-        if (this.#inspectProcess) {
-          this.#inspectProcess.kill();
-          this.#inspectProcess.stdout.removeAllListeners();
-          this.#inspectProcess.stderr.removeAllListeners();
-          this.#inspectProcess.stdin.destroy();
-        }
-        // Preserve buffer for waitForPrompt to capture error output
-        this.#inspectProcess = null;
+      child.on("close", () => {
+        child.stdout.removeListener("data", dataHandler);
+        child.stderr.removeListener("data", dataHandler);
+        child.stdin.destroy();
+        if (this.#inspectProcess === child) this.#inspectProcess = null;
+        this.#waiters.forEach(done => done());
       });
 
       const startupOutput = await this.#waitForPrompt();
@@ -154,13 +209,7 @@ export default class InspectTools {
     }
 
     if (c === "exit" || c === ".exit" || c === "kill") {
-      this.#inspectProcess.stdin.write(".exit\n");
-      this.#inspectProcess.kill();
-      this.#inspectProcess.stdout.removeAllListeners();
-      this.#inspectProcess.stderr.removeAllListeners();
-      this.#inspectProcess.stdin.destroy();
-      this.#inspectProcess = null;
-      this.#buffer = "";
+      await this.close();
       return "Node inspect session terminated.";
     }
 

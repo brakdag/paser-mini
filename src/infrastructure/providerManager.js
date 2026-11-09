@@ -1,3 +1,5 @@
+import DEFAULT_MODELS from "./providerDefaults.js";
+
 /**
  * Manages the registration and instantiation of AI provider adapters.
  * This class acts as a factory for creating adapter instances based on provider IDs.
@@ -11,62 +13,62 @@ class ProviderManager {
   static PROVIDERS = {
     GEMINI: {
       name: "Gemini",
-      defaultModel: "gemini-flash-lite-latest",
+      defaultModel: DEFAULT_MODELS.GEMINI,
       path: "./gemini/adapter.js",
     },
     NVIDIA: {
       name: "NVIDIA",
-      defaultModel: "z-ai/glm-5.2",
+      defaultModel: DEFAULT_MODELS.NVIDIA,
       path: "./nvidia/adapter.js",
     },
     NVIDIA_MINIMAX: {
       name: "NVIDIA MiniMax M3",
-      defaultModel: "minimaxai/minimax-m3",
+      defaultModel: DEFAULT_MODELS.NVIDIA_MINIMAX,
       path: "./nvidia-minimax/adapter.js",
     },
     HUGGINGFACE: {
       name: "HuggingFace",
-      defaultModel: "meta-llama/Meta-Llama-3-8B-Instruct",
+      defaultModel: DEFAULT_MODELS.HUGGINGFACE,
       path: "./huggingface/adapter.js",
     },
     OPENROUTER: {
       name: "OpenRouter",
-      defaultModel: "stealth/crouton-alpha",
+      defaultModel: DEFAULT_MODELS.OPENROUTER,
       path: "./openrouter/adapter.js",
     },
     ZENMUX: {
       name: "ZenMux",
-      defaultModel: "google/gemini-3.1-pro-preview",
+      defaultModel: DEFAULT_MODELS.ZENMUX,
       path: "./zenmux/adapter.js",
     },
     GROQ: {
       name: "Groq",
-      defaultModel: "llama3-8b-8192",
+      defaultModel: DEFAULT_MODELS.GROQ,
       path: "./groq/adapter.js",
     },
     CEREBRAS: {
       name: "Cerebras",
-      defaultModel: "llama3.1-8b",
+      defaultModel: DEFAULT_MODELS.CEREBRAS,
       path: "./cerebras/adapter.js",
     },
     COHERE: {
       name: "Cohere",
-      defaultModel: "command-r-plus",
+      defaultModel: DEFAULT_MODELS.COHERE,
       path: "./cohere/adapter.js",
     },
     CLOUDFLARE: {
       name: "Cloudflare",
-      defaultModel: "@cf/meta/llama-3.1-8b-instruct",
+      defaultModel: DEFAULT_MODELS.CLOUDFLARE,
       path: "./cloudflare/adapter.js",
     },
     ZAI: {
       name: "Z.AI",
-      defaultModel: "glm-4.7-flash",
+      defaultModel: DEFAULT_MODELS.ZAI,
       path: "./zai/adapter.js",
     },
     POOLSIDE: {
       name: "Poolside",
-      defaultModel: "poolside/laguna-s-2.1",
+      defaultModel: DEFAULT_MODELS.POOLSIDE,
       path: "./poolside/adapter.js",
     },
   };
@@ -95,8 +97,8 @@ class ProviderManager {
    * @param {string} params.providerId - The unique identifier of the provider (e.g., 'COHERE').
    * @param {object} params.ui - The UI interface for the adapter.
    * @param {object} params.configManager - The configuration manager for the adapter.
-   * @param {string} params.userNickname - The nickname of the user.
-   * @param {string} params.agentNickname - The nickname of the agent.
+   * @param {string} [params.userNickname] - The nickname of the user.
+   * @param {string} [params.agentNickname] - The nickname of the agent.
    * @returns {Promise<object>} The instantiated adapter instance.
    * @throws {Error} If the providerId is not supported.
    */
@@ -104,8 +106,8 @@ class ProviderManager {
     providerId,
     ui,
     configManager,
-    userNickname,
-    agentNickname,
+    userNickname = "user",
+    agentNickname = "assistant",
   }) {
     const provider = this.providers[providerId];
     if (!provider) {

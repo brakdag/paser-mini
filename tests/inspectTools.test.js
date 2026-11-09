@@ -11,3 +11,19 @@ describe("inspectTools", () => {
     );
   });
 });
+
+it("close resolves pending prompt polling and handles asynchronous spawn failure", async () => {
+  const { EventEmitter } = await import("node:events");
+  const { PassThrough } = await import("node:stream");
+  const child = Object.assign(new EventEmitter(), {
+    stdout: new PassThrough(), stderr: new PassThrough(), stdin: new PassThrough(),
+    kill() { return true; },
+  });
+  const inspector = new InspectTools({ spawnProcess() { return child; } });
+  const pending = inspector.inspect("src/main.js");
+  await new Promise(resolve => { setImmediate(resolve); });
+  child.emit("error", new Error("spawn fixture"));
+  assert.match(await pending, /Process exited during startup.*spawn fixture/s);
+  await inspector.close();
+  await inspector.close();
+});

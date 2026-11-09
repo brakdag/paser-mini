@@ -24,7 +24,7 @@ const MAX_ENTRY_BYTES = 16 * 1024;
 /** Manages optional bounded diagnostics and the unchanged session stream. */
 class Logger {
   /**
-   * Initializes the Logger, ensures the log directory exists, and opens write streams.
+   * Initializes inert logger settings; start or the first accepted write opens files.
    */
   constructor() {
     const logDir = path.join(process.cwd(), ".paser-mini", "log");
@@ -36,16 +36,16 @@ class Logger {
     this.technicalFailed = false;
     this.closed = false;
 
-    if (!fs.existsSync(logDir)) {
-      fs.mkdirSync(logDir, { recursive: true });
-    }
+    this.sessionStream = null;
+    this.shutdownPromise = null;
+  }
 
-    // Preserve the session stream and its existing append format.
+  /** Opens the session stream only when the application starts or a write is requested. */
+  start() {
+    if (this.closed || this.sessionStream) return;
+    fs.mkdirSync(path.dirname(this.sessionFile), { recursive: true });
     this.sessionStream = fs.createWriteStream(this.sessionFile, { flags: "a", encoding: "utf8" });
-
-    // Handle stream errors to prevent uncaught exceptions
     this.sessionStream.on("error", (err) => console.error("Session Stream Error:", err));
-
     const startMessage = `\n--- Session Started: ${new Date().toISOString()} ---\n`;
     if (this.logLevel) this.writeTechnical(startMessage);
     this.sessionStream.write(startMessage);
@@ -61,6 +61,7 @@ class Logger {
   log(level, message, data = null) {
     if (this.closed || this.technicalFailed || !this.logLevel
       || !LEVELS[level.toLowerCase()] || LEVELS[level.toLowerCase()] > this.logLevel) return;
+    this.start();
     const timestamp = new Date().toISOString();
     try {
       const resolvedMessage = typeof message === "function" ? message() : message;
@@ -184,6 +185,8 @@ class Logger {
    * @returns {void}
    */
   sessionLog(msg) {
+    if (this.closed) return;
+    this.start();
     const time = new Date().toLocaleTimeString("en-GB", {
       hour: "2-digit",
       minute: "2-digit",
@@ -201,17 +204,38 @@ class Logger {
    * @returns {void}
    */
   writeRawToSession(text) {
+    if (this.closed) return;
+    this.start();
     this.sessionStream.write(`${text}\n`);
   }
 
   /**
    * Gracefully terminates the write streams, ensuring all buffered data is flushed to disk.
    * Must be called during application shutdown to prevent data loss.
-   * @returns {void}
+   * @returns {Promise<void>} Buffered writes have finished, or failed.
    */
   shutdownStreams() {
+    if (this.shutdownPromise) return this.shutdownPromise;
     this.closed = true;
-    this.sessionStream.end();
+    this.shutdownPromise = new Promise((resolve, reject) => {
+      const stream = this.sessionStream;
+      if (!stream) { resolve(); return; }
+      if (stream.destroyed) {
+        if (stream.errored) reject(stream.errored);
+        else resolve();
+        return;
+      }
+      const callbacks = {};
+      /** @param {Error} error - Write failure. */
+      const failed = (error) => { stream.off("finish", callbacks.finished); reject(error); };
+      /** Resolves after the final buffered write. */
+      const finished = () => { stream.off("error", failed); resolve(); };
+      callbacks.finished = finished;
+      stream.once("error", failed);
+      stream.once("finish", finished);
+      stream.end();
+    });
+    return this.shutdownPromise;
   }
 }
 

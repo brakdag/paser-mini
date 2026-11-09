@@ -30,7 +30,9 @@ The history hook now declares its existing array contract; message elements rema
 untyped. Completing T22 resolves another 25 diagnostics through explicit GitHub
 runner fields, correct command/logger calls and an object view for JSON cloning.
 T14 declares the session provider manager explicitly and resolves its two missing-field diagnostics.
-The current inventory contains **207 diagnostics**, with no new debt. T12 removes three occurrences from Z.AI’s obsolete Axios retry interceptor; it adds no exemptions. T11 removes 16 inherited-hook visibility diagnostics by making the shared context policy an explicit adapter contract.
+The current inventory contains **170 diagnostics**, with no new debt. T12 removes three occurrences from Z.AI’s obsolete Axios retry interceptor; it adds no exemptions. T11 removes 16 inherited-hook visibility diagnostics by making the shared context policy an explicit adapter contract.
+
+T19/T20 remove 37 occurrences: shared API error construction replaces seven copies (35), MCP shutdown now returns void (1), and the injectable inspector launcher documents the process seam used by fixtures (1). No new diagnostics or exemptions were added.
 
 The retained diagnostics were reviewed by these groups:
 
@@ -38,7 +40,6 @@ The retained diagnostics were reviewed by these groups:
 | --- | --- | --- |
 | Provider `adapter.js`, `conversationState.js` | Constructor options narrower than callers, private JSDoc on inherited hooks, timestamp formats, custom HTTP error properties | T11/T12/T14/T15/T19; align contracts while testing each provider |
 | `chatManager.js`, `sessionFactory.js`, `terminalUI.js` | Config values typed as `unknown`, sync/async tool and UI return differences, session fields assigned after construction | T13/T14/T20 |
-| `McpManager.js` | `Promise.all` result is an array of void, while shutdown annotation says void | T20; connection behavior covered by T16 |
 | `gitTools.js`, `githubTools.js`, `loadTools.js`, `retryHandler.js` | Error objects extended with transport/OS metadata without matching declarations | Incremental type maintenance; transport contracts remain in T12 |
 | `tests/**/*.test.js` | Intentionally missing arguments, JSON Buffer coercion, `unknown` validation/error results, injected partial interfaces, mock properties and callbacks that TypeScript cannot infer as assigned | Narrow declarations as the corresponding contracts are maintained; retain behavior assertions |
 

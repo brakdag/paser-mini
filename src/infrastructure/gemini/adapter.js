@@ -1,4 +1,6 @@
 import axios from "axios";
+import { normalizeRole } from "../historyNormalizer.js";
+import DEFAULT_MODELS from "../providerDefaults.js";
 import { contentBlocks, describeBlock } from "../contentBlocks.js";
 import logger from "../../core/logger.js";
 import BaseAdapter from "../baseAdapter.js";
@@ -34,7 +36,7 @@ class GeminiAdapter extends BaseAdapter {
     super({ ui, configManager, userNickname, agentNickname });
     this.apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
     this.history = [];
-    this.currentModel = "models/gemma-4-26b-a4b-it";
+    this.currentModel = DEFAULT_MODELS.GEMINI;
     this.systemInstruction = null;
     this.temperature = 0.7;
     this.lastPayload = null;
@@ -157,8 +159,9 @@ class GeminiAdapter extends BaseAdapter {
     const ts = timestamp || IRCFormatter.getTimestamp();
     const parts = this._createParts(content);
 
+    const apiRole = normalizeRole(role, this.user.nickname, this.model.nickname);
     this.history.push({
-      role,
+      role: apiRole === "assistant" ? "model" : apiRole,
       parts,
       ...(content && typeof content === "object" ? { sourceContent: structuredClone(content) } : {}),
       timestamp: ts,

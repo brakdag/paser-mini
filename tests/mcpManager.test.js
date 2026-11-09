@@ -258,3 +258,31 @@ test("normalized tool identifiers still invoke the original remote tool name", a
   assert.deepEqual(Object.keys(manager.getSchemas()), ["mcp_fixture_server_echo_value"]);
   await manager.shutdown();
 });
+
+["handshake", "discovery"].forEach(phase => {
+  test(`shutdown closes an unpublished MCP ${phase} without waiting in the lifecycle queue`, async t => {
+    mockServer(t);
+    const entered = Promise.withResolvers();
+    const pending = Promise.withResolvers();
+    t.mock.method(Client.prototype, phase === "handshake" ? "connect" : "listTools", async () => {
+      entered.resolve();
+      return pending.promise;
+    });
+    const close = t.mock.method(Client.prototype, "close", async () => {
+      pending.resolve({ tools: [{ name: "late", inputSchema: {} }] });
+    });
+    const manager = fixtureManager();
+    const connecting = manager.connectServer("fixture", { command: "fake" });
+    await entered.promise;
+    const stopped = manager.shutdown();
+    assert.equal(manager.shutdown(), stopped);
+    await stopped;
+    await connecting;
+    assert.ok(close.mock.callCount() >= 1);
+    assert.equal(manager.connecting.size, 0);
+    assert.equal(manager.clients.size, 0);
+    assert.deepEqual(manager.getTools(), {});
+    await manager.connectServer("after", { command: "fake" });
+    assert.deepEqual(manager.getTools(), {});
+  });
+});

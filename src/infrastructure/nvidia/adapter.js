@@ -1,3 +1,5 @@
+import { normalizeRole } from "../historyNormalizer.js";
+import DEFAULT_MODELS from "../providerDefaults.js";
 import ConversationState from "../conversationState.js";
 import PayloadMapper from "../payloadMapper.js";
 import NvidiaRestClient from "./restClient.js";
@@ -5,7 +7,7 @@ import logger from "../../core/logger.js";
 import BaseAdapter from "../baseAdapter.js";
 import RetryHandler from "../../utils/retryHandler.js";
 
-const DEFAULT_MODEL = "meta/llama-3.1-405b-instruct";
+const DEFAULT_MODEL = DEFAULT_MODELS.NVIDIA;
 const DEFAULT_TEMPERATURE = 0.7;
 
 /**
@@ -182,7 +184,7 @@ class NvidiaAdapter extends BaseAdapter {
    * @param {number|null} timestamp - The optional message timestamp.
    */
   injectMessage(role, content, timestamp = null) {
-    this.state.addMessage(role, content, timestamp);
+    this.state.addMessage(normalizeRole(role, this.user.nickname, this.model.nickname), content, timestamp);
   }
 
   /**

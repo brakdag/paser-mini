@@ -29,6 +29,10 @@ const MODULE_MAP = {
 };
 
 let toolCache = {};
+const pendingTools = new Map();
+let toolsStopping = false;
+let toolsPermanentlyStopped = false;
+let toolShutdown = null;
 
 /**
  * Retrieves the singleton instance of a tool based on its module key.
@@ -36,18 +40,53 @@ let toolCache = {};
  * @returns {Promise<object>} The instantiated tool object.
  */
 export async function getToolInstance(moduleKey) {
-  if (!toolCache[moduleKey]) {
-    const modulePath = MODULE_MAP[moduleKey];
-    if (!modulePath) throw new Error(`Module ${moduleKey} not mapped.`);
-    const module = await import(modulePath);
-    let className = moduleKey.charAt(0).toUpperCase() + moduleKey.slice(1);
-    if (moduleKey === "githubTools") className = "GithubTools";
-    const ToolClass = module[className] || module.default;
-    if (!ToolClass)
-      throw new Error(`Class ${className} not found in ${modulePath}`);
-    toolCache[moduleKey] = new ToolClass();
+  if (toolsStopping) throw new Error("Tool registry is shutting down");
+  if (toolCache[moduleKey]) return toolCache[moduleKey];
+  if (!pendingTools.has(moduleKey)) {
+    const pending = (async () => {
+      const modulePath = MODULE_MAP[moduleKey];
+      if (!modulePath) throw new Error(`Module ${moduleKey} not mapped.`);
+      const module = await import(modulePath);
+      let className = moduleKey.charAt(0).toUpperCase() + moduleKey.slice(1);
+      if (moduleKey === "githubTools") className = "GithubTools";
+      const ToolClass = module[className] || module.default;
+      if (!ToolClass) throw new Error(`Class ${className} not found in ${modulePath}`);
+      if (toolsStopping) throw new Error("Tool registry is shutting down");
+      toolCache[moduleKey] = new ToolClass();
+      return toolCache[moduleKey];
+    })();
+    pendingTools.set(moduleKey, pending);
   }
-  return toolCache[moduleKey];
+  try {
+    return await pendingTools.get(moduleKey);
+  } finally {
+    pendingTools.delete(moduleKey);
+  }
+}
+
+/**
+ * Closes tools, including imports in flight, before releasing their cache.
+ * @param {boolean} [permanent] - Reject future tool acquisitions during application shutdown.
+ * @returns {Promise<void>} Shared completion for concurrent cleanup requests.
+ */
+export function shutdownTools(permanent = false) {
+  toolsPermanentlyStopped ||= permanent;
+  if (toolShutdown) return toolShutdown;
+  toolsStopping = true;
+  toolShutdown = Promise.resolve().then(async () => {
+    await Promise.allSettled(pendingTools.values());
+    const instances = Object.values(toolCache);
+    toolCache = {};
+    const results = await Promise.allSettled(instances.map(instance => instance.close?.()));
+    const errors = results.filter(result => result.status === "rejected").map(result => result.reason);
+    if (errors.length) throw new AggregateError(errors, "Tool cleanup failed");
+  }).finally(() => {
+    if (!toolsPermanentlyStopped) {
+      toolsStopping = false;
+      toolShutdown = null;
+    }
+  });
+  return toolShutdown;
 }
 
 /**
@@ -61,7 +100,7 @@ export function createTools(resolveInstance = getToolInstance) {
     name,
     async (...args) => {
       if (name === "reloadTools") {
-        toolCache = {};
+        await shutdownTools();
         return "Tool cache purged.";
       }
       const instance = await resolveInstance(definition.moduleKey);

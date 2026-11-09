@@ -3,7 +3,7 @@ import readline from "readline";
 /**
  * Handles reading input from the terminal using the readline interface.
  */
-class TerminalInput {
+export class TerminalInput {
   /**
    * Initializes the TerminalInput instance.
    */
@@ -12,6 +12,7 @@ class TerminalInput {
     this.inputQueue = [];
     this.inputResolver = null;
     this.commandHandler = null;
+    this.closed = false;
   }
 
   /**
@@ -19,16 +20,28 @@ class TerminalInput {
    * @returns {void}
    */
   init() {
-    if (this.rl) return;
+    if (this.rl || this.closed) return;
     this.rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
-      terminal: true,
+      terminal: Boolean(process.stdin.isTTY),
     });
 
+    this.rl.on("SIGINT", () => {
+      this.close();
+      process.emit("SIGINT");
+    });
+    this.rl.once("close", () => {
+      this.closed = true;
+      const resolve = this.inputResolver;
+      this.inputResolver = null;
+      resolve?.(null);
+    });
     this.rl.on("line", async (line) => {
       const trimmed = line.trim();
       if (!trimmed) return;
+
+      if (this.commandHandler?.interruptForExit?.(trimmed)) return;
 
       // Intercept non-blocking commands before they enter the queue
       if (this.commandHandler && this.commandHandler.isNonBlocking(trimmed)) {
@@ -53,7 +66,7 @@ class TerminalInput {
   /**
    * Requests input from the user. Returns immediately if input is queued, otherwise returns a promise.
    * @param {string} [prompt] - The prompt to display to the user.
-   * @returns {string|Promise<string>} The user input or a promise that resolves to the user input.
+   * @returns {string|null|Promise<string|null>} The user input or a promise that resolves to the user input.
    */
   requestInput(prompt = "> ") {
     if (this.inputQueue.length > 0) {
@@ -62,10 +75,23 @@ class TerminalInput {
       return input;
     }
 
+    if (this.closed) return null;
+
     return new Promise((resolve) => {
       this.inputResolver = resolve;
       process.stdout.write(prompt);
     });
+  }
+
+  /** Closes readline and resolves pending reads; repeated calls are harmless. */
+  close() {
+    this.closed = true;
+    this.inputQueue.length = 0;
+    this.commandHandler = null;
+    const resolve = this.inputResolver;
+    this.inputResolver = null;
+    resolve?.(null);
+    this.rl?.close();
   }
 
   /**
@@ -75,7 +101,7 @@ class TerminalInput {
    */
   async getConfirmation(message) {
     const answer = await this.requestInput(`${message} [y/N] \u276f `);
-    return answer.toLowerCase() === "y";
+    return answer?.toLowerCase() === "y";
   }
 
   /**

@@ -1,9 +1,9 @@
 import axios from "axios";
+import { sendChatCompletion, appendChatMessage, resetChatHistory, normalizeApiError } from "../compatibleChat.js";
+import DEFAULT_MODELS from "../providerDefaults.js";
 import BaseAdapter from "../baseAdapter.js";
 import logger from "../../core/logger.js";
-import IRCFormatter from "../../utils/ircFormatter.js";
 import RetryHandler from "../../utils/retryHandler.js";
-import { normalizeRole, normalizeContent } from "../historyNormalizer.js";
 
 const BASE_URL = "https://router.huggingface.co/v1";
 
@@ -25,7 +25,7 @@ class HuggingFaceAdapter extends BaseAdapter {
     super({ ui, configManager, userNickname, agentNickname });
     this.apiKey = process.env.HUGGINGFACE_API_KEY;
     this.history = [];
-    this.currentModel = "meta-llama/Meta-Llama-3-8B-Instruct";
+    this.currentModel = DEFAULT_MODELS.HUGGINGFACE;
     this.systemInstruction = null;
     this.temperature = 0.7;
 
@@ -57,19 +57,8 @@ class HuggingFaceAdapter extends BaseAdapter {
    */
   startChat(modelName, systemInstruction, temperature = 0.7) {
     this.currentModel = modelName || this.currentModel;
-    this.systemInstruction = systemInstruction;
     this.temperature = temperature;
-    if (this.systemInstruction) {
-      if (this.history.length > 0 && this.history[0].role === "system") {
-        this.history[0].content = this.systemInstruction;
-      } else {
-        this.history.unshift({
-          role: "system",
-          content: this.systemInstruction,
-          timestamp: IRCFormatter.getTimestamp(),
-        });
-      }
-    }
+    this.updateSystemInstruction(systemInstruction);
   }
 
   /**
@@ -83,91 +72,7 @@ class HuggingFaceAdapter extends BaseAdapter {
    * @throws {Error} If the API request fails.
    */
   async _sendMessage(message, role = "user", { signal, budget } = {}) {
-    const timestamp = IRCFormatter.getTimestamp();
-    this.injectMessage(role, message, timestamp);
-    this._enforceContextLimit(); // Plan complete-turn trimming before building the request
-    const historyLengthBefore = this.history.length;
-
-    const payload = this._preparePayload();
-    this._validateContextPayload(payload);
-
-    await this._applyRateLimit(signal);
-
-    try {
-      /**
-       * Executes the API request with retry logic.
-       * @returns {Promise<string>} The response text.
-       */
-      return await this.retryHandler.execute(async () => {
-        try {
-          logger.info(`[HuggingFaceAdapter] Requesting: ${this.client.defaults.baseURL}/chat/completions`);
-          logger.info(`[HuggingFaceAdapter] Payload: ${JSON.stringify(payload)}`);
-
-          const response = await this.client.post("/chat/completions", payload, { signal });
-          signal?.throwIfAborted();
-          return this._handleResponse(response);
-        } catch (error) {
-          throw this._handleApiError(error);
-        }
-      }, {
-        signal, budget,
-        recoverableErrors: this.recoverableErrors,
-        /**
-         * Callback executed when a retry is attempted.
-         * @param {number} attempt - The current attempt number.
-         * @param {Error} error - The error that triggered the retry.
-         * @param {string} formattedDelay - The formatted delay string.
-         * @returns {void}
-         */
-        onRetry: (attempt, error, formattedDelay) => {
-          logger.warn(`[HuggingFaceAdapter] Retrying in ${formattedDelay}... (${attempt}/${this.retryHandler.maxRetries}) due to: ${error.message}`);
-          if (this.ui && this.ui.displayInfo) {
-            this.ui.displayInfo(`Retrying HuggingFace in ${formattedDelay}... (${attempt}/${this.retryHandler.maxRetries}) | Error: ${error.message}`);
-          }
-        }
-      });
-    } catch (error) {
-      if (this.history.length === historyLengthBefore) {
-        this.popLastMessage();
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Prepares the payload for the HuggingFace /chat/completions endpoint.
-   * @private
-   * @returns {object} The formatted payload.
-   */
-  _preparePayload() {
-    return {
-      model: this.currentModel,
-      messages: this.history.map(({ role: msgRole, content, timestamp }) => ({
-        role: msgRole,
-        content: this.formatTextForPayload(msgRole, content, timestamp)
-      })),
-      temperature: this.temperature,
-      max_tokens: this.getMaxOutputTokens(),
-    };
-  }
-
-  /**
-   * Processes the API response and injects the assistant's message into history.
-   * @param {object} response - The axios response object.
-   * @private
-   * @returns {string} The extracted text content.
-   * @throws {Error} If the response text is empty.
-   */
-  _handleResponse(response) {
-    const textContent = response.data.choices[0].message.content;
-
-    if (textContent) {
-      const msgTimestamp = IRCFormatter.getTimestamp();
-      this.injectMessage("assistant", textContent, msgTimestamp);
-      return textContent;
-    }
-
-    throw new Error("Empty response from HuggingFace");
+    return sendChatCompletion(this, message, role, { signal, budget });
   }
 
   /**
@@ -177,13 +82,7 @@ class HuggingFaceAdapter extends BaseAdapter {
    * @returns {Error} A formatted Error object with name "APIError".
    */
   _handleApiError(error) {
-    if (["AbortError", "UserInterruptException", "TimeoutError"].includes(error.name) || ("code" in error && error.code === "ERR_CANCELED")) return error;
-    const errorMsg = error.response?.data?.error?.message || error.message;
-    const apiError = new Error(errorMsg);
-    apiError.name = "APIError";
-    apiError.response = error.response;
-    apiError.code = error.code;
-    return apiError;
+    return normalizeApiError(error);
   }
 
   /**
@@ -193,14 +92,7 @@ class HuggingFaceAdapter extends BaseAdapter {
    * @param {string|null} [timestamp] - The timestamp of the message.
    */
   injectMessage(role, content, timestamp = null) {
-    const apiRole = normalizeRole(role, this.user.nickname, this.model.nickname);
-    const finalContent = normalizeContent(content, apiRole);
-
-    this.history.push({
-      role: apiRole,
-      content: finalContent,
-      timestamp: timestamp || IRCFormatter.getTimestamp(),
-    });
+    appendChatMessage(this, role, content, timestamp);
   }
 
   /**
@@ -217,11 +109,7 @@ class HuggingFaceAdapter extends BaseAdapter {
    * @param {Array|null} [historyOverride] - The new history to set.
    */
   hardReset(historyOverride = null) {
-    this.history = historyOverride || [];
-    if (this.systemInstruction) {
-      this.injectMessage("system", this.systemInstruction);
-    }
-    logger.info("[HuggingFaceAdapter] History hard reset");
+    resetChatHistory(this, historyOverride);
   }
 
   /**

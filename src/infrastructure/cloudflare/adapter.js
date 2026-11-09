@@ -1,13 +1,14 @@
 import axios from "axios";
+import { sendChatCompletion, appendChatMessage, resetChatHistory, normalizeApiError } from "../compatibleChat.js";
+import DEFAULT_MODELS from "../providerDefaults.js";
 import BaseAdapter from "../baseAdapter.js";
 import logger from "../../core/logger.js";
 import RetryHandler from "../../utils/retryHandler.js";
-import IRCFormatter from "../../utils/ircFormatter.js";
-import { normalizeRole, normalizeContent, countTokensHeuristic } from "../historyNormalizer.js";
+import { countTokensHeuristic } from "../historyNormalizer.js";
 
 const ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID;
 const BASE_URL = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/ai/v1`;
-const DEFAULT_MODEL = "@cf/meta/llama-3.1-8b-instruct";
+const DEFAULT_MODEL = DEFAULT_MODELS.CLOUDFLARE;
 const DEFAULT_TEMPERATURE = 0.7;
 const CHARS_PER_TOKEN = 3.5;
 
@@ -57,17 +58,7 @@ class CloudflareAdapter extends BaseAdapter {
     this.systemInstruction = systemInstruction;
     this.temperature = temperature;
 
-    if (!this.systemInstruction) return;
-
-    if (this.history.length > 0 && this.history[0].role === "system") {
-      this.history[0].content = this.systemInstruction;
-    } else {
-      this.history.unshift({
-        role: "system",
-        content: this.systemInstruction,
-        timestamp: IRCFormatter.getTimestamp(),
-      });
-    }
+    this.updateSystemInstruction(this.systemInstruction);
   }
 
   /**
@@ -81,63 +72,7 @@ class CloudflareAdapter extends BaseAdapter {
    * @throws {Error} If the response is empty or the request fails.
    */
   async _sendMessage(message, role = "user", { signal, budget } = {}) {
-    this.injectMessage(role, message, IRCFormatter.getTimestamp());
-    this._enforceContextLimit(); // Plan complete-turn trimming before building the request
-    const historyLengthBefore = this.history.length;
-
-    const payload = {
-      model: this.currentModel,
-      messages: this.history.map(({ role: msgRole, content, timestamp }) => ({
-        role: msgRole,
-        content: this.formatTextForPayload(msgRole, content, timestamp)
-      })),
-      temperature: this.temperature,
-      max_tokens: this.getMaxOutputTokens(),
-    };
-    this._validateContextPayload(payload);
-    this.lastPayload = payload;
-
-    await this._applyRateLimit(signal);
-
-    try {
-      return await this.retryHandler.execute(async () => {
-        try {
-          const response = await this.client.post("/chat/completions", payload, { signal });
-          signal?.throwIfAborted();
-          const textContent = response.data.choices[0].message.content;
-
-          if (!textContent) {
-            throw new Error("Empty response from Cloudflare");
-          }
-
-          this.injectMessage("assistant", textContent, IRCFormatter.getTimestamp());
-          return textContent;
-        } catch (error) {
-          throw this._handleApiError(error);
-        }
-      }, {
-        signal, budget,
-        recoverableErrors: this.recoverableErrors,
-        /**
-         * Callback executed when a retry is attempted.
-         * @param {number} attempt - The current attempt number.
-         * @param {Error} error - The error that triggered the retry.
-         * @param {string} formattedDelay - The formatted delay string.
-         * @returns {void}
-         */
-        onRetry: (attempt, error, formattedDelay) => {
-          logger.warn(`[CloudflareAdapter] Retrying in ${formattedDelay}... (${attempt}/${this.retryHandler.maxRetries}) due to: ${error.message}`);
-          if (this.ui && this.ui.displayInfo) {
-            this.ui.displayInfo(`Retrying Cloudflare in ${formattedDelay}... (${attempt}/${this.retryHandler.maxRetries}) | Error: ${error.message}`);
-          }
-        }
-      });
-    } catch (error) {
-      if (this.history.length === historyLengthBefore) {
-        this.popLastMessage();
-      }
-      throw error;
-    }
+    return sendChatCompletion(this, message, role, { signal, budget });
   }
 
   /**
@@ -147,13 +82,7 @@ class CloudflareAdapter extends BaseAdapter {
    * @returns {Error} A formatted Error object with name "APIError".
    */
   _handleApiError(error) {
-    if (["AbortError", "UserInterruptException", "TimeoutError"].includes(error.name) || ("code" in error && error.code === "ERR_CANCELED")) return error;
-    const errorMsg = error.response?.data?.error?.message || error.message;
-    const apiError = new Error(errorMsg);
-    apiError.name = "APIError";
-    apiError.response = error.response;
-    apiError.code = error.code;
-    return apiError;
+    return normalizeApiError(error);
   }
 
   /**
@@ -163,14 +92,7 @@ class CloudflareAdapter extends BaseAdapter {
    * @param {string|null} [timestamp] - The message timestamp.
    */
   injectMessage(role, content, timestamp = null) {
-    const apiRole = normalizeRole(role, this.user.nickname, this.model.nickname);
-    const finalContent = normalizeContent(content, apiRole);
-
-    this.history.push({
-      role: apiRole,
-      content: finalContent,
-      timestamp: timestamp || IRCFormatter.getTimestamp(),
-    });
+    appendChatMessage(this, role, content, timestamp);
   }
 
   /**
@@ -187,11 +109,7 @@ class CloudflareAdapter extends BaseAdapter {
    * @param {Array|null} [historyOverride] - The new history to apply.
    */
   hardReset(historyOverride = null) {
-    this.history = historyOverride || [];
-    if (this.systemInstruction) {
-      this.injectMessage("system", this.systemInstruction);
-    }
-    logger.info("[CloudflareAdapter] History hard reset");
+    resetChatHistory(this, historyOverride);
   }
 
   /**

@@ -1,11 +1,13 @@
 import axios from "axios";
+import { normalizeApiError } from "../compatibleChat.js";
+import DEFAULT_MODELS from "../providerDefaults.js";
 import BaseAdapter from "../baseAdapter.js";
 import logger from "../../core/logger.js";
 import IRCFormatter from "../../utils/ircFormatter.js";
 import HistoryManager from "./historyManager.js";
 import { parseBooleanFlag } from "./utils.js";
 import {
-  DEFAULT_MODELS,
+  DEFAULT_MODELS as FALLBACK_MODELS,
   HTTP_TIMEOUT,
   MAX_TOKENS,
 } from "./constants.js";
@@ -33,7 +35,7 @@ class ZaiAdapter extends BaseAdapter {
   }) {
     super({ ui, configManager, userNickname, agentNickname });
     this.apiKey = process.env.ZAI_API_KEY;
-    this.currentModel = "glm-5.2";
+    this.currentModel = DEFAULT_MODELS.ZAI;
     this.systemInstruction = null;
     this.temperature = 0.7;
 
@@ -228,13 +230,7 @@ class ZaiAdapter extends BaseAdapter {
    * @returns {Error} A formatted Error object with name "APIError".
    */
   _handleApiError(error) {
-    if (["AbortError", "UserInterruptException", "TimeoutError"].includes(error.name) || ("code" in error && error.code === "ERR_CANCELED")) return error;
-    const errorMsg = error.response?.data?.error?.message || error.message;
-    const apiError = new Error(errorMsg);
-    apiError.name = "APIError";
-    apiError.response = error.response;
-    apiError.code = error.code;
-    return apiError;
+    return normalizeApiError(error);
   }
 
   /**
@@ -289,7 +285,7 @@ class ZaiAdapter extends BaseAdapter {
       return response.data.data.map((m) => m.id);
     } catch (error) {
       logger.error(`[ZaiAdapter] Error fetching models: ${error.message}`);
-      return DEFAULT_MODELS;
+      return FALLBACK_MODELS;
     }
   }
 

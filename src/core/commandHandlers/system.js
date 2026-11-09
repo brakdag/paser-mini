@@ -24,13 +24,13 @@ class SystemCommands {
   }
 
   /**
-   * Requests the application to exit and terminates the process.
+   * Requests exit through the application resource owner.
    * @param {object} chatManager The chat manager instance.
    * @returns {void}
    */
   static handleExit(chatManager) {
     chatManager.requestExit();
-    process.exit(0);
+
   }
 
   /**

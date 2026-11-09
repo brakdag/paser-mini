@@ -26,6 +26,9 @@ class McpManager {
     this.clients = new Map();
     this.registrations = new Map();
     this.pending = Promise.resolve();
+    this.connecting = new Set();
+    this.stopping = false;
+    this.shutdownPromise = null;
     this.tools = {};
     this.schemas = {};
   }
@@ -170,7 +173,7 @@ class McpManager {
    * @private
    */
   async _connectServer(serverName, serverConfig) {
-    if (this.clients.has(serverName) || serverConfig.enabled === false) return;
+    if (this.stopping || this.clients.has(serverName) || serverConfig.enabled === false) return;
     let client;
     let transport;
     try {
@@ -219,7 +222,9 @@ class McpManager {
         closed = true;
         if (this.clients.get(serverName) === client) this._removeRegistration(serverName);
       };
+      this.connecting.add(client);
       await client.connect(transport);
+      if (this.stopping) throw new Error("MCP manager is shutting down");
       const toolsResponse = await client.listTools();
       const discovered = toolsResponse?.tools;
       if (!Array.isArray(discovered)) throw new Error("Invalid MCP tool discovery response");
@@ -245,7 +250,7 @@ class McpManager {
         };
         schemas[name] = tool.inputSchema;
       });
-      if (closed) throw new Error("MCP connection closed during discovery");
+      if (closed || this.stopping) throw new Error("MCP connection closed during discovery");
       this.clients.set(serverName, client);
       this.registrations.set(serverName, {
         names: Object.keys(tools), safeName: safeServerName, config: JSON.stringify(resolvedConfig),
@@ -260,6 +265,8 @@ class McpManager {
       } catch (closeError) {
         logger.warn(`[McpManager] Failed to clean up ${serverName}: ${closeError.message}`);
       }
+    } finally {
+      this.connecting.delete(client);
     }
   }
 
@@ -284,9 +291,17 @@ class McpManager {
    * @returns {Promise<void>}
    */
   shutdown() {
-    return this._enqueue(() => Promise.all(
-      Array.from(this.clients.keys()).map((name) => this._disconnectServer(name))
-    ));
+    if (this.shutdownPromise) return this.shutdownPromise;
+    this.stopping = true;
+    // Do not queue behind a handshake/discovery waiting on an unresponsive server.
+    this.shutdownPromise = Promise.allSettled([
+      ...Array.from(this.connecting, client => client.close()),
+      ...Array.from(this.clients.keys(), name => this._disconnectServer(name)),
+    ]).then(results => {
+      const errors = results.filter(result => result.status === "rejected").map(result => result.reason);
+      if (errors.length) throw new AggregateError(errors, "MCP shutdown failed");
+    });
+    return this.shutdownPromise;
   }
 }
 

@@ -1,12 +1,12 @@
 import axios from "axios";
+import DEFAULT_MODELS from "../providerDefaults.js";
+import { sendChatCompletion, appendChatMessage, resetChatHistory, normalizeApiError } from "../compatibleChat.js";
 import BaseAdapter from "../baseAdapter.js";
 import logger from "../../core/logger.js";
-import IRCFormatter from "../../utils/ircFormatter.js";
 import RetryHandler from "../../utils/retryHandler.js";
-import { normalizeRole, normalizeContent } from "../historyNormalizer.js";
 
 const BASE_URL = "https://zenmux.ai/api/v1";
-const DEFAULT_MODEL = "google/gemini-3.1-pro-preview";
+const DEFAULT_MODEL = DEFAULT_MODELS.ZENMUX;
 const DEFAULT_TEMPERATURE = 0.7;
 const REQUEST_TIMEOUT_MS = 10 * 60 * 1000;
 const FALLBACK_MODELS = ["google/gemini-3.1-pro-preview"];
@@ -78,17 +78,7 @@ class ZenMuxAdapter extends BaseAdapter {
    * @throws {Error} If the API request fails.
    */
   async _sendMessage(message, role = "user", { signal, budget } = {}) {
-    const timestamp = IRCFormatter.getTimestamp();
-    this.injectMessage(role, message, timestamp);
-    this._enforceContextLimit();
-    const historyLengthBefore = this.history.length;
-
-    try {
-      return await this._dispatchMessage(signal, budget);
-    } catch (error) {
-      this._rollbackOnFailure(historyLengthBefore);
-      throw error;
-    }
+    return sendChatCompletion(this, message, role, { signal, budget });
   }
 
   /**
@@ -98,14 +88,7 @@ class ZenMuxAdapter extends BaseAdapter {
    * @param {string|null} [timestamp] - The timestamp of the message.
    */
   injectMessage(role, content, timestamp = null) {
-    const apiRole = normalizeRole(role, this.user.nickname, this.model.nickname);
-    const finalContent = normalizeContent(content, apiRole);
-
-    this.history.push({
-      role: apiRole,
-      content: finalContent,
-      timestamp: timestamp || IRCFormatter.getTimestamp(),
-    });
+    appendChatMessage(this, role, content, timestamp);
   }
 
   /**
@@ -122,11 +105,7 @@ class ZenMuxAdapter extends BaseAdapter {
    * @param {Array|null} [historyOverride] - The new history to set.
    */
   hardReset(historyOverride = null) {
-    this.history = historyOverride || [];
-    if (this.systemInstruction) {
-      this.injectMessage("system", this.systemInstruction);
-    }
-    logger.info("[ZenMuxAdapter] History hard reset");
+    resetChatHistory(this, historyOverride);
   }
 
   /**
@@ -180,124 +159,7 @@ class ZenMuxAdapter extends BaseAdapter {
    * @returns {void}
    */
   _updateSystemInstruction() {
-    if (!this.systemInstruction) return;
-
-    const hasSystemAtStart = this.history[0]?.role === "system";
-    if (hasSystemAtStart) {
-      this.history[0].content = this.systemInstruction;
-      return;
-    }
-
-    this.history.unshift({
-      role: "system",
-      content: this.systemInstruction,
-      timestamp: IRCFormatter.getTimestamp(),
-    });
-  }
-
-  /**
-   * Applies rate limiting, prepares the payload, and dispatches the request with retry semantics.
-   * @private
-   * @param {AbortSignal} signal - Shared request cancellation.
-   * @param {import("../../utils/requestBudget.js").default} budget - Shared request deadline.
-   * @returns {Promise<string>} The assistant's text response.
-   */
-  async _dispatchMessage(signal, budget) {
-    await this._applyRateLimit(signal);
-    const payload = this._preparePayload();
-    this._validateContextPayload(payload);
-    this.lastPayload = payload;
-
-    return this.retryHandler.execute(
-      () => this._executeRequest(payload, signal),
-      {
-        signal, budget,
-        recoverableErrors: this.recoverableErrors,
-        onRetry: this._logRetry.bind(this),
-      },
-    );
-  }
-
-  /**
-   * Executes a single HTTP request against the chat completions endpoint.
-   * @private
-   * @param {object} payload - The request payload to send.
-   * @param {AbortSignal} signal - Cancels the HTTP request.
-   * @returns {Promise<string>} The assistant's text response.
-   */
-  async _executeRequest(payload, signal) {
-    logger.info(`[ZenMuxAdapter] Requesting: ${this.client.defaults.baseURL}/chat/completions`);
-
-    try {
-      const response = await this.client.post("/chat/completions", payload, { signal });
-      signal?.throwIfAborted();
-      return this._handleResponse(response);
-    } catch (error) {
-      throw this._handleApiError(error);
-    }
-  }
-
-  /**
-   * Logs a retry attempt and surfaces it to the UI when available.
-   * @private
-   * @param {number} attempt - The current attempt number (1-indexed).
-   * @param {Error} error - The error that triggered the retry.
-   * @param {string} formattedDelay - The human-readable delay before the next attempt.
-   * @returns {void}
-   */
-  _logRetry(attempt, error, formattedDelay) {
-    logger.warn(`[ZenMuxAdapter] Retrying in ${formattedDelay}... (${attempt}/${this.retryHandler.maxRetries}) due to: ${error.message}`);
-    if (this.ui && this.ui.displayInfo) {
-      this.ui.displayInfo(`Retrying ZenMux in ${formattedDelay}... (${attempt}/${this.retryHandler.maxRetries}) | Error: ${error.message}`);
-    }
-  }
-
-  /**
-   * Rolls back the most recently injected message when the request fails before any history mutation.
-   * @private
-   * @param {number} historyLengthBefore - The history length captured before the request was dispatched.
-   * @returns {void}
-   */
-  _rollbackOnFailure(historyLengthBefore) {
-    if (this.history.length === historyLengthBefore) {
-      this.popLastMessage();
-    }
-  }
-
-  /**
-   * Builds the payload for the /chat/completions endpoint from the current history.
-   * @private
-   * @returns {object} The formatted payload ready for transmission.
-   */
-  _preparePayload() {
-    return {
-      model: this.currentModel,
-      messages: this.history.map(({ role: msgRole, content, timestamp }) => ({
-        role: msgRole,
-        content: this.formatTextForPayload(msgRole, content, timestamp),
-      })),
-      temperature: this.temperature,
-      max_tokens: this.getMaxOutputTokens(),
-    };
-  }
-
-  /**
-   * Extracts the assistant text from the API response and injects it into history.
-   * @private
-   * @param {object} response - The axios response object.
-   * @returns {string} The extracted text content.
-   * @throws {Error} If the response text is empty.
-   */
-  _handleResponse(response) {
-    const textContent = response.data.choices[0].message.content;
-
-    if (textContent) {
-      const msgTimestamp = IRCFormatter.getTimestamp();
-      this.injectMessage("assistant", textContent, msgTimestamp);
-      return textContent;
-    }
-
-    throw new Error("Empty response from ZenMux");
+    this.updateSystemInstruction(this.systemInstruction);
   }
 
   /**
@@ -307,13 +169,7 @@ class ZenMuxAdapter extends BaseAdapter {
    * @returns {Error} A formatted Error object with name "APIError".
    */
   _handleApiError(error) {
-    if (["AbortError", "UserInterruptException", "TimeoutError"].includes(error.name) || ("code" in error && error.code === "ERR_CANCELED")) return error;
-    const errorMsg = error.response?.data?.error?.message || error.message;
-    const apiError = new Error(errorMsg);
-    apiError.name = "APIError";
-    apiError.response = error.response;
-    apiError.code = error.code;
-    return apiError;
+    return normalizeApiError(error);
   }
 }
 

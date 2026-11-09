@@ -3,7 +3,7 @@ import ora from "ora";
 import { toolResultText } from "./toolResult.js";
 import renderer from "./TerminalRenderer.js";
 import IRCFormatter from "../utils/ircFormatter.js";
-import input from "./TerminalInput.js";
+import { TerminalInput } from "./TerminalInput.js";
 import sessionLogger from "./SessionLogger.js";
 import IRCFormat from "../formats/IRCFormat.js";
 import CleanFormat from "../formats/CleanFormat.js";
@@ -25,13 +25,14 @@ class TerminalUI {
    * @returns {Array} The queue of pending inputs.
    */
   get inputQueue() {
-    return input.inputQueue;
+    return this.input.inputQueue;
   }
 
   /**
    * Initializes the TerminalUI instance with default settings.
    */
   constructor() {
+    this.input = new TerminalInput();
     this.noSpinner = true;
     this.activeSpinners = new Map();
     this.user = { nickname: "user" };
@@ -52,7 +53,7 @@ class TerminalUI {
    * @param {object} handler The command handler instance.
    */
   setCommandHandler(handler) {
-    input.commandHandler = handler;
+    this.input.commandHandler = handler;
   }
 
   /**
@@ -155,7 +156,7 @@ class TerminalUI {
    * @param {string} [timestamp] Optional override for the timestamp.
    */
   displayChatMessage(nickname, text, timestamp = null) {
-    input.clearCurrentLine();
+    this.input.clearCurrentLine();
     const plainText = text.trim();
     const ts = timestamp || IRCFormatter.getTimestamp();
 
@@ -187,7 +188,7 @@ class TerminalUI {
    * @param {string} text The message to display.
    */
   displayRawMessage(text) {
-    input.clearCurrentLine();
+    this.input.clearCurrentLine();
     process.stdout.write(`${text}\n`);
     this.writeToLog(this.activePlugin.formatSystem(text));
   }
@@ -197,7 +198,7 @@ class TerminalUI {
    * @param {string} text The thought text to display.
    */
   displayThought(text) {
-    input.clearCurrentLine();
+    this.input.clearCurrentLine();
     process.stdout.write(`${chalk.green.italic(`🗬  ${text}`)}\n`);
   }
 
@@ -206,7 +207,7 @@ class TerminalUI {
    * @param {string} text The info message to display.
    */
   displayInfo(text) {
-    input.clearCurrentLine();
+    this.input.clearCurrentLine();
     process.stdout.write(`${chalk.blue("ℹ ") + chalk.cyan(text)}\n`);
     this.writeToLog(this.activePlugin.formatSystem(`INFO: ${text}`));
   }
@@ -216,7 +217,7 @@ class TerminalUI {
    * @param {string} text The error message to display.
    */
   displayError(text) {
-    input.clearCurrentLine();
+    this.input.clearCurrentLine();
     process.stdout.write(`${chalk.red("✖ ") + chalk.red.bold(text)}\n`);
     this.writeToLog(this.activePlugin.formatSystem(`ERROR: ${text}`));
   }
@@ -291,7 +292,7 @@ class TerminalUI {
    * @param {string} detail The detail of the operation.
    */
   displayToolStatus(name, success, detail) {
-    input.clearCurrentLine();
+    this.input.clearCurrentLine();
     const statusIcon = success ? "✓" : "✗";
     const statusColor = success ? chalk.green : chalk.red;
     const ts = IRCFormatter.getTimestamp();
@@ -351,7 +352,13 @@ class TerminalUI {
    * Initializes the terminal input handler.
    */
   initInput() {
-    input.init();
+    this.input.init();
+  }
+
+  /** Releases input and every active monitoring spinner. */
+  close() {
+    this.stopAllMonitoring();
+    this.input.close();
   }
 
   /**
@@ -360,7 +367,7 @@ class TerminalUI {
    * @returns {Promise<string>} The user's input string.
    */
   requestInput(prompt = "> ") {
-    return input.requestInput(prompt);
+    return this.input.requestInput(prompt);
   }
 
   /**
@@ -369,7 +376,7 @@ class TerminalUI {
    * @returns {Promise<boolean>} True if confirmed, false otherwise.
    */
   async getConfirmation(message) {
-    return input.getConfirmation(message);
+    return this.input.getConfirmation(message);
   }
 
   /**

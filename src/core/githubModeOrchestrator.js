@@ -33,6 +33,14 @@ class GitHubModeOrchestrator {
     this.triggerHashtag = "#ai-assistance";
     this.botLogin = null;
     this.activeIssues = new Set();
+    this.stopped = false;
+    this.activeSession = null;
+  }
+
+  /** Cancels the active turn and prevents scheduling further issues. */
+  close() {
+    this.stopped = true;
+    this.activeSession?.requestExit();
   }
 
   /**
@@ -43,7 +51,7 @@ class GitHubModeOrchestrator {
     this.botLogin = (await this.githubApi.getAuthenticatedUser()).login;
     const issues = await this.githubApi.listIssues(this.repo);
     const failures = [];
-    for (let index = 0; index < issues.length; index += 1) {
+    for (let index = 0; index < issues.length && !this.stopped; index += 1) {
       const issue = issues[index];
       if (!issue.pull_request && issue.state !== "closed" &&
           (issue.body || "").includes(this.triggerHashtag) &&
@@ -88,6 +96,8 @@ class GitHubModeOrchestrator {
         systemInstruction: this.systemInstruction, tools: this.tools, pureMode: this.pureMode,
         instanceMode: true,
       });
+      this.activeSession = session;
+      if (this.stopped) { session.requestExit(); return; }
       const discussion = inputs.map((comment) => `${comment.user?.login || "user"}: ${comment.body || ""}`).join("\n\n");
       await session.runOnce(`GitHub Issue #${number}: ${issue.title || ""}\n${issue.body || ""}\n\n${discussion}`);
       await ui.flush();
@@ -107,6 +117,7 @@ class GitHubModeOrchestrator {
           failures.push(labelError);
         }
       }
+      this.activeSession = null;
       this.activeIssues.delete(number);
     }
     if (failures.length) throw new AggregateError(failures, `Issue #${number} failed`);

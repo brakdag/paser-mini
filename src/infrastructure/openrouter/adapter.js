@@ -1,9 +1,10 @@
 import axios from "axios";
+import { appendChatMessage, resetChatHistory } from "../compatibleChat.js";
+import DEFAULT_MODELS from "../providerDefaults.js";
 import BaseAdapter from "../baseAdapter.js";
 import logger from "../../core/logger.js";
 import IRCFormatter from "../../utils/ircFormatter.js";
 import RetryHandler from "../../utils/retryHandler.js";
-import { normalizeRole, normalizeContent } from "../historyNormalizer.js";
 
 const BASE_URL = "https://openrouter.ai/api/v1";
 
@@ -33,7 +34,7 @@ class OpenRouterAdapter extends BaseAdapter {
     this.apiKey = process.env.OPENROUTER_API_KEY;
     this.history = [];
     this.lastPayload = null;
-    this.currentModel = "openai/gpt-3.5-turbo";
+    this.currentModel = DEFAULT_MODELS.OPENROUTER;
     this.systemInstruction = null;
     this.temperature = 0.7;
 
@@ -281,18 +282,7 @@ class OpenRouterAdapter extends BaseAdapter {
    * @param {string|null} [timestamp] - The timestamp of the message.
    */
   injectMessage(role, content, timestamp = null) {
-    const apiRole = normalizeRole(
-      role,
-      this.user.nickname,
-      this.model.nickname,
-    );
-    const finalContent = normalizeContent(content, apiRole);
-
-    this.history.push({
-      role: apiRole,
-      content: finalContent,
-      timestamp: timestamp || IRCFormatter.getTimestamp(),
-    });
+    appendChatMessage(this, role, content, timestamp);
   }
 
   /**
@@ -309,11 +299,7 @@ class OpenRouterAdapter extends BaseAdapter {
    * @param {Array|null} [historyOverride] - The new history to set.
    */
   hardReset(historyOverride = null) {
-    this.history = historyOverride || [];
-    if (this.systemInstruction) {
-      this.injectMessage("system", this.systemInstruction);
-    }
-    logger.info("[OpenRouterAdapter] History hard reset");
+    resetChatHistory(this, historyOverride);
   }
 
   /**

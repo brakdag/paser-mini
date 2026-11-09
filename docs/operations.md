@@ -155,15 +155,36 @@ projections and explicit unsupported-content responses.
 | `/s [file]` | Saves the last request payload, including conversation content, to JSON; defaults to `last_request.json` |
 | `/cache`, `/reload` | Rebuild prompt/catalog from startup options and role/MCP files; preserve conversation; no JS module reload |
 | `reloadSchemas()` | Re-register schemas from already loaded modules; edited JS requires a restart |
-| `reloadTools()` | Clear cached tool instances; it does not reload ESM modules or automatically rebind session contexts |
+| `reloadTools()` | Close cached tool resources before clearing instances; it does not reload ESM modules or automatically rebind session contexts |
 
 Only `/execute` controls the shell tool; it does not gate every tool that can
 execute code or modify files. Completed effects persist when a turn fails or
 is cancelled. Model requests share five total attempts and a ten-minute deadline
 covering transport and waits; `/models` cancels them for every provider. See the
 README request retry policy for programmatic limits and remote generation effects.
-Shutdown ownership remains tracked in T20. `run` has its own terminating OS
-deadline.
+EOF, `/exit` (and its aliases), SIGINT/SIGTERM, startup failures and unhandled
+process errors use one idempotent application shutdown. It cancels the active
+turn, closes readline/spinners, saves the prompt cache, closes MCP (including
+connections still being discovered), closes instantiated tool resources and
+awaits the session log flush. Fatal failures exit with status 1; normal exits
+and handled termination signals use 0. Cleanup failure or timeout also uses 1.
+The total cleanup deadline is five seconds; the last second is reserved for
+log flushing if another resource stalls. The executable terminates after cleanup,
+so a stalled resource cannot keep the CLI alive. A forced deadline or externally
+sent SIGKILL cannot guarantee buffered writes complete. `run` also has its own
+terminating OS deadline. User commands that intentionally launch independent
+background services retain their external effects.
+
+Each terminal UI owns its input. Importing application/domain modules does not
+open a session file or install process exception/signal handlers. The executable
+starts logging explicitly; programmatic callers can start the logger or let the
+first accepted write open it, and await `shutdownStreams()` when done.
+
+Compatible chat-completions adapters compose the shared request transport and
+history policies in `compatibleChat.js`; Gemini, Cohere and specialized provider
+payloads retain their own mapping. Local default model choices live in
+`providerDefaults.js` and are shared by the factory and adapters. They are local
+fallbacks, not a check that those models remain remotely available.
 
 ## Generated files and quality configuration
 

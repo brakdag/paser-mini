@@ -1,10 +1,12 @@
+import { normalizeRole } from "../historyNormalizer.js";
+import DEFAULT_MODELS from "../providerDefaults.js";
 import ConversationState from "../conversationState.js";
 import NvidiaRestClient from "../nvidia/restClient.js";
 import logger from "../../core/logger.js";
 import BaseAdapter from "../baseAdapter.js";
 import RetryHandler from "../../utils/retryHandler.js";
 
-const DEFAULT_MODEL = "minimaxai/minimax-m3";
+const DEFAULT_MODEL = DEFAULT_MODELS.NVIDIA_MINIMAX;
 const DEFAULT_TEMPERATURE = 0.3;
 const M3_TIMEOUT = 900000; // 15 minutes - M3 on NVIDIA experiences long queue times
 
@@ -258,7 +260,7 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
    * @param {number|null} timestamp - The optional message timestamp.
    */
   injectMessage(role, content, timestamp = null) {
-    this.state.addMessage(role, content, timestamp);
+    this.state.addMessage(normalizeRole(role, this.user.nickname, this.model.nickname), content, timestamp);
   }
 
   /**

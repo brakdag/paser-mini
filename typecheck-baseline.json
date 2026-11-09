@@ -37,46 +37,11 @@
       "count": 1
     },
     {
-      "file": "src/infrastructure/McpManager.js",
-      "code": 2322,
-      "message": "Type 'Promise<void[]>' is not assignable to type 'Promise<void>'.\n  Type 'void[]' is not assignable to type 'void'.",
-      "source": "Promise.all(\n      Array.from(this.clients.keys()).map((name) => this._disconnectServer(name))\n    )",
-      "count": 1
-    },
-    {
-      "file": "src/infrastructure/cerebras/adapter.js",
-      "code": 2339,
-      "message": "Property 'code' does not exist on type 'Error'.",
-      "source": "code",
-      "count": 2
-    },
-    {
-      "file": "src/infrastructure/cerebras/adapter.js",
-      "code": 2339,
-      "message": "Property 'response' does not exist on type 'Error'.",
-      "source": "response",
-      "count": 3
-    },
-    {
       "file": "src/infrastructure/cerebras/adapter.js",
       "code": 2353,
       "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
       "source": "userNickname",
       "count": 1
-    },
-    {
-      "file": "src/infrastructure/cloudflare/adapter.js",
-      "code": 2339,
-      "message": "Property 'code' does not exist on type 'Error'.",
-      "source": "code",
-      "count": 2
-    },
-    {
-      "file": "src/infrastructure/cloudflare/adapter.js",
-      "code": 2339,
-      "message": "Property 'response' does not exist on type 'Error'.",
-      "source": "response",
-      "count": 3
     },
     {
       "file": "src/infrastructure/cloudflare/adapter.js",
@@ -157,38 +122,10 @@
     },
     {
       "file": "src/infrastructure/groq/adapter.js",
-      "code": 2339,
-      "message": "Property 'code' does not exist on type 'Error'.",
-      "source": "code",
-      "count": 2
-    },
-    {
-      "file": "src/infrastructure/groq/adapter.js",
-      "code": 2339,
-      "message": "Property 'response' does not exist on type 'Error'.",
-      "source": "response",
-      "count": 3
-    },
-    {
-      "file": "src/infrastructure/groq/adapter.js",
       "code": 2353,
       "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
       "source": "userNickname",
       "count": 1
-    },
-    {
-      "file": "src/infrastructure/huggingface/adapter.js",
-      "code": 2339,
-      "message": "Property 'code' does not exist on type 'Error'.",
-      "source": "code",
-      "count": 2
-    },
-    {
-      "file": "src/infrastructure/huggingface/adapter.js",
-      "code": 2339,
-      "message": "Property 'response' does not exist on type 'Error'.",
-      "source": "response",
-      "count": 3
     },
     {
       "file": "src/infrastructure/huggingface/adapter.js",
@@ -276,20 +213,6 @@
     },
     {
       "file": "src/infrastructure/poolside/adapter.js",
-      "code": 2339,
-      "message": "Property 'code' does not exist on type 'Error'.",
-      "source": "code",
-      "count": 2
-    },
-    {
-      "file": "src/infrastructure/poolside/adapter.js",
-      "code": 2339,
-      "message": "Property 'response' does not exist on type 'Error'.",
-      "source": "response",
-      "count": 3
-    },
-    {
-      "file": "src/infrastructure/poolside/adapter.js",
       "code": 2353,
       "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
       "source": "userNickname",
@@ -297,38 +220,10 @@
     },
     {
       "file": "src/infrastructure/zai/adapter.js",
-      "code": 2339,
-      "message": "Property 'code' does not exist on type 'Error'.",
-      "source": "code",
-      "count": 2
-    },
-    {
-      "file": "src/infrastructure/zai/adapter.js",
-      "code": 2339,
-      "message": "Property 'response' does not exist on type 'Error'.",
-      "source": "response",
-      "count": 3
-    },
-    {
-      "file": "src/infrastructure/zai/adapter.js",
       "code": 2353,
       "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
       "source": "userNickname",
       "count": 1
-    },
-    {
-      "file": "src/infrastructure/zenmux/adapter.js",
-      "code": 2339,
-      "message": "Property 'code' does not exist on type 'Error'.",
-      "source": "code",
-      "count": 2
-    },
-    {
-      "file": "src/infrastructure/zenmux/adapter.js",
-      "code": 2339,
-      "message": "Property 'response' does not exist on type 'Error'.",
-      "source": "response",
-      "count": 3
     },
     {
       "file": "src/infrastructure/zenmux/adapter.js",
@@ -524,13 +419,6 @@
       "code": 2322,
       "message": "Type '(_executable: any, args: any) => Promise<never>' is not assignable to type '{ (file: string): PromiseWithChild<{ stdout: string; stderr: string; }>; (file: string, args: readonly string[]): PromiseWithChild<{ stdout: string; stderr: string; }>; (file: string, options: ExecFileOptionsWithBufferEncoding): PromiseWithChild<...>; (file: string, args: readonly string[], options: ExecFileOptionsW...'.\n  Property 'child' is missing in type 'Promise<never>' but required in type 'PromiseWithChild<{ stdout: string; stderr: string; }>'.",
       "source": "executor",
-      "count": 1
-    },
-    {
-      "file": "tests/filePathPolicy.test.js",
-      "code": 2322,
-      "message": "Type '(executable: any, args: any) => EventEmitter<DefaultEventMap>' is not assignable to type '{ (command: string, options?: SpawnOptionsWithoutStdio): ChildProcessWithoutNullStreams; (command: string, options: SpawnOptionsWithStdioTuple<StdioPipe, StdioPipe, StdioPipe>): ChildProcessByStdio<...>; (command: string, options: SpawnOptionsWithStdioTuple<...>): ChildProcessByStdio<...>; (command: string, options:...'.\n  Type 'EventEmitter<DefaultEventMap>' is missing the following properties from type 'ChildProcessWithoutNullStreams': stdin, stdout, stderr, stdio, and 12 more.",
-      "source": "spawnProcess",
       "count": 1
     },
     {

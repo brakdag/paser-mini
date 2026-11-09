@@ -1,4 +1,5 @@
 import axios from "axios";
+import DEFAULT_MODELS from "../providerDefaults.js";
 import { contentBlocks } from "../contentBlocks.js";
 import BaseAdapter from "../baseAdapter.js";
 import logger from "../../core/logger.js";
@@ -25,7 +26,7 @@ class CohereAdapter extends BaseAdapter {
     super({ ui, configManager, userNickname, agentNickname });
     this.apiKey = process.env.COHERE_API_KEY;
     this.history = [];
-    this.currentModel = "command-r-plus";
+    this.currentModel = DEFAULT_MODELS.COHERE;
     this.systemInstruction = null;
     this.temperature = 0.7;
 

@@ -273,6 +273,17 @@ class CommandHandler {
   }
 
   /**
+   * Stops an active turn immediately when an exit command arrives.
+   * @param {string} input - Terminal command.
+   * @returns {boolean} Whether exit was requested.
+   */
+  interruptForExit(input) {
+    if (!["/exit", "/quit", "/q", ":q"].includes(input.trim().toLowerCase())) return false;
+    this.chatManager.requestExit();
+    return true;
+  }
+
+  /**
    * Interrupts a pending provider request before queuing model selection.
    * @param {string} input - The terminal input.
    * @returns {boolean} Whether model selection should take priority.
