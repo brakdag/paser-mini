@@ -128,11 +128,11 @@ export default class GitTools {
 
   /**
    * Gets all changes in the repository compared to the index.
-   * @param {string} [filepath] - Optional path to limit the diff.
+   * @param {string} [filePath] - Optional path to limit the diff.
    * @returns {Promise<string>} The diff output or a message indicating no changes.
    */
-  async gitDiffAll(filepath) {
-    const args = filepath === undefined ? ["diff"] : ["--literal-pathspecs", "diff", "--", this.#paths.getSafePath(filepath)];
+  async gitDiffAll(filePath) {
+    const args = filePath === undefined ? ["diff"] : ["--literal-pathspecs", "diff", "--", this.#paths.getSafePath(filePath)];
     const stdout = await this.#run(args);
     return stdout || "No changes found in the repository.";
   }
@@ -198,14 +198,18 @@ export default class GitTools {
 
   /**
    * Restores a specific file to its last committed state.
-   * @param {string|{filepath: string}} f - File path or object containing path.
+   * @param {string|{path?: string, filepath?: string}} target - File path, canonical object or legacy filepath object.
    * @returns {Promise<string>} The result of the restore command.
    * @throws {Error} If the file path is missing.
    */
-  async restoreFile(f) {
-    const filepath = typeof f === 'object' ? f.filepath : f;
-    if (!filepath) throw new Error("File path is required.");
-    const safePath = this.#paths.getSafeMutationPath(filepath, { recursive: true });
+  async restoreFile(target) {
+    if (target && typeof target === "object" && target.path !== undefined &&
+        target.filepath !== undefined && target.path !== target.filepath) {
+      throw new Error("Conflicting arguments: path and filepath");
+    }
+    const filePath = target && typeof target === "object" ? target.path ?? target.filepath : target;
+    if (typeof filePath !== "string" || !filePath) throw new Error("File path is required.");
+    const safePath = this.#paths.getSafeMutationPath(filePath, { recursive: true });
     return this.#run(["--literal-pathspecs", "restore", "--", safePath]);
   }
 }

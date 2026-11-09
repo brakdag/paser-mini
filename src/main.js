@@ -44,7 +44,7 @@ async function main() {
 }
 
 process.on("unhandledRejection", (reason, promise) => {
-  logger.error("Unhandled Rejection at:", reason, { promise });
+  logger.error("Unhandled Rejection:", { reason, promise });
 });
 
 process.on("uncaughtException", (err) => {
@@ -53,7 +53,7 @@ process.on("uncaughtException", (err) => {
 
 /**
  * Gracefully terminates all active connections and saves caches.
- * Triggered on normal exits, SIGINT (Ctrl+C), and SIGTERM.
+ * Installed for SIGINT (Ctrl+C) and SIGTERM; normal exits save the cache separately.
  */
 async function gracefulShutdown() {
   promptManager.saveCache();

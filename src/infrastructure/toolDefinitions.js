@@ -17,13 +17,15 @@ function binaryArguments(args) {
  * @param {string|null} moduleKey - Tool implementation module, or internal operation.
  * @param {string|null} method - Implementation method.
  * @param {object} schema - Zod argument schema.
- * @param {string[]} [parameters] - Explicit order for a union schema.
- * @param {((args: unknown[]) => unknown[])|null} [adaptArguments] - Optional implementation signature adapter.
+ * @param {object} [options] - Ordering, signature adaptation and compatibility.
+ * @param {string[]} [options.parameters] - Explicit order for a union schema.
+ * @param {((args: unknown[]) => unknown[])|null} [options.adaptArguments] - Implementation signature adapter.
+ * @param {Record<string, string>} [options.aliases] - Legacy argument names.
  * @returns {object} Shared tool contract.
  */
-function define(description, moduleKey, method, schema, parameters = Object.keys(schema.shape), adaptArguments = null) {
+function define(description, moduleKey, method, schema, { parameters = Object.keys(schema.shape), adaptArguments = null, aliases = {} } = {}) {
   return Object.freeze({ description, moduleKey, method, schema, parameters: Object.freeze(parameters), adaptArguments,
-    requiresBash: moduleKey === "systemTools" && method === "execute" });
+    aliases: Object.freeze(aliases), requiresBash: moduleKey === "systemTools" && method === "execute" });
 }
 
 // Parser, validator, prompt and executable registry all consume these contracts.
@@ -38,7 +40,7 @@ const TOOL_DEFINITIONS = {
   analysis: define("Run static analysis for JS/TS codebase", "systemTools", "analyzeCode", SCHEMAS.analysis),
   eslint: define("Run ESLint", "systemTools", "lintCode", SCHEMAS.eslint),
   doc: define("Generate HTML documentation using JSDoc", "systemTools", "generateDocs", SCHEMAS.doc),
-  execute: define("Execute a bash", "systemTools", "execute", SCHEMAS.execute),
+  execute: define("Execute a shell command with user permissions", "systemTools", "execute", SCHEMAS.execute),
   grep: define("Search string in path", "searchTools", "searchText", SCHEMAS.grep),
   glob: define("Search files by pattern", "searchTools", "searchFilesPatternFixed", SCHEMAS.glob),
   rename: define("Move or rename path", "fileTools", "rename", SCHEMAS.rename),
@@ -50,15 +52,15 @@ const TOOL_DEFINITIONS = {
     "memoryTools", "pushMemory",
     SCHEMAS.push,
   ),
-  token: define("Current token count", "memoryTools", "getTokenCount", SCHEMAS.token),
+  token: define("Estimated token usage (character-based heuristic)", "memoryTools", "getTokenCount", SCHEMAS.token),
   tree: define("Get the repository file tree", "gitTools", "getTrackedFiles", SCHEMAS.tree),
   diff: define("Show differences of a file using git diff", "gitTools", "gitDiffAll", SCHEMAS.diff),
-  restore: define("Restore a file using git restore", "gitTools", "restoreFile", SCHEMAS.restore),
+  restore: define("Restore a file using git restore", "gitTools", "restoreFile", SCHEMAS.restore, { aliases: { filepath: "path" } }),
   concat: define("Concatenates source file to destination file", "fileTools", "concat", SCHEMAS.concat),
-  structure: define("Returns keys and structure of a JSON node", "jsonTools", "getJsonStructure", SCHEMAS.structure),
-  node: define("Retrieves content of a specific JSON node", "jsonTools", "getJsonNode", SCHEMAS.node),
-  arrange: define("Returns length and item type of a JSON array", "jsonTools", "getJsonArrayInfo", SCHEMAS.arrange),
-  update: define("Updates a specific JSON node", "jsonTools", "updateJsonNode", SCHEMAS.update),
+  structure: define("Returns keys and structure of a JSON node", "jsonTools", "getJsonStructure", SCHEMAS.structure, { aliases: { file_path: "filePath", path: "nodePath" } }),
+  node: define("Retrieves content of a specific JSON node", "jsonTools", "getJsonNode", SCHEMAS.node, { aliases: { file_path: "filePath", path: "nodePath" } }),
+  arrange: define("Returns length and item type of a JSON array", "jsonTools", "getJsonArrayInfo", SCHEMAS.arrange, { aliases: { file_path: "filePath", path: "nodePath" } }),
+  update: define("Updates a specific JSON node", "jsonTools", "updateJsonNode", SCHEMAS.update, { aliases: { file_path: "filePath", path: "nodePath" } }),
   issues: define("List issues in GitHub", "githubTools", "listIssues", SCHEMAS.issues),
   create: define("Create a new GitHub issue", "githubTools", "createIssue", SCHEMAS.create),
   edit: define("Edit an existing issue", "githubTools", "editIssue", SCHEMAS.edit),
@@ -66,10 +68,12 @@ const TOOL_DEFINITIONS = {
   post: define("Post a comment to a GitHub issue", "githubTools", "postComment", SCHEMAS.post),
   remote: define("Get the current Git repository name", "gitTools", "getCurrentRepo", SCHEMAS.remote),
   patch: define("Apply a git patch", "gitTools", "applyPatch", SCHEMAS.patch),
-  notify: define("Sends a non stop notification to the user", "notificationTools", "notifyUser", SCHEMAS.notify),
+  notify: define("Start an asynchronous sound notification", "notificationTools", "notifyUser", SCHEMAS.notify),
   scene: define("Insert a Fountain scene", "fountainTools", "insertSceneFountain", SCHEMAS.scene),
-  zip: define("Lists all files in a ZIP archive", "zipTools", "listContents", SCHEMAS.zip),
-  bin: define("Perform binary analysis on a file", "binaryTools", "handleHexCommand", SCHEMAS.bin, Object.keys(BINARY_FIELDS), binaryArguments),
+  zip: define("Lists all files in a ZIP archive", "zipTools", "listContents", SCHEMAS.zip, { aliases: { filePath: "path" } }),
+  bin: define("Perform binary analysis on a file", "binaryTools", "handleHexCommand", SCHEMAS.bin, {
+    parameters: Object.keys(BINARY_FIELDS), adaptArguments: binaryArguments, aliases: { filePath: "path" },
+  }),
   search: define(
     "Search the web using DuckDuckGo with Brave fallback; use for general queries and URLs.",
     "webTools", "searchWeb",
@@ -93,7 +97,7 @@ const TOOL_DEFINITIONS = {
   qr: define("Render text or URL as a scannable QR code in the terminal", "qrTools", "generateQr", SCHEMAS.qr),
   mkdir: define("Create directory recursively", "fileTools", "mkdir", SCHEMAS.mkdir),
   reloadSchemas: define("Re-register bundled schemas", "systemTools", "reloadSchemas", SCHEMAS.reloadSchemas),
-  reloadTools: define("Clear cached tool instances", null, null, SCHEMAS.reloadTools),
+  reloadTools: define("Clear tool instance cache; session contexts must be rebound; does not reload JS", null, null, SCHEMAS.reloadTools),
 };
 
 export default Object.freeze(TOOL_DEFINITIONS);

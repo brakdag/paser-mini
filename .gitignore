@@ -5,3 +5,10 @@ node_modules/
 last_request.json
 .paser-mini/
 mcp.json
+
+# Local credentials and generated outputs (preserve existing files)
+.env
+.env.*
+!.env.example
+/docs/api/
+*.heapsnapshot

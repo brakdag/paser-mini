@@ -40,7 +40,7 @@ export default async function createSession({
     const [memory, system, util] = await Promise.all([
       resolveTool("memoryTools"), resolveTool("systemTools"), resolveTool("utilTools"),
     ]);
-    memory.setMemoryContext(assistant, session);
+    memory.setMemoryContext(session);
     system.setContext(assistant, session);
     util.setIdentityContext(model);
   }

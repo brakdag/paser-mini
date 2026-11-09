@@ -165,13 +165,24 @@ unchanged. Persistence supports one writer process per project; configuration
 writers sharing a global file must also be coordinated by the caller.
 
 ### Installation
+
+Clone the repository, then install its locked dependencies:
+
 ```bash
-curl -fsSL https://raw.githubusercontent.com/brakdag/paser-mini/main/install.sh | bash
+git clone https://github.com/brakdag/paser-mini.git
+cd paser-mini
+npm ci --ignore-scripts
+npm start
 ```
-Or clone manually:
-```bash
-git clone https://github.com/brakdag/paser-mini.git && cd paser-mini && chmod +x install.sh && ./install.sh
-```
+
+Alternatively, run `bash install.sh` from the clone. It checks for Node 24/26,
+runs `npm ci --ignore-scripts` and links the `paser-mini` launcher into
+`~/.local/bin` (add that directory to PATH). The launcher preserves your current
+project directory. With npm's package installation/linking, both `paser-mini`
+and the established `paser_mini` command target the same CLI.
+
+See [operating reference](docs/operations.md) for system executables,
+configuration scopes, argument compatibility and tool/history side effects.
 
 ### Credentials Configuration
 Configure your API key in your `.bashrc` or `.zshrc`:

@@ -87,6 +87,15 @@ index 0000000..f7db191
     assert.strictEqual(await fs.readFile(target, "utf8"), "base\n");
   });
 
+  it("accepts canonical restore objects and rejects conflicting paths without changing files", async () => {
+    const target = path.join(repoDir, "base.txt");
+    await fs.writeFile(target, "changed\n");
+    await assert.rejects(gitTools.restoreFile({ path: "base.txt", filepath: "other.txt" }), /Conflicting arguments/);
+    assert.strictEqual(await fs.readFile(target, "utf8"), "changed\n");
+    await gitTools.restoreFile({ path: "base.txt" });
+    assert.strictEqual(await fs.readFile(target, "utf8"), "base\n");
+  });
+
   it("should limit a diff to the requested path", async () => {
     await fs.writeFile(path.join(repoDir, "base.txt"), "changed base\n", "utf8");
     await fs.writeFile(path.join(repoDir, "other.txt"), "changed other\n", "utf8");

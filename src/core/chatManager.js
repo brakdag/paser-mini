@@ -48,18 +48,13 @@ class ChatManager {
 
     this.ui.setBashEnabled(this.configManager.get("execute_enabled", false));
     this.currentChannel = "#main";
-    this.timestampsEnabled = this.configManager.get("timestamps_enabled", false);
-    this.safemode = this.configManager.get("safemode", false);
     
     this.parser = new SmartToolParser();
     this.engine = new ExecutionEngine(
-      this.assistant,
       this.tools,
       this.parser,
       this.ui,
-      this.instanceMode,
-      null,
-      this.pureMode,
+      { pureMode: this.pureMode },
     );
     this.commandHandler = new CommandHandler(this, this.ui);
     this.ui.setCommandHandler(this.commandHandler);
@@ -130,7 +125,6 @@ class ChatManager {
     
     // Restart the chat and propagate the new adapter
     this.assistant.startChat(modelName, this.systemInstruction, temp);
-    this.engine.assistant = this.assistant;
     this.turnProcessor.assistant = this.assistant;
     this.turnProcessor.api.assistant = this.assistant;
   }
@@ -394,8 +388,8 @@ class ChatManager {
   }
 
   /**
-   * Calculates the total token count from the system instruction and history.
-   * @returns {number} The calculated token count.
+   * Estimates token usage from the system instruction and history.
+   * @returns {number} The character-based estimate.
    * @private
    */
   _calculateTokenCount() {
@@ -411,7 +405,7 @@ class ChatManager {
   }
 
   /**
-   * Calculates the current token usage relative to the context window limit.
+   * Estimates current token usage relative to the context window limit.
    * @returns {string} A formatted string showing current/limit and percentage.
    */
   getTokenCount() {

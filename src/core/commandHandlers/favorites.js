@@ -26,9 +26,9 @@ class FavoriteCommands {
     }
 
     if (parts[1] === "+") {
-      const provider = chatManager.configManager.get("provider", "Gemini");
+      const provider = chatManager.configManager.get("provider", "GEMINI");
       const model = chatManager.assistant.currentModel;
-      const temp = chatManager.temperature;
+      const temp = chatManager.model.temperature;
       const newFav = { provider, model, temp };
 
       if (
@@ -66,7 +66,7 @@ class FavoriteCommands {
         const providerName = fav.provider;
         const currentProvider = chatManager.configManager.get(
           "provider",
-          "Gemini",
+          "GEMINI",
         );
 
         if (providerName !== currentProvider) {

@@ -59,11 +59,9 @@ const COMMAND_MAP = {
    */
   "/reset": SystemCommands.handleReset,
   /**
-   * @param {object} _ The chat manager (unused).
-   * @param {object} ui The UI.
    * @returns {boolean} Always true.
    */
-  "/clear": (_, ui) => SystemCommands.handleClear(ui),
+  "/clear": () => SystemCommands.handleClear(),
   /**
    * @param {import("./chatManager.js").default} cm The chat manager.
    * @param {object} ui The UI.
@@ -103,7 +101,7 @@ const COMMAND_MAP = {
   /**
    * @param {object} _ The chat manager (unused).
    * @param {object} ui The UI.
-   * @returns {void}
+   * @returns {boolean} Always true.
    */
   "/help": (_, ui) => InterfaceCommands.handleHelp(ui),
   /**
@@ -295,6 +293,13 @@ class CommandHandler {
     const input = userInput.trim();
     const lowerInput = input.toLowerCase();
 
+    if (lowerInput === "/fav+") {
+      return FavoriteCommands.handleFav(this.chatManager, this.ui, ["/fav", "+"]);
+    }
+    if (lowerInput === "/s") {
+      return SessionCommands.handleSavePayload(this.chatManager, this.ui, "last_request.json");
+    }
+
     if (/^\/(?:rewrite|r)(?:\s|$)/i.test(input)) {
       return SessionCommands.handleRewrite(this.chatManager, this.ui, input.replace(/^\/\S+\s*/, ""));
     }
@@ -303,7 +308,8 @@ class CommandHandler {
       return COMMAND_MAP[lowerInput](this.chatManager, this.ui);
 
     const prefixKey = Object.keys(PREFIX_COMMANDS).find((key) =>
-      lowerInput.startsWith(key),
+      lowerInput.startsWith(key) &&
+        (key.endsWith(" ") || input.length === key.length || /\s/.test(input[key.length])),
     );
     if (prefixKey) {
       return PREFIX_COMMANDS[prefixKey]({

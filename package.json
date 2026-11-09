@@ -8,6 +8,7 @@
   },
   "main": "src/main.js",
   "bin": {
+    "paser-mini": "src/main.js",
     "paser_mini": "src/main.js"
   },
   "scripts": {

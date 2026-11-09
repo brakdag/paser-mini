@@ -34,11 +34,11 @@ describe("perfTools", () => {
     assert.ok(stats.size > 0);
   });
 
-  it("should throw on missing filepath", async () => {
+  it("should throw on missing path", async () => {
     const perfTools = new PerfTools();
     await assert.rejects(
       async () => perfTools.snapshot(),
-      /'filepath' parameter is required/,
+      /'path' parameter is required/,
     );
   });
 });

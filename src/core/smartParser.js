@@ -3,6 +3,7 @@ import validator from "./schemaRegistry.js";
 import mcpManager from "../infrastructure/McpManager.js";
 
 import TOOL_DEFINITIONS from "../infrastructure/toolDefinitions.js";
+import normalizeArgumentNames from "./toolArguments.js";
 
 const OPEN = "\u018f";       // Latin Capital Schwa
 const CLOSE = "\u0259";      // Latin Small Schwa
@@ -40,16 +41,17 @@ class SmartToolParser {
   buildPositionalArgs(name, args) {
     const toolDef = Object.hasOwn(this.toolMap, name) ? this.toolMap[name] : null;
     if (!toolDef) return Object.values(args);
+    const normalized = normalizeArgumentNames(args, toolDef.aliases);
 
     const keys = toolDef.parameters;
     let lastProvided = -1;
     keys.forEach((key, index) => {
-      if (Object.hasOwn(args, key)) lastProvided = index;
+      if (Object.hasOwn(normalized, key)) lastProvided = index;
     });
 
     const positional = [];
     for (let i = 0; i <= lastProvided; i += 1) {
-      positional.push(Object.hasOwn(args, keys[i]) ? args[keys[i]] : undefined);
+      positional.push(Object.hasOwn(normalized, keys[i]) ? normalized[keys[i]] : undefined);
     }
     return positional;
   }

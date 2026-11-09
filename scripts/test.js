@@ -19,7 +19,7 @@ try {
    * @returns {boolean} Whether the entry belongs in the test project.
    */
   const filter = entry => !excluded.has(path.basename(entry)) && !path.basename(entry).startsWith("tmp-");
-  ["src", "tests", "scripts", "package.json", "jsconfig.json", "eslint.config.js", "typecheck-baseline.json"].forEach((name) => {
+  ["src", "tests", "scripts", "package.json", "install.sh", "jsconfig.json", "eslint.config.js", "typecheck-baseline.json"].forEach((name) => {
     fs.cpSync(path.join(source, name), path.join(project, name), {
       recursive: true,
       filter,

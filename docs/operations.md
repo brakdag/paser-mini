@@ -1,0 +1,149 @@
+# Operating reference
+
+Paser Mini targets Debian/Linux and Node 24.x or 26.x. Run `npm ci --ignore-scripts`
+inside the clone; run `npm start` there or use the launcher installed by
+`bash install.sh`. Run `paser-mini` from the project you want the agent to access:
+project paths and state are based on that working directory, while bundled code
+is resolved from the installation. The installer requires an existing clone;
+piping its script into a shell from an unrelated directory does not clone it.
+`paser_mini` remains an alias in npm's bin mapping. Do not assume bundled default
+model names are currently offered by a provider; select an available model using
+`/models` and configure credentials for that provider.
+
+## Executables and credentials
+
+| Feature | Required executable or configuration |
+| --- | --- |
+| CLI and installer | Node 24/26, npm; installer also uses Bash, `readlink -f`, `dirname`, `mkdir`, `ln`, `chmod` |
+| Git tools and test fixtures | `git` |
+| Text search | GNU `grep`; globs are handled in JavaScript |
+| Web search and HTML rendering | `elinks`; search queries contact DuckDuckGo with Brave fallback |
+| PDF text extraction | `pdftotext` (Debian package `poppler-utils`) |
+| Image conversion and cropping | ImageMagick `convert` and `identify` |
+| Sound notification | An available `aplay`, `afplay` or `play`; the bundled sound is currently looked up under the project `src/assets/type.wav` |
+| JS/TS analysis, lint, documentation | Declared local TypeScript, ESLint and JSDoc dependencies; no implicit `npx` installation |
+| Node inspection | `node` on PATH; the inspector launches it as a child process |
+| MCP | Commands or HTTP endpoints configured by the user in `.paser-mini/config/mcp.json` |
+
+Missing feature-specific executables fail when that tool is used; they are not
+all needed for ordinary chat. Tests replace network, image and sound services
+with local fakes. Tests still need Git, GNU grep and permission to start local
+subprocesses. A sandbox blocking `spawnSync` can produce `EPERM`; that failure
+alone does not indicate a filesystem mounted read-only or a damaged device.
+
+Credentials are read from the launch environment; `dotenv/config` also reads
+the project `.env` at startup. Keep credentials out of version control.
+
+| Provider ID | Environment variables |
+| --- | --- |
+| `GEMINI` | `GEMINI_API_KEY`, falling back to `GOOGLE_API_KEY` |
+| `NVIDIA`, `NVIDIA_MINIMAX` | `NVIDIA_API_KEY` |
+| `HUGGINGFACE` | `HUGGINGFACE_API_KEY` |
+| `OPENROUTER` | `OPENROUTER_API_KEY` |
+| `GROQ` | `GROQ_API_KEY` |
+| `CEREBRAS` | `CEREBRAS_API_KEY` |
+| `COHERE` | `COHERE_API_KEY` |
+| `CLOUDFLARE` | `CLOUDFLARE_API_KEY`, `CLOUDFLARE_ACCOUNT_ID` |
+| `ZAI` | `ZAI_API_KEY`; optional `ZAI_BASE_URL` and `ZAI_CODING_PLAN` |
+| `POOLSIDE` | `POOLSIDE_API_KEY` |
+| `ZENMUX` | `ZENMUX_API_KEY` |
+| GitHub tools/batch mode | `GITHUB_TOKEN` and a repository Git remote, or an explicit repository argument |
+
+## Configuration scopes
+
+Global keys are `favorites`, `fetch_headers`, `unavailable_models`,
+`user_nickname` and `agent_nickname`. They live in `~/.paser-mini/config.json`;
+legacy project values are readable until startup migrates them, and existing
+global values win. Other settings live in `.paser-mini/config/config.json`:
+`provider`, `model_name`, `default_temperature`, `rendering_mode`,
+`immersion_mode`, `execute_enabled`, `rpm_limit`, `context_window_limit` and
+`max_tokens`. Embedded callers can set temporary values without saving them.
+Changing files externally does not reload an existing ConfigManager;
+`/reload` rebuilds the prompt/catalog, not this JSON configuration instance.
+The shared `model.temperature` is the session's temperature source;
+`session.temperature` remains a read-only accessor for existing integrations.
+
+`timestamps_enabled`, `safemode` and `instance_timeout` do not control current
+execution; old saved values are left untouched. Shell execution is gated by
+`execute_enabled`; pure mode disables tool execution. Neither flag creates an
+operating-system sandbox. Persistence and concurrent-writer limitations are
+documented in the README; use one writer process per project.
+
+## Argument names and compatibility
+
+New single-resource tools use `path`; names with multiple meanings use explicit
+camelCase names. Positional calls keep their order and meaning. The generated
+catalog advertises the canonical names below; named callers use the schema
+registry to normalize supported legacy names before validation. The parser's
+positional builder also accepts these names for existing engine callers.
+
+| Tool | Canonical arguments | Supported legacy named arguments |
+| --- | --- | --- |
+| `restore`, `zip` | `path` | `restore.filepath`, `zip.filePath` |
+| `bin` | `action, path, offset, length, end, endianness, outputFile, pattern, hexString, type` | `filePath` → `path` |
+| `structure`, `node`, `arrange` | `filePath, nodePath` | `file_path` → `filePath`, `path` → `nodePath` |
+| `update` | `filePath, nodePath, value` | Same JSON aliases |
+
+For example, `node("config.json", "items.0")` is unchanged. Named input
+`{file_path: "config.json", path: "items.0"}` normalizes to
+`{filePath: "config.json", nodePath: "items.0"}`. Duplicate names with equal
+values are accepted; different values are rejected before invocation. Other
+unknown fields remain subject to each tool's schema. These aliases are deliberate
+compatibility, not additional tool names. `eval`, `real`, `ls` and `difference`
+are not tool names. GitHub fields such as `issue_number` retain the established
+API contract; existing non-path names have not been changed cosmetically.
+
+## History, context and tool effects
+
+History is kept in memory by the adapter. `session.log` records conversation and
+tool events, and `memento.log` stores distilled memory. Startup does not replay
+those logs automatically; `/c` asks the agent to read the session log. `/reset`
+clears conversation history and retains the current system prompt. The model's
+`reset(user_message)` tool also queues a new user message and resets its tool
+tracker. `/rewrite` replaces the last tracked complete turn and restores its
+history if replacement fails; it does not undo filesystem, network or command
+effects. Reconfiguring between providers remains tracked separately in T14;
+do not assume a cross-provider history conversion contract exists.
+
+`/trunc n` controls the adapter's approximate FIFO trimming budget, using
+character counts and a reserved output allowance. It can remove individual
+messages or truncate message text. `0` disables this local trimming policy;
+provider limits still apply. `token()` and `/config` report estimates, not
+tokenizer measurements. When no trim limit is set, the usage ratio currently
+uses a fixed 250,000-token display reference, not a discovered model capacity.
+A common context budget and coherent turn trimming remain in T11.
+
+| Operation | Observable effects |
+| --- | --- |
+| File, JSON, binary extraction, patch and Git restore tools | Modify project files; path policy applies, with protected metadata exclusions |
+| `run`, `execute`, inspector commands | Execute with user permissions; arbitrary code can access resources beyond convenience path helpers; `run` deadlines do not terminate asynchronous work |
+| `doc`, `snapshot` | Write generated HTML or heap snapshots to the requested validated destination |
+| `fetch`, `url`, `search` | Make network requests and may start renderers; results use the documented limits and cache policies |
+| GitHub create/edit/close/post | Publish changes to the selected remote repository |
+| `notify` | Starts asynchronous audio playback when its project sound and player are available |
+| `push` | Appends to memory and may update ranks of referenced entries |
+| `/s [file]` | Saves the last request payload, including conversation content, to JSON; defaults to `last_request.json` |
+| `/cache`, `/reload` | Rebuild prompt/catalog from startup options and role/MCP files; preserve conversation; no JS module reload |
+| `reloadSchemas()` | Re-register schemas from already loaded modules; edited JS requires a restart |
+| `reloadTools()` | Clear cached tool instances; it does not reload ESM modules or automatically rebind session contexts |
+
+Only `/execute` controls the shell tool; it does not gate every tool that can
+execute code or modify files. Completed effects persist when a turn fails or
+is cancelled. The common result/media contract, retry budgets, process isolation
+and shutdown ownership remain T15, T12, T02 and T20 respectively.
+
+## Generated files and quality configuration
+
+`eslint.config.js` is the only lint configuration; `jsconfig.json` and the
+reviewed type baseline provide incremental JS type control. Run
+`npm run check` before integration. Its test runner uses a temporary project and
+HOME; local credentials and state are excluded. No generated credentials or
+logs are removed as part of maintenance.
+
+`.gitignore` excludes `.paser-mini/` at any depth (including old state under
+`src/core`), `.env` files except `.env.example`, default payload JSON,
+`docs/api/`, heap snapshots and `node_modules/`. Custom output paths are the
+caller's responsibility. `bin/paser-mini` is a tracked portable launcher;
+the installer recreates the same wrapper and creates a local symlink outside
+the checkout. Ignoring a path does not remove already tracked files or delete
+existing logs. Keep session/memory logs unless deliberately managing that data.

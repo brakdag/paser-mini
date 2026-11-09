@@ -22,7 +22,13 @@ class GitHubModeOrchestrator {
   constructor(systemInstruction, tools, pureMode = false, {
     githubApi = new GithubTools(), configManager = null, sessionFactory = createSession, repo = null,
   } = {}) {
-    Object.assign(this, { systemInstruction, tools, pureMode, githubApi, configManager, sessionFactory, repo });
+    this.systemInstruction = systemInstruction;
+    this.tools = tools;
+    this.pureMode = pureMode;
+    this.githubApi = githubApi;
+    this.configManager = configManager;
+    this.sessionFactory = sessionFactory;
+    this.repo = repo;
     this.processingLabel = "paser-processing";
     this.triggerHashtag = "#ai-assistance";
     this.botLogin = null;

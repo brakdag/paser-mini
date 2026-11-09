@@ -12,12 +12,10 @@ const TOOL_DEFAULTS = {
   push: "insight",
   token: "tokens",
   tree: "tree",
-  difference: "all",
   remote: "url",
   patch: "git patch",
-  run: "sandbox",
+  run: "JavaScript",
   list: "root",
-  ls: "root",
 };
 
 /**

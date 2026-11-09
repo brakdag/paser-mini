@@ -1,5 +1,3 @@
-import MemoryTools from "../../tools/memoryTools.js";
-
 /**
  * Handles configuration-related commands, providing visibility into the current system settings.
  */
@@ -11,12 +9,10 @@ class ConfigCommands {
    * @returns {Promise<boolean>} True if the operation succeeded.
    */
   static async handleConfig(chatManager, ui) {
-    const memoryTools = new MemoryTools();
-    memoryTools.setMemoryContext(chatManager.assistant, chatManager);
-    const tokenUsage = await memoryTools.getTokenCount();
+    const tokenUsage = chatManager.getTokenCount();
 
     const truncLimit = chatManager.configManager.get("context_window_limit", 0);
-    const truncDisplay = truncLimit === 0 ? "Infinite" : `${truncLimit} tokens`;
+    const truncDisplay = truncLimit === 0 ? "Disabled (provider limits still apply)" : `~${truncLimit} tokens`;
 
     const configData = [
       ["Provider", chatManager.assistant.providerId || "Unknown"],
@@ -25,9 +21,8 @@ class ConfigCommands {
       ["Rendering Mode", chatManager.ui.renderingMode],
       ["Truncation Limit", truncDisplay],
       ["RPM Limit", chatManager.configManager.get("rpm_limit", "N/A")],
-      ["Instance Timeout", `${chatManager.configManager.get("instance_timeout", 300)}s`],
       ["Execute", chatManager.ui.bashEnabled ? "ENABLED" : "DISABLED"],
-      ["Token Usage", tokenUsage],
+      ["Estimated Token Usage", tokenUsage],
     ];
 
     ui.displayInfoPanel("Current Configuration", configData);

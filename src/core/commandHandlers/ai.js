@@ -17,12 +17,6 @@ class AICommands {
   }
 
   /**
-   * Handles the provider connection process, allowing the user to select a provider from a menu.
-   * @param {object} chatManager The chat manager instance.
-   * @param {object} ui The terminal UI instance.
-   * @returns {Promise<boolean>} True if the operation succeeded.
-   */
-  /**
    * Resolves a provider argument (name, id, or index) to a provider entry.
    * @param {Array<object>} providers - The list of available providers.
    * @param {string} arg - The user-provided argument.

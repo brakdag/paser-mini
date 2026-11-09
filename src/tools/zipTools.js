@@ -8,12 +8,12 @@ import PathValidator from "../utils/pathValidator.js";
 export default class ZipTools {
   /**
    * List the contents of a ZIP archive.
-   * @param {string} filepath - Path to the ZIP file.
+   * @param {string} filePath - Path to the ZIP file.
    * @returns {Promise<string>} JSON string containing the list of files.
    * @throws {Error} If the file cannot be read or is not a valid ZIP archive.
    */
-  async listContents(filepath) {
-    const data = await fs.readFile(PathValidator.getSafePath(filepath));
+  async listContents(filePath) {
+    const data = await fs.readFile(PathValidator.getSafePath(filePath));
     const zip = await JSZip.loadAsync(data);
     const files = Object.keys(zip.files);
     return JSON.stringify({ files });

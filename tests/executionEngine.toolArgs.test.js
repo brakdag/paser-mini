@@ -28,7 +28,7 @@ function harness(names) {
     endToolMonitoring() {},
   };
   const parser = new SmartToolParser();
-  const engine = new ExecutionEngine({}, tools, parser, ui);
+  const engine = new ExecutionEngine(tools, parser, ui);
   return { calls, engine, parser };
 }
 

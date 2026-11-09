@@ -6,8 +6,6 @@ import { createRequire } from "node:module";
 import PathValidator from "../utils/pathValidator.js";
 import { registerSchemas } from "../core/schemaRegistry.js";
 
-export const SYSTEM_TOOLS_VERSION = "1.0.0";
-
 const EXEC_TIMEOUT_MS = 60000;
 const require = createRequire(import.meta.url);
 
@@ -184,3 +182,5 @@ export class SystemTools {
     }
   }
 }
+
+export default SystemTools;

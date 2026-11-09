@@ -36,7 +36,7 @@ function harness(reply, limits = {}) {
     injectMessage() {},
   };
   const parser = new SmartToolParser();
-  const engine = new ExecutionEngine(assistant, tools, parser, ui);
+  const engine = new ExecutionEngine(tools, parser, ui);
   const processor = new TurnProcessor(assistant, tools, parser, engine, ui, new RepetitionDetector(), limits);
   // These tests exercise tool progress rather than prose repetition.
   /** @returns {boolean} Allows prose so the test exercises tool progress. */

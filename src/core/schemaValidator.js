@@ -1,4 +1,5 @@
 import ValidationResult from "./validationResult.js";
+import normalizeArgumentNames from "./toolArguments.js";
 
 /**
  * Validates tool arguments against registered Zod schemas to ensure type safety and structural integrity.
@@ -9,16 +10,19 @@ class SchemaValidator {
    */
   constructor() {
     this.schemas = new Map();
+    this.aliases = new Map();
   }
 
   /**
    * Registers a Zod schema for a specific tool.
    * @param {string} toolName - The unique identifier of the tool.
    * @param {import('zod').ZodSchema} schema - The Zod schema used for validation.
+   * @param {Record<string, string>} [aliases] - Supported legacy argument names.
    * @returns {void}
    */
-  registerSchema(toolName, schema) {
+  registerSchema(toolName, schema, aliases = {}) {
     this.schemas.set(toolName, schema);
+    this.aliases.set(toolName, aliases);
   }
 
   /**
@@ -47,7 +51,13 @@ class SchemaValidator {
       throw new TypeError(errorMsg);
     }
 
-    const result = schema.safeParse(args);
+    let normalized;
+    try {
+      normalized = normalizeArgumentNames(args, this.aliases.get(toolName));
+    } catch (error) {
+      return new ValidationResult(false, [error.message]);
+    }
+    const result = schema.safeParse(normalized);
 
     if (!result.success) {
       const errors = result.error.issues.map((issue) => {

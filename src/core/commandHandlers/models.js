@@ -34,7 +34,7 @@ class ModelCommands {
         throw new Error("Invalid model identifier.");
       }
 
-      const newTemp = parts[2] ? parseFloat(parts[2]) : chatManager.temperature;
+      const newTemp = parts[2] ? parseFloat(parts[2]) : chatManager.model.temperature;
 
       chatManager.configManager.save("model_name", modelName);
       chatManager.configManager.save("default_temperature", newTemp);

@@ -94,7 +94,7 @@ test("GitHub runner uses configured identities/model, binds contexts, comments a
   assert.equal(session.assistant.temperature, 0.3);
   assert.equal(session.ui.model.nickname, "helper");
   assert.equal(session.ui.user.nickname, "developer");
-  assert.deepEqual(h.contexts.memory, [session.assistant, session]);
+  assert.deepEqual(h.contexts.memory, [session]);
   assert.deepEqual(h.contexts.system, [session.assistant, session]);
   assert.deepEqual(h.contexts.identity, [session.model]);
   assert.equal(h.events.filter(([kind]) => kind === "request").length, 1);

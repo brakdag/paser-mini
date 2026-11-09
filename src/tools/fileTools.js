@@ -132,11 +132,11 @@ class FileTools {
 
   /**
    * Reads the contents of a file.
-   * @param {string} filepath The path to the file.
+   * @param {string} filePath The path to the file.
    * @returns {Promise<string>} The file contents.
    */
-  async read(filepath) {
-    const safePath = this.#paths.getSafePath(filepath);
+  async read(filePath) {
+    const safePath = this.#paths.getSafePath(filePath);
     return this.#readFull(safePath);
   }
 
@@ -146,25 +146,25 @@ class FileTools {
    * Omits the final line terminator and preserves empty lines, so "a\nb\n"
    * tailed by 1 yields "b", while "a\n\n" tailed by 2 yields "a\n".
    * Asking for more lines than exist returns all lines within the size limit.
-   * @param {string} filepath The path to the file.
+   * @param {string} filePath The path to the file.
    * @param {string|number} tail Number of lines to tail from the end.
    * @returns {Promise<string>} The tailed content.
    */
-  async tail(filepath, tail) {
-    const safePath = this.#paths.getSafePath(filepath);
+  async tail(filePath, tail) {
+    const safePath = this.#paths.getSafePath(filePath);
     return this.#readTail(safePath, tail);
   }
 
   /**
    * Writes content to a file, creating parent directories if needed.
-   * @param {string} filepath The file path.
+   * @param {string} filePath The file path.
    * @param {string} content The content to write.
    */
-  async write(filepath, content) {
+  async write(filePath, content) {
     if (Buffer.byteLength(content, "utf8") > FILE_SIZE_LIMIT) {
       throw new Error("Content too large");
     }
-    const safePath = this.#paths.getSafeMutationPath(filepath);
+    const safePath = this.#paths.getSafeMutationPath(filePath);
     await fs.mkdir(path.dirname(safePath), { recursive: true });
     await fs.writeFile(safePath, content, "utf8");
   }
@@ -181,10 +181,10 @@ class FileTools {
 
   /**
    * Removes a file or directory recursively.
-   * @param {string} filepath The path to remove.
+   * @param {string} filePath The path to remove.
    */
-  async remove(filepath) {
-    const safePath = this.#paths.getSafeMutationPath(filepath, { operation: "remove", recursive: true });
+  async remove(filePath) {
+    const safePath = this.#paths.getSafeMutationPath(filePath, { operation: "remove", recursive: true });
     await fs.rm(safePath, { recursive: true });
   }
 
@@ -209,12 +209,12 @@ class FileTools {
 
   /**
    * Replaces the first occurrence of text in a file.
-   * @param {string} filepath The file path.
+   * @param {string} filePath The file path.
    * @param {string} searchText The text to find.
    * @param {string} replaceText The text to replace it with.
    */
-  async replace(filepath, searchText, replaceText) {
-    const safePath = this.#paths.getSafeMutationPath(filepath);
+  async replace(filePath, searchText, replaceText) {
+    const safePath = this.#paths.getSafeMutationPath(filePath);
     const content = await fs.readFile(safePath, "utf8");
     const newContent = this.#performReplace(content, searchText, replaceText);
     await fs.writeFile(safePath, newContent, "utf8");
@@ -246,13 +246,13 @@ class FileTools {
 
   /**
    * Performs a regular expression search and replace on a file.
-   * @param {string} filepath The file path.
+   * @param {string} filePath The file path.
    * @param {string} pattern The regular expression pattern.
    * @param {string} replacement The replacement string.
    * @param {string} flags The regular expression flags.
    */
-  async sed(filepath, pattern, replacement = "", flags = "g") {
-    const safePath = this.#paths.getSafeMutationPath(filepath);
+  async sed(filePath, pattern, replacement = "", flags = "g") {
+    const safePath = this.#paths.getSafeMutationPath(filePath);
     const content = await fs.readFile(safePath, "utf8");
     const regex = new RegExp(pattern, flags);
     const newContent = content.replace(regex, replacement);

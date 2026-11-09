@@ -36,16 +36,16 @@ export default class PerfTools {
 
   /**
    * Create a heap snapshot for memory leak analysis.
-   * @param {string} filepath - The output path for the snapshot file.
+   * @param {string} filePath - The output path for the snapshot file.
    * @returns {Promise<string>} Confirmation message upon successful write.
-   * @throws {Error} If the filepath is missing or the snapshot process fails.
+   * @throws {Error} If the filePath is missing or the snapshot process fails.
    */
-  async snapshot(filepath) {
-    if (!filepath) {
-      throw new Error("The 'filepath' parameter is required for heap snapshots.");
+  async snapshot(filePath) {
+    if (!filePath) {
+      throw new Error("The 'path' parameter is required for heap snapshots.");
     }
 
-    const safePath = PathValidator.getSafeMutationPath(filepath);
+    const safePath = PathValidator.getSafeMutationPath(filePath);
     const snapshotStream = v8.getHeapSnapshot();
     const fileStream = fs.createWriteStream(safePath);
 

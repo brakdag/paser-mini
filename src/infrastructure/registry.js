@@ -50,14 +50,6 @@ export async function getToolInstance(moduleKey) {
   return toolCache[moduleKey];
 }
 
-export const GITHUB_SYSTEM_INSTRUCTION =
-  "## GitHub Mode Protocol\n" +
-  "You are operating in GitHub Mode. Your primary interface is GitHub/Issues.\n" +
-  "1. Communication: All via GitHub issue comments.\n" +
-  "2. Planning: Post a detailed Work Plan first.\n" +
-  "3. Progress: Use Markdown checklists.\n" +
-  "4. Transparency: Be explicit about actions.";
-
 /**
  * Creates executable wrappers from the shared contracts. Instance resolution is
  * injectable so contract tests never initialize external clients or sessions.

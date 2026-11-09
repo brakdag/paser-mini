@@ -25,7 +25,7 @@ const values = {
 function pipeline(tools) {
   const parser = new SmartToolParser();
   const ui = { bashEnabled: true, startToolMonitoring() {}, endToolMonitoring() {} };
-  return { parser, engine: new ExecutionEngine({}, tools, parser, ui) };
+  return { parser, engine: new ExecutionEngine(tools, parser, ui) };
 }
 
 describe("shared tool catalog contracts", () => {

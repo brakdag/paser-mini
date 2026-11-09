@@ -27,7 +27,9 @@ used for tool results, and the command test explicitly types its partial manager
 fixture. T22's prompt reload correction resolves 29 more diagnostics: the missing
 command handler, the missing base prompt property and history inferred as `void`.
 The history hook now declares its existing array contract; message elements remain
-untyped. The current inventory contains **253 diagnostics**, with no new debt.
+untyped. Completing T22 resolves another 25 diagnostics through explicit GitHub
+runner fields, correct command/logger calls and an object view for JSON cloning.
+The current inventory contains **228 diagnostics**, with no new debt.
 
 The retained diagnostics were reviewed by these groups:
 
@@ -35,12 +37,8 @@ The retained diagnostics were reviewed by these groups:
 | --- | --- | --- |
 | Provider `adapter.js`, `conversationState.js` | Constructor options narrower than callers, private JSDoc on inherited hooks, timestamp formats, custom HTTP error properties | T11/T12/T14/T15/T19; align contracts while testing each provider |
 | `chatManager.js`, `sessionFactory.js`, `terminalUI.js` | Config values typed as `unknown`, sync/async tool and UI return differences, session fields assigned after construction | T13/T14/T20 |
-| `githubModeOrchestrator.js` | TypeScript does not infer instance fields initialized through `Object.assign` | T22; runtime behavior already covered by GitHub fixtures |
-| `commandHandler.js` | `/clear` passes an unused argument, `/help` return annotation differs | T22; missing `/reload` handler resolved and removed from the inventory |
 | `McpManager.js` | `Promise.all` result is an array of void, while shutdown annotation says void | T20; connection behavior covered by T16 |
-| `main.js` | Logger call supplies more arguments than its declared signature | T20/T22 |
-| `gitTools.js`, `githubTools.js`, `loadTools.js`, `retryHandler.js` | Error objects extended with transport/OS metadata without matching declarations | T12/T22 |
-| `jsonTools.js` | Spread from a value whose recursive structure has no explicit type | T22; JSON behavior covered by fixtures |
+| `gitTools.js`, `githubTools.js`, `loadTools.js`, `retryHandler.js` | Error objects extended with transport/OS metadata without matching declarations | Incremental type maintenance; transport contracts remain in T12 |
 | `tests/**/*.test.js` | Intentionally missing arguments, JSON Buffer coercion, `unknown` validation/error results, injected partial interfaces, mock properties and callbacks that TypeScript cannot infer as assigned | Narrow declarations as the corresponding contracts are maintained; retain behavior assertions |
 
 Small annotation defects were corrected during T21 rather than baselined:

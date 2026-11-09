@@ -23,16 +23,15 @@ fi
 PROJECT_ROOT=$(pwd)
 echo "Project at: $PROJECT_ROOT"
 
-# 3. Install dependencies
-echo "Installing Node.js dependencies..."
-npm install
-
-if [ $? -eq 0 ]; then
-    echo "[OK] Dependencies installed successfully."
-else
-    echo "[ERROR] npm install failed."
+# 3. Check the supported runtime and install locked dependencies
+NODE_MAJOR=$(node -p 'process.versions.node.split(".")[0]')
+if [ "$NODE_MAJOR" != "24" ] && [ "$NODE_MAJOR" != "26" ]; then
+    echo "Error: Node 24.x or 26.x is required."
     exit 1
 fi
+
+echo "Installing locked Node.js dependencies..."
+npm ci --ignore-scripts
 
 # 4. Create a local binary wrapper
 echo "Creating local binary wrapper..."
@@ -54,9 +53,6 @@ chmod +x "$PROJECT_ROOT/bin/paser-mini"
 # 5. Configure symbolic link (exposed as paser-mini)
 echo "Configuring 'paser-mini' command..."
 mkdir -p "$HOME/.local/bin"
-
-# Remove existing link
-rm -f "$HOME/.local/bin/paser-mini"
 
 ln -sf "$PROJECT_ROOT/bin/paser-mini" "$HOME/.local/bin/paser-mini"
 

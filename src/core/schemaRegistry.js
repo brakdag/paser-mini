@@ -11,7 +11,7 @@ const validator = new SchemaValidator();
 async function registerSchemas() {
   try {
     Object.entries(TOOL_DEFINITIONS).forEach(([toolName, definition]) => {
-      validator.registerSchema(toolName, definition.schema);
+      validator.registerSchema(toolName, definition.schema, definition.aliases);
     });
   } catch (e) {
     logger.error(`[SchemaRegistry] Critical error registering schemas: ${e.message}`);

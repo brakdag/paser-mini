@@ -61,7 +61,8 @@ export default class JsonTools {
     if (pathParts.length === 0) return value;
 
     const [first, ...rest] = pathParts;
-    const cloned = Array.isArray(data) ? [...data] : { ...data };
+    const objectData = /** @type {object} */ (data);
+    const cloned = Array.isArray(data) ? [...data] : { ...objectData };
 
     if (data && typeof data === "object" && first in data) {
       cloned[first] = this.#setByPathImmutable(data[first], rest, value);

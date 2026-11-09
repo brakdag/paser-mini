@@ -56,6 +56,76 @@ function harness(t, options = {}) {
   return { manager, assistant, errors, messages, payloads, answers };
 }
 
+test("/help and /config describe actual reset and context behavior", async (t) => {
+  const h = harness(t);
+  const panels = [];
+  Object.assign(h.manager.ui, {
+    displayInfoPanel(title, rows) { panels.push({ title, rows }); },
+  });
+  assert.equal(await h.manager.commandHandler.handle("/help"), true);
+  const help = JSON.stringify(panels[0].rows);
+  ["/reload", "/connect", "/execute", "/trunc", "/true", "/sp", "/c", "/mchk"].forEach(command => {
+    assert.ok(help.includes(command), command);
+  });
+  assert.doesNotMatch(help, /Bridge Block/);
+  assert.equal(await h.manager.commandHandler.handle("/config"), true);
+  const config = JSON.stringify(panels[1].rows);
+  assert.match(config, /Estimated Token Usage/);
+  assert.match(config, /provider limits still apply/);
+  assert.doesNotMatch(config, /Infinite|Instance Timeout/);
+});
+
+["/fav +", "/fav+"].forEach(command => {
+  test(`${command} saves the current model temperature`, async (t) => {
+    const h = harness(t);
+    const saves = [];
+    t.mock.method(h.manager.configManager, "save", (key, value) => saves.push({ key, value }));
+    assert.equal(await h.manager.commandHandler.handle(command), true);
+    assert.deepEqual(saves, [{ key: "favorites", value: [{ provider: "GEMINI", model: "test-model", temp: 0.7 }] }]);
+  });
+});
+
+test("command prefixes require a word boundary", async (t) => {
+  const h = harness(t);
+  const commands = ["/modelsExtra", "/favorite", "/connected"];
+  for (let i = 0; i < commands.length; i += 1) {
+    assert.equal(await h.manager.commandHandler.handle(commands[i]), true);
+    assert.match(h.errors.at(-1), /Invalid command/);
+  }
+  const errorsBefore = h.errors.length;
+  assert.equal(await h.manager.commandHandler.handle("/fav\t+"), true);
+  assert.equal(h.errors.length, errorsBefore);
+  assert.equal(h.payloads.length, 0);
+});
+
+test("/s without arguments saves the last payload to its documented default", async (t) => {
+  const h = harness(t);
+  h.assistant.lastPayload = { contents: [] };
+  const writes = [];
+  t.mock.method(fs, "writeFile", async (...args) => { writes.push(args); });
+  assert.equal(await h.manager.commandHandler.handle("/s"), true);
+  assert.equal(writes[0][0], "last_request.json");
+  assert.deepEqual(JSON.parse(writes[0][1]), { contents: [] });
+});
+
+test("/trunc accepts whole budgets once and describes them as estimates", async (t) => {
+  const h = harness(t);
+  const saves = [];
+  const info = [];
+  t.mock.method(h.manager.configManager, "save", (key, value) => saves.push({ key, value }));
+  t.mock.method(h.manager.ui, "displayInfo", message => info.push(message));
+  const invalid = ["12x", "-1", "1.5", "Infinity"];
+  for (let i = 0; i < invalid.length; i += 1) {
+    await h.manager.commandHandler.handle(`/trunc ${invalid[i]}`);
+  }
+  assert.equal(saves.length, 0);
+  await h.manager.commandHandler.handle("/trunc 8000");
+  assert.deepEqual(saves, [{ key: "context_window_limit", value: 8000 }]);
+  assert.match(info.at(-1), /Approximate FIFO budget/);
+  await h.manager.commandHandler.handle("/trunc 0");
+  assert.match(info.at(-1), /Provider context limits still apply/);
+});
+
 ["/reload", "/cache"].forEach((command) => {
   test(`${command} rereads the role file and updates tools without clearing history`, async (t) => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), "paser-reload-"));

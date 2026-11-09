@@ -169,18 +169,19 @@ export default class BaseAdapter {
   }
 
   /**
-   * The Guardian of Context. Trims the conversation history to fit within the configured token limit.
-   * Preserves the initial system instruction and purges the oldest messages (FIFO) implacably.
+   * Trims history using a character-based estimate and a reserved output allowance.
+   * Preserves the initial system entry where possible; can truncate a single message.
+   * This is not a tokenizer or a guarantee that the provider will accept the payload.
    * @private
    */
   _enforceContextLimit() {
     const limit = parseInt(this.configManager.get("context_window_limit", 0), 10);
-    if (!limit || limit <= 0) return; // 0 means infinite, disabled
+    if (!limit || limit <= 0) return; // 0 disables local trimming; provider limits still apply.
 
     const history = this.getHistory();
     if (!history || history.length === 0) return;
 
-    // Architectural Correction: Reserve space for output tokens + 500 safety margin to prevent API overflow
+    // Reserve estimated space for output tokens and 500 tokens of overhead.
     const outputBufferTokens = this.getMaxOutputTokens() + 500;
     const effectiveLimit = Math.max(0, limit - outputBufferTokens);
 
@@ -198,14 +199,14 @@ export default class BaseAdapter {
 
     if (totalChars <= maxChars) return;
 
-    // Implacable purge: Start from index 1 (preserving the initial system prompt at index 0)
+    // Preserve a leading system entry while removing older conversation messages.
     const currentIndex = history.length > 1 && (history[0].role === 'system' || history[0].role === 'server') ? 1 : 0;
 
-    // Keep purging as long as we exceed the limit and have more than one message to remove
+    // Remove messages while the estimated size exceeds the allowance.
     while (totalChars > maxChars && history.length > currentIndex + 1) {
       const removed = history.splice(currentIndex, 1)[0];
       totalChars -= this._getMessageLength(removed);
-      logger.debug(`[${this.constructor.name}] Context limit exceeded. Purged 1 older message to maintain strict ${limit} token limit.`);
+      logger.debug(`[${this.constructor.name}] Context limit exceeded. Purged 1 older message to reduce estimated usage toward ${limit} tokens.`);
     }
 
     // Surgical truncation as a last resort if a single message paralyzes the limit
@@ -227,23 +228,24 @@ export default class BaseAdapter {
             }
           }
         }
-        logger.error(`[${this.constructor.name}] CRITICAL: Single message exceeded the strict limit. Applied surgical truncation.`);
+        logger.error(`[${this.constructor.name}] Estimated context budget exceeded; truncated part of a message.`);
       }
     }
   }
 
   /**
-   * The Absolute Wall. Trims the final payload to ensure it strictly respects the token limit before network transmission.
-   * This operates on the formatted messages to account for any overhead added during payload preparation.
+   * Trims the formatted payload using the adapter's character-based estimate.
+   * Does not account for every provider's tokenization, media or protocol overhead.
+   * Includes formatting present in messages; model-specific overhead can still be missing.
    * @param {Array<object>} messages - The formatted messages ready to be sent to the API.
-   * @returns {Array<object>} The strictly trimmed messages array.
+   * @returns {Array<object>} The messages after heuristic trimming.
    */
   _enforcePayloadLimit(messages) {
     const limit = parseInt(this.configManager.get("context_window_limit", 0), 10);
     if (!limit || limit <= 0) return messages; // 0 means disabled
     if (!messages || messages.length === 0) return messages;
 
-    // Architectural Correction: Reserve space for output tokens + 500 safety margin to prevent API overflow
+    // Reserve estimated space for output tokens and 500 tokens of overhead.
     const outputBufferTokens = this.getMaxOutputTokens() + 500;
     const effectiveLimit = Math.max(0, limit - outputBufferTokens);
 
@@ -267,12 +269,12 @@ export default class BaseAdapter {
       firstNonSystemIndex += 1;
     }
 
-    // Implacable purge on the formatted payload
+    // Remove older formatted messages while their estimated size exceeds the budget.
     while (totalChars > maxChars && firstNonSystemIndex < messages.length - 1) {
       const removed = messages.splice(firstNonSystemIndex, 1)[0];
       const removedContent = typeof removed.content === "string" ? removed.content : JSON.stringify(removed.content || "");
       totalChars -= removedContent.length;
-      logger.warn(`[${this.constructor.name}] PAYLOAD LIMIT: Hard-trimmed 1 formatted message to prevent API ban. Limit: ${limit}t`);
+      logger.warn(`[${this.constructor.name}] Estimated payload budget ${limit} tokens: removed one formatted message.`);
     }
 
     // Surgical Truncation on the formatted payload

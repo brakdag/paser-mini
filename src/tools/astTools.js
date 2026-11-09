@@ -91,12 +91,12 @@ export class AstTools {
 
   /**
    * Parses the complete JavaScript module and returns matching AST nodes.
-   * @param {string} filepath - Path to the source file.
+   * @param {string} filePath - Path to the source file.
    * @param {string} query - The AST node type to search for.
    * @param {number} [limit] - Maximum results to return.
    * @returns {Promise<string>} JSON string containing the analysis results.
    */
-  async analyze(filepath, query, limit = 100) {
+  async analyze(filePath, query, limit = 100) {
     if (!query) {
       throw new Error("Query parameter is required.");
     }
@@ -104,7 +104,7 @@ export class AstTools {
       throw new Error("Limit must be an integer between 1 and 10000.");
     }
 
-    const code = await fs.readFile(PathValidator.getSafePath(filepath), "utf8");
+    const code = await fs.readFile(PathValidator.getSafePath(filePath), "utf8");
     const resultsData = this.#analyzeWithAST(code, query, limit);
 
     return JSON.stringify(resultsData, null, 2);

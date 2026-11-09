@@ -21,11 +21,11 @@ class EvalTools {
   #paths;
 
   /**
-   * Virtual File System provided to the sandbox.
+   * Project-scoped convenience filesystem exposed in the VM context.
    */
   #BrowserFS = {
     /**
-     * Writes content to a file within the sandbox root.
+     * Writes content to a file within the project root.
      * @param {string} filename - The name of the file to write.
      * @param {string} content - The content to write to the file.
      * @returns {Promise<void>}
@@ -35,7 +35,7 @@ class EvalTools {
       await fs.writeFile(resolvedPath, content, "utf8");
     },
     /**
-     * Reads content from a file within the sandbox root.
+     * Reads content from a file within the project root.
      * @param {string} filename - The name of the file to read.
      * @returns {Promise<string>} The content of the file.
      */
@@ -44,12 +44,12 @@ class EvalTools {
       return fs.readFile(resolvedPath, "utf8");
     },
     /**
-     * Lists files in the sandbox root directory.
+     * Lists files in the project root directory.
      * @returns {Promise<string[]>} A list of filenames.
      */
     list: async () => fs.readdir(this.#paths.getRoot()),
     /**
-     * Deletes a file within the sandbox root.
+     * Deletes a file within the project root.
      * @param {string} filename - The name of the file to delete.
      * @returns {Promise<void>}
      */
@@ -65,7 +65,7 @@ class EvalTools {
    * @param {string} filename - The filename to validate.
    * @param {boolean} [mutation] - Whether the helper changes the filesystem.
    * @returns {string} The absolute, safe path.
-   * @throws {Error} If the path attempts to traverse outside the sandbox root.
+   * @throws {Error} If the path attempts to traverse outside the project root.
    */
   #getSafeSandboxPath(filename, mutation = false) {
     try {
@@ -125,7 +125,7 @@ class EvalTools {
   }
 
   /**
-   * Awaits a sandbox-produced promise with a hard deadline.
+   * Awaits a sandbox-produced promise with a deadline on the wait, without terminating asynchronous work.
    * @param {Promise<unknown>} promise - The promise returned by sandboxed code.
    * @returns {Promise<unknown>} The settled value.
    * @throws {Error} If the deadline elapses first.

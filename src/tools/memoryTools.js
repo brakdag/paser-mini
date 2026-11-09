@@ -6,17 +6,13 @@ import MementoManager from "./mementoManager.js";
 export default class MemoryTools {
   #memento = new MementoManager();
 
-  #currentAssistant = null;
-
   #currentChatManager = null;
 
   /**
    * Set the operational context for memory tools.
-   * @param {object} assistant The assistant instance.
    * @param {object} chatManager The chat manager instance.
    */
-  setMemoryContext(assistant, chatManager) {
-    this.#currentAssistant = assistant;
+  setMemoryContext(chatManager) {
     this.#currentChatManager = chatManager;
   }
 
@@ -35,7 +31,7 @@ export default class MemoryTools {
   }
 
   /**
-   * Retrieves the current token count from the chat manager.
+   * Retrieves the estimated token usage from the chat manager.
    * @returns {Promise<string>} The current token count.
    * @throws {Error} If the memory context has not been initialized.
    */

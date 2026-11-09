@@ -93,23 +93,22 @@ class SystemCommands {
       ui.displayError("Usage: /trunc <limit_in_tokens> (use 0 to disable)");
       return true;
     }
-    const limit = parseInt(args[0], 10);
-    if (Number.isNaN(limit) || limit < 0) {
+    const limit = Number(args[0]);
+    if (!Number.isSafeInteger(limit) || limit < 0) {
       ui.displayError("Truncation limit must be a positive integer, or 0 to disable.");
       return true;
     }
-    chatManager.configManager.save("context_window_limit", limit);
     chatManager.setContextWindowLimit(limit);
 
-    // Apply strict context boundary IMMEDIATELY to sync the state with the new config
+    // Apply the adapter's existing heuristic trimming policy immediately.
     if (limit > 0 && chatManager.assistant && typeof chatManager.assistant._enforceContextLimit === "function") {
       chatManager.assistant._enforceContextLimit();
     }
 
     if (limit === 0) {
-      ui.displayInfo("Context truncation DISABLED. Context window is now infinite.");
+      ui.displayInfo("Context truncation DISABLED. Provider context limits still apply.");
     } else {
-      ui.displayInfo(`Context truncation ENABLED. FIFO limit strictly set to: ${limit} tokens.`);
+      ui.displayInfo(`Context truncation ENABLED. Approximate FIFO budget: ${limit} tokens.`);
     }
     return true;
   }
