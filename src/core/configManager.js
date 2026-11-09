@@ -1,7 +1,7 @@
 import fs from "fs";
 import os from "os";
 import path from "path";
-import logger from "./logger.js";
+import { randomUUID } from "crypto";
 
 /**
  * Keys belonging to the user's global scope and persisting across projects.
@@ -21,54 +21,60 @@ const GLOBAL_KEYS = new Set([
  * 2. Local (Current project ./.paser-mini/config/config.json)
  */
 class ConfigManager {
+  #fs;
+
   /**
    * Initializes the ConfigManager and loads configurations from both layers.
+   * @param {object} [options] Storage locations and filesystem dependency.
+   * @param {string} [options.globalDir] Directory for user configuration.
+   * @param {string} [options.localDir] Directory for project configuration.
+   * @param {object} [options.fileSystem] Synchronous filesystem implementation.
    */
-  constructor() {
-    const globalDir = path.join(os.homedir(), ".paser-mini");
-    if (!fs.existsSync(globalDir)) {
-      fs.mkdirSync(globalDir, { recursive: true });
-    }
+  constructor({
+    globalDir = path.join(os.homedir(), ".paser-mini"),
+    localDir = path.join(process.cwd(), ".paser-mini/config"),
+    fileSystem = fs,
+  } = {}) {
+    this.#fs = fileSystem;
     this.globalPath = path.join(globalDir, "config.json");
     this.globalConfig = this._loadConfig(this.globalPath);
 
-    const localDir = path.join(process.cwd(), ".paser-mini/config");
-    if (!fs.existsSync(localDir)) {
-      fs.mkdirSync(localDir, { recursive: true });
-    }
     this.localPath = path.join(localDir, "config.json");
     this.localConfig = this._loadConfig(this.localPath);
-
-    this._migrateGlobalKeys();
   }
 
   /**
    * Moves any global keys found in the local config to the global config.
-   * This ensures data integrity when the GLOBAL_KEYS set is updated.
-   * @private
-   * @returns {void}
+   * Called explicitly by application startup; constructing a manager only reads.
+   * Saves the global copy before removing local keys and can resume after failure.
+   * @returns {boolean} Whether legacy local keys were removed.
    */
-  _migrateGlobalKeys() {
+  migrateGlobalKeys() {
     let needsLocalSave = false;
     let needsGlobalSave = false;
+    const globalConfig = { ...this.globalConfig };
+    const localConfig = { ...this.localConfig };
 
     GLOBAL_KEYS.forEach((key) => {
-      if (key in this.localConfig) {
-        if (!(key in this.globalConfig)) {
-          this.globalConfig[key] = this.localConfig[key];
+      if (key in localConfig) {
+        if (!(key in globalConfig)) {
+          globalConfig[key] = localConfig[key];
           needsGlobalSave = true;
         }
-        delete this.localConfig[key];
+        delete localConfig[key];
         needsLocalSave = true;
       }
     });
 
     if (needsGlobalSave) {
-      this._saveConfig(this.globalPath, this.globalConfig);
+      this._saveConfig(this.globalPath, globalConfig);
+      this.globalConfig = globalConfig;
     }
     if (needsLocalSave) {
-      this._saveConfig(this.localPath, this.localConfig);
+      this._saveConfig(this.localPath, localConfig);
+      this.localConfig = localConfig;
     }
+    return needsLocalSave;
   }
 
   /**
@@ -78,14 +84,23 @@ class ConfigManager {
    * @private
    */
   _loadConfig(configPath) {
+    let content;
     try {
-      return fs.existsSync(configPath)
-        ? JSON.parse(fs.readFileSync(configPath, "utf8"))
-        : {};
+      content = this.#fs.readFileSync(configPath, "utf8");
     } catch (error) {
-      logger.error(`Failed to load config from ${configPath}: ${error.message}`);
-      return {};
+      if (error.code === "ENOENT") return {};
+      throw new Error(`Cannot read configuration: ${configPath}`, { cause: error });
     }
+    let config;
+    try {
+      config = JSON.parse(content);
+    } catch (error) {
+      throw new Error(`Invalid JSON configuration: ${configPath}`, { cause: error });
+    }
+    if (config === null || typeof config !== "object" || Array.isArray(config)) {
+      throw new Error(`Configuration must contain a JSON object: ${configPath}`);
+    }
+    return config;
   }
 
   /**
@@ -95,7 +110,42 @@ class ConfigManager {
    * @private
    */
   _saveConfig(configPath, configData) {
-    fs.writeFileSync(configPath, JSON.stringify(configData, null, 4), "utf8");
+    // Serialize before opening files: unsupported values must not affect storage.
+    const content = JSON.stringify(configData, null, 4);
+    this.#fs.mkdirSync(path.dirname(configPath), { recursive: true });
+    let target = configPath;
+    let mode = 0o600;
+    let existing;
+    try {
+      existing = this.#fs.lstatSync(configPath);
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+    }
+    if (existing) {
+      // Keep existing symlinks; a dangling link rejects instead of being replaced.
+      if (existing.isSymbolicLink()) target = this.#fs.realpathSync(configPath);
+      mode = this.#fs.statSync(target).mode % 0o1000;
+    }
+    const temporary = path.join(path.dirname(target), `.paser-config-${randomUUID()}.tmp`);
+    let descriptor;
+    let temporaryExists = false;
+    try {
+      descriptor = this.#fs.openSync(temporary, "wx", 0o600);
+      temporaryExists = true;
+      this.#fs.writeFileSync(descriptor, content, "utf8");
+      this.#fs.fchmodSync(descriptor, mode);
+      this.#fs.fsyncSync(descriptor);
+      this.#fs.closeSync(descriptor);
+      descriptor = undefined;
+      this.#fs.renameSync(temporary, target);
+      temporaryExists = false;
+    } finally {
+      try {
+        if (descriptor !== undefined) this.#fs.closeSync(descriptor);
+      } finally {
+        if (temporaryExists) this.#fs.rmSync(temporary, { force: true });
+      }
+    }
   }
 
   /**
@@ -110,7 +160,9 @@ class ConfigManager {
     const isGlobal = GLOBAL_KEYS.has(key);
 
     if (isGlobal) {
-      return key in this.globalConfig ? this.globalConfig[key] : defaultValue;
+      if (key in this.globalConfig) return this.globalConfig[key];
+      // Preserve legacy values until the caller explicitly migrates storage.
+      return key in this.localConfig ? this.localConfig[key] : defaultValue;
     }
 
     if (key in this.localConfig) return this.localConfig[key];
@@ -119,13 +171,6 @@ class ConfigManager {
     return defaultValue;
   }
 
-  /**
-   * Saves a configuration value and persists it to the appropriate layer.
-   * Determines the layer based on the GLOBAL_KEYS whitelist.
-   * @param {string} key - The configuration key to save.
-   * @param {unknown} value - The value to associate with the key.
-   * @returns {void}
-   */
   /**
    * Sets a configuration value in memory without persisting it to disk.
    * @param {string} key - The configuration key to set.
@@ -150,8 +195,10 @@ class ConfigManager {
     const config = isGlobal ? this.globalConfig : this.localConfig;
     const configPath = isGlobal ? this.globalPath : this.localPath;
 
-    config[key] = value;
-    this._saveConfig(configPath, config);
+    const updated = { ...config, [key]: value };
+    this._saveConfig(configPath, updated);
+    if (isGlobal) this.globalConfig = updated;
+    else this.localConfig = updated;
   }
 }
 

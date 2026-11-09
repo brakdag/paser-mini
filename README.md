@@ -59,6 +59,70 @@ and allows subsequent calls to proceed. This is not a cross-process lock: run on
 one Paser Mini process per project when storing memories. Writes are not transactional
 across disk failures; a failed append can leave reference ranks already updated.
 
+### Configuration persistence
+
+Global settings live in `~/.paser-mini/config.json`; project settings live in
+`.paser-mini/config/config.json`. Missing files start with empty settings. Invalid
+JSON, a root other than an object, or a read error stops startup with the file path;
+the existing file is preserved for repair.
+
+Saving writes and synchronizes a unique temporary file in the destination directory
+before replacing the JSON with an atomic rename. A failed write leaves the previous
+file and the manager's saved values intact, and removes the temporary file when
+cleanup succeeds. New files use permissions `0600`; replacements preserve existing
+permission bits and follow existing file symlinks. Constructing `ConfigManager`
+only reads; it does not create directories or migrate settings. CLI startup
+explicitly calls `migrateGlobalKeys()` to move legacy global keys out of project
+configuration. Embedded callers can invoke that method when appropriate; legacy
+values remain readable without migration, with global settings taking precedence.
+The global copy is saved before removing local keys, so an interrupted migration
+can resume on the next startup. Repeating a completed migration does not write files.
+
+Each file is replaced independently. This does not coordinate concurrent writers or
+provide a transaction across both files or a durability guarantee after power loss.
+A forcibly terminated process may leave a `.paser-config-*.tmp` file beside the
+configuration; with Paser Mini stopped, such leftover temporary files can be removed.
+
+### File indexing and batch loading
+
+`index(path, filter)` respects project and nested `.gitignore` files, including
+globs, anchored rules and negations. Rules are case sensitive on Linux. Ancestor
+rules still apply when indexing a subdirectory; an excluded parent directory must
+be re-included before its children can be re-included. Git's global excludes and
+`.git/info/exclude` are not read. Each rules file is limited to 64 KiB; an unreadable
+or oversized nested rules file skips its subtree with a diagnostic.
+
+`.git`, `.paser-mini`, `.codex`, `.agents` and `.aws` are always excluded at every
+depth, even if negated in `.gitignore` or explicitly requested. Scanning skips
+symlink entries; explicitly indexed directory aliases and symlinked project roots
+remain supported within the project path policy.
+
+An index includes at most 1,000 files, visits at most 10,000 directory entries,
+descends at most 64 levels below the project root, and returns at most 512 KiB of
+JSON. It preserves `total` and `files` and adds `truncated`, `diagnostics` and
+`omittedDiagnostics`. At most 50 diagnostics fit within the same byte budget.
+When truncated, index a narrower directory or use an extension filter. A failed
+index invalidates the previous cached IDs; each successful index replaces them.
+
+`load("0,1,2")` accepts at most 50 comma-separated nonnegative integer IDs and
+deduplicates repeated IDs. Each source file is limited to 100 KiB; total output
+is limited to 512 KiB, including decoded UTF-8, MIME headers, diagnostics and the
+closing boundary. Whole files are omitted once the byte budget is reached, with
+a `Batch truncated` part asking for a smaller batch. No file content is cut in half.
+
+Deleted, changed, unreadable or replaced files produce per-file diagnostic parts;
+other files in the batch continue to load. Metadata is checked against the index
+and again around a bounded read. Re-index changed files before loading them.
+These checks are not a filesystem snapshot. MIME `Content-Length` measures the
+returned UTF-8 body and file names are escaped in headers.
+
+Embedded callers can inject `fileSystem` and override `limits` on `LoadTools`:
+`maxIndexFiles`, `maxIndexEntries`, `maxIndexBytes`, `maxDepth`, `maxBatchFiles` and
+`maxBatchBytes`. Values must be positive safe integers; index/batch byte budgets
+must be at least 2048/1024 and depth cannot exceed 128. Public tool arguments are
+unchanged. Persistence supports one writer process per project; configuration
+writers sharing a global file must also be coordinated by the caller.
+
 ### Installation
 ```bash
 curl -fsSL https://raw.githubusercontent.com/brakdag/paser-mini/main/install.sh | bash

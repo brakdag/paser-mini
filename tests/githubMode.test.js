@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, writeFileSync, rmSync, mkdirSync, readFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import GitHubModeOrchestrator from "../src/core/githubModeOrchestrator.js";
@@ -275,6 +275,9 @@ test("GitHub UI orders ignored publications, flushes failures, and rejects inter
 test("real CLI --github-mode finishes in a subprocess with fake GitHub and model transports", () => {
   const dir = mkdtempSync(path.join(os.tmpdir(), "paser-github-cli-"));
   try {
+    const localConfig = path.join(dir, ".paser-mini", "config", "config.json");
+    mkdirSync(path.dirname(localConfig), { recursive: true });
+    writeFileSync(localConfig, JSON.stringify({ user_nickname: "legacy-user", agent_nickname: "legacy-agent" }));
     const bootstrap = path.join(dir, "offline.mjs");
     writeFileSync(bootstrap, `
       import { registerHooks } from 'node:module';
@@ -313,6 +316,10 @@ test("real CLI --github-mode finishes in a subprocess with fake GitHub and model
     assert.match(result.stdout, /COMMENT Offline answer/);
     assert.match(result.stdout, /paser-mini:completed:/);
     assert.match(result.stdout, /UNLABEL/);
+    assert.deepEqual(JSON.parse(readFileSync(localConfig)), {});
+    assert.deepEqual(JSON.parse(readFileSync(path.join(dir, ".paser-mini", "config.json"))), {
+      user_nickname: "legacy-user", agent_nickname: "legacy-agent",
+    });
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

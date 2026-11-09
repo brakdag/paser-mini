@@ -1,207 +1,346 @@
 import fs from "fs/promises";
+import { constants } from "fs";
 import path from "path";
+import ignore from "ignore";
 import PathValidator from "../utils/pathValidator.js";
 
 const FILE_SIZE_LIMIT = 100 * 1024;
+const IGNORE_SIZE_LIMIT = 64 * 1024;
 const BOUNDARY = "---çç";
+const INTERNAL_NAMES = new Set([".git", ".paser-mini", ".codex", ".agents", ".aws"]);
+const DEFAULT_LIMITS = {
+  maxIndexFiles: 1000,
+  maxIndexEntries: 10000,
+  maxIndexBytes: 512 * 1024,
+  maxDepth: 64,
+  maxBatchFiles: 50,
+  maxBatchBytes: 512 * 1024,
+};
+const MIME_TYPES = {
+  js: "text/javascript", json: "application/json", md: "text/markdown",
+  txt: "text/plain", html: "text/html", css: "text/css", xml: "application/xml",
+  yml: "text/yaml", yaml: "text/yaml",
+};
 
 /**
- * Provides tools for efficient file indexing and batch loading.
+ * Compares the identity and modification metadata captured around a read.
+ * @param {object} left Earlier file stats.
+ * @param {object} right Later file stats.
+ * @returns {boolean} Whether both describe the same unchanged regular file.
  */
+function sameFile(left, right) {
+  return right.isFile() && ["dev", "ino", "size", "mtimeMs", "ctimeMs"]
+    .every((key) => left[key] === right[key]);
+}
+
+/**
+ * Creates an error with a stable diagnostic code.
+ * @param {string} code Diagnostic code.
+ * @param {string} message Human-readable explanation.
+ * @returns {Error} The coded error.
+ */
+function loadError(code, message) {
+  return Object.assign(new Error(message), { code });
+}
+
+/** Provides bounded file indexing and batch loading within one project. */
 class LoadTools {
   #cachedIndex = null;
 
-  #cachedDir = null;
-
   #paths;
+
+  #fs;
+
+  #limits;
 
   /**
    * Binds indexing and loading to one stable project root.
-   * @param {object} [options] - Tool dependencies.
-   * @param {PathValidator|typeof PathValidator} [options.pathValidator] - Project policy.
+   * @param {object} [options] Tool dependencies and resource limits.
+   * @param {PathValidator|typeof PathValidator} [options.pathValidator] Project policy.
+   * @param {object} [options.fileSystem] Promise-based filesystem implementation.
+   * @param {object} [options.limits] Overrides of the documented index/batch limits.
    */
-  constructor({ pathValidator = PathValidator } = {}) {
+  constructor({ pathValidator = PathValidator, fileSystem = fs, limits = {} } = {}) {
     this.#paths = pathValidator;
+    this.#fs = fileSystem;
+    this.#limits = { ...DEFAULT_LIMITS, ...limits };
+    Object.entries(this.#limits).forEach(([key, value]) => {
+      if (!Object.hasOwn(DEFAULT_LIMITS, key) || !Number.isSafeInteger(value) || value < 1) {
+        throw new Error(`Invalid load limit: ${key}`);
+      }
+    });
+    if (this.#limits.maxIndexBytes < 2048 || this.#limits.maxBatchBytes < 1024 || this.#limits.maxDepth > 128) {
+      throw new Error("Index/batch byte limits must be at least 2048/1024 and maxDepth at most 128");
+    }
   }
 
   /**
-   * Parses .gitignore and returns a set of ignore patterns.
-   * @param {string} baseDir The directory containing .gitignore.
-   * @returns {Promise<string[]>} Array of gitignore patterns.
+   * Reads at most limit + 1 bytes from a regular file, closing on every outcome.
+   * @param {string} filePath Validated path to open without following its final link.
+   * @param {number} limit Maximum accepted input bytes.
+   * @param {object|null} [expected] Optional indexed metadata to validate before reading.
+   * @returns {Promise<Buffer>} Complete bytes of an unchanged file.
    */
-  async #parseGitignore(baseDir) {
-    const gitignorePath = path.join(baseDir, ".gitignore");
+  async #readBounded(filePath, limit, expected = null) {
+    // Nonblocking open also prevents a replaced FIFO from hanging the tool.
+    // eslint-disable-next-line no-bitwise -- These are independent POSIX open flags.
+    const flags = constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK;
+    const handle = await this.#fs.open(filePath, flags);
     try {
-      const content = await fs.readFile(this.#paths.getSafePath(gitignorePath), "utf8");
-      return content
-        .split("\n")
-        .map((l) => l.trim())
-        .filter((l) => l && !l.startsWith("#"));
+      const before = await handle.stat();
+      if (!before.isFile() || (expected && !sameFile(expected, before))) {
+        throw loadError("FILE_CHANGED", "File changed since indexing; run index() again.");
+      }
+      if (before.size > limit) throw loadError("FILE_TOO_LARGE", `File exceeds size limit of ${limit} bytes.`);
+      const buffer = Buffer.alloc(limit + 1);
+      let length = 0;
+      let finished = false;
+      while (!finished && length < buffer.length) {
+        const { bytesRead } = await handle.read(buffer, length, buffer.length - length, length);
+        length += bytesRead;
+        finished = bytesRead === 0;
+      }
+      const after = await handle.stat();
+      if (!sameFile(before, after) || length !== before.size) {
+        throw loadError("FILE_CHANGED", "File changed during reading; run index() again.");
+      }
+      if (length > limit) throw loadError("FILE_TOO_LARGE", `File exceeds size limit of ${limit} bytes.`);
+      return buffer.subarray(0, length);
+    } finally {
+      await handle.close();
+    }
+  }
+
+  /**
+   * Adds this directory's .gitignore rules to the inherited layers.
+   * @param {string} directory Canonical directory within the project.
+   * @param {Array} layers Ancestor rule layers.
+   * @param {string} root Canonical project root, including when its policy uses an alias.
+   * @returns {Promise<Array>} Layers with this directory's rules, if present.
+   */
+  async #rules(directory, layers, root) {
+    if (layers.at(-1)?.directory === directory) return layers;
+    const safePath = this.#paths.getSafePath(path.relative(root, path.join(directory, ".gitignore")));
+    let content;
+    try {
+      // Internal ignore-file symlinks keep working; external ones fail validation.
+      const resolved = await this.#fs.realpath(safePath);
+      content = await this.#readBounded(resolved, IGNORE_SIZE_LIMIT);
     } catch (error) {
-      if (error.code === "ENOENT") return [];
-      throw error;
+      if (error.code === "ENOENT") return layers;
+      const relative = path.join(path.relative(root, directory), ".gitignore");
+      throw loadError(error.code || "IGNORE_ERROR", `Cannot read ${relative}: ${error.message}`);
+    }
+    return [...layers, { directory, matcher: ignore({ ignorecase: false }).add(content.toString("utf8")) }];
+  }
+
+  /**
+   * Applies ancestor rules followed by more specific rules and negations.
+   * @param {string} fullPath Candidate absolute path.
+   * @param {boolean} directory Whether it is a directory.
+   * @param {Array} layers Ordered ancestor .gitignore matchers.
+   * @returns {boolean} Whether the candidate should be pruned.
+   */
+  #isIgnored(fullPath, directory, layers) {
+    let ignored = false;
+    layers.forEach((layer) => {
+      const relative = path.relative(layer.directory, fullPath);
+      const result = layer.matcher.test(`${relative}${directory ? "/" : ""}`);
+      if (result.ignored) ignored = true;
+      else if (result.unignored) ignored = false;
+    });
+    return ignored;
+  }
+
+  /**
+   * Records a bounded diagnostic without letting error output bypass index limits.
+   * @param {object} operation Mutable state for this index operation.
+   * @param {string} relative Project-relative path.
+   * @param {Error} error Failure to report.
+   * @returns {void}
+   */
+  #diagnose(operation, relative, error) {
+    const state = operation;
+    const diagnostic = { path: relative, code: error.code || "INDEX_ERROR", message: error.message.slice(0, 512) };
+    const bytes = Buffer.byteLength(JSON.stringify(diagnostic)) + 1;
+    if (state.diagnostics.length < 50 && bytes <= state.remaining) {
+      state.diagnostics.push(diagnostic);
+      state.remaining -= bytes;
+    } else {
+      state.omittedDiagnostics += 1;
+      state.truncated = true;
     }
   }
 
   /**
-   * Checks if a relative path matches any gitignore pattern.
-   * @param {string} relPath The relative path from project root.
-   * @param {string[]} patterns The gitignore patterns.
-   * @returns {boolean} True if the path should be ignored.
+   * Traverses with bounded directory handles, output size, file count and entries.
+   * @param {string} directory Validated directory.
+   * @param {Array} inherited Ancestor ignore rules.
+   * @param {object} operation Shared traversal limits, records and diagnostics.
+   * @param {number} depth Depth relative to the project root.
+   * @returns {Promise<void>} Resolves after scanning or reaching a limit.
    */
-  #isIgnored(relPath, patterns) {
-    const normalized = relPath.replace(/\\/g, "/");
-    for (let i = 0; i < patterns.length; i += 1) {
-      const cleanPattern = patterns[i].replace(/\\/g, "/").replace(/\/$/, "");
-      if (cleanPattern.startsWith("/")) {
-        const p = cleanPattern.slice(1);
-        if (normalized === p || normalized.startsWith(`${p}/`)) return true;
-      } else {
-        const parts = normalized.split("/");
-        for (let j = 0; j < parts.length; j += 1) {
-          if (parts.slice(j).join("/") === cleanPattern) return true;
-          if (parts[j] === cleanPattern) return true;
-        }
-      }
+  async #scan(directory, inherited, operation, depth) {
+    const state = operation;
+    const relative = path.relative(state.root, directory);
+    if (depth > this.#limits.maxDepth) {
+      state.truncated = true;
+      this.#diagnose(state, relative, loadError("DEPTH_LIMIT", "Directory depth limit reached."));
+      return;
     }
-    return false;
-  }
-
-  /**
-   * Parses a comma-separated filter into an array of normalized extensions.
-   * @param {string} filter Comma-separated extensions (e.g., "js", ".js", "js,ts,json").
-   * @returns {string[]|null} Array of extensions without dots, or null if no filter.
-   */
-  #parseFilter(filter) {
-    if (!filter) return null;
-    return String(filter)
-      .split(",")
-      .map((f) => f.trim().toLowerCase())
-      .map((f) => f.startsWith(".") ? f.slice(1) : f)
-      .filter((f) => f.length > 0);
-  }
-
-  /**
-   * Recursively scans a directory and indexes files.
-   * @param {string} dirPath The absolute directory path.
-   * @param {string} baseDir The project root for relative paths.
-   * @param {string[]} patterns The gitignore patterns.
-   * @param {number} startId The starting ID counter.
-   * @param {string[]} [extensions] Optional array of extensions to filter.
-   * @returns {Promise<{files: Array, nextId: number}>} Indexed files and next ID.
-   */
-  async #scanDirectory(dirPath, baseDir, patterns, startId, extensions = null) {
-    const entries = await fs.readdir(dirPath, { withFileTypes: true });
-    const files = [];
-    let currentId = startId;
-
-    for (let i = 0; i < entries.length; i += 1) {
-      const entry = entries[i];
-      const fullPath = path.join(dirPath, entry.name);
-      const relPath = path.relative(baseDir, fullPath);
-
-      if (!this.#isIgnored(relPath, patterns)) {
-        if (entry.isDirectory()) {
-          const result = await this.#scanDirectory(fullPath, baseDir, patterns, currentId, extensions);
-          files.push(...result.files);
-          currentId = result.nextId;
-        } else if (entry.isFile()) {
-          const ext = path.extname(entry.name).slice(1).toLowerCase();
-          if (!extensions || extensions.includes(ext)) {
-            const stats = await fs.stat(fullPath);
-            files.push({
-              id: currentId,
-              path: relPath,
-              size: stats.size,
-            });
-            currentId += 1;
+    let handle;
+    try {
+      const layers = await this.#rules(directory, inherited, state.root);
+      handle = await this.#fs.opendir(this.#paths.getSafePath(relative || "."));
+      let entry = await handle.read();
+      while (entry && !state.stopped) {
+        if (state.visited >= this.#limits.maxIndexEntries) {
+          state.stopped = true;
+          state.truncated = true;
+          this.#diagnose(state, relative, loadError("ENTRY_LIMIT", "Index entry limit reached; index a narrower directory."));
+        } else {
+          state.visited += 1;
+          const fullPath = path.join(directory, entry.name);
+          if (!INTERNAL_NAMES.has(entry.name) && !this.#isIgnored(fullPath, entry.isDirectory(), layers)) {
+            if (entry.isDirectory()) await this.#scan(fullPath, layers, state, depth + 1);
+            else if (entry.isFile()) await this.#indexFile(fullPath, state);
           }
+          if (!state.stopped) entry = await handle.read();
         }
       }
+    } catch (error) {
+      // A failed rules read skips the subtree; scanning without its rules is unsafe.
+      this.#diagnose(state, relative, error);
+    } finally {
+      if (handle) await handle.close();
     }
-    return { files, nextId: currentId };
   }
 
   /**
-   * Indexes all files in a directory tree, respecting .gitignore.
-   * @param {string} dirPath The root directory to index.
-   * @param {string} [filter] Optional comma-separated extensions (e.g., "js,ts").
-   * @returns {Promise<string>} JSON string with file index and total count.
+   * Captures one file's metadata, with independent handling of disappearing files.
+   * @param {string} fullPath Candidate absolute path.
+   * @param {object} operation Index operation state.
+   * @returns {Promise<void>} Resolves after recording or skipping the candidate.
+   */
+  async #indexFile(fullPath, operation) {
+    const state = operation;
+    const relative = path.relative(state.root, fullPath);
+    const extension = path.extname(fullPath).slice(1).toLowerCase();
+    if (state.extensions && !state.extensions.includes(extension)) return;
+    try {
+      const stats = await this.#fs.lstat(this.#paths.getSafePath(relative));
+      if (!stats.isFile()) throw loadError("FILE_CHANGED", "File type changed during indexing.");
+      const file = { id: state.files.length, path: relative, size: stats.size };
+      const bytes = Buffer.byteLength(JSON.stringify(file)) + 1;
+      if (state.files.length >= this.#limits.maxIndexFiles || bytes > state.remaining) {
+        state.stopped = true;
+        state.truncated = true;
+        this.#diagnose(state, relative, loadError("INDEX_LIMIT", "Index file/output limit reached; index a narrower directory."));
+      } else {
+        state.files.push(file);
+        state.snapshots.push({ ...file, stats });
+        state.remaining -= bytes;
+      }
+    } catch (error) {
+      this.#diagnose(state, relative, error);
+    }
+  }
+
+  /**
+   * Indexes files with nested .gitignore rules and permanent metadata exclusions.
+   * @param {string} [dirPath] Directory within the project, defaulting to its root.
+   * @param {string|null} [filter] Optional comma-separated extensions (e.g. "js,ts").
+   * @returns {Promise<string>} Bounded JSON index with truncation and diagnostics.
    */
   async index(dirPath = ".", filter = null) {
-    const safePath = this.#paths.getSafePath(dirPath);
-    // Resolve the directory before path.join constructs descendant paths;
-    // joining an unresolved symlink/.. would change its traversal semantics.
-    const directory = await fs.realpath(safePath);
-    const root = this.#paths.getRoot();
-    const realRoot = await fs.realpath(root);
-    const patterns = await this.#parseGitignore(root);
-    const extensions = this.#parseFilter(filter);
-    const { files } = await this.#scanDirectory(directory, realRoot, patterns, 0, extensions);
-    this.#cachedIndex = files;
-    this.#cachedDir = safePath;
-    return JSON.stringify({ total: files.length, files });
+    this.#cachedIndex = null;
+    const directory = await this.#fs.realpath(this.#paths.getSafePath(dirPath));
+    if (!(await this.#fs.stat(directory)).isDirectory()) throw loadError("ENOTDIR", "Index path must be a directory.");
+    const root = await this.#fs.realpath(this.#paths.getRoot());
+    const segments = path.relative(root, directory).split(path.sep).filter(Boolean);
+    const state = {
+      root, files: [], snapshots: [], diagnostics: [], omittedDiagnostics: 0,
+      remaining: this.#limits.maxIndexBytes - 1024, visited: 0, stopped: false, truncated: false,
+      extensions: filter ? String(filter).split(",").map((ext) => ext.trim().replace(/^\./, "").toLowerCase()).filter(Boolean) : null,
+    };
+    let layers = [];
+    let current = root;
+    let excluded = false;
+    if (segments.length > this.#limits.maxDepth) {
+      excluded = true;
+      state.truncated = true;
+      this.#diagnose(state, path.relative(root, directory), loadError("DEPTH_LIMIT", "Directory depth limit reached."));
+    }
+    // Build ancestor rules even when the caller starts indexing a subdirectory.
+    for (let i = 0; i < segments.length && !excluded; i += 1) {
+      layers = await this.#rules(current, layers, root);
+      current = path.join(current, segments[i]);
+      excluded = INTERNAL_NAMES.has(segments[i]) || this.#isIgnored(current, true, layers);
+    }
+    // Validate root rules before scanning so invalid external rule symlinks reject.
+    if (!segments.length) layers = await this.#rules(root, [], root);
+    if (!excluded) await this.#scan(directory, layers, state, segments.length);
+    this.#cachedIndex = state.snapshots;
+    return JSON.stringify({
+      total: state.files.length, files: state.files, truncated: state.truncated,
+      diagnostics: state.diagnostics, omittedDiagnostics: state.omittedDiagnostics,
+    });
   }
 
   /**
-   * Loads multiple files by their IDs and returns them as MIME multipart.
-   * @param {string} ids Comma-separated file IDs (e.g., "0,3,5").
-   * @returns {Promise<string>} MIME multipart formatted string with file contents.
+   * Formats one MIME part, escaping file names so they cannot inject headers.
+   * @param {number} id Indexed file identifier.
+   * @param {string} relative File path or diagnostic label.
+   * @param {string} content Text body.
+   * @param {boolean} [error] Whether this is a diagnostic instead of file content.
+   * @returns {string} MIME part with its encoded body's actual byte length.
+   */
+  #part(id, relative, content, error = false) {
+    const safeName = JSON.stringify(relative).slice(1, -1);
+    const type = error ? "text/plain" : MIME_TYPES[path.extname(relative).slice(1).toLowerCase()] || "text/plain";
+    return `${BOUNDARY}\nContent-ID: ${id}\nContent-Path: ${safeName}\nContent-Type: ${type}\nContent-Length: ${Buffer.byteLength(content)}\n\n${content}`;
+  }
+
+  /**
+   * Loads a bounded batch; stale, missing and unreadable files become MIME diagnostics.
+   * @param {string} ids Comma-separated file IDs (e.g. "0,3,5").
+   * @returns {Promise<string>} Bounded multipart contents with any per-file errors.
    */
   async load(ids) {
-    const idList = String(ids)
-      .split(",")
-      .map((id) => parseInt(id.trim(), 10))
-      .filter((id) => !Number.isNaN(id));
-
-    if (idList.length === 0) {
-      throw new Error("No valid IDs provided");
-    }
-
-    if (!this.#cachedIndex) {
-      throw new Error("No index available. Run index() first.");
-    }
-    const fileMap = new Map(this.#cachedIndex.map((f) => [f.id, f]));
-
+    const input = String(ids).trim();
+    if (input.length > this.#limits.maxBatchFiles * 32) throw new Error("ID request too large; use a smaller batch.");
+    if (!/^\d+(?:\s*,\s*\d+)*$/.test(input)) throw new Error("No valid IDs provided; use comma-separated nonnegative integers.");
+    const requested = input.split(",").map(Number);
+    if (requested.some((id) => !Number.isSafeInteger(id))) throw new Error("No valid IDs provided; ID exceeds integer range.");
+    if (requested.length > this.#limits.maxBatchFiles) throw new Error(`Batch exceeds ${this.#limits.maxBatchFiles} IDs; use a smaller batch.`);
+    const idList = [...new Set(requested)];
+    if (!this.#cachedIndex) throw new Error("No index available. Run index() first.");
+    const fileMap = new Map(this.#cachedIndex.map((file) => [file.id, file]));
     const parts = [];
-    for (let i = 0; i < idList.length; i += 1) {
+    let remaining = this.#limits.maxBatchBytes - 512;
+    let truncated = false;
+    for (let i = 0; i < idList.length && !truncated; i += 1) {
       const id = idList[i];
-      const fileEntry = fileMap.get(id);
-      if (!fileEntry) {
-        parts.push(
-          `${BOUNDARY}\nContent-ID: ${id}\nContent-Type: text/plain\nContent-Description: File not found\n\nError: File with ID ${id} not found in index.`
-        );
-      } else {
-        const safePath = this.#paths.getSafePath(fileEntry.path);
-        const stats = await fs.stat(safePath);
-
-        if (stats.size > FILE_SIZE_LIMIT) {
-          parts.push(
-            `${BOUNDARY}\nContent-ID: ${id}\nContent-Type: text/plain\nContent-Description: File too large\n\nError: File ${fileEntry.path} exceeds size limit of ${FILE_SIZE_LIMIT} bytes.`
-          );
-        } else {
-          const content = await fs.readFile(safePath, "utf8");
-          const ext = path.extname(fileEntry.path).slice(1).toLowerCase();
-          const mimeTypes = {
-            js: "text/javascript",
-            json: "application/json",
-            md: "text/markdown",
-            txt: "text/plain",
-            html: "text/html",
-            css: "text/css",
-            xml: "application/xml",
-            yml: "text/yaml",
-            yaml: "text/yaml",
-          };
-          const contentType = mimeTypes[ext] || "text/plain";
-
-          parts.push(
-            `${BOUNDARY}\nContent-ID: ${id}\nContent-Path: ${fileEntry.path}\nContent-Type: ${contentType}\nContent-Length: ${stats.size}\n\n${content}`
-          );
-        }
+      const file = fileMap.get(id);
+      let part;
+      try {
+        if (!file) throw loadError("NOT_IN_INDEX", `File with ID ${id} not found in index.`);
+        const safePath = this.#paths.getSafePath(file.path);
+        const content = await this.#readBounded(safePath, FILE_SIZE_LIMIT, file.stats);
+        part = this.#part(id, file.path, content.toString("utf8"));
+      } catch (error) {
+        part = this.#part(id, file?.path || "File not found", `Error [${error.code || "LOAD_ERROR"}]: ${error.message.slice(0, 512)}`, true);
+      }
+      const bytes = Buffer.byteLength(part) + 1;
+      if (bytes > remaining) truncated = true;
+      else {
+        parts.push(part);
+        remaining -= bytes;
       }
     }
-
+    if (truncated) {
+      parts.push(this.#part(-1, "Batch truncated", `Batch byte limit of ${this.#limits.maxBatchBytes} reached. Remaining IDs omitted; request a smaller batch.`, true));
+    }
     return `${parts.join("\n")}\n${BOUNDARY}--\n`;
   }
 }

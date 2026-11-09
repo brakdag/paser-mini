@@ -192,6 +192,8 @@ export default class WebTools {
   #getFetchHeaders() {
     if (!this.#configManager) this.#configManager = new ConfigManager();
     const manager = this.#configManager;
+    // Real storage resolves global precedence and legacy local fallback itself.
+    if (manager instanceof ConfigManager) return manager.get("fetch_headers", {}) || {};
     let globalHeaders = {};
     let localHeaders = {};
     if (typeof manager.get === "function") {
@@ -199,8 +201,7 @@ export default class WebTools {
     } else {
       globalHeaders = manager.globalConfig?.fetch_headers || {};
     }
-    // ConfigManager migrates legacy local fetch_headers to global on construction.
-    // Reading localConfig also supports injected managers and future local overrides.
+    // Injected managers can provide separate global and local header layers.
     localHeaders = manager.localConfig?.fetch_headers || {};
     return mergeHeaders(globalHeaders, localHeaders);
   }

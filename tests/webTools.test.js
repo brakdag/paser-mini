@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import WebTools from "../src/tools/webTools.js";
+import ConfigManager from "../src/core/configManager.js";
 
 let tempDir;
 
@@ -50,6 +51,26 @@ function fakeHttp(responseOrHandler) {
 }
 
 describe("webTools.fetchRaw", () => {
+  it("reads legacy headers without migration and preserves global precedence", async (t) => {
+    const state = await fs.mkdtemp(path.join(os.tmpdir(), "paser-web-config-"));
+    t.after(() => fs.rm(state, { recursive: true, force: true }));
+    const globalDir = path.join(state, "global");
+    const localDir = path.join(state, "local");
+    await fs.mkdir(globalDir);
+    await fs.mkdir(localDir);
+    const localContent = JSON.stringify({ fetch_headers: { "X-Source": "legacy" } });
+    await fs.writeFile(path.join(localDir, "config.json"), localContent);
+    const legacy = new ConfigManager({ globalDir, localDir });
+    const http = fakeHttp({ headers: { "content-type": "text/plain" }, data: "content" });
+    await new WebTools({ httpClient: http, configManager: legacy }).fetchRaw("https://example.test/legacy");
+    assert.equal(http.calls[0].options.headers["X-Source"], "legacy");
+    await fs.writeFile(path.join(globalDir, "config.json"), JSON.stringify({ fetch_headers: { "X-Source": "global" } }));
+    const global = new ConfigManager({ globalDir, localDir });
+    await new WebTools({ httpClient: http, configManager: global }).fetchRaw("https://example.test/global");
+    assert.equal(http.calls[1].options.headers["X-Source"], "global");
+    assert.equal(await fs.readFile(path.join(localDir, "config.json"), "utf8"), localContent);
+  });
+
   it("matches a literal phrase including s, spaces, and special characters", async () => {
     const phrase = "stress test + (a|b)?";
     const http = fakeHttp({

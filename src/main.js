@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { writeSync } from "fs";
 import parseCliOptions from "./core/cliOptions.js";
 import TerminalUI from "./core/terminalUI.js";
 import createSession from "./core/sessionFactory.js";
@@ -15,6 +16,7 @@ import logger from "./core/logger.js";
 async function main() {
   const options = parseCliOptions();
   const configManager = new ConfigManager();
+  configManager.migrateGlobalKeys();
 
   const { systemInstruction, filteredTools, pureMode } = await promptManager.buildPrompt(options);
 
@@ -67,6 +69,7 @@ process.on("exit", () => {
 });
 
 main().catch((err) => {
+  writeSync(2, `Paser Mini error: ${err.message}\n`);
   logger.error("Critical Error:", err);
   process.exit(1);
 });
