@@ -163,9 +163,10 @@ is cancelled. Model requests share five total attempts and a ten-minute deadline
 covering transport and waits; `/models` cancels them for every provider. See the
 README request retry policy for programmatic limits and remote generation effects.
 EOF, `/exit` (and its aliases), SIGINT/SIGTERM, startup failures and unhandled
-process errors use one idempotent application shutdown. It cancels the active
-turn, closes readline/spinners, saves the prompt cache, closes MCP (including
-connections still being discovered), closes instantiated tool resources and
+process errors use one idempotent application shutdown. EOF drains queued input
+and the current turn before shutdown; `/exit` and termination signals cancel the
+active turn. Shutdown closes readline/spinners, saves the prompt cache, closes
+MCP (including connections still being discovered), closes instantiated tool resources and
 awaits the session log flush. Fatal failures exit with status 1; normal exits
 and handled termination signals use 0. Cleanup failure or timeout also uses 1.
 The total cleanup deadline is five seconds; the last second is reserved for

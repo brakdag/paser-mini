@@ -284,3 +284,29 @@ test("tool reload and permanent shutdown share cleanup and reject late acquisiti
   assert.equal(result.status, 0, result.stderr);
   assert.deepEqual(await fs.readdir(options.cwd), []);
 });
+
+test("tool cleanup continues after synchronous and asynchronous close failures", async t => {
+  const options = await fixture(t);
+  const registryUrl = new URL("../src/infrastructure/registry.js", import.meta.url).href;
+  const result = spawnSync(process.execPath, ["--input-type=module", "-e", `
+    import assert from 'node:assert/strict';
+    import { getToolInstance, shutdownTools } from ${JSON.stringify(registryUrl)};
+    const events = [];
+    const first = await getToolInstance('inspectTools');
+    const second = await getToolInstance('systemTools');
+    const third = await getToolInstance('utilTools');
+    first.close = () => { events.push('first'); throw Error('sync failure'); };
+    second.close = async () => { events.push('second'); throw Error('async failure'); };
+    third.close = () => { events.push('third'); };
+    await assert.rejects(shutdownTools(), error => {
+      assert.ok(error instanceof AggregateError);
+      assert.deepEqual(error.errors.map(item => item.message), ['sync failure', 'async failure']);
+      return true;
+    });
+    assert.deepEqual(events, ['first', 'second', 'third']);
+    assert.notEqual(await getToolInstance('inspectTools'), first);
+    await shutdownTools(true);
+  `], options);
+  assert.ifError(result.error);
+  assert.equal(result.status, 0, result.stderr);
+});

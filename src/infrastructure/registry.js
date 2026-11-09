@@ -77,7 +77,7 @@ export function shutdownTools(permanent = false) {
     await Promise.allSettled(pendingTools.values());
     const instances = Object.values(toolCache);
     toolCache = {};
-    const results = await Promise.allSettled(instances.map(instance => instance.close?.()));
+    const results = await Promise.allSettled(instances.map(instance => Promise.resolve().then(() => instance.close?.())));
     const errors = results.filter(result => result.status === "rejected").map(result => result.reason);
     if (errors.length) throw new AggregateError(errors, "Tool cleanup failed");
   }).finally(() => {

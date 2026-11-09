@@ -185,15 +185,16 @@ export default class InspectTools {
 
       const startupOutput = await this.#waitForPrompt();
 
-      if (!this.#inspectProcess) {
+      if (this.#inspectProcess !== child) {
         return `Process exited during startup.\nOutput:\n${startupOutput}`;
       }
 
       if (c) {
         // Allow the debugger to stabilize in paused state after break-on-start
         await new Promise((r) => { setTimeout(r, 200); });
+        if (this.#inspectProcess !== child) return "[Process terminated]";
         this.#buffer = "";
-        this.#inspectProcess.stdin.write(`${c}\n`);
+        child.stdin.write(`${c}\n`);
         const output = await this.#waitForPrompt();
         if (!this.#inspectProcess) {
           return `${output}\n\n[Process terminated]`;
