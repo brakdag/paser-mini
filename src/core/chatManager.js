@@ -36,6 +36,10 @@ class ChatManager {
     this.user = user;
     this.model = model;
     this.instanceMode = instanceMode;
+    this.providerManager = null;
+    this.toolContexts = null;
+    this.prepareToolContexts = null;
+    this._reconfiguring = false;
     this.configManager = configManager || new ConfigManager();
     const DEFAULT_CONTEXT_WINDOW_LIMIT = 0;
 
@@ -112,30 +116,65 @@ class ChatManager {
    * @param {number} params.temp - The target temperature.
    */
   async switchProvider({ providerId, modelName, temp }) {
-    this.assistant = await this.providerManager.createAdapter({
-      providerId,
-      ui: this.ui,
-      configManager: this.configManager,
-    });
-    this.assistant.setIdentities(this.user, this.model);
-    this.model.name = modelName;
-    this.model.temperature = temp;
-    
-    // Restart the chat and propagate the new adapter
-    this.assistant.startChat(modelName, this.systemInstruction, temp);
-    this.turnProcessor.assistant = this.assistant;
-    this.turnProcessor.api.assistant = this.assistant;
+    if (this._turnInProgress || this._reconfiguring) {
+      throw new Error("Wait for the active turn or reconfiguration to finish.");
+    }
+    if (!modelName?.trim() || !Number.isFinite(temp)) {
+      throw new Error("A model name and finite temperature are required.");
+    }
+    this._reconfiguring = true;
+    try {
+      const previous = this.assistant;
+      const preserveHistory = previous.providerId === providerId;
+      const nextModel = { ...this.model, name: modelName, temperature: temp };
+      const candidate = await this.providerManager.createAdapter({
+        providerId, ui: this.ui, configManager: this.configManager,
+        userNickname: this.user.nickname, agentNickname: this.model.nickname,
+      });
+      candidate.setIdentities({ ...this.user }, nextModel);
+      candidate.setRenderingMode(this.renderingMode);
+      candidate.setImmersionMode(this.immersionMode);
+      await candidate.startChat(modelName, this.systemInstruction, temp);
+      if (preserveHistory) {
+        const history = candidate.getHistory();
+        history.splice(0, history.length, ...structuredClone(previous.getHistory()));
+        candidate.updateSystemInstruction(this.systemInstruction);
+      }
+      candidate.checkContextLimit?.(this.contextWindowLimit);
+      candidate.setIdentities(this.user, this.model);
+      this.bindToolContexts(candidate);
+      Object.assign(this.model, nextModel);
+      this.assistant = candidate;
+      this.turnProcessor.assistant = candidate;
+      this.turnProcessor.api.assistant = candidate;
+      this._lastTurn = null;
+      this.repetitionDetector.reset();
+      this.engine.toolTracker.reset();
+      if (!preserveHistory) this.ui.displayInfo("Provider changed: conversation history restarted.");
+    } finally {
+      this._reconfiguring = false;
+    }
   }
 
   /**
-   * Sets the current model temperature and restarts the chat session.
-   * @param {number} temp - The new temperature value.
+   * Binds session tools to the active adapter, including sessions started in pure mode.
+   * @param {object} [assistant] - Prepared adapter to bind.
    */
-  setTemperature(temp) {
-    this.model.temperature = temp;
-    if (this.assistant && this.assistant.startChat) {
-      this.assistant.startChat(this.model.name, this.systemInstruction, temp);
-    }
+  bindToolContexts(assistant = this.assistant) {
+    if (!this.toolContexts) return;
+    const { memory, system, util } = this.toolContexts;
+    memory.setMemoryContext(this);
+    system.setContext(assistant, this);
+    util.setIdentityContext(this.model);
+  }
+
+  /**
+   * Changes temperature through the same prepared-adapter operation.
+   * @param {number} temp - New temperature.
+   * @returns {Promise<void>} Reconfiguration completion.
+   */
+  async setTemperature(temp) {
+    await this.switchProvider({ providerId: this.assistant.providerId, modelName: this.model.name, temp });
   }
 
   /**
@@ -144,16 +183,30 @@ class ChatManager {
    * @param {object} tools - The new tools object.
    * @param {boolean} [pureMode] - The explicit execution mode, retained when omitted.
    */
-  updateSystemContext(systemInstruction, tools, pureMode = this.pureMode) {
-    this.systemInstruction = systemInstruction;
-    this.pureMode = pureMode;
-    this.tools = tools;
-    this.engine.tools = tools;
-    this.engine.strictPureMode = pureMode;
-    this.turnProcessor.tools = tools;
-    
-    if (this.assistant && this.assistant.updateSystemInstruction) {
-      this.assistant.updateSystemInstruction(systemInstruction);
+  async updateSystemContext(systemInstruction, tools, pureMode = this.pureMode) {
+    if (this._turnInProgress || this._reconfiguring) {
+      throw new Error("Wait for the active turn or reconfiguration to finish.");
+    }
+    this._reconfiguring = true;
+    try {
+      if (!pureMode) await this.prepareToolContexts?.();
+      const history = structuredClone(this.assistant.getHistory());
+      try {
+        this.assistant.updateSystemInstruction?.(systemInstruction);
+      } catch (error) {
+        this.assistant.systemInstruction = this.systemInstruction;
+        const current = this.assistant.getHistory();
+        current.splice(0, current.length, ...history);
+        throw error;
+      }
+      this.systemInstruction = systemInstruction;
+      this.pureMode = pureMode;
+      this.tools = tools;
+      this.engine.tools = tools;
+      this.engine.strictPureMode = pureMode;
+      this.turnProcessor.tools = tools;
+    } finally {
+      this._reconfiguring = false;
     }
   }
 
@@ -209,6 +262,7 @@ class ChatManager {
    */
   setRenderingMode(mode) {
     this.saveConfig("rendering_mode", mode);
+    this.renderingMode = mode;
     this.ui.setRenderingMode(mode);
     if (this.assistant && this.assistant.setRenderingMode) {
       this.assistant.setRenderingMode(mode);
@@ -328,6 +382,7 @@ class ChatManager {
    */
   async processTurn(userInput) {
     if (!userInput?.trim()) return undefined;
+    if (this._reconfiguring) throw new Error("Session reconfiguration is in progress.");
     const { assistant } = this;
     const before = structuredClone(assistant.getHistory());
     this._turnInProgress = true;

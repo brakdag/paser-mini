@@ -29,7 +29,8 @@ command handler, the missing base prompt property and history inferred as `void`
 The history hook now declares its existing array contract; message elements remain
 untyped. Completing T22 resolves another 25 diagnostics through explicit GitHub
 runner fields, correct command/logger calls and an object view for JSON cloning.
-The current inventory contains **209 diagnostics**, with no new debt. T12 removes three occurrences from Z.AI’s obsolete Axios retry interceptor; it adds no exemptions. T11 removes 16 inherited-hook visibility diagnostics by making the shared context policy an explicit adapter contract.
+T14 declares the session provider manager explicitly and resolves its two missing-field diagnostics.
+The current inventory contains **207 diagnostics**, with no new debt. T12 removes three occurrences from Z.AI’s obsolete Axios retry interceptor; it adds no exemptions. T11 removes 16 inherited-hook visibility diagnostics by making the shared context policy an explicit adapter contract.
 
 The retained diagnostics were reviewed by these groups:
 

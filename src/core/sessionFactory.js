@@ -36,13 +36,15 @@ export default async function createSession({
     assistant, tools, systemInstruction, pureMode, ui, user, model, configManager, instanceMode,
   });
   session.providerManager = providerManager;
-  if (!pureMode) {
+  /** Loads and binds contexts only when tools are first enabled. */
+  session.prepareToolContexts = async () => {
+    if (session.toolContexts) return;
     const [memory, system, util] = await Promise.all([
       resolveTool("memoryTools"), resolveTool("systemTools"), resolveTool("utilTools"),
     ]);
-    memory.setMemoryContext(session);
-    system.setContext(assistant, session);
-    util.setIdentityContext(model);
-  }
+    session.toolContexts = { memory, system, util };
+    session.bindToolContexts();
+  };
+  if (!pureMode) await session.prepareToolContexts();
   return session;
 }

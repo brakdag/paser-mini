@@ -64,24 +64,10 @@ class FavoriteCommands {
       if (idx >= 0 && idx < favorites.length) {
         const fav = favorites[idx];
         const providerName = fav.provider;
-        const currentProvider = chatManager.configManager.get(
-          "provider",
-          "GEMINI",
-        );
-
-        if (providerName !== currentProvider) {
-          await chatManager.switchProvider({ providerId: providerName, modelName: fav.model, temp: fav.temp });
-          chatManager.configManager.save("provider", providerName);
-        }
-
-        chatManager.configManager.save("model_name", fav.model);
-        chatManager.configManager.save("default_temperature", fav.temp);
-        chatManager.setTemperature(fav.temp);
-        chatManager.assistant.startChat(
-          fav.model,
-          chatManager.systemInstruction,
-          fav.temp,
-        );
+        await chatManager.switchProvider({ providerId: providerName, modelName: fav.model, temp: fav.temp });
+        chatManager.saveConfig("provider", providerName);
+        chatManager.saveConfig("model_name", fav.model);
+        chatManager.saveConfig("default_temperature", fav.temp);
 
         ui.displayInfo(
           `Loaded favorite ${idx}: ${providerName} | ${fav.model} | Temp: ${fav.temp}`,

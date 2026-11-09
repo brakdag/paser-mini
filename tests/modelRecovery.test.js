@@ -103,6 +103,13 @@ test("/models cancels an in-flight initial message and the next turn uses the se
     },
   });
 
+  manager.providerManager = {
+    async createAdapter() {
+      const next = createAdapter(ui);
+      t.mock.method(next.client, "post", adapter.client.post);
+      return next;
+    },
+  };
   const running = manager.run("Original request");
   const signal = await started.promise;
   terminal.emit("line", "/models models/new 0.4");
@@ -120,7 +127,7 @@ test("/models cancels an in-flight initial message and the next turn uses the se
   assert.equal(getModels.mock.callCount(), 0);
   assert.deepEqual(errors, []);
   assert.ok(messages.includes("New model response"));
-  assert.equal(adapter.getHistory()[0].parts[0].text, "New request");
+  assert.equal(manager.assistant.getHistory()[0].parts[0].text, "New request");
 });
 
 test("Gemini backoff is cancelled without another request or changes to earlier history", { timeout: 1000 }, async (t) => {
@@ -194,6 +201,11 @@ test("/models still lists models and selects a filtered index", async () => {
     },
     model: { name: "old", temperature: 0.7 },
     temperature: 0.7,
+    async switchProvider({ modelName, temp }) {
+      this.assistant.startChat(modelName);
+      Object.assign(this.model, { name: modelName, temperature: temp });
+    },
+    saveConfig() {},
     configManager: { get(key, fallback) { return settings.get(key) ?? fallback; }, save() {} },
   };
   const ui = {

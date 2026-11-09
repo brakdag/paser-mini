@@ -36,14 +36,11 @@ class ModelCommands {
 
       const newTemp = parts[2] ? parseFloat(parts[2]) : chatManager.model.temperature;
 
-      chatManager.configManager.save("model_name", modelName);
-      chatManager.configManager.save("default_temperature", newTemp);
-      Object.assign(chatManager.model, { name: modelName, temperature: newTemp });
-      chatManager.assistant.startChat(
-        modelName,
-        chatManager.systemInstruction,
-        newTemp,
-      );
+      await chatManager.switchProvider({
+        providerId: chatManager.assistant.providerId, modelName, temp: newTemp,
+      });
+      chatManager.saveConfig("model_name", modelName);
+      chatManager.saveConfig("default_temperature", newTemp);
 
       ui.displayInfo(`Model changed to ${modelName} | Temperature: ${newTemp}`);
     } catch (error) {

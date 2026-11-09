@@ -351,13 +351,13 @@ test("context updates use the explicit mode and retain it when omitted", async (
   let executions = 0;
   const tools = { async read() { executions += 1; return "Contents"; } };
   const h = harness(t);
-  h.manager.updateSystemContext("Custom prompt", tools, true);
+  await h.manager.updateSystemContext("Custom prompt", tools, true);
   assert.equal(h.manager.engine.strictPureMode, true);
   assert.equal((await h.manager.engine.executeToolCall("read", { path: "fixture.txt" })).success, false);
   assert.equal(executions, 0);
-  h.manager.updateSystemContext("", tools);
+  await h.manager.updateSystemContext("", tools);
   assert.equal(h.manager.engine.strictPureMode, true);
-  h.manager.updateSystemContext("", tools, false);
+  await h.manager.updateSystemContext("", tools, false);
   assert.equal((await h.manager.engine.executeToolCall("read", { path: "fixture.txt" })).success, true);
   assert.equal(executions, 1);
 });

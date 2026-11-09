@@ -66,7 +66,7 @@ export class SystemTools {
       throw new Error("System context not initialized");
     }
 
-    this.#assistant.hardReset();
+    this.#chatManager.assistant.hardReset();
     this.#chatManager.ui.inputQueue.push(userMessage);
     this.#chatManager.engine.toolTracker.reset();
 

@@ -149,9 +149,9 @@ class SystemCommands {
   static async handleCache(chatManager, ui) {
     try {
       ui.displayInfo("Forcing system cache rebuild...");
-      const { systemInstruction, filteredTools } = await promptManager.rebuildCache();
+      const { systemInstruction, filteredTools, pureMode } = await promptManager.rebuildCache();
 
-      chatManager.updateSystemContext(systemInstruction, filteredTools);
+      await chatManager.updateSystemContext(systemInstruction, filteredTools, pureMode);
 
       promptManager.saveCache();
       ui.displayInfo("Cache rebuilt and updated successfully.");
@@ -298,8 +298,8 @@ class SystemCommands {
           }
 
           // Force hot-reload of system prompt and tools
-          const { systemInstruction, filteredTools } = await promptManager.rebuildCache();
-          chatManager.updateSystemContext(systemInstruction, filteredTools);
+          const { systemInstruction, filteredTools, pureMode } = await promptManager.rebuildCache();
+          await chatManager.updateSystemContext(systemInstruction, filteredTools, pureMode);
           promptManager.saveCache();
 
           ui.displayInfo(`MCP server '${targetServer}' is now ${desiredState ? "ENABLED" : "DISABLED"}.`);
@@ -322,8 +322,8 @@ class SystemCommands {
         try {
           await fsp.writeFile(configPath, JSON.stringify(config, null, 2), "utf8");
           await mcpManager.disconnectServer(targetServer);
-          const { systemInstruction, filteredTools } = await promptManager.rebuildCache();
-          chatManager.updateSystemContext(systemInstruction, filteredTools);
+          const { systemInstruction, filteredTools, pureMode } = await promptManager.rebuildCache();
+          await chatManager.updateSystemContext(systemInstruction, filteredTools, pureMode);
           promptManager.saveCache();
           ui.displayInfo(`Removed MCP server '${targetServer}' from configuration.`);
         } catch (e) {

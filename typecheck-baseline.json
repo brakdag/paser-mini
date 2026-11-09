@@ -10,13 +10,6 @@
     },
     {
       "file": "src/core/chatManager.js",
-      "code": 2339,
-      "message": "Property 'providerManager' does not exist on type 'ChatManager'.",
-      "source": "providerManager",
-      "count": 1
-    },
-    {
-      "file": "src/core/chatManager.js",
       "code": 2345,
       "message": "Argument of type 'unknown' is not assignable to parameter of type 'string'.",
       "source": "this.configManager.get(\"context_window_limit\", DEFAULT_CONTEXT_WINDOW_LIMIT)",
@@ -34,13 +27,6 @@
       "code": 2345,
       "message": "Argument of type '{ [key: string]: (...args: unknown[]) => unknown; }' is not assignable to parameter of type '{ [key: string]: (...args: unknown[]) => Promise<unknown>; }'.\n  'string' index signatures are incompatible.\n    Type '(...args: unknown[]) => unknown' is not assignable to type '(...args: unknown[]) => Promise<unknown>'.\n      Type '{}' is missing the following properties from type 'Promise<unknown>': then, catch, finally, [Symbol.toStringTag]",
       "source": "this.tools",
-      "count": 1
-    },
-    {
-      "file": "src/core/sessionFactory.js",
-      "code": 2339,
-      "message": "Property 'providerManager' does not exist on type 'ChatManager'.",
-      "source": "providerManager",
       "count": 1
     },
     {

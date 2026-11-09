@@ -102,8 +102,21 @@ clears conversation history and retains the current system prompt. The model's
 `reset(user_message)` tool also queues a new user message and resets its tool
 tracker. `/rewrite` replaces the last tracked complete turn and restores its
 history if replacement fails; it does not undo filesystem, network or command
-effects. Reconfiguring between providers remains tracked separately in T14;
-do not assume a cross-provider history conversion contract exists.
+effects. `/connect`, `/models` and loading a favorite prepare a replacement adapter
+before publishing it. They retain identities, rendering/immersion, tool policy,
+catalog and execution permission. A creation, initialization or context-budget
+failure leaves the previous adapter and conversation usable. No remote health
+probe is performed; initialization may consult provider metadata (Cerebras).
+Credentials and generation availability are checked on the next model request.
+
+Changing model or temperature within the same provider preserves the native
+history, including media and turn identifiers. Changing provider restarts the
+conversation and displays a notice; history is not converted between formats.
+Session logs are retained. A successful switch clears the `/rewrite` target and
+tool/repetition tracking. Reconfiguration requires an idle session (overlapping
+operations are rejected). Reloading prompt/tools preserves history and updates the
+pure-mode execution policy together; tools are loaded lazily when leaving pure
+mode. Adapter initialization and prompt/tool reconfiguration are awaited.
 
 `/trunc n` sets a common estimated budget across all twelve providers. The
 allowance includes normalized serialized content, framing, the actual output

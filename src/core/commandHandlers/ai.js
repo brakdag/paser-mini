@@ -80,8 +80,8 @@ class AICommands {
     const { id, defaultModel } = selectedProvider;
 
     await chatManager.switchProvider({ providerId: id, modelName: defaultModel, temp: chatManager.model.temperature });
-    chatManager.configManager.save("provider", id);
-    chatManager.configManager.save("model_name", defaultModel);
+    chatManager.saveConfig("provider", id);
+    chatManager.saveConfig("model_name", defaultModel);
     ui.displayInfo(`Connected to ${id}`);
     return true;
   }
