@@ -35,17 +35,20 @@ async function fixture(t, provider = "gemini") {
 }
 
 providers.forEach(provider => {
-  test(`${provider}: rejects an oversized current input before transport and restores history`, async (t) => {
-    const { adapter, settings, payloads } = await fixture(t, provider);
+  test(`${provider}: truncates oversized current input and continues through transport`, async (t) => {
+    const { adapter, settings, payloads, information } = await fixture(t, provider);
     adapter.injectMessage("user", "Earlier question");
     adapter.injectMessage("model", "Earlier answer");
-    const before = structuredClone(adapter.getHistory());
     settings.context_window_limit = adapter.getMaxOutputTokens() + 800;
-    await assert.rejects(adapter.sendMessage("CURRENT_SOURCE_".repeat(2000)), /CONTEXT_BUDGET/);
-    assert.equal(payloads.length, 0);
-    assert.deepEqual(adapter.getHistory(), before);
-    assert.equal(await adapter.sendMessage("Short question"), "Answer");
+    assert.equal(await adapter.sendMessage(`${"CURRENT_SOURCE_".repeat(2000)}LATEST_END`), "Answer");
     assert.equal(payloads.length, 1);
+    const serialized = JSON.stringify(payloads[0]);
+    assert.ok(serialized.includes("[Context truncated]"));
+    assert.ok(serialized.includes("LATEST_END"));
+    assert.ok(serialized.length < 4000);
+    assert.ok(information.length > 0);
+    assert.equal(await adapter.sendMessage("Short question"), "Answer");
+    assert.equal(payloads.length, 2);
   });
 
   test(`${provider}: removes complete older turns and preserves current source in the final payload`, async (t) => {
@@ -63,15 +66,35 @@ providers.forEach(provider => {
     assert.equal(adapter.getHistory().filter(message => message.role !== "system").length, 2);
   });
 
-  test(`${provider}: checks formatting overhead before transport`, async (t) => {
+  test(`${provider}: truncates formatting overhead before transport`, async (t) => {
     const { adapter, settings, payloads } = await fixture(t, provider);
     settings.context_window_limit = adapter.getMaxOutputTokens() + 900;
-    const before = structuredClone(adapter.getHistory());
-    t.mock.method(adapter, "formatTextForPayload", () => "formatting".repeat(3000));
-    await assert.rejects(adapter.sendMessage("Short question"), /CONTEXT_BUDGET/);
-    assert.equal(payloads.length, 0);
-    assert.deepEqual(adapter.getHistory(), before);
+    t.mock.method(adapter, "formatTextForPayload", (role, text) => role === "system" ? text : "formatting".repeat(3000));
+    assert.equal(await adapter.sendMessage("Short question"), "Answer");
+    assert.equal(payloads.length, 1);
+    assert.ok(JSON.stringify(payloads[0]).includes("[Context truncated]"));
+    assert.ok(JSON.stringify(payloads[0]).length < 4000);
+    const { messages, contents, ...extra } = payloads[0];
+    const input = estimateContextTokens(messages || contents, "", adapter.getCharsPerToken(), extra);
+    assert.ok(input + adapter.getMaxOutputTokens() + 500 <= settings.context_window_limit);
   });
+});
+
+test("truncation preserves structured blocks, pinned instructions and payload schemas", () => {
+  const media = { inline_data: { mime_type: "image/png", data: "YWJj".repeat(1000) } };
+  const messages = [
+    { role: "system", content: "System rules ".repeat(1000) },
+    { role: "developer", content: "Developer rules ".repeat(1000) },
+    { role: "user", parts: [{ text: `HEAD${" output ".repeat(10000)}TAIL` }, media], contextTurn: "active" },
+  ];
+  const extra = { tools: [{ name: "example", description: "Schema ".repeat(1000) }] };
+  const before = structuredClone({ messages, extra });
+  const retained = planContext(messages, contextSettings(1, 4096, 3.5), "", extra);
+  assert.deepEqual(retained.slice(0, 2), messages.slice(0, 2));
+  assert.deepEqual(retained[2].parts[1], media);
+  assert.match(retained[2].parts[0].text, /^HEAD.*\[Context truncated\].*TAIL$/s);
+  assert.equal(retained[2].contextTurn, "active");
+  assert.deepEqual({ messages, extra }, before);
 });
 
 test("common normalization measures content, text and all parts and counts system once", () => {
@@ -86,7 +109,7 @@ test("common normalization measures content, text and all parts and counts syste
   const parts = [{ role: "user", parts: [{ text: "a".repeat(100) }, { text: "b".repeat(100) }] }];
   assert.ok(estimateContextTokens(parts, "", 3.5) > 200 / 3.5);
   const before = structuredClone(parts);
-  assert.throws(() => planContext(parts, contextSettings(600, 64, 3.5), ""), /CONTEXT_BUDGET/);
+  assert.ok(estimateContextTokens(planContext(parts, contextSettings(600, 64, 3.5), ""), "", 3.5) <= 100);
   assert.deepEqual(parts, before);
 });
 
@@ -94,23 +117,23 @@ test("media and wire framing carry an explicit estimate, including extra tool sc
   const image = [{ role: "user", parts: [{ text: "Look" }, { inline_data: { mime_type: "image/png", data: "YWJj" } }] }];
   const text = [{ role: "user", parts: [{ text: "Look" }] }];
   assert.ok(estimateContextTokens(image, "", 3.5) >= estimateContextTokens(text, "", 3.5) + 2048);
-  assert.throws(() => planContext(image, contextSettings(1000, 64, 3.5), ""), /CONTEXT_BUDGET/);
+  assert.deepEqual(planContext(image, contextSettings(1000, 64, 3.5), ""), image);
   assert.ok(estimateContextTokens(text, "", 3.5, { tools: "schema".repeat(500) }) > 800);
 });
 
-test("no fragment of an impossible system/current turn is silently cut", () => {
+test("impossible local limits preserve instructions and allow a soft minimum", () => {
   const messages = [{ role: "user", content: "unchanged", contextTurn: "current" }];
   const before = structuredClone(messages);
-  assert.throws(() => planContext(messages, contextSettings(1000, 64, 3.5), "system".repeat(1000)), /CONTEXT_BUDGET/);
+  assert.deepEqual(planContext(messages, contextSettings(1000, 64, 3.5), "system".repeat(1000)), messages);
   assert.deepEqual(messages, before);
-  assert.throws(() => contextSettings(100, 64, 3.5), /CONTEXT_BUDGET/);
+  assert.equal(contextSettings(100, 64, 3.5).limit, 100);
   [0, -1, 1.5, Infinity, NaN, "12x", true, null, ""].forEach(value => {
     assert.throws(() => contextSettings(8000, value, 3.5), /CONTEXT_CONFIG/);
   });
   assert.deepEqual(planContext(messages, contextSettings(0, 64, 3.5), "x".repeat(10000)), messages);
 });
 
-test("all tool exchanges of the active turn survive or are rejected together", async (t) => {
+test("an oversized tool result is shortened and the active turn continues", async (t) => {
   const { adapter, settings, payloads } = await fixture(t);
   await adapter.sendMessage("Older turn");
   settings.context_window_limit = 1000;
@@ -120,21 +143,21 @@ test("all tool exchanges of the active turn survive or are rejected together", a
   await adapter.sendMessage("Tool result");
   const current = adapter.getHistory().filter(message => message.contextTurn === adapter.getHistory().at(-1).contextTurn);
   assert.equal(current.length, 4);
-  const before = structuredClone(adapter.getHistory());
   const calls = payloads.length;
-  await assert.rejects(adapter.sendMessage("Huge tool result".repeat(1000)), /CONTEXT_BUDGET/);
-  assert.equal(payloads.length, calls);
-  assert.deepEqual(adapter.getHistory(), before);
+  assert.equal(await adapter.sendMessage("Huge tool result".repeat(1000)), "Answer");
+  assert.equal(payloads.length, calls + 1);
+  assert.ok(JSON.stringify(payloads.at(-1)).includes("[Context truncated]"));
+  assert.equal(await adapter.sendMessage("Continue with next tool result"), "Answer");
 });
 
-test("formatting expansion is checked before HTTP and failure restores pruned history", async (t) => {
-  const { adapter, settings, payloads } = await fixture(t);
-  await adapter.sendMessage("Earlier question");
-  settings.context_window_limit = 1000;
+test("transport failure still restores history after truncation", async (t) => {
+  const { adapter, settings } = await fixture(t, "nvidia");
+  await adapter.sendMessage("Earlier question".repeat(500));
+  settings.context_window_limit = adapter.getMaxOutputTokens() + 900;
   const before = structuredClone(adapter.getHistory());
-  t.mock.method(adapter, "formatTextForPayload", () => "formatted overhead".repeat(1000));
-  await assert.rejects(adapter.sendMessage("Short question"), /CONTEXT_BUDGET/);
-  assert.equal(payloads.length, 1);
+  t.mock.method(adapter.restClient, "chatCompletions", async () => { throw new Error("Transport failed"); });
+  t.mock.method(adapter.retryHandler, "execute", async operation => operation());
+  await assert.rejects(adapter.sendMessage("Huge result".repeat(1000)), /Transport failed/);
   assert.deepEqual(adapter.getHistory(), before);
 });
 
@@ -152,15 +175,33 @@ test("context usage indicator labels disabled limits and shares the reserve", as
   assert.match(manager.getTokenCount(), /564 reserved/);
 });
 
-test("proposed budgets are rejected before saving or modifying history", async (t) => {
+test("small budgets are saved without changing history during validation", async (t) => {
   const { adapter } = await fixture(t);
   const manager = Object.create(ChatManager.prototype);
   manager.assistant = adapter;
   manager.contextWindowLimit = 0;
-  /** Fails if an invalid setting reaches persistence. */
-  manager.saveConfig = () => { throw new Error("must not save an invalid budget"); };
+  let saved;
+  /**
+   * Records persistence without writing user configuration.
+   * @param {string} key - Setting name.
+   * @param {number} value - New limit.
+   */
+  manager.saveConfig = (key, value) => { saved = [key, value]; };
   const before = structuredClone(adapter.getHistory());
-  assert.throws(() => manager.setContextWindowLimit(50), /CONTEXT_BUDGET/);
-  assert.equal(manager.contextWindowLimit, 0);
+  manager.setContextWindowLimit(50);
+  assert.equal(manager.contextWindowLimit, 50);
+  assert.deepEqual(saved, ["context_window_limit", 50]);
   assert.deepEqual(adapter.getHistory(), before);
+});
+
+providers.forEach(provider => {
+  test(`${provider}: tiny budget and large system prompt never block sending`, async (t) => {
+    const { adapter, settings, payloads } = await fixture(t, provider);
+    const system = "Preserve these instructions. ".repeat(1000).trim();
+    adapter.updateSystemInstruction(system);
+    settings.context_window_limit = 1;
+    assert.equal(await adapter.sendMessage("Large tool output ".repeat(1000)), "Answer");
+    assert.ok(JSON.stringify(payloads[0]).includes(system));
+    assert.ok(JSON.stringify(payloads[0]).includes("[Context truncated]"));
+  });
 });

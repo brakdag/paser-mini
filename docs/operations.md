@@ -126,15 +126,19 @@ or guarantees of provider acceptance. All `parts`, text and content blocks
 participate in the estimate; final provider payloads are checked again,
 including formatting, system fields and tool schemas.
 
-Trimming removes complete older user turns, including tool/recovery exchanges.
-System/developer instructions and the current turn remain whole. Untagged
-imported history is treated as one legacy unit rather than guessing tool
-boundaries. When the protected content or formatted request cannot fit, sending
-fails with `CONTEXT_BUDGET` and restores the pending request's history. A failed
-transport also restores history removed during preparation. Already completed
-tool effects persist. The proposed `/trunc` setting is checked before saving.
-`max_tokens` must be a positive integer; the budget must exceed its output
-reserve plus protocol overhead.
+Trimming first removes complete older user turns, including tool/recovery
+exchanges. If the active turn still exceeds the budget, its text is shortened
+with a `[Context truncated]` marker, retaining the beginning and end. The final
+formatted request is shortened again when formatting adds overhead. This policy
+also applies to imported history. System/developer instructions, media, tool
+schemas and protocol structure are preserved; each text block retains at least
+128 characters (or its full text if shorter). These mandatory fields and the
+output/protocol reserve impose a soft minimum, so very small limits may be
+exceeded. A local budget never raises `CONTEXT_BUDGET` or stops the agent loop.
+Provider limits and transport errors still apply; failed transport restores
+history removed or shortened during preparation. Already completed tool effects
+persist. `max_tokens` must be a positive integer; any nonnegative integer local
+budget is accepted, including values below the output reserve.
 
 `0` disables the local budget; the UI says so without a percentage against an
 invented model capacity. With a limit enabled, the UI includes the output and

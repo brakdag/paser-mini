@@ -40,9 +40,10 @@ every model available from each service. Remote models may reject image input;
 normal request errors propagate with history rollback. There is no automatic
 model capability discovery or binary-resource download. The unprojected content
 remains in native in-memory history (Gemini uses `sourceContent` alongside its
-parts), including content an adapter cannot send. Normal complete-turn trimming,
-reset and provider changes still remove history according to their documented
-policies. Session logs contain the terminal's textual view, not a binary archive.
+parts), including content an adapter cannot send. Context trimming can remove
+older turns and shorten active text with an explicit marker; binary blocks remain
+intact in retained messages. Reset and provider changes still remove history
+according to their documented policies. Session logs contain the terminal's textual view, not a binary archive.
 
 The terminal displays the tool name, argument detail and a success/failure mark
 (✓/✗). Tool result bodies, resource text and metadata are sent to the model

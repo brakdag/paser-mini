@@ -80,7 +80,7 @@ class SystemCommands {
   }
 
   /**
-   * Handles /trunc with an estimated context budget and complete-turn pruning.
+   * Handles /trunc with an soft context budget and automatic text truncation.
    * @param {object} chatManager The chat manager instance.
    * @param {object} ui The terminal UI instance.
    * @param {string} input The arguments (e.g., 8000).
@@ -104,7 +104,7 @@ class SystemCommands {
       return true;
     }
 
-    // Apply the accepted complete-turn policy immediately.
+    // Apply the accepted truncation policy immediately.
     if (limit > 0 && chatManager.assistant && typeof chatManager.assistant._enforceContextLimit === "function") {
       chatManager.assistant._enforceContextLimit();
     }
@@ -112,7 +112,7 @@ class SystemCommands {
     if (limit === 0) {
       ui.displayInfo("Context truncation DISABLED. Provider context limits still apply.");
     } else {
-      ui.displayInfo(`Context truncation ENABLED. Approximate complete-turn budget: ${limit} tokens.`);
+      ui.displayInfo(`Context truncation ENABLED. Approximate complete-turn budget: ${limit} tokens; active text is shortened if needed, with a minimum for instructions and response reserve.`);
     }
     return true;
   }

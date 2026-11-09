@@ -210,28 +210,29 @@ export default class BaseAdapter {
     planContext(this.getHistory(), settings, this.systemInstruction);
   }
 
-  /** Plans complete-turn trimming atomically; never slices message contents. */
+  /** Removes old turns, then shortens active text without interrupting the request. */
   _enforceContextLimit() {
     this._tagContextEntries();
     const settings = this._contextSettings();
     if (!settings.limit) return;
     const history = this.getHistory();
     const retained = planContext(history, settings, this.systemInstruction);
-    if (retained.length !== history.length) {
+    if (retained.some((message, index) => message !== history[index]) || retained.length !== history.length) {
       const removed = history.length - retained.length;
       history.splice(0, history.length, ...retained);
-      this.ui?.displayInfo?.(`Context estimate: removed ${removed} messages in complete older turns to fit ${settings.limit} tokens.`);
+      this.ui?.displayInfo?.(`Context estimate: removed ${removed} messages in complete older turns; shortened active text if needed (target ${settings.limit} tokens).`);
     }
   }
 
   /**
-   * Validates a formatted payload without destructively trimming messages.
+   * Trims formatted message text using the common non-fatal budget policy.
    * @param {object[]} messages - Final provider messages.
-   * @returns {object[]} The unchanged messages, if within the estimated budget.
+   * @returns {object[]} The retained messages.
    */
   _enforcePayloadLimit(messages) {
-    this._validateContextPayload({ messages });
-    return messages;
+    const payload = { messages };
+    this._validateContextPayload(payload);
+    return payload.messages;
   }
 
   /**
@@ -242,10 +243,13 @@ export default class BaseAdapter {
     const settings = this._contextSettings();
     if (!settings.limit) return;
     const { messages, contents, ...extra } = payload;
-    // Separate system fields are physically sent in addition to the messages.
-    const input = estimateContextTokens(messages || contents || [], "", settings.charsPerToken, extra);
-    if (input + settings.output + 500 > settings.limit) {
-      throw new Error("CONTEXT_BUDGET: formatted payload exceeds the estimated budget; no request sent and no input truncated");
+    // Include physical system fields and schemas in the soft minimum, never slice them.
+    const key = messages ? "messages" : "contents";
+    const original = messages || contents || [];
+    const retained = planContext(original, settings, "", extra);
+    Object.assign(payload, { [key]: retained });
+    if (retained.some((message, index) => message !== original[index]) || retained.length !== original.length) {
+      this.ui?.displayInfo?.(`Context estimate: shortened formatted request text (target ${settings.limit} tokens).`);
     }
   }
 
