@@ -45,13 +45,6 @@
     },
     {
       "file": "src/core/commandHandler.js",
-      "code": 2339,
-      "message": "Property 'handleReload' does not exist on type 'typeof SystemCommands'.",
-      "source": "handleReload",
-      "count": 1
-    },
-    {
-      "file": "src/core/commandHandler.js",
       "code": 2554,
       "message": "Expected 0 arguments, but got 1.",
       "source": "ui",
@@ -126,76 +119,6 @@
       "message": "Type 'Promise<void[]>' is not assignable to type 'Promise<void>'.\n  Type 'void[]' is not assignable to type 'void'.",
       "source": "Promise.all(\n      Array.from(this.clients.keys()).map((name) => this._disconnectServer(name))\n    )",
       "count": 1
-    },
-    {
-      "file": "src/infrastructure/baseAdapter.js",
-      "code": 1345,
-      "message": "An expression of type 'void' cannot be tested for truthiness.",
-      "source": "history",
-      "count": 1
-    },
-    {
-      "file": "src/infrastructure/baseAdapter.js",
-      "code": 2339,
-      "message": "Property 'content' does not exist on type 'never'.",
-      "source": "content",
-      "count": 4
-    },
-    {
-      "file": "src/infrastructure/baseAdapter.js",
-      "code": 2339,
-      "message": "Property 'length' does not exist on type 'never'.",
-      "source": "length",
-      "count": 5
-    },
-    {
-      "file": "src/infrastructure/baseAdapter.js",
-      "code": 2339,
-      "message": "Property 'parts' does not exist on type 'never'.",
-      "source": "parts",
-      "count": 7
-    },
-    {
-      "file": "src/infrastructure/baseAdapter.js",
-      "code": 2339,
-      "message": "Property 'reduce' does not exist on type 'never'.",
-      "source": "reduce",
-      "count": 1
-    },
-    {
-      "file": "src/infrastructure/baseAdapter.js",
-      "code": 2339,
-      "message": "Property 'role' does not exist on type 'never'.",
-      "source": "role",
-      "count": 2
-    },
-    {
-      "file": "src/infrastructure/baseAdapter.js",
-      "code": 2339,
-      "message": "Property 'some' does not exist on type 'never'.",
-      "source": "some",
-      "count": 1
-    },
-    {
-      "file": "src/infrastructure/baseAdapter.js",
-      "code": 2339,
-      "message": "Property 'splice' does not exist on type 'never'.",
-      "source": "splice",
-      "count": 1
-    },
-    {
-      "file": "src/infrastructure/baseAdapter.js",
-      "code": 2339,
-      "message": "Property 'systemInstruction' does not exist on type 'BaseAdapter'.",
-      "source": "systemInstruction",
-      "count": 2
-    },
-    {
-      "file": "src/infrastructure/baseAdapter.js",
-      "code": 2339,
-      "message": "Property 'text' does not exist on type 'never'.",
-      "source": "text",
-      "count": 4
     },
     {
       "file": "src/infrastructure/cerebras/adapter.js",

@@ -321,6 +321,13 @@ parameter order and implementation. It replaces `registry_positional.json`.
 The parser, validator, executable registry and generated prompt use this catalog.
 `execute` remains hidden until `/execute` enables shell access.
 
+`/reload` is an alias for `/cache`: both rebuild the system prompt and tool
+catalog using the startup options, reread the role file and reconcile MCP
+configuration, then save the startup cache. Conversation history is retained.
+They do not reload JavaScript modules or change the provider or model; edited
+modules require restarting. If rebuilding fails, the command reports the error
+and leaves the session prompt and tool registry unchanged so it can be retried.
+
 `concat(destination, source)` now appends the **source file's contents**, rather
 than treating its path as text. Both paths must be inside the project and the
 result is limited to 100 KiB. `push` accepts one argument. `reloadSchemas()`

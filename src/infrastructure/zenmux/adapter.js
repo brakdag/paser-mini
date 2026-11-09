@@ -17,6 +17,8 @@ const FALLBACK_MODELS = ["google/gemini-3.1-pro-preview"];
  * @augments BaseAdapter
  */
 class ZenMuxAdapter extends BaseAdapter {
+  systemInstructionInHistory = true;
+
   /**
    * @param {object} params - The constructor parameters.
    * @param {object} params.ui - The UI interface.

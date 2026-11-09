@@ -12,6 +12,8 @@ const BASE_URL = "https://router.huggingface.co/v1";
  * @augments BaseAdapter
  */
 class HuggingFaceAdapter extends BaseAdapter {
+  systemInstructionInHistory = true;
+
   /**
    * @param {object} params - The constructor parameters.
    * @param {object} params.ui - The UI interface.

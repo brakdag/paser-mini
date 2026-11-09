@@ -14,6 +14,8 @@ const CHARS_PER_TOKEN = 3.5;
  * Adapter for integrating Groq AI models into the system.
  */
 class GroqAdapter extends BaseAdapter {
+  systemInstructionInHistory = true;
+
   /**
    * Initializes the Groq adapter with API client and retry logic.
    * @param {object} params - The constructor parameters.

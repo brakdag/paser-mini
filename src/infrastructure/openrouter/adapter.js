@@ -12,6 +12,8 @@ const BASE_URL = "https://openrouter.ai/api/v1";
  * @augments BaseAdapter
  */
 class OpenRouterAdapter extends BaseAdapter {
+  systemInstructionInHistory = true;
+
   /**
    * @param {object} params - The constructor parameters.
    * @param {object} params.ui - The UI interface.

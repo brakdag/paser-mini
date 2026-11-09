@@ -1,9 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import ChatManager from "../src/core/chatManager.js";
 import SessionCommands from "../src/core/commandHandlers/session.js";
 import GeminiAdapter from "../src/infrastructure/gemini/adapter.js";
 import { UserInterruptException } from "../src/core/exceptions.js";
+import promptManager, { SystemPromptManager } from "../src/core/systemPromptManager.js";
+import mcpManager from "../src/infrastructure/McpManager.js";
 
 /**
  * Creates an offline session with the real turn processor and Gemini history.
@@ -50,6 +55,68 @@ function harness(t, options = {}) {
   assistant.startChat(manager.model.name, manager.systemInstruction);
   return { manager, assistant, errors, messages, payloads, answers };
 }
+
+["/reload", "/cache"].forEach((command) => {
+  test(`${command} rereads the role file and updates tools without clearing history`, async (t) => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "paser-reload-"));
+    t.after(() => fs.rm(dir, { recursive: true, force: true }));
+    t.mock.method(mcpManager, "initialize", async () => {});
+    t.mock.method(mcpManager, "getTools", () => ({}));
+    t.mock.method(mcpManager, "getSchemas", () => ({}));
+    const file = path.join(dir, "role.txt");
+    await fs.writeFile(file, 'Original role\nTOOLS_AVAILABLE = ["read"]');
+    const builder = new SystemPromptManager({ cacheDir: path.join(dir, "cache") });
+    const initial = await builder.buildPrompt({ fileSystemInstruction: file });
+    builder.saveCache();
+    const h = harness(t, { systemInstruction: initial.systemInstruction, tools: initial.filteredTools });
+    h.assistant.injectMessage("user", "Existing conversation");
+    const history = structuredClone(h.assistant.getHistory());
+    t.mock.method(promptManager, "rebuildCache", () => builder.rebuildCache());
+    t.mock.method(promptManager, "saveCache", () => builder.saveCache());
+    await fs.writeFile(file, 'Updated role\nTOOLS_AVAILABLE = ["write"]');
+
+    assert.equal(await h.manager.commandHandler.handle(`  ${command.toUpperCase()}  `), true);
+    assert.match(h.manager.systemInstruction, /Updated role/);
+    assert.doesNotMatch(h.manager.systemInstruction, /Original role/);
+    assert.deepEqual(Object.keys(h.manager.tools), ["write"]);
+    assert.equal(h.manager.engine.tools, h.manager.tools);
+    assert.equal(h.manager.turnProcessor.tools, h.manager.tools);
+    assert.deepEqual(h.assistant.getHistory(), history);
+    assert.equal(h.errors.length, 0);
+    const cache = JSON.parse(await fs.readFile(builder.cacheFile, "utf8"));
+    assert.equal(cache.systemInstruction, h.manager.systemInstruction);
+    assert.deepEqual(cache.filteredToolNames, ["write"]);
+    h.answers.push("Continued answer");
+    await h.manager.processTurn("Continue");
+    assert.match(JSON.stringify(h.payloads[0].systemInstruction), /Updated role/);
+  });
+
+  test(`${command} reports a rebuild failure and permits a later retry`, async (t) => {
+    const h = harness(t);
+    h.assistant.injectMessage("user", "Existing conversation");
+    const history = structuredClone(h.assistant.getHistory());
+    const { tools } = h.manager;
+    const rebuild = t.mock.method(promptManager, "rebuildCache", async () => {
+      throw new Error("Cannot read role file");
+    });
+    const save = t.mock.method(promptManager, "saveCache", () => {});
+    assert.equal(await h.manager.commandHandler.handle(command), true);
+    assert.match(h.errors.at(-1), /Failed to rebuild cache: Cannot read role file/);
+    assert.equal(h.manager.systemInstruction, "Test system");
+    assert.equal(h.manager.tools, tools);
+    assert.equal(save.mock.callCount(), 0);
+    assert.deepEqual(h.assistant.getHistory(), history);
+    rebuild.mock.mockImplementation(async () => ({
+      systemInstruction: "Recovered prompt", filteredTools: {}, pureMode: false,
+    }));
+    assert.equal(await h.manager.commandHandler.handle(command), true);
+    assert.equal(h.manager.systemInstruction, "Recovered prompt");
+    assert.equal(save.mock.callCount(), 1);
+    h.answers.push("Continued answer");
+    await h.manager.processTurn("Continue");
+    assert.equal(h.payloads.length, 1);
+  });
+});
 
 test("/rewrite and /r replace the latest simple turn and preserve earlier history", async (t) => {
   const h = harness(t);

@@ -24,6 +24,8 @@ const CHARS_PER_TOKEN = 3.5;
  * Adapter for integrating Cerebras AI models into the system.
  */
 class CerebrasAdapter extends BaseAdapter {
+  systemInstructionInHistory = true;
+
   /**
    * Initializes the Cerebras adapter with API client and retry logic.
    * @param {object} params - The constructor parameters.

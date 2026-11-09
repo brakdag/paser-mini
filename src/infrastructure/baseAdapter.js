@@ -8,6 +8,8 @@ import logger from "../core/logger.js";
  * Base class for AI adapters. This class is abstract and cannot be instantiated directly.
  */
 export default class BaseAdapter {
+  systemInstructionInHistory = false;
+
   /**
    * @param {object} config - Configuration object for the adapter.
    * @param {object} config.ui - The UI interface.
@@ -40,6 +42,23 @@ export default class BaseAdapter {
   setIdentities(user, model) {
     this.user = user;
     this.model = model;
+  }
+
+  /**
+   * Replaces the prompt without restarting the model or clearing conversation messages.
+   * Adapters that store the prompt in history opt in with systemInstructionInHistory.
+   * @param {string} systemInstruction - The replacement system prompt, or empty to remove it.
+   */
+  updateSystemInstruction(systemInstruction) {
+    this.systemInstruction = systemInstruction;
+    if (!this.systemInstructionInHistory) return;
+    const history = this.getHistory();
+    if (history[0]?.role === "system") {
+      if (systemInstruction) history[0].content = systemInstruction;
+      else history.shift();
+    } else if (systemInstruction) {
+      history.unshift({ role: "system", content: systemInstruction });
+    }
   }
 
   /**
@@ -321,6 +340,8 @@ export default class BaseAdapter {
 
   /**
    * Retrieves the current chat history. Subclasses should return an Array.
+   * @abstract
+   * @returns {Array} The conversation messages, including the system entry when used.
    * @throws {Error} If the method is not implemented by the subclass.
    */
   getHistory() {

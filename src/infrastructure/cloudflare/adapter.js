@@ -15,6 +15,8 @@ const CHARS_PER_TOKEN = 3.5;
  * Adapter for integrating Cloudflare Workers AI models into the system.
  */
 class CloudflareAdapter extends BaseAdapter {
+  systemInstructionInHistory = true;
+
   /**
    * Initializes the Cloudflare adapter with API client and retry logic.
    * @param {object} params - The constructor parameters.

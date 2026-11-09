@@ -17,6 +17,8 @@ const FALLBACK_MODELS = ["poolside/laguna-s-2.1", "poolside/laguna-xs-2.1"];
  * @augments BaseAdapter
  */
 class PoolsideAdapter extends BaseAdapter {
+  systemInstructionInHistory = true;
+
   /**
    * @param {object} params - The constructor parameters.
    * @param {object} params.ui - The UI interface.

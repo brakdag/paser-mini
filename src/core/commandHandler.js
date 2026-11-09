@@ -117,7 +117,7 @@ const COMMAND_MAP = {
    * @param {object} ui The UI.
    * @returns {Promise<boolean>} Always true.
    */
-  "/reload": (cm, ui) => SystemCommands.handleReload(cm, ui),
+  "/reload": (cm, ui) => SystemCommands.handleCache(cm, ui),
   /**
    * @param {import("./chatManager.js").default} cm The chat manager.
    * @param {object} ui The UI.

@@ -180,7 +180,7 @@ class InterfaceCommands {
       ["/help", "Show this help menu"],
       ["/config", "Show current system configuration"],
       ["/models", "Change AI model and temperature"],
-      ["/cache", "Rebuild system prompt and tools cache"],
+      ["/cache | /reload", "Rebuild system prompt and tools cache"],
       ["/fav", "Manage favorite models (/fav, /fav+, /fav -<idx>, /fav <idx>)"],
       ["/reset", "Hard Reset: Clear history and Leap via Bridge Block"],
       ["/rewrite <msg> | /r <msg>", "Replace the last turn, including tool exchanges"],
