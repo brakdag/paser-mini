@@ -4,8 +4,8 @@ import ApiCommunicator from './ApiCommunicator.js';
 import ThoughtExtractor from './thoughtExtractor.js';
 import ToolExecutor from './toolExecutor.js';
 
-const MAX_TOOL_ITERATIONS = 500;
-const MAX_CONSECUTIVE_ERRORS = 50;
+import TurnControl from './turnControl.js';
+import TurnLimitError from './exceptions/TurnLimitError.js';
 
 /**
  * Orchestrates the processing of a single turn, including input handling, 
@@ -20,8 +20,9 @@ class TurnProcessor {
    * @param {object} engine The execution engine for tool calls.
    * @param {object} ui The terminal user interface instance.
    * @param {object} repetitionDetector The detector for identifying repetitive AI responses.
+   * @param {object} [limits] Programmatic turn scheduling limits.
    */
-  constructor(assistant, tools, parser, engine, ui, repetitionDetector) {
+  constructor(assistant, tools, parser, engine, ui, repetitionDetector, limits = {}) {
     this.assistant = assistant;
     this.tools = tools;
     this.parser = parser;
@@ -29,6 +30,9 @@ class TurnProcessor {
     this.ui = ui;
     this.repetitionDetector = repetitionDetector;
     this.api = new ApiCommunicator(assistant, ui);
+    this.limits = limits;
+    /** @type {TurnControl|null} */
+    this.control = null;
   }
 
   /**
@@ -38,65 +42,69 @@ class TurnProcessor {
    * @returns {Promise<void>} A promise that resolves when the turn is complete.
    */
   async process(userInput) {
-    this.engine.toolTracker.reset();
     if (!userInput) return;
+    if (this.control) throw new Error('A turn is already active.');
+    this.engine.toolTracker.reset();
     this.repetitionDetector.reset();
+    this.control = new TurnControl(this.ui, this.limits);
+    try {
+      await this.#processTurn(userInput);
+    } catch (error) {
+      if (!(error instanceof TurnLimitError)) throw error;
+      this.ui.displayError(error.message);
+    } finally {
+      this.control = null;
+    }
+  }
+
+  /** Cancels pending requests and prevents the next action, including during tool execution. */
+  cancelPendingTurn() {
+    if (this.control) this.control.cancelled = true;
+    this.api.cancelPendingRequest();
+  }
+
+  /**
+   * Runs a turn under its shared budget.
+   * @param {string} userInput The submitted input.
+   */
+  async #processTurn(userInput) {
     logger.info('Starting processTurn', { userInput });
-
     let currentResponse = await this.#sendInitialRequest(userInput);
-
+    this.control.check();
     if (this.engine.strictPureMode) {
-      if (currentResponse.trim()) {
-        await this.ui.displayChatMessage(this.ui.model.nickname, currentResponse);
-      }
+      if (currentResponse.trim()) await this.ui.displayChatMessage(this.ui.model.nickname, currentResponse);
       return;
     }
-
-    let turnComplete = false;
-    let iterations = 0;
-    let consecutiveErrors = 0;
-
-    while (!turnComplete && iterations < MAX_TOOL_ITERATIONS) {
-      iterations += 1;
+    while (true) {
+      this.control.check();
       const repetitionCheck = this.repetitionDetector.addText(currentResponse);
-
       if (repetitionCheck !== true) {
         currentResponse = await this.#handleRepetition(repetitionCheck);
       } else {
         currentResponse = ThoughtExtractor.extract(currentResponse, this.ui);
         const toolCalls = this.parser.extractToolCalls(currentResponse);
-
-        if (toolCalls.length === 0) {
-          turnComplete = true;
-        } else {
-          const executionResult = await ToolExecutor.execute(toolCalls, this.engine, this.ui, this.assistant, this.parser);
-          if (executionResult.terminate) return;
-          
-          if (executionResult.errorCount > 0) {
-            consecutiveErrors += executionResult.errorCount;
-          } else {
-            consecutiveErrors = 0;
-          }
-
-          if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
-            currentResponse = await this.api.send('CRITICAL ERROR: Too many consecutive parsing failures. Stop using tools.', { role: 'user' });
-            consecutiveErrors = 0;
-          } else {
-            const resultsPayload = this.#buildResultsPayload(executionResult.results);
-            currentResponse = await this.#sendToolResults(resultsPayload);
-          }
-        }
+        if (toolCalls.length === 0) break;
+        const executionResult = await ToolExecutor.execute(toolCalls, this.engine, this.ui, this.assistant, this.parser, this.control);
+        if (executionResult.terminate) return;
+        currentResponse = await this.#sendToolResults(this.#buildResultsPayload(executionResult.results));
       }
     }
-
-    if (iterations >= MAX_TOOL_ITERATIONS) {
-      this.ui.displayError('Maximum tool iterations reached.');
-    }
-
+    this.control.check();
     const finalResponse = this.parser.cleanResponse(currentResponse);
-    if (finalResponse.trim()) {
-      await this.ui.displayChatMessage(this.ui.model.nickname, finalResponse);
-    }
+    if (finalResponse.trim()) await this.ui.displayChatMessage(this.ui.model.nickname, finalResponse);
+  }
+
+  /**
+   * Applies the shared budget to every exchange, including recovery.
+   * @param {string|Array} message The content to send.
+   * @param {object} [options] Send options.
+   * @returns {Promise<string>} The model response.
+   */
+  async #send(message, options = {}) {
+    this.control.beforeRequest();
+    const response = await this.api.send(message, options);
+    this.control.check();
+    return response;
   }
 
   /**
@@ -106,11 +114,11 @@ class TurnProcessor {
    */
   async #sendInitialRequest(processedInput) {
     try {
-      return await this.api.send(processedInput);
+      return await this.#send(processedInput);
     } catch (e) {
       if (e instanceof GeminiSafetyError || e instanceof GeminiEmptyResponseError) {
         this.ui.displayError(`Model Error: ${e.message}. Last message removed.`);
-        return this.api.send('Model Error: Safety or Empty response. Please rephrase.', { role: 'user' });
+        return this.#send('Model Error: Safety or Empty response. Please rephrase.', { role: 'user' });
       }
       throw e;
     }
@@ -124,7 +132,7 @@ class TurnProcessor {
   async #handleRepetition(repetitionCheck) {
     this.ui.displayChatMessage('system', `-!- Repetition detected: ${repetitionCheck}`);
     this.ui.displayError(`Repetition detected: ${repetitionCheck}`);
-    return this.api.send('ERR: Repetition detected. Please rephrase.', { role: 'user' });
+    return this.#send('ERR: Repetition detected. Please rephrase.', { role: 'user' });
   }
 
   /**
@@ -148,11 +156,11 @@ class TurnProcessor {
    */
   async #sendToolResults(resultsPayload) {
     try {
-      return await this.api.send(resultsPayload, { role: 'user' });
+      return await this.#send(resultsPayload, { role: 'user' });
     } catch (e) {
       if (e instanceof GeminiSafetyError || e instanceof GeminiEmptyResponseError) {
         this.ui.displayError(`Model Error during tool execution: ${e.message}`);
-        return this.api.send('Model Error during tool execution. Please rephrase.', { role: 'user' });
+        return this.#send('Model Error during tool execution. Please rephrase.', { role: 'user' });
       }
       throw e;
     }

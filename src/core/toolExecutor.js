@@ -1,3 +1,4 @@
+import TurnLimitError from "./exceptions/TurnLimitError.js";
 import { UserInterruptException } from "./exceptions.js";
 
 /**
@@ -23,24 +24,28 @@ class ToolExecutor {
    * @param {object} ui The UI instance.
    * @param {object} assistant The assistant instance.
    * @param {object} parser The parser instance.
-   * @returns {Promise<{results: Array, errorCount: number, terminate: boolean}>} The execution results.
+   * @param {import("./turnControl.js").default} [control] The active turn budget.
+   * @returns {Promise<{results: Array, errorCount: number, executionErrorCount: number, terminate: boolean}>} The execution results.
    */
-  static async execute(toolCalls, engine, ui, assistant, parser) {
+  static async execute(toolCalls, engine, ui, assistant, parser, control) {
     const toolResults = [];
     let errorCount = 0;
+    let executionErrorCount = 0;
 
     for (let i = 0; i < toolCalls.length; i += 1) {
+      control?.beforeAction();
+      if (ui.inputQueue?.length) throw new UserInterruptException();
       const call = toolCalls[i];
       if (call.data) {
-        if (ui.inputQueue && ui.inputQueue.length > 0) {
-          throw new UserInterruptException();
-        }
-
         const executionResult = await engine.executeToolCall(
           call.data.name,
           call.data.args,
         );
-        const { response, result } = executionResult;
+        const { response, result, success, terminate } = executionResult;
+        control?.check();
+        if (terminate) throw new TurnLimitError(String(result));
+        if (success === false) executionErrorCount += 1;
+        control?.recordResult(success !== false);
 
         if (result && result.type === FOUNTAIN_INJECTION_TYPE) {
           ui.displayChatMessage("system", result.content);
@@ -49,7 +54,7 @@ class ToolExecutor {
             "user",
             parser.formatToolResponse("OK", "OK", true),
           );
-          return { results: [], errorCount: 0, terminate: true };
+          return { results: [], errorCount: 0, executionErrorCount: 0, terminate: true };
         }
 
         if (result && result.type === QR_DISPLAY_TYPE) {
@@ -57,16 +62,18 @@ class ToolExecutor {
           toolResults.push({
             response: parser.formatToolResponse("qr", "QR code displayed successfully on user terminal.", true),
             result: null,
+            success,
           });
         } else {
-          toolResults.push({ response, result });
+          toolResults.push({ response, result, success });
         }
       } else if (call.error) {
         errorCount += 1;
         toolResults.push(`ERR: ${call.error}`);
+        control?.recordResult(false);
       }
     }
-    return { results: toolResults, errorCount, terminate: false };
+    return { results: toolResults, errorCount, executionErrorCount, terminate: false };
   }
 }
 

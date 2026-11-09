@@ -33,7 +33,7 @@ class ApiCommunicator {
 
   /**
    * Sends a message to the assistant with exponential backoff retry logic.
-   * @param {string} message - The message to send.
+   * @param {string|Array} message - The message to send.
    * @param {object} [options] - The options for the send operation.
    * @param {string} [options.role] - The role of the sender.
    * @param {number} [options.attempt] - The current attempt number.

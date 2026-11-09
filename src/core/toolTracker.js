@@ -1,6 +1,9 @@
+import { createHash } from "node:crypto";
+import { inspect } from "node:util";
 import logger from "./logger.js";
 
 const MAX_ATTEMPTS = 100;
+const MAX_UNCHANGED_RESULTS = 5;
 
 /**
  * Tracks tool call attempts to detect and prevent infinite loops.
@@ -12,6 +15,8 @@ class ToolAttemptTracker {
   constructor() {
     this.attempts = new Map();
     this.maxAttempts = MAX_ATTEMPTS;
+    this.outcomes = new Map();
+    this.maxUnchangedResults = MAX_UNCHANGED_RESULTS;
   }
 
   /**
@@ -24,16 +29,24 @@ class ToolAttemptTracker {
     const key = this._getKey(name, args);
     const count = (this.attempts.get(key) || 0) + 1;
     this.attempts.set(key, count);
-    return count <= this.maxAttempts;
+    return count <= this.maxAttempts
+      && (this.outcomes.get(key)?.unchanged || 0) < this.maxUnchangedResults;
   }
 
   /**
-   * Clears the attempt counter for a specific tool call upon successful execution.
+   * Records unchanged results separately from the total attempt cap. Changed output is progress.
    * @param {string} name The name of the tool.
    * @param {object} args The arguments used in the call.
+   * @param {unknown} result The returned tool value.
    */
-  recordSuccess(name, args) {
-    this.attempts.delete(this._getKey(name, args));
+  recordSuccess(name, args, result) {
+    const key = this._getKey(name, args);
+    const fingerprint = createHash("sha256").update(inspect(result, { depth: null, sorted: true, getters: false, customInspect: false, maxArrayLength: null, maxStringLength: null })).digest("hex");
+    const previous = this.outcomes.get(key);
+    this.outcomes.set(key, {
+      fingerprint,
+      unchanged: previous?.fingerprint === fingerprint ? previous.unchanged + 1 : 1,
+    });
   }
 
   /**
@@ -41,6 +54,7 @@ class ToolAttemptTracker {
    */
   reset() {
     this.attempts.clear();
+    this.outcomes.clear();
   }
 
   /**
@@ -61,7 +75,8 @@ class ToolAttemptTracker {
    * @returns {string} The generated key.
    */
   _getKey(name, args) {
-    return `${name}:${JSON.stringify(args)}`;
+    const fingerprint = createHash("sha256").update(inspect(args, { depth: null, sorted: true, getters: false, customInspect: false, maxArrayLength: null, maxStringLength: null })).digest("hex");
+    return `${name}:${fingerprint}`;
   }
 }
 

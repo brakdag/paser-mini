@@ -1,8 +1,6 @@
 import ToolAttemptTracker from "./toolTracker.js";
 import getToolDetail from "./toolDetailExtractor.js";
 
-const DEFAULT_MAX_TURNS = 10000;
-
 /**
  * ExecutionEngine is responsible for the orchestration of tool calls.
  * It manages tool validation, loop detection, security constraints,
@@ -36,9 +34,6 @@ class ExecutionEngine {
     this.instanceMode = instanceMode;
     this.toolTracker = tracker || new ToolAttemptTracker();
     this.strictPureMode = pureMode || false;
-    this.turnCount = 0;
-    this.maxTurns = DEFAULT_MAX_TURNS;
-    this.stopRequested = false;
   }
 
   /**
@@ -73,7 +68,7 @@ class ExecutionEngine {
    * Executes a specific tool call after performing security and validity checks.
    * @param {string} name - The name of the tool to be executed.
    * @param {object} args - The arguments passed to the tool.
-   * @returns {Promise<{response: string, result: unknown, success: boolean}>} An object containing the formatted response, the raw result, and the success status.
+   * @returns {Promise<{response: string, result: unknown, success: boolean, terminate: boolean}>} An object containing the formatted response, the raw result, and the success status.
    */
   async executeToolCall(name, args) {
     const displayName = name;
@@ -82,18 +77,20 @@ class ExecutionEngine {
     let success = false;
     let detail = "no details";
     let monitoringStarted = false;
+    let terminate = false;
 
     try {
       const validationError = this._validateToolExecution(toolName);
       if (validationError) {
         result = validationError;
       } else if (!this.toolTracker.recordAttempt(toolName, args)) {
-        result = `Tool loop detected: ${toolName} called too many times.`;
+        result = `Tool loop detected: ${toolName} repetition limit reached (unchanged results or total attempts).`;
+        terminate = true;
       } else {
         detail = this._getToolDetail(toolName, args);
 
-        this.ui.startToolMonitoring(displayName, detail);
         monitoringStarted = true;
+        this.ui.startToolMonitoring(displayName, detail);
 
         const toolFunc = this.tools[toolName];
         result = this.toolParser.isPositional(toolName)
@@ -102,16 +99,17 @@ class ExecutionEngine {
         success = true;
       }
     } catch (e) {
+      if (e.name === "UserInterruptException" || e.name === "AbortError" || e.code === "ERR_CANCELED") throw e;
       result = e.message;
       success = false;
-    }
-
-    if (monitoringStarted) {
-      this.ui.endToolMonitoring(displayName, success, detail);
+    } finally {
+      if (monitoringStarted) {
+        this.ui.endToolMonitoring(displayName, success, detail);
+      }
     }
 
     if (success) {
-      this.toolTracker.recordSuccess(toolName, args);
+      this.toolTracker.recordSuccess(toolName, args, result);
     } else {
       this.toolTracker.recordFailure(toolName, args);
     }
@@ -120,6 +118,7 @@ class ExecutionEngine {
       response: this.toolParser.formatToolResponse(detail, result, success),
       result,
       success,
+      terminate,
     };
   }
 }

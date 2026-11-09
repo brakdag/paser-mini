@@ -217,9 +217,11 @@ test("only /models interrupts Gemini, including arguments and mixed case", () =>
   let cancelled = 0;
   const manager = {
     assistant: { providerId: "GEMINI" },
-    turnProcessor: { api: { cancelPendingRequest() { cancelled += 1; } } },
+    turnProcessor: { cancelPendingTurn() { cancelled += 1; } },
   };
-  const handler = new CommandHandler(manager, {});
+  const handler = new CommandHandler(
+    /** @type {import("../src/core/chatManager.js").default} */ (/** @type {unknown} */ (manager)), {},
+  );
   assert.equal(handler.interruptForModelChange("/models"), true);
   assert.equal(handler.interruptForModelChange(" /MoDeLs models/new "), true);
   assert.equal(handler.interruptForModelChange("/models-invalid"), false);

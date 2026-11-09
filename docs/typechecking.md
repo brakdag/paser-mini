@@ -22,12 +22,16 @@ errors and unresolved imports cannot enter the baseline. The compiler version is
 pinned and also recorded in the inventory. Node types come from the locked Node 24
 definitions on both supported runtimes.
 
+T13 resolves two entries: the communicator now accepts the array payload already
+used for tool results, and the command test explicitly types its partial manager
+fixture. The current inventory contains **282 diagnostics**, with no new debt.
+
 The retained diagnostics were reviewed by these groups:
 
 | Files | Existing contract or typing debt | Follow-up |
 | --- | --- | --- |
 | `baseAdapter.js`, provider `adapter.js`, `conversationState.js` | Base history methods inferred as `void`, constructor options narrower than callers, private JSDoc on inherited hooks, timestamp formats, custom HTTP error properties | T11/T12/T14/T15/T19; align contracts while testing each provider |
-| `chatManager.js`, `sessionFactory.js`, `turnProcessor.js`, `terminalUI.js` | Config values typed as `unknown`, sync/async tool and UI return differences, session fields assigned after construction | T13/T14/T20 |
+| `chatManager.js`, `sessionFactory.js`, `terminalUI.js` | Config values typed as `unknown`, sync/async tool and UI return differences, session fields assigned after construction | T13/T14/T20 |
 | `githubModeOrchestrator.js` | TypeScript does not infer instance fields initialized through `Object.assign` | T22; runtime behavior already covered by GitHub fixtures |
 | `commandHandler.js` | `/clear` passes an unused argument, `/help` return annotation differs, `/reload` refers to missing `handleReload` | T22; `/reload` is a real existing dispatch defect, not a claim of type safety |
 | `McpManager.js` | `Promise.all` result is an array of void, while shutdown annotation says void | T20; connection behavior covered by T16 |

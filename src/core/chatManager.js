@@ -100,6 +100,7 @@ class ChatManager {
    */
   requestExit() {
     this.stopRequested = true;
+    this.turnProcessor.cancelPendingTurn();
   }
 
   /**
@@ -389,6 +390,7 @@ class ChatManager {
    */
   stopExecution() {
     this.stopRequested = true;
+    this.turnProcessor.cancelPendingTurn();
   }
 
   /**

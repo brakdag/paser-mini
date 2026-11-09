@@ -279,6 +279,30 @@ show an error in the UI and trigger one rephrase request. A failed rephrase is
 propagated without further recovery. Transport errors retain their original
 cause, HTTP response and error code; interruptions propagate without rephrasing.
 
+### Turn limits and interruption
+
+Each turn allows up to 500 tool-call attempts (including invalid arguments),
+500 model exchanges (including recovery), and 30 minutes of elapsed time.
+Ten consecutive argument or execution failures stop the turn; a successful
+execution resets only that error streak. The UI reports the stop reason and
+returns control without requesting another recovery from the model.
+
+Repeating a tool with the same arguments and unchanged output five times blocks
+the next identical call. Changed output counts as progress, but a given call
+still has a total cap of 100 attempts per turn. Argument property order does not
+change its identity. This is a conservative repetition policy, not proof of
+semantic progress: tools that legitimately return identical acknowledgements
+are subject to the same limit. Every new turn starts with fresh counters.
+
+Queued input or explicit turn cancellation prevents the next tool or model
+exchange. `/models` also interrupts Gemini requests and retry waits. The deadline
+is checked before and after exchanges and tool calls; it stops scheduling work
+but cannot forcibly terminate a tool or transport already running. Provider retry
+budgets, cancellation inside transports, and isolation of executed code remain
+separate concerns (T12/T02). Completed tool effects are not rolled back when a
+turn stops. Programmatic callers can supply positive integer limits and a
+monotonic clock as the final `TurnProcessor` constructor argument.
+
 ## 🜰 Ecosystem Alignment
 For the narrative history of this pod and the character breakdowns of the team, see the [Staff Directory](./docs/staff/).
 

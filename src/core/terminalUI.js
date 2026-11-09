@@ -258,8 +258,9 @@ class TerminalUI {
     if (this.noSpinner) {
       return;
     }
-    const spinner = ora({ text: chalk.yellow(msg), color: "yellow" }).start();
+    const spinner = ora({ text: chalk.yellow(msg), color: "yellow" });
     this.activeSpinners.set(name, spinner);
+    spinner.start();
   }
 
   /**
@@ -312,9 +313,12 @@ class TerminalUI {
    */
   endToolMonitoring(name, success, detail) {
     const spinner = this.activeSpinners.get(name);
-    if (spinner) spinner.stop();
-    this.displayToolStatus(name, success, detail);
-    if (spinner) this.activeSpinners.delete(name);
+    try {
+      if (spinner) spinner.stop();
+      this.displayToolStatus(name, success, detail);
+    } finally {
+      this.activeSpinners.delete(name);
+    }
   }
 
   /**

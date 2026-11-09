@@ -282,7 +282,7 @@ class CommandHandler {
   interruptForModelChange(input) {
     if (!/^\/models(?:\s|$)/i.test(input.trim())) return false;
     if (this.chatManager.assistant.providerId !== "GEMINI") return false;
-    this.chatManager.turnProcessor.api.cancelPendingRequest();
+    this.chatManager.turnProcessor.cancelPendingTurn();
     return true;
   }
 
