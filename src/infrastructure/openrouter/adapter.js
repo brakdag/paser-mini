@@ -12,6 +12,8 @@ const BASE_URL = "https://openrouter.ai/api/v1";
  * @augments BaseAdapter
  */
 class OpenRouterAdapter extends BaseAdapter {
+  supportsImageParts = true;
+
   systemInstructionInHistory = true;
 
   /**

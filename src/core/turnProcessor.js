@@ -1,3 +1,4 @@
+import { toolResultsContent } from "./toolResult.js";
 import logger from './logger.js';
 import { GeminiSafetyError, GeminiEmptyResponseError } from './exceptions.js';
 import ApiCommunicator from './ApiCommunicator.js';
@@ -143,12 +144,7 @@ class TurnProcessor {
    * @returns {string|Array} The formatted payload for the API.
    */
   #buildResultsPayload(toolResults) {
-    const mapped = toolResults.map((r) => {
-      if (typeof r === 'string') return r;
-      return r.result && r.result.mime_type ? r.result : r.response;
-    });
-    const sep = "\n\n";
-    return mapped.every((item) => typeof item === 'string') ? mapped.join(sep) : mapped;
+    return toolResultsContent(toolResults);
   }
 
   /**

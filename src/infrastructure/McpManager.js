@@ -234,14 +234,14 @@ class McpManager {
         /**
          * Executes only while the discovering connection remains registered.
          * @param {object} args - Remote tool arguments.
-         * @returns {Promise<string>} Text blocks from the remote result.
+         * @returns {Promise<object>} Complete remote result, including error status and metadata.
          */
         tools[name] = async (args) => {
           if (this.clients.get(serverName) !== client) {
             throw new Error(`MCP server '${serverName}' is disconnected`);
           }
           const result = await client.callTool({ name: tool.name, arguments: args });
-          return result.content.map((c) => c.text || "").join("\n");
+          return result;
         };
         schemas[name] = tool.inputSchema;
       });

@@ -1,3 +1,4 @@
+import { normalizeToolResult, toolResultText } from "./toolResult.js";
 import ToolAttemptTracker from "./toolTracker.js";
 import getToolDetail from "./toolDetailExtractor.js";
 
@@ -52,11 +53,12 @@ class ExecutionEngine {
    * Executes a specific tool call after performing security and validity checks.
    * @param {string} name - The name of the tool to be executed.
    * @param {object} args - The arguments passed to the tool.
-   * @returns {Promise<{response: string, result: unknown, success: boolean, terminate: boolean}>} An object containing the formatted response, the raw result, and the success status.
+   * @returns {Promise<{response: string, result: unknown, outcome: object, success: boolean, terminate: boolean}>} An object containing the formatted response, the raw result, and the success status.
    */
   async executeToolCall(name, args) {
     let result;
     let success = false;
+    let outcome;
     let detail = "no details";
     let monitoringStarted = false;
     let terminate = false;
@@ -78,7 +80,8 @@ class ExecutionEngine {
         result = this.toolParser.isPositional(name)
           ? await toolFunc(...this.toolParser.buildPositionalArgs(name, args))
           : await toolFunc(args);
-        success = true;
+        outcome = normalizeToolResult(result);
+        success = !outcome.isError;
       }
     } catch (e) {
       if (e.name === "UserInterruptException" || e.name === "AbortError" || e.code === "ERR_CANCELED") throw e;
@@ -90,6 +93,9 @@ class ExecutionEngine {
       }
     }
 
+    outcome ||= normalizeToolResult(result, success);
+    this.ui.displayToolResult?.(name, outcome);
+
     if (success) {
       this.toolTracker.recordSuccess(name, args, result);
     } else {
@@ -97,8 +103,9 @@ class ExecutionEngine {
     }
 
     return {
-      response: this.toolParser.formatToolResponse(detail, result, success),
+      response: this.toolParser.formatToolResponse(detail, toolResultText(outcome), success),
       result,
+      outcome,
       success,
       terminate,
     };

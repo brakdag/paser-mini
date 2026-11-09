@@ -29,6 +29,7 @@ class ConversationState {
    * @returns {string} The formatted message string.
    */
   _formatMessage(role, text, timestamp = null) {
+    if (typeof text !== "string") return "[Structured content retained in history]";
     if (this.renderingMode === "FOUNTAIN") return text;
 
     if (

@@ -93,7 +93,7 @@ test("failed discovery closes the unpublished client and permits a successful re
   assert.deepEqual(manager.getTools(), {});
   assert.equal(Client.prototype.close.mock.callCount(), 1);
   await manager.connectServer("fixture", { command: "fake" });
-  assert.equal(await manager.getTools().mcp_fixture_echo({}), "echo");
+  assert.deepEqual(await manager.getTools().mcp_fixture_echo({}), { content: [{ text: "echo" }] });
   await manager.shutdown();
 });
 
@@ -141,7 +141,7 @@ test("disconnect removes exact ownership and invalidates tools copied into an en
   assert.deepEqual(Object.keys(manager.getTools()), ["mcp_a_child_other"]);
   assert.deepEqual(Object.keys(manager.getSchemas()), ["mcp_a_child_other"]);
   await assert.rejects(copied({}), /disconnected/);
-  assert.equal(await manager.getTools().mcp_a_child_other({}), "other");
+  assert.deepEqual(await manager.getTools().mcp_a_child_other({}), { content: [{ text: "other" }] });
   await manager.shutdown();
 });
 
@@ -174,7 +174,7 @@ test("unexpected close removes tools and a stale close cannot retire a replaceme
   await manager.connectServer("fixture", { command: "fake" });
   oldClient.onclose();
   await assert.rejects(copied({}), /disconnected/);
-  assert.equal(await manager.getTools().mcp_fixture_echo({}), "echo");
+  assert.deepEqual(await manager.getTools().mcp_fixture_echo({}), { content: [{ text: "echo" }] });
   await manager.shutdown();
 });
 
@@ -225,7 +225,7 @@ test("configuration reload reconciles changed, disabled, removed and missing ser
   const options = { injectSystemInstruction: "Fixture role" };
   const initialPrompt = await prompt.buildPrompt(options);
   const copied = initialPrompt.filteredTools.mcp_second_echo;
-  assert.equal(await copied({}), "echo");
+  assert.deepEqual(await copied({}), { content: [{ text: "echo" }] });
   assert.match(initialPrompt.systemInstruction, /mcp_second_echo/);
   prompt.saveCache();
   const previous = manager.clients.get("first");
@@ -254,7 +254,7 @@ test("normalized tool identifiers still invoke the original remote tool name", a
   mockServer(t, ["echo.value"]);
   const manager = fixtureManager();
   await manager.connectServer("fixture-server", { command: "fake" });
-  assert.equal(await manager.getTools().mcp_fixture_server_echo_value({}), "echo.value");
+  assert.deepEqual(await manager.getTools().mcp_fixture_server_echo_value({}), { content: [{ text: "echo.value" }] });
   assert.deepEqual(Object.keys(manager.getSchemas()), ["mcp_fixture_server_echo_value"]);
   await manager.shutdown();
 });

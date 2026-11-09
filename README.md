@@ -232,6 +232,12 @@ serialized to prevent duplicate connections and late discovery after disconnect.
 The application-wide shutdown deadline and resource ownership remain separate
 work tracked in `TODO.md` (T20).
 
+Tool results preserve ordered content blocks and remote error status through the
+engine, terminal and adapters. Image transmission is implemented for Gemini and
+OpenRouter; other adapters explain unsupported media and retain originals in
+in-memory history. See [tool results and media](docs/tool-results.md) for the
+contract, resource handling and Fountain/QR behavior.
+
 ### Command Line Arguments
 | Argument | Short | Description |
 | :--- | :--- | :--- |

@@ -1,4 +1,5 @@
 import axios from "axios";
+import { contentBlocks, describeBlock } from "../contentBlocks.js";
 import logger from "../../core/logger.js";
 import BaseAdapter from "../baseAdapter.js";
 import IRCFormatter from "../../utils/ircFormatter.js";
@@ -133,33 +134,16 @@ class GeminiAdapter extends BaseAdapter {
    * @returns {Array<object>} An array of Gemini API parts.
    */
   _createParts(content) {
-    if (Array.isArray(content)) {
-      return content.flatMap((item) => {
-        if (typeof item === "string") return [{ text: item }];
-        if (item && typeof item === "object" && item.mime_type && item.data) {
-          return [
-            { inline_data: { mime_type: item.mime_type, data: item.data } },
-            { text: `Image resolution: ${item.resolution || "unknown"}` },
-          ];
-        }
-        return [{ text: item === undefined ? "" : JSON.stringify(item) }];
-      });
-    }
-    if (typeof content === "string") {
-      return [{ text: content }];
-    }
-    if (
-      content &&
-      typeof content === "object" &&
-      content.mime_type &&
-      content.data
-    ) {
-      return [
-        { inline_data: { mime_type: content.mime_type, data: content.data } },
-        { text: `Image resolution: ${content.resolution || "unknown"}` },
-      ];
-    }
-    return [{ text: content === undefined ? "" : JSON.stringify(content) }];
+    return contentBlocks(content).map(block => {
+      if (block.type === "image" && block.data && block.mimeType) {
+        return { inline_data: { mime_type: block.mimeType, data: block.data } };
+      }
+      if (block.type === "image_url") {
+        const match = /^data:([^;]+);base64,([\s\S]+)$/.exec(block.image_url?.url || "");
+        if (match) return { inline_data: { mime_type: match[1], data: match[2] } };
+      }
+      return { text: describeBlock(block, "GeminiAdapter") };
+    });
   }
 
   /**
@@ -176,6 +160,7 @@ class GeminiAdapter extends BaseAdapter {
     this.history.push({
       role,
       parts,
+      ...(content && typeof content === "object" ? { sourceContent: structuredClone(content) } : {}),
       timestamp: ts,
     });
   }

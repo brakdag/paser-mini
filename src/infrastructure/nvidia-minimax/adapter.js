@@ -134,7 +134,7 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
     }
 
     history.forEach((m) => {
-      const text = typeof m.text === "string" ? m.text : JSON.stringify(m.text);
+      const {text} = m;
       messages.push({
         role: m.role === "model" ? "assistant" : m.role,
         content: this.formatTextForPayload(m.role, text, m.timestamp),

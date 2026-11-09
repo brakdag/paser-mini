@@ -1,3 +1,4 @@
+import { contentBlocks } from "./contentBlocks.js";
 /**
  * Shared utilities for normalizing chat history across AI adapters.
  */
@@ -31,7 +32,8 @@ export function normalizeContent(content, apiRole) {
       { type: 'image_url', image_url: { url: `data:${content.mime_type};base64,${content.data}` } },
     ];
   } else if (Array.isArray(content)) {
-    finalContent = content.join('\n');
+    finalContent = contentBlocks(content).map(block => (block.type === "text" && apiRole === "assistant"
+      ? { ...block, text: block.text.replace(/<thought>[\s\S]*?<\/thought>/gi, "").trim() } : block));
   }
 
   if (typeof finalContent === 'string' && apiRole === 'assistant') {

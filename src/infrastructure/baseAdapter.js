@@ -1,5 +1,6 @@
 import { setTimeout as delay } from "node:timers/promises";
 import { randomUUID } from "node:crypto";
+import { providerContent } from "./contentBlocks.js";
 import IRCFormat from "../formats/IRCFormat.js";
 import CleanFormat from "../formats/CleanFormat.js";
 import FountainFormat from "../formats/FountainFormat.js";
@@ -12,6 +13,8 @@ import { contextSettings, estimateContextTokens, planContext } from "./contextBu
  */
 export default class BaseAdapter {
   systemInstructionInHistory = false;
+
+  supportsImageParts = false;
 
   /** @type {import("../utils/retryHandler.js").default|undefined} */
   retryHandler;
@@ -92,13 +95,18 @@ export default class BaseAdapter {
   /**
    * Formats text for the API payload based on the current Immersion Mode.
    * @param {string} role - The role of the sender ('user' or 'model'/'assistant').
-   * @param {string} text - The raw text content.
+   * @param {string|object|Array} text - The raw content.
    * @param {string|null} [timestamp] - Optional timestamp.
-   * @returns {string} The formatted text.
+   * @returns {string|Array} The formatted content.
    */
   formatTextForPayload(role, text, timestamp = null) {
+    const projected = providerContent(text, this.constructor.name, this.supportsImageParts);
+    if (Array.isArray(projected)) {
+      return projected.map(block => (block.type === "text"
+        ? { ...block, text: this.formatTextForPayload(role, block.text, timestamp) } : block));
+    }
     if (!this.immersionMode || this.renderingMode === "CLEAN") {
-      return text;
+      return projected;
     }
 
     let normalizedRole = role;
@@ -115,13 +123,13 @@ export default class BaseAdapter {
     }
 
     if (this.renderingMode === "IRC") {
-      return this.ircFormatter.formatMessage(nickname, text, timestamp);
+      return this.ircFormatter.formatMessage(nickname, projected, timestamp);
     }
     if (this.renderingMode === "FOUNTAIN") {
-      return this.fountainFormatter.formatMessage(nickname, text);
+      return this.fountainFormatter.formatMessage(nickname, projected);
     }
 
-    return text;
+    return projected;
   }
 
   /**

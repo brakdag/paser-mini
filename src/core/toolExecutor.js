@@ -1,3 +1,4 @@
+import { toolResultsContent } from "./toolResult.js";
 import TurnLimitError from "./exceptions/TurnLimitError.js";
 import { UserInterruptException } from "./exceptions.js";
 
@@ -41,15 +42,17 @@ class ToolExecutor {
           call.data.name,
           call.data.args,
         );
-        const { response, result, success, terminate } = executionResult;
+        const { response, result, outcome, success, terminate } = executionResult;
+        const action = outcome?.action || (!outcome && result);
         control?.check();
         if (terminate) throw new TurnLimitError(String(result));
         if (success === false) executionErrorCount += 1;
         control?.recordResult(success !== false);
 
-        if (result && result.type === FOUNTAIN_INJECTION_TYPE) {
-          ui.displayChatMessage("system", result.content);
-          assistant.injectMessage("user", result.content);
+        if (success !== false && action && action.type === FOUNTAIN_INJECTION_TYPE) {
+          if (toolResults.length) assistant.injectMessage("user", toolResultsContent(toolResults));
+          ui.displayChatMessage("system", action.content);
+          assistant.injectMessage("user", action.content);
           assistant.injectMessage(
             "user",
             parser.formatToolResponse("OK", "OK", true),
@@ -57,15 +60,15 @@ class ToolExecutor {
           return { results: [], errorCount: 0, executionErrorCount: 0, terminate: true };
         }
 
-        if (result && result.type === QR_DISPLAY_TYPE) {
-          ui.displayRawMessage(result.content);
+        if (success !== false && action && action.type === QR_DISPLAY_TYPE) {
+          ui.displayRawMessage(action.content);
           toolResults.push({
             response: parser.formatToolResponse("qr", "QR code displayed successfully on user terminal.", true),
             result: null,
             success,
           });
         } else {
-          toolResults.push({ response, result, success });
+          toolResults.push({ name: call.data.name, response, result, outcome, success });
         }
       } else if (call.error) {
         errorCount += 1;

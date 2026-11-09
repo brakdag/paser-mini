@@ -138,9 +138,9 @@ reserve plus protocol overhead.
 
 `0` disables the local budget; the UI says so without a percentage against an
 invented model capacity. With a limit enabled, the UI includes the output and
-protocol reserve in its estimate. Provider limits still apply. The result/media
-preservation contract remains tracked in T15; this policy budgets the content
-that the current adapters actually preserve.
+protocol reserve in its estimate. Provider limits still apply. See the
+[result/media contract](tool-results.md) for block preservation, adapter
+projections and explicit unsupported-content responses.
 
 | Operation | Observable effects |
 | --- | --- |
@@ -162,8 +162,8 @@ execute code or modify files. Completed effects persist when a turn fails or
 is cancelled. Model requests share five total attempts and a ten-minute deadline
 covering transport and waits; `/models` cancels them for every provider. See the
 README request retry policy for programmatic limits and remote generation effects.
-The common result/media contract and shutdown ownership remain T15 and T20. `run` has its own
-terminating OS deadline.
+Shutdown ownership remains tracked in T20. `run` has its own terminating OS
+deadline.
 
 ## Generated files and quality configuration
 

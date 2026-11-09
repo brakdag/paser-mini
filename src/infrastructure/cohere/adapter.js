@@ -1,4 +1,5 @@
 import axios from "axios";
+import { contentBlocks } from "../contentBlocks.js";
 import BaseAdapter from "../baseAdapter.js";
 import logger from "../../core/logger.js";
 import IRCFormatter from "../../utils/ircFormatter.js";
@@ -241,16 +242,18 @@ class CohereAdapter extends BaseAdapter {
     const lastMessage = this.history[this.history.length - 1];
 
     const safeRole = apiRole === 'assistant' ? 'assistant' : 'user';
-    let safeContent = typeof finalContent === 'string' ? finalContent : JSON.stringify(finalContent);
+    let safeContent = finalContent;
 
-    if (safeRole === 'assistant') {
+    if (safeRole === 'assistant' && typeof safeContent === 'string') {
       // Purga infalible de tokens locales para evitar fallos de codificacion
       safeContent = safeContent.split(SCHWA).join('Action: ');
       safeContent = safeContent.split('[TOOL_EXEC]').join('[Executing Action]');
     }
 
     if (lastMessage && lastMessage.role === safeRole) {
-      lastMessage.content += `\n${safeContent}`;
+      lastMessage.content = typeof lastMessage.content === "string" && typeof safeContent === "string"
+        ? `${lastMessage.content}\n${safeContent}`
+        : [...contentBlocks(lastMessage.content), ...contentBlocks(safeContent)];
       lastMessage.timestamp = lastMessage.timestamp || timestamp || IRCFormatter.getTimestamp();
     } else {
       this.history.push({

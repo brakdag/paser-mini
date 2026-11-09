@@ -111,7 +111,7 @@ class NvidiaAdapter extends BaseAdapter {
     const history = this.state.getRawHistory();
     const processedHistory = history.map((m) => ({
       ...m,
-      text: this.formatTextForPayload(m.role, typeof m.text === 'string' ? m.text : JSON.stringify(m.text), m.timestamp),
+      text: this.formatTextForPayload(m.role, m.text, m.timestamp),
     }));
 
     const payload = PayloadMapper.toNvidia({
