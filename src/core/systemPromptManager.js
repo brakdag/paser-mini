@@ -1,6 +1,8 @@
 import fs from "fs";
 import fsp from "fs/promises";
 import path from "path";
+import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
 import {
   generateSystemInstruction,
   AVAILABLE_TOOLS,
@@ -8,8 +10,7 @@ import {
 import mcpManager from "../infrastructure/McpManager.js";
 import logger from "./logger.js";
 
-const CACHE_DIR = path.join(process.cwd(), ".paser-mini/cache");
-const CACHE_FILE = path.join(CACHE_DIR, "startup.json");
+const APP_ROOT = fileURLToPath(new URL("../../", import.meta.url));
 
 /**
  * SystemPromptManager handles the construction of the system prompt,
@@ -18,8 +19,12 @@ const CACHE_FILE = path.join(CACHE_DIR, "startup.json");
 export class SystemPromptManager {
   /**
    * Initializes the SystemPromptManager.
+   * @param {object} [settings] - Storage settings.
+   * @param {string} [settings.cacheDir] - Startup cache directory.
    */
-  constructor() {
+  constructor({ cacheDir = path.join(process.cwd(), ".paser-mini/cache") } = {}) {
+    this.cacheDir = cacheDir;
+    this.cacheFile = path.join(cacheDir, "startup.json");
     this._pendingCache = null;
     this._options = null;
     this._forceRebuild = false;
@@ -75,7 +80,7 @@ export class SystemPromptManager {
     // --- MCP Integration ---
     await mcpManager.initialize();
     const mcpTools = mcpManager.getTools();
-    Object.assign(AVAILABLE_TOOLS, mcpTools);
+    const availableTools = { ...AVAILABLE_TOOLS, ...mcpTools };
     const mcpSchemas = mcpManager.getSchemas();
     // -----------------------
 
@@ -85,21 +90,33 @@ export class SystemPromptManager {
       ((await this._exists(defaultPath)) ? defaultPath : null);
 
     const dependencies = [
-      "src/infrastructure/toolDefinitions.js",
-      "src/core/schemas.js",
-      "src/infrastructure/system_instruction.json",
+      path.join(APP_ROOT, "src/infrastructure/toolDefinitions.js"),
+      path.join(APP_ROOT, "src/core/schemas.js"),
+      path.join(APP_ROOT, "src/infrastructure/system_instruction.json"),
       path.join(".paser-mini", "config", "mcp.json"),
       ...(injectionFile ? [injectionFile] : []),
     ];
 
-    const currentMtimes = await this._getMtimes(dependencies);
+    const dependencyPaths = dependencies.map((file) => path.resolve(file));
+    const currentMtimes = await this._getMtimes(dependencyPaths);
+    const hashes = await Promise.all(dependencyPaths.map(async (file) => {
+      try {
+        return createHash("sha256").update(await fsp.readFile(file)).digest("hex");
+      } catch {
+        return null;
+      }
+    }));
+    const catalogKey = JSON.stringify({ names: Object.keys(availableTools).sort(), schemas: mcpSchemas });
+    const date = new Date().toDateString();
 
     if (!this._forceRebuild) {
       try {
-        const cacheData = JSON.parse(await fsp.readFile(CACHE_FILE, "utf8"));
-        const isCacheValid = dependencies.every(
-          (_, i) => cacheData.mtimes[i] === currentMtimes[i],
-        );
+        const cacheData = JSON.parse(await fsp.readFile(this.cacheFile, "utf8"));
+        const isCacheValid =
+          cacheData.date === date && cacheData.catalogKey === catalogKey &&
+          JSON.stringify(cacheData.hashes) === JSON.stringify(hashes) &&
+          JSON.stringify(cacheData.dependencies) === JSON.stringify(dependencyPaths) &&
+          dependencyPaths.every((_, i) => cacheData.mtimes[i] === currentMtimes[i]);
 
         const optionsMatch =
           cacheData.options.pureMode === false &&
@@ -109,7 +126,7 @@ export class SystemPromptManager {
 
         if (isCacheValid && optionsMatch) {
           const filteredTools = Object.fromEntries(
-            Object.entries(AVAILABLE_TOOLS).filter(
+            Object.entries(availableTools).filter(
               ([name]) =>
                 cacheData.filteredToolNames.includes(name) ||
                 name.startsWith("mcp_"),
@@ -130,7 +147,7 @@ export class SystemPromptManager {
     }
 
     let injection = "";
-    let filteredTools = { ...AVAILABLE_TOOLS };
+    let filteredTools = { ...availableTools };
 
     if (options.injectSystemInstruction) {
       injection = options.injectSystemInstruction;
@@ -142,7 +159,7 @@ export class SystemPromptManager {
         try {
           const availableList = JSON.parse(toolsMatch[1]);
           filteredTools = Object.fromEntries(
-            Object.entries(AVAILABLE_TOOLS).filter(
+            Object.entries(availableTools).filter(
               ([name]) =>
                 availableList.includes(name) || name.startsWith("mcp_"),
             ),
@@ -164,6 +181,10 @@ export class SystemPromptManager {
       : baseInstr;
 
     this._pendingCache = {
+      date,
+      catalogKey,
+      hashes,
+      dependencies: dependencyPaths,
       mtimes: currentMtimes,
       options: {
         pureMode: false,
@@ -205,10 +226,10 @@ export class SystemPromptManager {
     if (!this._pendingCache) return;
 
     try {
-      if (!fs.existsSync(CACHE_DIR)) {
-        fs.mkdirSync(CACHE_DIR, { recursive: true });
+      if (!fs.existsSync(this.cacheDir)) {
+        fs.mkdirSync(this.cacheDir, { recursive: true });
       }
-      fs.writeFileSync(CACHE_FILE, JSON.stringify(this._pendingCache), "utf8");
+      fs.writeFileSync(this.cacheFile, JSON.stringify(this._pendingCache), "utf8");
       this._pendingCache = null;
     } catch (err) {
       logger.warn(`Could not write startup cache on exit: ${err.message}`);

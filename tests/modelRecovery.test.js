@@ -12,7 +12,7 @@ import RetryHandler from "../src/utils/retryHandler.js";
 
 /**
  * Creates a promise that test callbacks can resolve.
- * @returns {{promise: Promise<unknown>, resolve: Function}} The deferred result.
+ * @returns {{promise: Promise<unknown>, resolve: (value?: unknown) => void}} The deferred result.
  */
 function deferred() {
   let resolve;
@@ -28,7 +28,7 @@ function deferred() {
 function createAdapter(ui = {}) {
   const adapter = new GeminiAdapter({
     ui,
-    configManager: { get: (key, fallback) => key === "rpm_limit" ? 60000000 : fallback },
+    configManager: { get(key, fallback) { return key === "rpm_limit" ? 60000000 : fallback; } },
   });
   adapter.providerId = "GEMINI";
   return adapter;
@@ -56,6 +56,7 @@ test("/models cancels an in-flight initial message and the next turn uses the se
   const changed = deferred();
   const errors = [];
   const messages = [];
+  let manager;
   const ui = {
     setBashEnabled() {},
     setRenderingMode() {},
@@ -89,7 +90,7 @@ test("/models cancels an in-flight initial message and the next turn uses the se
     throw new Error("Changing by name must not fetch the catalog");
   });
   const settings = new Map();
-  const manager = new ChatManager({
+  manager = new ChatManager({
     assistant: adapter,
     tools: {},
     systemInstruction: "Test prompt",
@@ -97,8 +98,8 @@ test("/models cancels an in-flight initial message and the next turn uses the se
     user: { nickname: "user" },
     model: { nickname: "agent", name: "models/old", temperature: 0.7 },
     configManager: {
-      get: (key, fallback) => settings.has(key) ? settings.get(key) : fallback,
-      save: (key, value) => settings.set(key, value),
+      get(key, fallback) { return settings.has(key) ? settings.get(key) : fallback; },
+      save(key, value) { settings.set(key, value); },
     },
   });
 
@@ -124,7 +125,7 @@ test("/models cancels an in-flight initial message and the next turn uses the se
 
 test("Gemini backoff is cancelled without another request or changes to earlier history", { timeout: 1000 }, async (t) => {
   const retrying = deferred();
-  const adapter = createAdapter({ displayInfo: () => retrying.resolve() });
+  const adapter = createAdapter({ displayInfo() { retrying.resolve(); } });
   adapter.injectMessage("user", "Earlier context");
   const post = t.mock.method(adapter.client, "post", async () => { throw serviceError(); });
   const api = new ApiCommunicator(adapter, {});
@@ -144,7 +145,7 @@ test("cancellation also interrupts the outer API backoff", { timeout: 1000 }, as
   let attempts = 0;
   const api = new ApiCommunicator({
     async sendMessage() { attempts += 1; throw serviceError(); },
-  }, { displayError: () => retrying.resolve() });
+  }, { displayError() { retrying.resolve(); } });
   api.baseDelay = 300000;
   const rejected = assert.rejects(api.send("Request"), { name: "UserInterruptException" });
   await retrying.promise;
@@ -155,6 +156,12 @@ test("cancellation also interrupts the outer API backoff", { timeout: 1000 }, as
 
 test("cancelling the Gemini rate-limit wait sends no HTTP request", { timeout: 1000 }, async (t) => {
   const adapter = createAdapter();
+  /**
+   * Forces a rate-limit wait to exercise cancellation.
+   * @param {string} key - Setting name.
+   * @param {unknown} fallback - Default value.
+   * @returns {unknown} RPM setting or default value.
+   */
   adapter.configManager.get = (key, fallback) => key === "rpm_limit" ? 1 : fallback;
   adapter.lastRequestTime = Date.now();
   const post = t.mock.method(adapter.client, "post");
@@ -186,17 +193,17 @@ test("/models still lists models and selects a filtered index", async () => {
   const settings = new Map([["unavailable_models", ["models/hidden"]]]);
   const chatManager = {
     assistant: {
-      getAvailableModels: async () => ["models/hidden", "models/available"],
+      async getAvailableModels() { return ["models/hidden", "models/available"]; },
       startChat(name) { this.currentModel = name; },
     },
     model: { name: "old", temperature: 0.7 },
     temperature: 0.7,
-    configManager: { get: (key, fallback) => settings.get(key) ?? fallback, save() {} },
+    configManager: { get(key, fallback) { return settings.get(key) ?? fallback; }, save() {} },
   };
   const ui = {
-    displayMenu: (title, models) => menus.push(models),
+    displayMenu(title, models) { menus.push(models); },
     displayInfo() {},
-    displayError: (message) => errors.push(message),
+    displayError(message) { errors.push(message); },
   };
   await ModelCommands.handleModels(chatManager, ui, ["/models"]);
   await ModelCommands.handleModels(chatManager, ui, ["/models", "0"]);

@@ -40,6 +40,7 @@ class TurnProcessor {
   async process(userInput) {
     this.engine.toolTracker.reset();
     if (!userInput) return;
+    this.repetitionDetector.reset();
     logger.info('Starting processTurn', { userInput });
 
     let currentResponse = await this.#sendInitialRequest(userInput);

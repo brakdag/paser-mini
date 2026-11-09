@@ -38,8 +38,7 @@ class ModelCommands {
 
       chatManager.configManager.save("model_name", modelName);
       chatManager.configManager.save("default_temperature", newTemp);
-      chatManager.model.name = modelName;
-      chatManager.model.temperature = newTemp;
+      Object.assign(chatManager.model, { name: modelName, temperature: newTemp });
       chatManager.assistant.startChat(
         modelName,
         chatManager.systemInstruction,

@@ -1,8 +1,8 @@
+import { setTimeout as delay } from "node:timers/promises";
 import IRCFormat from "../formats/IRCFormat.js";
 import CleanFormat from "../formats/CleanFormat.js";
 import FountainFormat from "../formats/FountainFormat.js";
 import logger from "../core/logger.js";
-import { setTimeout as delay } from "node:timers/promises";
 
 /**
  * Base class for AI adapters. This class is abstract and cannot be instantiated directly.

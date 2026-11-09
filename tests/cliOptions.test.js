@@ -67,14 +67,14 @@ test("the last system instruction option wins when positive and negative flags a
     t.mock.method(mcpManager, "getSchemas", () => ({}));
     const manager = new SystemPromptManager();
     t.mock.method(manager, "_exists", async () => false);
-    t.mock.method(manager, "_getMtimes", async () => [0, 0, 0, 0]);
-    t.mock.method(fsp, "readFile", async () => JSON.stringify({
-      mtimes: [0, 0, 0, 0],
-      options: { systemInstruction: "", ...(hasExplicitMode ? { pureMode: false } : {}) },
-      filteredToolNames: ["read"],
-      systemInstruction: "Cached prompt",
-    }));
-    const context = await manager.buildPrompt(parseCliOptions(["node", "paser-mini", "-si", ""]));
+    const options = parseCliOptions(["node", "paser-mini", "-si", ""]);
+    await manager.buildPrompt(options);
+    const cache = { ...manager._pendingCache, systemInstruction: "Cached prompt" };
+    if (!hasExplicitMode) delete cache.options.pureMode;
+    const readFile = fsp.readFile.bind(fsp);
+    t.mock.method(fsp, "readFile", async (file, ...args) =>
+      file === manager.cacheFile ? JSON.stringify(cache) : readFile(file, ...args));
+    const context = await manager.buildPrompt(options);
     assert.equal(context.pureMode, false);
     assert.equal(typeof context.filteredTools.read, "function");
     assert.equal(context.systemInstruction, hasExplicitMode ? "Cached prompt" : "");

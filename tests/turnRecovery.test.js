@@ -288,3 +288,19 @@ test("HTTP status and provider details survive wrapping with the original cause"
   assert.equal(h.transport.mock.callCount(), 1);
   assert.deepEqual(h.errors, []);
 });
+
+test("independent turns do not inherit repetition history", async (t) => {
+  const h = harness(t, async () => reply("same answer"));
+  h.processor.repetitionDetector = new RepetitionDetector(2, 2);
+
+  await h.processor.process("First question");
+  await h.processor.process("Second question");
+
+  assert.equal(h.transport.mock.callCount(), 2);
+  assert.deepEqual(h.errors, []);
+  assert.deepEqual(h.messages, [
+    { nick: "agent", message: "same answer" },
+    { nick: "agent", message: "same answer" },
+  ]);
+  assert.deepEqual(h.processor.repetitionDetector.buffer, ["same", "answer"]);
+});

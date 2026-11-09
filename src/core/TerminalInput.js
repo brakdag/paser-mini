@@ -42,9 +42,10 @@ class TerminalInput {
         const resolve = this.inputResolver;
         this.inputResolver = null;
         resolve(trimmed);
+      } else if (modelChange) {
+        this.inputQueue.unshift(trimmed);
       } else {
-        if (modelChange) this.inputQueue.unshift(trimmed);
-        else this.inputQueue.push(trimmed);
+        this.inputQueue.push(trimmed);
       }
     });
   }

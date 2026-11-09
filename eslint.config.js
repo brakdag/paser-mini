@@ -6,6 +6,7 @@ import jsdoc from "eslint-plugin-jsdoc";
 import globals from "globals";
 
 export default [
+  { ignores: ["tests/errores/**"] },
   {
     plugins: {
       "import-x": importX,

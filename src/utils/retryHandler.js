@@ -48,6 +48,7 @@ class RetryHandler {
    * @private
    */
   _isRecoverable(error, recoverableMessages) {
+    if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') return false;
     if (error.name === 'ServiceDegradedError') return true;
     
     // Check HTTP status codes (500, 429, 503, etc.) in the wrapped object
@@ -82,14 +83,16 @@ class RetryHandler {
     for (let attempt = 1; attempt <= this.maxRetries; attempt += 1) {
       signal?.throwIfAborted();
       try {
-        return await fn();
+        const result = await fn();
+        signal?.throwIfAborted();
+        return result;
       } catch (error) {
         signal?.throwIfAborted();
         lastError = error;
         
         const isRecoverable = this._isRecoverable(error, recoverableErrors);
 
-        if (!isRecoverable) {
+        if (!isRecoverable || attempt === this.maxRetries) {
           throw error;
         }
 

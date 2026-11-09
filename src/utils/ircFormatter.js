@@ -46,18 +46,17 @@ class IRCFormatter {
    * Formats a message for terminal output with colors.
    * @param {string} nickname - The nickname of the message sender.
    * @param {string} text - The message content.
-   * @param {string} agentNickname - The nickname of the AI agent.
+   * @param {string} _agentNickname - The nickname of the AI agent.
    * @param {string} [timestamp] - Optional override for the timestamp.
    * @returns {string} The formatted terminal message string with colors.
    */
   static formatTerminalMessage(
     nickname,
     text,
-    agentNickname,
+    _agentNickname,
     timestamp = null,
   ) {
     const ts = timestamp || this.getTimestamp();
-    const nameColor = nickname === agentNickname ? chalk.cyan : chalk.green;
     return `[${ts}] <${nickname}> ${text}`;
   }
 
