@@ -67,6 +67,27 @@ Configure your API key in your `.bashrc` or `.zshrc`:
 export GOOGLE_API_KEY="your_google_api_key_here"
 ```
 
+### MCP server environment
+
+Local stdio servers in `.paser-mini/config/mcp.json` can define an `env` object:
+
+```json
+{
+  "mcpServers": {
+    "local": {
+      "command": "my-mcp-server",
+      "env": { "API_KEY": "${MY_MCP_API_KEY}", "MODE": "local" }
+    }
+  }
+}
+```
+
+Values such as `${MY_MCP_API_KEY}` resolve from the Paser Mini process environment.
+The MCP SDK adds its default inherited variables (including `PATH`); explicit
+`env` entries override those defaults for the child process only. Omitting `env`
+keeps the SDK defaults. Unset references remain literal and emit a diagnostic
+warning when warning logs are enabled. HTTP servers use `headers` instead.
+
 ### Command Line Arguments
 | Argument | Short | Description |
 | :--- | :--- | :--- |

@@ -13,8 +13,11 @@ import logger from "../core/logger.js";
 class McpManager {
   /**
    * Initializes the McpManager with empty maps for clients, tools, and schemas.
+   * @param {object} [options] - Injectable transport dependencies.
+   * @param {(options: object) => object} [options.createStdioTransport] - Factory for local server transports.
    */
-  constructor() {
+  constructor({ createStdioTransport = (options) => new StdioClientTransport(options) } = {}) {
+    this.createStdioTransport = createStdioTransport;
     this.clients = new Map();
     this.tools = {};
     this.schemas = {};
@@ -140,9 +143,10 @@ class McpManager {
       } else {
         logger.info(`[McpManager] Spawning stdio MCP server: ${serverName}...`);
         
-        transport = new StdioClientTransport({
+        transport = this.createStdioTransport({
           command: resolvedConfig.command,
           args: resolvedConfig.args || [],
+          env: resolvedConfig.env,
           stderr: "pipe",
         });
 
@@ -227,4 +231,5 @@ class McpManager {
 }
 
 const mcpManager = new McpManager();
+export { McpManager };
 export default mcpManager;
