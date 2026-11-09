@@ -189,7 +189,7 @@ class GeminiAdapter extends BaseAdapter {
    * @returns {Promise<string>} The processed response text.
    * @throws {Error} If the API request fails.
    */
-  async sendMessage(message, role = "user", { signal } = {}) {
+  async _sendMessage(message, role = "user", { signal } = {}) {
     await this._applyRateLimit(signal);
     signal?.throwIfAborted();
     const historyBefore = this.history.slice();
@@ -202,6 +202,7 @@ class GeminiAdapter extends BaseAdapter {
         async () => {
           try {
             const payload = this._buildPayload();
+            this._validateContextPayload(payload);
             this.lastPayload = payload;
 
             const modelName = this.currentModel.replace(/^models\//, "");

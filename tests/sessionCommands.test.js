@@ -121,7 +121,7 @@ test("/trunc accepts whole budgets once and describes them as estimates", async 
   assert.equal(saves.length, 0);
   await h.manager.commandHandler.handle("/trunc 8000");
   assert.deepEqual(saves, [{ key: "context_window_limit", value: 8000 }]);
-  assert.match(info.at(-1), /Approximate FIFO budget/);
+  assert.match(info.at(-1), /Approximate complete-turn budget/);
   await h.manager.commandHandler.handle("/trunc 0");
   assert.match(info.at(-1), /Provider context limits still apply/);
 });
@@ -212,6 +212,9 @@ test("rewrite removes every tool exchange in the turn", async (t) => {
   const earlier = structuredClone(h.assistant.getHistory());
   await h.manager.processTurn("Question with tools");
   assert.equal(h.assistant.getHistory().length, earlier.length + 6);
+  const turnIds = h.assistant.getHistory().slice(earlier.length).map(message => message.contextTurn);
+  assert.ok(turnIds.every(Boolean));
+  assert.equal(new Set(turnIds).size, 1);
   await SessionCommands.handleRewrite(h.manager, h.manager.ui, "Replacement question");
   assert.deepEqual(h.assistant.getHistory().slice(0, earlier.length), earlier);
   assert.equal(h.assistant.getHistory().length, earlier.length + 2);

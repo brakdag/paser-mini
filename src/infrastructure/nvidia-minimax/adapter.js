@@ -70,12 +70,13 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
    * @param {string} role - The role of the message sender.
    * @returns {Promise<string>} The processed response text.
    */
-  async sendMessage(message, role = "user") {
+  async _sendMessage(message, role = "user") {
     this.state.addMessage(role, message);
-    this._enforceContextLimit(); // Apply strict context boundary before API call
+    this._enforceContextLimit(); // Plan complete-turn trimming before building the request
     const historyLengthBefore = this.state.getRawHistory().length;
 
     const payload = this._preparePayload();
+    this._validateContextPayload(payload);
     this.lastPayload = payload;
 
     await this._applyRateLimit();
@@ -135,7 +136,7 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
       });
     });
 
-    // THE ABSOLUTE WALL: Hard-trim the final payload to prevent API bans
+    // Check the final formatted payload with the common estimator.
     const strictlyTrimmedMessages = this._enforcePayloadLimit(messages);
 
     return {
@@ -192,7 +193,6 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
     });
 
     this.state.addMessage("model", content);
-    this._enforceContextLimit(); // Apply strict context boundary AFTER receiving response
     return content;
   }
 
@@ -253,7 +253,6 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
    */
   injectMessage(role, content, timestamp = null) {
     this.state.addMessage(role, content, timestamp);
-    this._enforceContextLimit(); // Ensure strict boundary on manual injection
   }
 
   /**

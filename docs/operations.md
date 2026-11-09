@@ -105,18 +105,35 @@ history if replacement fails; it does not undo filesystem, network or command
 effects. Reconfiguring between providers remains tracked separately in T14;
 do not assume a cross-provider history conversion contract exists.
 
-`/trunc n` controls the adapter's approximate FIFO trimming budget, using
-character counts and a reserved output allowance. It can remove individual
-messages or truncate message text. `0` disables this local trimming policy;
-provider limits still apply. `token()` and `/config` report estimates, not
-tokenizer measurements. When no trim limit is set, the usage ratio currently
-uses a fixed 250,000-token display reference, not a discovered model capacity.
-A common context budget and coherent turn trimming remain in T11.
+`/trunc n` sets a common estimated budget across all twelve providers. The
+allowance includes normalized serialized content, framing, the actual output
+reserve and 500 protocol tokens. Media adds 2,048 estimated tokens per block
+in addition to its serialized size. These are heuristics, not tokenizer counts
+or guarantees of provider acceptance. All `parts`, text and content blocks
+participate in the estimate; final provider payloads are checked again,
+including formatting, system fields and tool schemas.
+
+Trimming removes complete older user turns, including tool/recovery exchanges.
+System/developer instructions and the current turn remain whole. Untagged
+imported history is treated as one legacy unit rather than guessing tool
+boundaries. When the protected content or formatted request cannot fit, sending
+fails with `CONTEXT_BUDGET` and restores the pending request's history. A failed
+transport also restores history removed during preparation. Already completed
+tool effects persist. The proposed `/trunc` setting is checked before saving.
+`max_tokens` must be a positive integer; the budget must exceed its output
+reserve plus protocol overhead.
+
+`0` disables the local budget; the UI says so without a percentage against an
+invented model capacity. With a limit enabled, the UI includes the output and
+protocol reserve in its estimate. Provider limits still apply. The result/media
+preservation contract remains tracked in T15; this policy budgets the content
+that the current adapters actually preserve.
 
 | Operation | Observable effects |
 | --- | --- |
 | File, JSON, binary extraction, patch and Git restore tools | Modify project files; path policy applies, with protected metadata exclusions |
-| `run`, `execute`, inspector commands | Execute with user permissions; arbitrary code can access resources beyond convenience path helpers; `run` deadlines do not terminate asynchronous work |
+| `run` | Requires Linux/Bubblewrap/prlimit; fresh isolated process per call, writable project, read-only top-level protected metadata/runtime, no host network/environment; terminates namespace processes within 5 seconds; completed file effects persist. See README for limits and project inode caveats |
+| `execute`, inspector commands | Execute with user permissions; arbitrary code can access resources beyond convenience path helpers |
 | `doc`, `snapshot` | Write generated HTML or heap snapshots to the requested validated destination |
 | `fetch`, `url`, `search` | Make network requests and may start renderers; results use the documented limits and cache policies |
 | GitHub create/edit/close/post | Publish changes to the selected remote repository |
@@ -129,8 +146,9 @@ A common context budget and coherent turn trimming remain in T11.
 
 Only `/execute` controls the shell tool; it does not gate every tool that can
 execute code or modify files. Completed effects persist when a turn fails or
-is cancelled. The common result/media contract, retry budgets, process isolation
-and shutdown ownership remain T15, T12, T02 and T20 respectively.
+is cancelled. The common result/media contract, retry budgets
+and shutdown ownership remain T15, T12 and T20 respectively. `run` has its own
+terminating OS deadline.
 
 ## Generated files and quality configuration
 

@@ -29,7 +29,7 @@ command handler, the missing base prompt property and history inferred as `void`
 The history hook now declares its existing array contract; message elements remain
 untyped. Completing T22 resolves another 25 diagnostics through explicit GitHub
 runner fields, correct command/logger calls and an object view for JSON cloning.
-The current inventory contains **228 diagnostics**, with no new debt.
+The current inventory contains **212 diagnostics**, with no new debt. T11 removes 16 inherited-hook visibility diagnostics by making the shared context policy an explicit adapter contract.
 
 The retained diagnostics were reviewed by these groups:
 

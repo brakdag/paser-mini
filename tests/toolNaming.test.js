@@ -64,5 +64,5 @@ test("generated catalog advertises canonical path names and accurate execution l
     assert.ok(prompt.includes(signature), signature);
   });
   assert.match(prompt, /Estimated token usage/);
-  assert.match(prompt, /not a security sandbox/);
+  assert.match(prompt, /disposable Linux sandbox/);
 });

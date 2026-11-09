@@ -6,9 +6,7 @@ import RepetitionDetector from "./repetitionDetector.js";
 import logger from "./logger.js";
 import ConfigManager from "./configManager.js";
 import TurnProcessor from "./turnProcessor.js";
-import { countTokensHeuristic } from "../infrastructure/historyNormalizer.js";
-
-const MAX_CONTEXT_TOKENS = 250000;
+import { estimateContextTokens } from "../infrastructure/contextBudget.js";
 
 /**
  * ChatManager orchestrates the interaction between the user, the AI assistant,
@@ -176,6 +174,7 @@ class ChatManager {
    * @param {number} limit - The token limit.
    */
   setContextWindowLimit(limit) {
+    this.assistant.checkContextLimit?.(limit);
     this.contextWindowLimit = limit;
     this.saveConfig("context_window_limit", limit);
   }
@@ -396,12 +395,8 @@ class ChatManager {
     const systemInstruction = this.systemInstruction || "";
     const history = this.assistant.getHistory ? this.assistant.getHistory() : [];
 
-    if (typeof this.assistant.countTokens === "function") {
-      return this.assistant.countTokens(systemInstruction, history);
-    }
-
     const charsPerToken = typeof this.assistant.getCharsPerToken === "function" ? this.assistant.getCharsPerToken() : 3.5;
-    return countTokensHeuristic(systemInstruction, history, charsPerToken);
+    return estimateContextTokens(history, systemInstruction, charsPerToken);
   }
 
   /**
@@ -409,10 +404,13 @@ class ChatManager {
    * @returns {string} A formatted string showing current/limit and percentage.
    */
   getTokenCount() {
-    const count = this._calculateTokenCount();
-    const limit = this.contextWindowLimit || MAX_CONTEXT_TOKENS;
-    const percentage = (count / limit) * 100;
-    return `${count}/${limit}(${percentage.toFixed(1)}%)`;
+    const usage = this.assistant.getContextUsage?.();
+    const count = usage?.input ?? this._calculateTokenCount();
+    const limit = usage?.limit ?? this.contextWindowLimit;
+    if (!limit) return `~${count} input tokens (local limit disabled)`;
+    const reserved = (usage?.output ?? 4096) + (usage?.overhead ?? 500);
+    const total = count + reserved;
+    return `~${total}/${limit}(${((total / limit) * 100).toFixed(1)}%; ${reserved} reserved)`;
   }
 }
 

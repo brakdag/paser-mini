@@ -23,6 +23,10 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: npm
+      - name: Install run isolation dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes bubblewrap util-linux
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npm ls --all
       - name: Lint, reviewed type baseline and isolated tests

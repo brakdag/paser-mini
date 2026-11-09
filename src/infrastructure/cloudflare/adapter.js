@@ -77,9 +77,9 @@ class CloudflareAdapter extends BaseAdapter {
    * @returns {Promise<string>} The response text from the API.
    * @throws {Error} If the response is empty or the request fails.
    */
-  async sendMessage(message, role = "user") {
+  async _sendMessage(message, role = "user") {
     this.injectMessage(role, message, IRCFormatter.getTimestamp());
-    this._enforceContextLimit(); // Apply strict context boundary before API call
+    this._enforceContextLimit(); // Plan complete-turn trimming before building the request
     const historyLengthBefore = this.history.length;
 
     const payload = {
@@ -91,6 +91,7 @@ class CloudflareAdapter extends BaseAdapter {
       temperature: this.temperature,
       max_tokens: this.getMaxOutputTokens(),
     };
+    this._validateContextPayload(payload);
     this.lastPayload = payload;
 
     await this._applyRateLimit();

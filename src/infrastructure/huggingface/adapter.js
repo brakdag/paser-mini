@@ -79,13 +79,14 @@ class HuggingFaceAdapter extends BaseAdapter {
    * @returns {Promise<string>} The response text from the AI.
    * @throws {Error} If the API request fails.
    */
-  async sendMessage(message, role = "user") {
+  async _sendMessage(message, role = "user") {
     const timestamp = IRCFormatter.getTimestamp();
     this.injectMessage(role, message, timestamp);
-    this._enforceContextLimit(); // Apply strict context boundary before API call
+    this._enforceContextLimit(); // Plan complete-turn trimming before building the request
     const historyLengthBefore = this.history.length;
 
     const payload = this._preparePayload();
+    this._validateContextPayload(payload);
 
     await this._applyRateLimit();
 

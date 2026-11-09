@@ -55,12 +55,13 @@ class NvidiaAdapter extends BaseAdapter {
    * @param {string} role - The role of the message sender.
    * @returns {Promise<string>} The processed response text.
    */
-  async sendMessage(message, role = "user") {
+  async _sendMessage(message, role = "user") {
     this.state.addMessage(role, message);
-    this._enforceContextLimit(); // Apply strict context boundary before API call
+    this._enforceContextLimit(); // Plan complete-turn trimming before building the request
     const historyLengthBefore = this.state.getRawHistory().length;
 
     const payload = this._preparePayload();
+    this._validateContextPayload(payload);
     this.lastPayload = payload;
 
     await this._applyRateLimit();
@@ -115,7 +116,7 @@ class NvidiaAdapter extends BaseAdapter {
       maxTokens: this.getMaxOutputTokens(),
     });
     
-    // THE ABSOLUTE WALL: Hard-trim the final payload to prevent API bans
+    // Check the final formatted payload with the common estimator.
     payload.messages = this._enforcePayloadLimit(payload.messages);
     
     return { ...payload, model: this.currentModel, max_tokens: this.getMaxOutputTokens() };
@@ -137,7 +138,6 @@ class NvidiaAdapter extends BaseAdapter {
 
     logger.info("NvidiaAdapter: Response received", { length: content.length });
     this.state.addMessage("model", content);
-    this._enforceContextLimit(); // Apply strict context boundary AFTER receiving response
     return content;
   }
 
@@ -177,7 +177,6 @@ class NvidiaAdapter extends BaseAdapter {
    */
   injectMessage(role, content, timestamp = null) {
     this.state.addMessage(role, content, timestamp);
-    this._enforceContextLimit(); // Ensure strict boundary on manual injection
   }
 
   /**

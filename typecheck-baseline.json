@@ -73,13 +73,6 @@
     },
     {
       "file": "src/infrastructure/cerebras/adapter.js",
-      "code": 2341,
-      "message": "Property '_enforceContextLimit' is private and only accessible within class 'BaseAdapter'.",
-      "source": "_enforceContextLimit",
-      "count": 1
-    },
-    {
-      "file": "src/infrastructure/cerebras/adapter.js",
       "code": 2353,
       "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
       "source": "userNickname",
@@ -98,13 +91,6 @@
       "message": "Property 'response' does not exist on type 'Error'.",
       "source": "response",
       "count": 3
-    },
-    {
-      "file": "src/infrastructure/cloudflare/adapter.js",
-      "code": 2341,
-      "message": "Property '_enforceContextLimit' is private and only accessible within class 'BaseAdapter'.",
-      "source": "_enforceContextLimit",
-      "count": 1
     },
     {
       "file": "src/infrastructure/cloudflare/adapter.js",
@@ -139,13 +125,6 @@
       "code": 2339,
       "message": "Property 'status' does not exist on type 'Error'.",
       "source": "status",
-      "count": 1
-    },
-    {
-      "file": "src/infrastructure/cohere/adapter.js",
-      "code": 2341,
-      "message": "Property '_enforceContextLimit' is private and only accessible within class 'BaseAdapter'.",
-      "source": "_enforceContextLimit",
       "count": 1
     },
     {
@@ -185,13 +164,6 @@
     },
     {
       "file": "src/infrastructure/gemini/adapter.js",
-      "code": 2341,
-      "message": "Property '_enforceContextLimit' is private and only accessible within class 'BaseAdapter'.",
-      "source": "_enforceContextLimit",
-      "count": 1
-    },
-    {
-      "file": "src/infrastructure/gemini/adapter.js",
       "code": 2353,
       "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
       "source": "userNickname",
@@ -213,13 +185,6 @@
     },
     {
       "file": "src/infrastructure/groq/adapter.js",
-      "code": 2341,
-      "message": "Property '_enforceContextLimit' is private and only accessible within class 'BaseAdapter'.",
-      "source": "_enforceContextLimit",
-      "count": 1
-    },
-    {
-      "file": "src/infrastructure/groq/adapter.js",
       "code": 2353,
       "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
       "source": "userNickname",
@@ -238,13 +203,6 @@
       "message": "Property 'response' does not exist on type 'Error'.",
       "source": "response",
       "count": 3
-    },
-    {
-      "file": "src/infrastructure/huggingface/adapter.js",
-      "code": 2341,
-      "message": "Property '_enforceContextLimit' is private and only accessible within class 'BaseAdapter'.",
-      "source": "_enforceContextLimit",
-      "count": 1
     },
     {
       "file": "src/infrastructure/huggingface/adapter.js",
@@ -266,13 +224,6 @@
       "message": "Property 'response' does not exist on type 'Error'.",
       "source": "response",
       "count": 5
-    },
-    {
-      "file": "src/infrastructure/nvidia-minimax/adapter.js",
-      "code": 2341,
-      "message": "Property '_enforceContextLimit' is private and only accessible within class 'BaseAdapter'.",
-      "source": "_enforceContextLimit",
-      "count": 3
     },
     {
       "file": "src/infrastructure/nvidia-minimax/adapter.js",
@@ -300,13 +251,6 @@
       "code": 2339,
       "message": "Property 'response' does not exist on type 'Error'.",
       "source": "response",
-      "count": 3
-    },
-    {
-      "file": "src/infrastructure/nvidia/adapter.js",
-      "code": 2341,
-      "message": "Property '_enforceContextLimit' is private and only accessible within class 'BaseAdapter'.",
-      "source": "_enforceContextLimit",
       "count": 3
     },
     {
@@ -339,13 +283,6 @@
     },
     {
       "file": "src/infrastructure/openrouter/adapter.js",
-      "code": 2341,
-      "message": "Property '_enforceContextLimit' is private and only accessible within class 'BaseAdapter'.",
-      "source": "_enforceContextLimit",
-      "count": 1
-    },
-    {
-      "file": "src/infrastructure/openrouter/adapter.js",
       "code": 2353,
       "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
       "source": "userNickname",
@@ -367,13 +304,6 @@
     },
     {
       "file": "src/infrastructure/poolside/adapter.js",
-      "code": 2341,
-      "message": "Property '_enforceContextLimit' is private and only accessible within class 'BaseAdapter'.",
-      "source": "_enforceContextLimit",
-      "count": 1
-    },
-    {
-      "file": "src/infrastructure/poolside/adapter.js",
       "code": 2353,
       "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
       "source": "userNickname",
@@ -392,13 +322,6 @@
       "message": "Property 'response' does not exist on type 'Error'.",
       "source": "response",
       "count": 5
-    },
-    {
-      "file": "src/infrastructure/zai/adapter.js",
-      "code": 2341,
-      "message": "Property '_enforceContextLimit' is private and only accessible within class 'BaseAdapter'.",
-      "source": "_enforceContextLimit",
-      "count": 1
     },
     {
       "file": "src/infrastructure/zai/adapter.js",
@@ -427,13 +350,6 @@
       "message": "Property 'response' does not exist on type 'Error'.",
       "source": "response",
       "count": 3
-    },
-    {
-      "file": "src/infrastructure/zenmux/adapter.js",
-      "code": 2341,
-      "message": "Property '_enforceContextLimit' is private and only accessible within class 'BaseAdapter'.",
-      "source": "_enforceContextLimit",
-      "count": 1
     },
     {
       "file": "src/infrastructure/zenmux/adapter.js",

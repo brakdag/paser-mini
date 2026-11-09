@@ -36,7 +36,7 @@ describe("evalTools", () => {
     );
   });
 
-  it("abandons an await that never settles instead of hanging forever", async () => {
+  it("terminates an await that never settles", async () => {
     const evalTools = new EvalTools();
     const started = Date.now();
     await assert.rejects(

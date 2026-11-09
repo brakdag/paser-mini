@@ -43,6 +43,8 @@ in the [Node release schedule](https://nodejs.org/en/about/previous-releases).
 Install the locked dependencies with `npm ci --ignore-scripts`, then run
 `npm start`. Git and GNU grep must be available for the CLI tools and test suite;
 audio, ImageMagick and network services are replaced by local fakes in tests.
+The `run` tests require Linux, Bubblewrap, util-linux and enabled unprivileged
+user namespaces. See the execution policy below for the dependency and limits.
 
 `npm run check` runs lint, the reviewed JS type baseline and the complete test
 suite. They can also be run separately as `npm run lint`, `npm run typecheck` and
@@ -310,7 +312,7 @@ exchange. `/models` also interrupts Gemini requests and retry waits. The deadlin
 is checked before and after exchanges and tool calls; it stops scheduling work
 but cannot forcibly terminate a tool or transport already running. Provider retry
 budgets, cancellation inside transports, and isolation of executed code remain
-separate concerns (T12/T02). Completed tool effects are not rolled back when a
+separate concerns (T12 and the run policy below). Completed tool effects are not rolled back when a
 turn stops. Programmatic callers can supply positive integer limits and a
 monotonic clock as the final `TurnProcessor` constructor argument.
 
@@ -375,7 +377,28 @@ are rejected. Git's own repository bookkeeping remains managed by Git.
 
 This policy checks filesystem paths before use. It does not provide operating
 system isolation against concurrent path changes or inode aliases such as hard
-links. Application-owned persistence writes its own state directly. JavaScript,
-shell commands, debugger commands and code launched by analysis/documentation
-tools still run with the user's permissions; `run` isolation remains tracked in
-T02 of `TODO.md`.
+links. Application-owned persistence writes its own state directly. Shell commands, debugger commands and code launched by analysis/documentation
+tools still run with the user's permissions.
+
+`run` requires Linux, `/usr/bin/bwrap` (Bubblewrap with `--disable-userns`),
+`/usr/bin/prlimit` (util-linux), and enabled unprivileged user namespaces.
+It fails explicitly if isolation cannot be established; there is no in-process
+fallback. Each call gets a fresh JavaScript context and a separate mount, PID,
+network, IPC and user namespace. The project is writable; existing top-level protected
+metadata entries are mounted read-only. `/usr` and runtime libraries are
+read-only, `/tmp` and `/dev` are private, and the host home, environment and
+network are not inherited. Project-local secrets remain readable: choose the
+project root accordingly. External symlinks cannot expose unmounted host paths.
+Do not use a project containing hard links to sensitive external files or host
+Unix sockets: a writable project mount retains those inode capabilities.
+
+The total deadline is 5 seconds (including setup), with a 1-second synchronous
+VM limit. Namespace processes, including detached descendants and unawaited
+work, terminate after success, failure or deadline. Source and combined output
+are limited to 1 MiB each. JavaScript runs without JIT, with a 64 MiB V8 heap;
+hard per-process limits are 1 GiB address space, 5 CPU seconds, 16 MiB per file,
+64 open descriptors, 256 processes/threads per real UID, and no core dumps.
+These are not aggregate RAM or project-disk quotas. File effects completed
+before termination persist. Globals no longer persist between calls.
+This policy relies on the host kernel and installed runtime; it does not
+isolate `execute` or provide a virtual machine for hostile native software.

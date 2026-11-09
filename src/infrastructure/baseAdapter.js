@@ -1,8 +1,10 @@
 import { setTimeout as delay } from "node:timers/promises";
+import { randomUUID } from "node:crypto";
 import IRCFormat from "../formats/IRCFormat.js";
 import CleanFormat from "../formats/CleanFormat.js";
 import FountainFormat from "../formats/FountainFormat.js";
 import logger from "../core/logger.js";
+import { contextSettings, estimateContextTokens, planContext } from "./contextBudget.js";
 
 /**
  * Base class for AI adapters. This class is abstract and cannot be instantiated directly.
@@ -135,22 +137,6 @@ export default class BaseAdapter {
   }
 
   /**
-   * Helper method to calculate the character length of a message regardless of its structural shape.
-   * Supports standard 'content', NVIDIA's 'text', and Gemini's 'parts'.
-   * @param {object} msg - The message object.
-   * @returns {number} The total character length of the message content.
-   * @private
-   */
-  _getMessageLength(msg) {
-    if (typeof msg.content === "string") return msg.content.length;
-    if (typeof msg.text === "string") return msg.text.length;
-    if (Array.isArray(msg.parts)) {
-      return msg.parts.reduce((acc, part) => acc + (typeof part.text === "string" ? part.text.length : 0), 0);
-    }
-    return JSON.stringify(msg).length;
-  }
-
-  /**
    * Retrieves the specific character-to-token heuristic for the model.
    * Subclasses can override this to match their specific tokenizers.
    * @returns {number} The characters per token.
@@ -165,148 +151,140 @@ export default class BaseAdapter {
    * @returns {number} The number of tokens to reserve for the response.
    */
   getMaxOutputTokens() {
-    return parseInt(this.configManager.get("max_tokens", 4096), 10);
+    return contextSettings(0, this.configManager.get("max_tokens", 4096), this.getCharsPerToken()).output;
+  }
+
+  #contextTurn = null;
+
+  #pendingEntries = null;
+
+  /** Marks one user turn, including its tool exchanges and recovery requests. */
+  beginContextTurn() {
+    if (this.#contextTurn) throw new Error("A context turn is already active");
+    this.#contextTurn = randomUUID();
+  }
+
+  /** Finishes turn grouping without deleting its history identifiers. */
+  endContextTurn() {
+    this.#contextTurn = null;
   }
 
   /**
-   * Trims history using a character-based estimate and a reserved output allowance.
-   * Preserves the initial system entry where possible; can truncate a single message.
-   * This is not a tokenizer or a guarantee that the provider will accept the payload.
-   * @private
+   * Tags entries added during the pending request; system instructions stay pinned.
    */
-  _enforceContextLimit() {
-    const limit = parseInt(this.configManager.get("context_window_limit", 0), 10);
-    if (!limit || limit <= 0) return; // 0 disables local trimming; provider limits still apply.
-
-    const history = this.getHistory();
-    if (!history || history.length === 0) return;
-
-    // Reserve estimated space for output tokens and 500 tokens of overhead.
-    const outputBufferTokens = this.getMaxOutputTokens() + 500;
-    const effectiveLimit = Math.max(0, limit - outputBufferTokens);
-
-    const charsPerToken = this.getCharsPerToken();
-    const maxChars = effectiveLimit * charsPerToken;
-    let systemChars = 0;
-    
-    // Calculate system instruction chars only if it's not already in history (OpenAI style)
-    const historyHasSystem = history.some(msg => msg.role === 'system' || msg.role === 'server');
-    if (!historyHasSystem && typeof this.systemInstruction === 'string') {
-      systemChars = this.systemInstruction.length;
-    }
-
-    let totalChars = history.reduce((acc, msg) => acc + this._getMessageLength(msg), 0) + systemChars;
-
-    if (totalChars <= maxChars) return;
-
-    // Preserve a leading system entry while removing older conversation messages.
-    const currentIndex = history.length > 1 && (history[0].role === 'system' || history[0].role === 'server') ? 1 : 0;
-
-    // Remove messages while the estimated size exceeds the allowance.
-    while (totalChars > maxChars && history.length > currentIndex + 1) {
-      const removed = history.splice(currentIndex, 1)[0];
-      totalChars -= this._getMessageLength(removed);
-      logger.debug(`[${this.constructor.name}] Context limit exceeded. Purged 1 older message to reduce estimated usage toward ${limit} tokens.`);
-    }
-
-    // Surgical truncation as a last resort if a single message paralyzes the limit
-    if (totalChars > maxChars && history.length > 0) {
-      const overflowChars = totalChars - maxChars;
-      const lastMsg = history[history.length - 1];
-      const msgLength = this._getMessageLength(lastMsg);
-      if (msgLength > overflowChars) {
-        if (typeof lastMsg.text === 'string') {
-          lastMsg.text = lastMsg.text.slice(0, lastMsg.text.length - overflowChars);
-        } else if (typeof lastMsg.content === 'string') {
-          lastMsg.content = lastMsg.content.slice(0, lastMsg.content.length - overflowChars);
-        } else if (Array.isArray(lastMsg.parts)) {
-          // Handle Gemini/Anthropic parts format: truncate the last text part precisely
-          for (let i = lastMsg.parts.length - 1; i >= 0; i -= 1) {
-            if (typeof lastMsg.parts[i].text === 'string' && lastMsg.parts[i].text.length >= overflowChars) {
-              lastMsg.parts[i].text = lastMsg.parts[i].text.slice(0, lastMsg.parts[i].text.length - overflowChars);
-              break;
-            }
-          }
-        }
-        logger.error(`[${this.constructor.name}] Estimated context budget exceeded; truncated part of a message.`);
+  _tagContextEntries() {
+    if (!this.#pendingEntries || !this.#contextTurn) return;
+    this.getHistory().forEach(message => {
+      if (!this.#pendingEntries.has(message) && !["system", "developer"].includes(message.role)) {
+        Object.assign(message, { contextTurn: this.#contextTurn });
       }
+    });
+  }
+
+  /**
+   * Reads and validates the common context settings.
+   * @returns {{limit: number, output: number, charsPerToken: number}} Policy.
+   */
+  _contextSettings() {
+    return contextSettings(this.configManager.get("context_window_limit", 0), this.getMaxOutputTokens(), this.getCharsPerToken());
+  }
+
+  /**
+   * Checks a proposed setting before it is persisted or history is modified.
+   * @param {number} limit - Proposed local context limit.
+   */
+  checkContextLimit(limit) {
+    const settings = contextSettings(limit, this.getMaxOutputTokens(), this.getCharsPerToken());
+    planContext(this.getHistory(), settings, this.systemInstruction);
+  }
+
+  /** Plans complete-turn trimming atomically; never slices message contents. */
+  _enforceContextLimit() {
+    this._tagContextEntries();
+    const settings = this._contextSettings();
+    if (!settings.limit) return;
+    const history = this.getHistory();
+    const retained = planContext(history, settings, this.systemInstruction);
+    if (retained.length !== history.length) {
+      const removed = history.length - retained.length;
+      history.splice(0, history.length, ...retained);
+      this.ui?.displayInfo?.(`Context estimate: removed ${removed} messages in complete older turns to fit ${settings.limit} tokens.`);
     }
   }
 
   /**
-   * Trims the formatted payload using the adapter's character-based estimate.
-   * Does not account for every provider's tokenization, media or protocol overhead.
-   * Includes formatting present in messages; model-specific overhead can still be missing.
-   * @param {Array<object>} messages - The formatted messages ready to be sent to the API.
-   * @returns {Array<object>} The messages after heuristic trimming.
+   * Validates a formatted payload without destructively trimming messages.
+   * @param {object[]} messages - Final provider messages.
+   * @returns {object[]} The unchanged messages, if within the estimated budget.
    */
   _enforcePayloadLimit(messages) {
-    const limit = parseInt(this.configManager.get("context_window_limit", 0), 10);
-    if (!limit || limit <= 0) return messages; // 0 means disabled
-    if (!messages || messages.length === 0) return messages;
-
-    // Reserve estimated space for output tokens and 500 tokens of overhead.
-    const outputBufferTokens = this.getMaxOutputTokens() + 500;
-    const effectiveLimit = Math.max(0, limit - outputBufferTokens);
-
-    const charsPerToken = this.getCharsPerToken();
-    const maxChars = effectiveLimit * charsPerToken;
-    
-    // Calculate total characters based on the formatted 'content' field
-    let totalChars = messages.reduce((acc, msg) => {
-      const content = typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content || "");
-      return acc + content.length;
-    }, 0);
-
-    if (totalChars <= maxChars) return messages;
-
-    // Find the first non-system message index to start the purge
-    let firstNonSystemIndex = 0;
-    while (
-      firstNonSystemIndex < messages.length && 
-      (messages[firstNonSystemIndex].role === "system" || messages[firstNonSystemIndex].role === "server")
-    ) {
-      firstNonSystemIndex += 1;
-    }
-
-    // Remove older formatted messages while their estimated size exceeds the budget.
-    while (totalChars > maxChars && firstNonSystemIndex < messages.length - 1) {
-      const removed = messages.splice(firstNonSystemIndex, 1)[0];
-      const removedContent = typeof removed.content === "string" ? removed.content : JSON.stringify(removed.content || "");
-      totalChars -= removedContent.length;
-      logger.warn(`[${this.constructor.name}] Estimated payload budget ${limit} tokens: removed one formatted message.`);
-    }
-
-    // Surgical Truncation on the formatted payload
-    if (totalChars > maxChars && messages.length > 0) {
-      const lastMsg = messages[messages.length - 1];
-      const overflowChars = totalChars - maxChars;
-      
-      if (typeof lastMsg.content === "string" && lastMsg.content.length > overflowChars) {
-        lastMsg.content = lastMsg.content.slice(0, lastMsg.content.length - overflowChars);
-        logger.error(`[${this.constructor.name}] CRITICAL PAYLOAD LIMIT: Applied surgical truncation to final message content.`);
-      } else if (Array.isArray(lastMsg.parts)) {
-        for (let i = lastMsg.parts.length - 1; i >= 0; i -= 1) {
-          if (typeof lastMsg.parts[i].text === "string" && lastMsg.parts[i].text.length > overflowChars) {
-            lastMsg.parts[i].text = lastMsg.parts[i].text.slice(0, lastMsg.parts[i].text.length - overflowChars);
-            logger.error(`[${this.constructor.name}] CRITICAL PAYLOAD LIMIT: Applied surgical truncation to final message part.`);
-            break;
-          }
-        }
-      }
-    }
-
+    this._validateContextPayload({ messages });
     return messages;
   }
 
   /**
-   * Sends a message to the AI provider.
-   * @param {string|object|Array} _message - The message content to send.
-   * @param {string} [_role] - The role of the sender.
-   * @returns {Promise<string>} The response text from the AI.
-   * @throws {Error} If the method is not implemented by the subclass.
+   * Applies the same estimator to the actual request, including extra fields.
+   * @param {object} payload - Complete provider payload.
    */
-  async sendMessage(_message, _role = "user") {
+  _validateContextPayload(payload) {
+    const settings = this._contextSettings();
+    if (!settings.limit) return;
+    const { messages, contents, ...extra } = payload;
+    // Separate system fields are physically sent in addition to the messages.
+    const input = estimateContextTokens(messages || contents || [], "", settings.charsPerToken, extra);
+    if (input + settings.output + 500 > settings.limit) {
+      throw new Error("CONTEXT_BUDGET: formatted payload exceeds the estimated budget; no request sent and no input truncated");
+    }
+  }
+
+  /**
+   * Estimates usage with the same normalization and reserve as request preparation.
+   * @returns {{input: number, output: number, overhead: number, limit: number}} Usage.
+   */
+  getContextUsage() {
+    const settings = this._contextSettings();
+    return {
+      input: estimateContextTokens(this.getHistory(), this.systemInstruction, settings.charsPerToken),
+      output: settings.output, overhead: 500, limit: settings.limit,
+    };
+  }
+
+  /**
+   * Sends a request with atomic history rollback and coherent turn identifiers.
+   * @param {string|object|Array} message - The content to send.
+   * @param {string} [role] - Sender role.
+   * @param {object} [options] - Provider options, including cancellation.
+   * @returns {Promise<string>} Model response.
+   */
+  async sendMessage(message, role = "user", options = {}) {
+    if (this.#pendingEntries) throw new Error("A context request is already active");
+    const history = this.getHistory();
+    const before = structuredClone(history);
+    const ownsTurn = !this.#contextTurn;
+    if (ownsTurn) this.beginContextTurn();
+    this.#pendingEntries = new Set(history);
+    try {
+      const response = await this._sendMessage(message, role, options);
+      this._tagContextEntries();
+      return response;
+    } catch (error) {
+      const current = this.getHistory();
+      current.splice(0, current.length, ...before);
+      throw error;
+    } finally {
+      this.#pendingEntries = null;
+      if (ownsTurn) this.endContextTurn();
+    }
+  }
+
+  /**
+   * Provider implementation, called by the common history transaction.
+   * @param {string|object|Array} _message - Content.
+   * @param {string} [_role] - Sender role.
+   * @param {object} [_options] - Provider options.
+   * @returns {Promise<string>} Model response.
+   */
+  async _sendMessage(_message, _role = "user", _options = {}) {
     throw new Error("Method 'sendMessage()' must be implemented.");
   }
 

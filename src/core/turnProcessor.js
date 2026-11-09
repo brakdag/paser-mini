@@ -48,11 +48,13 @@ class TurnProcessor {
     this.repetitionDetector.reset();
     this.control = new TurnControl(this.ui, this.limits);
     try {
+      this.assistant.beginContextTurn?.();
       await this.#processTurn(userInput);
     } catch (error) {
       if (!(error instanceof TurnLimitError)) throw error;
       this.ui.displayError(error.message);
     } finally {
+      this.assistant.endContextTurn?.();
       this.control = null;
     }
   }

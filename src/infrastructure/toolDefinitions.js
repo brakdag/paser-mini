@@ -85,7 +85,7 @@ const TOOL_DEFINITIONS = {
     "webTools", "fetchRaw",
     SCHEMAS.fetch,
   ),
-  run: define("Execute JavaScript with user permissions; not a security sandbox", "evalTools", "executeJS", SCHEMAS.run),
+  run: define("Execute JavaScript in a disposable Linux sandbox: project files only, no network, 5s deadline; requires Bubblewrap", "evalTools", "executeJS", SCHEMAS.run),
   img: define("Visualizes an image.", "utilTools", "seeImage", SCHEMAS.img),
   inspect: define("Debug NodeJS code using built-in inspect repl", "inspectTools", "inspect", SCHEMAS.inspect),
   ast: define("Analyze JavaScript AST", "astTools", "analyze", SCHEMAS.ast),

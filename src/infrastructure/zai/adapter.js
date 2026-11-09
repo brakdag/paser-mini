@@ -139,13 +139,14 @@ class ZaiAdapter extends BaseAdapter {
    * @returns {Promise<string>} The response text from the AI.
    * @throws {Error} If the API request fails.
    */
-  async sendMessage(message, role = "user") {
+  async _sendMessage(message, role = "user") {
     const timestamp = IRCFormatter.getTimestamp();
     this.injectMessage(role, message, timestamp);
     this._enforceContextLimit();
     const historyLengthBefore = this.getHistory().length;
 
     const payload = this._preparePayload();
+    this._validateContextPayload(payload);
     this.lastPayload = payload;
 
     await this._applyRateLimit();

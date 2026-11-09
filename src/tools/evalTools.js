@@ -1,241 +1,144 @@
-import fs from "fs/promises";
-import vm from "vm";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { spawn } from "node:child_process";
 import PathValidator from "../utils/pathValidator.js";
 
-/**
- * Executes JavaScript in a separate V8 context (`node:vm`).
- *
- * SECURITY MODEL, stated plainly:
- * `vm` is an isolation-of-scope facility, NOT a security boundary. Code run
- * here shares the host process's intrinsics, so it can reach the real
- * `process` and the host filesystem with the user's own permissions (for
- * example via a constructor chain from an exposed function). Treat this tool
- * as "run code as the user", exactly like a shell. Use an operating-system
- * sandbox (container, unprivileged user, seccomp) if genuine isolation is
- * required; no amount of global-hiding inside this file provides it.
- *
- * The timeouts below bound how long a call may block, not the lifetime of
- * asynchronous work the analysed code may have started.
- */
-class EvalTools {
+const source = fileURLToPath(new URL("../../", import.meta.url));
+const MAX_BYTES = 1024 * 1024;
+
+/** Runs each JavaScript call in a disposable Linux mount/network/PID namespace. */
+export default class EvalTools {
   #paths;
 
-  /**
-   * Project-scoped convenience filesystem exposed in the VM context.
-   */
-  #BrowserFS = {
-    /**
-     * Writes content to a file within the project root.
-     * @param {string} filename - The name of the file to write.
-     * @param {string} content - The content to write to the file.
-     * @returns {Promise<void>}
-     */
-    write: async (filename, content) => {
-      const resolvedPath = this.#getSafeSandboxPath(filename, true);
-      await fs.writeFile(resolvedPath, content, "utf8");
-    },
-    /**
-     * Reads content from a file within the project root.
-     * @param {string} filename - The name of the file to read.
-     * @returns {Promise<string>} The content of the file.
-     */
-    read: async (filename) => {
-      const resolvedPath = this.#getSafeSandboxPath(filename);
-      return fs.readFile(resolvedPath, "utf8");
-    },
-    /**
-     * Lists files in the project root directory.
-     * @returns {Promise<string[]>} A list of filenames.
-     */
-    list: async () => fs.readdir(this.#paths.getRoot()),
-    /**
-     * Deletes a file within the project root.
-     * @param {string} filename - The name of the file to delete.
-     * @returns {Promise<void>}
-     */
-    delete: async (filename) => {
-      const resolvedPath = this.#getSafeSandboxPath(filename, true);
-      await fs.unlink(resolvedPath);
-    },
-  };
+  #timeoutMs;
 
   /**
-   * Applies the project policy to BrowserFS convenience helpers only.
-   * This does not constrain arbitrary JavaScript (see the class documentation).
-   * @param {string} filename - The filename to validate.
-   * @param {boolean} [mutation] - Whether the helper changes the filesystem.
-   * @returns {string} The absolute, safe path.
-   * @throws {Error} If the path attempts to traverse outside the project root.
+   * Creates a project-scoped runner. Missing OS isolation fails closed.
+   * @param {object} [options] - Execution policy.
+   * @param {PathValidator|typeof PathValidator} [options.pathValidator] - Project paths.
+   * @param {number} [options.timeoutMs] - Total deadline, at most five seconds.
    */
-  #getSafeSandboxPath(filename, mutation = false) {
-    try {
-      return mutation ? this.#paths.getSafeMutationPath(filename) : this.#paths.getSafePath(filename);
-    } catch (error) {
-      throw new Error(`SECURITY_ERR: ${error.message}`, { cause: error });
+  constructor({ pathValidator = PathValidator, timeoutMs = 5000 } = {}) {
+    if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 5000) {
+      throw new Error("run timeoutMs must be an integer between 1 and 5000");
     }
-  }
-
-  #trace = [];
-
-  #context;
-
-  /**
-   * Initializes the EvalTools instance and creates the VM context.
-   * @param {object} [options] - Tool dependencies.
-   * @param {PathValidator|typeof PathValidator} [options.pathValidator] - Project policy.
-   */
-  constructor({ pathValidator = PathValidator } = {}) {
     this.#paths = pathValidator;
-    this.#context = this.#createContext();
+    this.#timeoutMs = timeoutMs;
   }
 
   /**
-   * Creates the VM context and the small API surface exposed to it.
-   * This controls convenience and naming only; it is not a security
-   * boundary (see the class documentation).
-   * @returns {vm.Context} The created VM context.
+   * Constructs the fixed OS policy; no shell, inherited environment or host home.
+   * @returns {string[]} Bubblewrap arguments.
    */
-  #createContext() {
-    const sandbox = {
-      BrowserFS: this.#BrowserFS,
-      console: {
-        /**
-         * Logs a message to the AI log.
-         * @param {...unknown} args - The arguments to log.
-         * @returns {void}
-         */
-        log: (...args) => this.#log("AI_LOG", args),
-        /**
-         * Logs an error message to the AI log.
-         * @param {...unknown} args - The arguments to log.
-         * @returns {void}
-         */
-        error: (...args) => this.#log("AI_ERR", args),
-        /**
-         * Logs a warning message to the AI log.
-         * @param {...unknown} args - The arguments to log.
-         * @returns {void}
-         */
-        warn: (...args) => this.#log("AI_WARN", args),
-      },
-      window: {},
-      navigator: { userAgent: "eval()-V8-Surgical-Sandbox/1.0" },
-    };
-    return vm.createContext(sandbox);
-  }
-
-  /**
-   * Awaits a sandbox-produced promise with a deadline on the wait, without terminating asynchronous work.
-   * @param {Promise<unknown>} promise - The promise returned by sandboxed code.
-   * @returns {Promise<unknown>} The settled value.
-   * @throws {Error} If the deadline elapses first.
-   */
-  async #awaitWithDeadline(promise) {
-    const ASYNC_TIMEOUT_MS = 5000;
-    let timer;
-    const deadline = new Promise((_, reject) => {
-      timer = setTimeout(() => {
-        reject(
-          new Error(
-            `ASYNC_TIMEOUT: sandboxed code did not settle within ${ASYNC_TIMEOUT_MS}ms. ` +
-              "The wait has been abandoned; the underlying work may still be running.",
-          ),
-        );
-      }, ASYNC_TIMEOUT_MS);
-      // The timer is deliberately NOT unref'd. Unref'd timers let Node exit
-      // before the deadline fires when nothing else keeps the loop alive,
-      // which would abandon the caller without settling its promise. The
-      // timer stays referenced until the race settles, then is cleared.
-    });
-
-    try {
-      return await Promise.race([promise, deadline]);
-    } finally {
-      clearTimeout(timer);
+  #arguments() {
+    const root = this.#paths.getRoot();
+    const realRoot = fs.realpathSync(root);
+    // These trees supply the runtime and private kernel interfaces. A project
+    // must not replace them, or be an ancestor exposing the host filesystem.
+    const reserved = ["/usr", "/lib", "/lib64", "/runtime", "/proc", "/dev", "/etc"];
+    if ([root, realRoot].some(candidate => candidate === "/" || candidate === "/tmp" || reserved.some(entry => candidate === entry || candidate.startsWith(`${entry}/`)))) {
+      throw new Error("RUN_ROOT: project root overlaps the sandbox runtime");
     }
-  }
-
-  /**
-   * Safely stringifies an object, handling circular references.
-   * @param {unknown} obj - The object to stringify.
-   * @returns {string} The JSON string representation.
-   */
-  #safeStringify(obj) {
-    const seen = new WeakSet();
-    return JSON.stringify(obj, (key, value) => {
-      if (typeof value === "object" && value !== null) {
-        if (seen.has(value)) {
-          return "[Circular]";
+    const args = [
+      "--unshare-all", "--unshare-user", "--die-with-parent", "--new-session", "--disable-userns",
+      "--cap-drop", "ALL", "--clearenv", "--setenv", "HOME", "/tmp",
+      "--setenv", "PATH", "/usr/bin", "--setenv", "LANG", "C.UTF-8",
+      "--ro-bind", "/usr", "/usr",
+    ];
+    ["/lib", "/lib64"].forEach(entry => {
+      if (fs.existsSync(entry)) args.push("--ro-bind", entry, entry);
+    });
+    args.push(
+      "--proc", "/proc", "--dev", "/dev", "--tmpfs", "/tmp",
+      "--bind", root, root, "--chdir", root,
+      "--ro-bind", process.execPath, "/runtime/node",
+      "--ro-bind", path.join(source, "package.json"), "/runtime/package.json",
+      "--ro-bind", path.join(source, "src/tools/evalWorker.js"), "/runtime/tools/evalWorker.js",
+      "--ro-bind", path.join(source, "src/utils/pathValidator.js"), "/runtime/utils/pathValidator.js",
+    );
+    // Kernel-enforced read-only mounts complement BrowserFS mutation checks.
+    [".git", ".paser-mini", ".codex", ".agents", ".aws"].forEach(name => {
+      const entry = path.join(root, name);
+      if (fs.existsSync(entry)) {
+        const target = fs.realpathSync(entry);
+        const relative = path.relative(realRoot, target);
+        if (relative === ".." || relative.startsWith("../") || path.isAbsolute(relative)) {
+          throw new Error("RUN_ROOT: protected metadata resolves outside the project");
         }
-        seen.add(value);
+        args.push("--ro-bind", entry, entry);
       }
-      return value;
     });
+    args.push(
+      "/usr/bin/prlimit", "--as=1073741824:1073741824", "--cpu=5:5",
+      "--fsize=16777216:16777216", "--nofile=64:64", "--nproc=256:256", "--core=0:0", "--",
+      "/runtime/node", "--jitless", "--max-old-space-size=64", "--stack-size=512", "/runtime/tools/evalWorker.js",
+    );
+    return args;
   }
 
   /**
-   * Internal logger that formats and stores messages in the trace.
-   * @param {string} type - The log level/type.
-   * @param {unknown[]} args - The data to log.
-   */
-  #log(type, args) {
-    const argsArray = Array.isArray(args) ? args : [args];
-    const msg = argsArray
-      .map((a) => (typeof a === "object" ? this.#safeStringify(a) : a))
-      .join(" ");
-    const timestamp = new Date().toISOString().split("T")[1].split(".")[0];
-    this.#trace.push(`[${timestamp}] [${type}] ${msg}`);
-  }
-
-  /**
-   * Executes JavaScript code within the VM context.
-   * Automatically wraps code in an async IIFE if top-level await is detected.
-   * @param {string} code - The JavaScript code to execute.
-   * @returns {Promise<{trace: string[], result: unknown}>} The execution result and trace.
-   * @throws {Error} If the code execution fails catastrophically.
-   */
-  async #execute(code) {
-    this.#trace = [];
-    let result;
-    try {
-      const wrappedCode = code.includes('await') ? `(async () => { ${code} })()` : code;
-      result = vm.runInContext(wrappedCode, this.#context, { timeout: 1000 });
-
-      // Duck typing para Promesas a través de límites de VM.
-      // vm's timeout covers only synchronous execution, so an awaiting caller
-      // would otherwise wait forever on a promise that never settles. The
-      // deadline below bounds the *wait*: the sandboxed async work cannot be
-      // forcibly cancelled from inside this process, and the error says so
-      // rather than implying the code was stopped.
-      if (result && typeof result.then === 'function') {
-        result = await this.#awaitWithDeadline(result);
-      }
-
-      if (result !== undefined) {
-        const safeResult = typeof result === "object" ? this.#safeStringify(result) : result;
-        this.#log("RETURN", safeResult);
-      }
-    } catch (err) {
-      this.#log("CRASH", err.message);
-      throw err; // Propagate the error to the engine
-    }
-    return { trace: this.#trace, result };
-  }
-
-  /**
-   * Public interface to execute JavaScript code.
-   * @param {string} code - The JavaScript code to execute.
-   * @returns {Promise<string>} The JSON string containing the result and trace.
+   * Executes one call, waiting for process closure before returning or throwing.
+   * Globals are fresh for every call. No fallback to in-process execution exists.
+   * @param {string} code - JavaScript source; top-level await is supported.
+   * @returns {Promise<string>} JSON with result and captured console trace.
    */
   async executeJS(code) {
-    const output = await this.#execute(code);
-    return JSON.stringify(
-      { result: output.result, trace: output.trace },
-      null,
-      2,
-    );
+    if (typeof code !== "string" || Buffer.byteLength(code) > MAX_BYTES) {
+      throw new Error("RUN_INPUT: code must be a string of at most 1 MiB");
+    }
+    if (process.platform !== "linux") {
+      throw new Error("RUN_UNAVAILABLE: run requires Linux, Bubblewrap and prlimit; no unsafe fallback");
+    }
+    const args = this.#arguments();
+    return new Promise((resolve, reject) => {
+      const child = spawn("/usr/bin/bwrap", args, {
+        env: {}, stdio: ["pipe", "pipe", "pipe"],
+      });
+      let failure;
+      let stdout = "";
+      let stderr = "";
+      let bytes = 0;
+      /**
+       * Stops the namespace supervisor; its death kills the namespace init.
+       * @param {Error} error - Reason retained until the pipes close.
+       */
+      const stop = error => {
+        if (!failure) failure = error;
+        child.kill("SIGKILL");
+      };
+      const timer = setTimeout(() => stop(new Error(`ASYNC_TIMEOUT: run terminated after ${this.#timeoutMs}ms (script execution timed out)`)), this.#timeoutMs);
+      child.on("error", error => { failure = new Error(`RUN_UNAVAILABLE: ${error.message}`, { cause: error }); });
+      child.stdin.on("error", error => {
+        if (!("code" in error) || error.code !== "EPIPE") stop(error);
+      });
+      child.stdout.setEncoding("utf8");
+      child.stderr.setEncoding("utf8");
+      child.stdout.on("data", chunk => {
+        bytes += Buffer.byteLength(chunk);
+        if (bytes > MAX_BYTES) stop(new Error("RUN_OUTPUT: output exceeded 1 MiB; execution terminated"));
+        else stdout += chunk.toString();
+      });
+      child.stderr.on("data", chunk => {
+        bytes += Buffer.byteLength(chunk);
+        if (bytes > MAX_BYTES) stop(new Error("RUN_OUTPUT: output exceeded 1 MiB; execution terminated"));
+        else stderr += chunk.toString();
+      });
+      child.once("close", (exitCode, signal) => {
+        clearTimeout(timer);
+        if (failure) { reject(failure); return; }
+        if (exitCode !== 0) {
+          reject(new Error(`RUN_FAILED: sandbox exited (${signal || exitCode}): ${stderr.trim()}`));
+          return;
+        }
+        try {
+          const response = JSON.parse(stdout);
+          if (response.error) throw new Error(response.error);
+          if (typeof response.output !== "string") throw new Error("RUN_PROTOCOL: missing result");
+          resolve(response.output);
+        } catch (error) { reject(error); }
+      });
+      child.stdin.end(JSON.stringify({ code }));
+    });
   }
 }
-
-export default EvalTools;
-

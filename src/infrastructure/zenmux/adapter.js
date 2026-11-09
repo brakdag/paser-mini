@@ -75,7 +75,7 @@ class ZenMuxAdapter extends BaseAdapter {
    * @returns {Promise<string>} The response text from the AI.
    * @throws {Error} If the API request fails.
    */
-  async sendMessage(message, role = "user") {
+  async _sendMessage(message, role = "user") {
     const timestamp = IRCFormatter.getTimestamp();
     this.injectMessage(role, message, timestamp);
     this._enforceContextLimit();
@@ -201,6 +201,7 @@ class ZenMuxAdapter extends BaseAdapter {
   async _dispatchMessage() {
     await this._applyRateLimit();
     const payload = this._preparePayload();
+    this._validateContextPayload(payload);
     this.lastPayload = payload;
 
     return this.retryHandler.execute(

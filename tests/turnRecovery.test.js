@@ -195,10 +195,11 @@ test("failed requests restore history removed by context preparation", async (t)
    * @returns {unknown} The context limit, output reserve or default.
    */
   h.adapter.configManager.get = (key, fallback) => {
-    if (key === "context_window_limit") return 501;
-    if (key === "max_tokens") return 0;
+    if (key === "context_window_limit") return 800;
+    if (key === "max_tokens") return 1;
     return fallback;
   };
+  h.adapter.getHistory()[0].parts[0].text = "Earlier question ".repeat(400);
   const before = structuredClone(h.adapter.getHistory());
 
   await assert.rejects(h.processor.process("Current question"), { name: "APIError", cause });
@@ -222,6 +223,7 @@ test("context preparation errors roll back the pending message before any HTTP r
 test("transport error text does not trigger domain recovery", async (t) => {
   const cause = new Error("Response blocked by safety filters.");
   const h = harness(t, async () => { throw cause; });
+  h.adapter.getHistory()[0].parts[0].text = "Earlier question ".repeat(400);
   const before = structuredClone(h.adapter.getHistory());
 
   await assert.rejects(h.processor.process("Current question"), { name: "APIError", cause });

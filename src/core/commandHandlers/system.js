@@ -81,7 +81,7 @@ class SystemCommands {
   }
 
   /**
-   * Handles the /trunc command to dynamically set the FIFO context window truncation limit.
+   * Handles /trunc with an estimated context budget and complete-turn pruning.
    * @param {object} chatManager The chat manager instance.
    * @param {object} ui The terminal UI instance.
    * @param {string} input The arguments (e.g., 8000).
@@ -98,9 +98,14 @@ class SystemCommands {
       ui.displayError("Truncation limit must be a positive integer, or 0 to disable.");
       return true;
     }
-    chatManager.setContextWindowLimit(limit);
+    try {
+      chatManager.setContextWindowLimit(limit);
+    } catch (error) {
+      ui.displayError(error.message);
+      return true;
+    }
 
-    // Apply the adapter's existing heuristic trimming policy immediately.
+    // Apply the accepted complete-turn policy immediately.
     if (limit > 0 && chatManager.assistant && typeof chatManager.assistant._enforceContextLimit === "function") {
       chatManager.assistant._enforceContextLimit();
     }
@@ -108,7 +113,7 @@ class SystemCommands {
     if (limit === 0) {
       ui.displayInfo("Context truncation DISABLED. Provider context limits still apply.");
     } else {
-      ui.displayInfo(`Context truncation ENABLED. Approximate FIFO budget: ${limit} tokens.`);
+      ui.displayInfo(`Context truncation ENABLED. Approximate complete-turn budget: ${limit} tokens.`);
     }
     return true;
   }
