@@ -1,0 +1,6 @@
+{"id":"A01","firstPayloadRoles":["user"],"systemAppearsAfterMetadata":true}
+{"id":"A02","rewriteReportedSuccess":true,"oldHistoryRestored":false,"githubCompletionReceipt":true,"runsForTwoAttempts":1}
+{"id":"A03","expected":"before cost=$$; matched=$& after","actual":"before cost=$; matched=TOKEN after"}
+{"id":"A04","success":true,"isError":false,"output":"Exit Code 7:\npartial\n"}
+{"id":"A05","cursorsRequested":[null],"discovered":["mcp_fixture_first"],"missing":"mcp_fixture_second"}
+{"id":"A06","managerReportsIdle":true,"processorStillActive":true,"promptChangedDuringRequest":true}
