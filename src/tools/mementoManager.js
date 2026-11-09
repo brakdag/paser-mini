@@ -4,6 +4,9 @@ import path from "path";
 
 const LOG_DIR = path.join(process.cwd(), ".paser-mini", "log");
 
+// Shared by instances in this process. Entries are removed when the queue drains.
+const pendingWrites = new Map();
+
 /**
  * Manages the memento log file, handling memory storage and rank tracking.
  */
@@ -21,7 +24,7 @@ class MementoManager {
     if (!fsSync.existsSync(logDir)) {
       fsSync.mkdirSync(logDir, { recursive: true });
     }
-    this.#LOG_FILE = path.join(logDir, "memento.log");
+    this.#LOG_FILE = path.join(fsSync.realpathSync(logDir), "memento.log");
   }
 
   /**
@@ -34,6 +37,29 @@ class MementoManager {
    * @throws {Error} If the memory cannot be stored.
    */
   async pushMemory(role, scope, value, key = null) {
+    const previous = pendingWrites.get(this.#LOG_FILE) ?? Promise.resolve();
+    const operation = previous.then(() => this.#storeMemory(role, scope, value, key));
+    // A failed write rejects its caller, but must not poison subsequent writes.
+    const tail = operation.then(() => undefined, () => undefined);
+    pendingWrites.set(this.#LOG_FILE, tail);
+    try {
+      return await operation;
+    } finally {
+      if (pendingWrites.get(this.#LOG_FILE) === tail) {
+        pendingWrites.delete(this.#LOG_FILE);
+      }
+    }
+  }
+
+  /**
+   * Updates ranks, allocates an ID and appends while owning the file's queue.
+   * @param {string} role Role of the agent.
+   * @param {string} scope Scope of the memory.
+   * @param {string} value The memory content.
+   * @param {string|null} key Optional key for the memory.
+   * @returns {Promise<string>} Confirmation after the write completes.
+   */
+  async #storeMemory(role, scope, value, key) {
     await this.#incrementReferencedRanks(value);
 
     const nextId = await this.#nextId();

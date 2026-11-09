@@ -52,6 +52,13 @@ Technical writes are synchronous and bounded, with no pending write queue. Concu
 
 To reclaim space from old diagnostics, stop Paser Mini and delete only `paser_mini.log`, `paser_mini.log.1` and `paser_mini.log.2` inside `.paser-mini/log/`. Keep `session.log` and `memento.log` for context and memory.
 
+Memory writes to `memento.log` are serialized per log directory within one process,
+including separate manager instances and directory symlinks. Concurrent calls keep
+their entry IDs and reference ranks in order. A failed operation rejects its caller
+and allows subsequent calls to proceed. This is not a cross-process lock: run only
+one Paser Mini process per project when storing memories. Writes are not transactional
+across disk failures; a failed append can leave reference ranks already updated.
+
 ### Installation
 ```bash
 curl -fsSL https://raw.githubusercontent.com/brakdag/paser-mini/main/install.sh | bash

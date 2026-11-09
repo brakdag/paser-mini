@@ -160,4 +160,42 @@ describe("mementoManager", () => {
       await fs.rm(ownDir, { recursive: true, force: true });
     }
   });
+
+  it("should preserve concurrent entries and ranks across instances sharing a log", async (t) => {
+    const ownDir = await fs.mkdtemp(path.join(os.tmpdir(), "paser-memento-concurrent-"));
+    t.after(() => fs.rm(ownDir, { recursive: true, force: true }));
+    const aliasDir = `${ownDir}-alias`;
+    await fs.symlink(ownDir, aliasDir, "dir");
+    t.after(() => fs.unlink(aliasDir));
+    const managers = [
+      new MementoManager({ logDir: ownDir }),
+      new MementoManager({ logDir: aliasDir }),
+    ];
+    await managers[0].pushMemory("agent", "test", "seed\nrecord");
+
+    const results = await Promise.all(Array.from({ length: 30 }, (_, index) =>
+      managers[index % 2].pushMemory("agent", "test", `value ${index}\nreferences #1 #1`)));
+    const records = await readRecords(path.join(ownDir, "memento.log"));
+
+    assert.strictEqual(records.length, 31);
+    assert.deepStrictEqual(records.map((line) => Number(line.match(/^\[ID: (\d+)\]/)[1])),
+      Array.from({ length: 31 }, (_, index) => index + 1));
+    assert.ok(records[0].includes("[Rank: 30]"));
+    results.forEach((result, index) => {
+      assert.ok(result.includes(`entry #${index + 2}.`));
+      assert.ok(records[index + 1].endsWith(`value ${index}\\nreferences #1 #1`));
+    });
+  });
+
+  it("should continue storing memories after a queued write rejects", async (t) => {
+    const ownDir = await fs.mkdtemp(path.join(os.tmpdir(), "paser-memento-recovery-"));
+    t.after(() => fs.rm(ownDir, { recursive: true, force: true }));
+    const own = new MementoManager({ logDir: ownDir });
+    const ownLog = path.join(ownDir, "memento.log");
+    await fs.mkdir(ownLog);
+    await assert.rejects(own.pushMemory("agent", "test", "fails"), { code: "EISDIR" });
+    await fs.rmdir(ownLog);
+    assert.match(await own.pushMemory("agent", "test", "recovered"), /entry #1\./);
+    assert.strictEqual((await readRecords(ownLog)).length, 1);
+  });
 });
