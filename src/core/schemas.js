@@ -31,7 +31,7 @@ const binarySchema = z.discriminatedUnion("action", [
 const SCHEMAS = {
   analysis: z.object({ path: z.string().min(1) }).strict(),
   arrange: z.object({ file_path: z.string().min(1), path: z.string() }).strict(),
-  ast: z.object({ path: z.string().min(1), query: z.string(), limit: z.number().optional() }).strict(),
+  ast: z.object({ path: z.string().min(1), query: z.string().min(1), limit: z.number().int().min(1).max(10000).optional() }).strict(),
   bin: binarySchema,
   close: z.object({ issue_number: z.number().int(), repo: z.string().optional() }).strict(),
   concat: z.object({ destination: z.string().min(1), source: z.string().min(1) }).strict(),

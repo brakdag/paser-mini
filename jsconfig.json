@@ -4,7 +4,12 @@
     "target": "ESNext",
     "moduleResolution": "node",
     "checkJs": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
     "lib": ["ESNext"],
     "types": ["node"]
-  }
+  },
+  "include": ["src/**/*.js", "tests/**/*.test.js", "scripts/**/*.js"],
+  "exclude": ["node_modules", "tests/errores"]
 }

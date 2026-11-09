@@ -12,7 +12,6 @@ export default class QrTools {
    * @param {boolean} top - Whether the top module is dark.
    * @param {boolean} bottom - Whether the bottom module is dark.
    * @returns {string} The Unicode character representing the pair.
-   * @private
    */
   #getHalfBlock(top, bottom) {
     if (top && bottom) return "█";

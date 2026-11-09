@@ -137,13 +137,13 @@ const COMMAND_MAP = {
    */
   "/cache": (cm, ui) => SystemCommands.handleCache(cm, ui),
   /**
-   * @param {import("../chatManager.js").default} cm The chat manager.
+   * @param {import("./chatManager.js").default} cm The chat manager.
    * @param {object} ui The UI.
    * @returns {Promise<boolean>} Always true.
    */
   "/tools": (cm, ui) => SystemCommands.handleTools(cm, ui),
   /**
-   * @param {import("../chatManager.js").default} cm The chat manager.
+   * @param {import("./chatManager.js").default} cm The chat manager.
    * @param {object} ui The UI.
    * @returns {Promise<boolean>} Always true.
    */

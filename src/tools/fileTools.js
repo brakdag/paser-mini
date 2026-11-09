@@ -57,7 +57,7 @@ class FileTools {
    * @returns {Promise<string>} The tailed content.
    */
   async #readTail(safePath, tail) {
-    const numericTail = parseInt(tail, 10);
+    const numericTail = parseInt(String(tail), 10);
     if (Number.isNaN(numericTail)) {
       throw new Error("tail must be a number");
     }

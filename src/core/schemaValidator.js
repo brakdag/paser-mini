@@ -6,7 +6,6 @@ import ValidationResult from "./validationResult.js";
 class SchemaValidator {
   /**
    * Initializes the SchemaValidator with an empty registry of schemas.
-   * @returns {void}
    */
   constructor() {
     this.schemas = new Map();

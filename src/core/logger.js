@@ -25,7 +25,6 @@ const MAX_ENTRY_BYTES = 16 * 1024;
 class Logger {
   /**
    * Initializes the Logger, ensures the log directory exists, and opens write streams.
-   * @returns {void}
    */
   constructor() {
     const logDir = path.join(process.cwd(), ".paser-mini", "log");

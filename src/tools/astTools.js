@@ -18,7 +18,9 @@ export class AstTools {
         simplified.name = node.name;
         break;
       case "Literal":
-        simplified.value = node.value;
+        // JSON has no bigint or RegExp value; retain their source information.
+        if (node.regex) simplified.value = { pattern: node.regex.pattern, flags: node.regex.flags };
+        else simplified.value = typeof node.value === "bigint" ? node.value.toString() : node.value;
         break;
       case "CallExpression":
         simplified.callee =
@@ -71,44 +73,6 @@ export class AstTools {
   }
 
   /**
-   * Fast path analysis using the tokenizer.
-   * @param {string} code - The source code.
-   * @param {string} query - The node type to search for.
-   * @param {number} limit - Maximum results to return.
-   * @returns {object} The analysis results.
-   */
-  #analyzeWithTokenizer(code, query, limit) {
-    const results = [];
-    const tokenizer = acorn.tokenizer(code, {
-      ecmaVersion: "latest",
-      sourceType: "module",
-    });
-    let token = tokenizer.getToken();
-
-    while (token.type.label !== "eof") {
-      if (results.length >= limit) break;
-      if (query === "Identifier" && token.type.label === "name") {
-        results.push({ type: "Identifier", name: token.value });
-      } else if (
-        query === "Literal" &&
-        ["num", "string", "regexp", "true", "false", "null"].includes(
-          token.type.label,
-        )
-      ) {
-        results.push({ type: "Literal", value: token.value });
-      }
-      token = tokenizer.getToken();
-    }
-
-    return {
-      count: results.length,
-      limit,
-      strategy: "tokenizer_fast_path",
-      results,
-    };
-  }
-
-  /**
    * Slow path analysis using the full AST parser.
    * @param {string} code - The source code.
    * @param {string} query - The node type to search for.
@@ -126,7 +90,7 @@ export class AstTools {
   }
 
   /**
-   * Analyzes a file's AST or tokens based on the provided query.
+   * Parses the complete JavaScript module and returns matching AST nodes.
    * @param {string} filepath - Path to the source file.
    * @param {string} query - The AST node type to search for.
    * @param {number} [limit] - Maximum results to return.
@@ -136,21 +100,12 @@ export class AstTools {
     if (!query) {
       throw new Error("Query parameter is required.");
     }
+    if (!Number.isInteger(limit) || limit < 1 || limit > 10000) {
+      throw new Error("Limit must be an integer between 1 and 10000.");
+    }
 
     const code = await fs.readFile(PathValidator.getSafePath(filepath), "utf8");
-    let resultsData;
-
-    if (query === "Identifier" || query === "Literal") {
-      try {
-        resultsData = this.#analyzeWithTokenizer(code, query, limit);
-      } catch {
-        // Fallback to AST if tokenizer fails due to syntax errors
-      }
-    }
-
-    if (!resultsData) {
-      resultsData = this.#analyzeWithAST(code, query, limit);
-    }
+    const resultsData = this.#analyzeWithAST(code, query, limit);
 
     return JSON.stringify(resultsData, null, 2);
   }

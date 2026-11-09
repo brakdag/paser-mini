@@ -1,0 +1,1104 @@
+{
+  "typescript": "5.9.3",
+  "diagnostics": [
+    {
+      "file": "src/core/chatManager.js",
+      "code": 2339,
+      "message": "Property 'chatManager' does not exist on type 'TurnProcessor'.",
+      "source": "chatManager",
+      "count": 1
+    },
+    {
+      "file": "src/core/chatManager.js",
+      "code": 2339,
+      "message": "Property 'providerManager' does not exist on type 'ChatManager'.",
+      "source": "providerManager",
+      "count": 1
+    },
+    {
+      "file": "src/core/chatManager.js",
+      "code": 2345,
+      "message": "Argument of type 'unknown' is not assignable to parameter of type 'string'.",
+      "source": "this.configManager.get(\"context_window_limit\", DEFAULT_CONTEXT_WINDOW_LIMIT)",
+      "count": 1
+    },
+    {
+      "file": "src/core/chatManager.js",
+      "code": 2345,
+      "message": "Argument of type 'unknown' is not assignable to parameter of type 'string'.",
+      "source": "this.configManager.get(\"rendering_mode\", \"IRC\")",
+      "count": 1
+    },
+    {
+      "file": "src/core/chatManager.js",
+      "code": 2345,
+      "message": "Argument of type '{ [key: string]: (...args: unknown[]) => unknown; }' is not assignable to parameter of type '{ [key: string]: (...args: unknown[]) => Promise<unknown>; }'.\n  'string' index signatures are incompatible.\n    Type '(...args: unknown[]) => unknown' is not assignable to type '(...args: unknown[]) => Promise<unknown>'.\n      Type '{}' is missing the following properties from type 'Promise<unknown>': then, catch, finally, [Symbol.toStringTag]",
+      "source": "this.tools",
+      "count": 1
+    },
+    {
+      "file": "src/core/commandHandler.js",
+      "code": 2322,
+      "message": "Type 'boolean' is not assignable to type 'void'.",
+      "source": "InterfaceCommands.handleHelp(ui)",
+      "count": 1
+    },
+    {
+      "file": "src/core/commandHandler.js",
+      "code": 2339,
+      "message": "Property 'handleReload' does not exist on type 'typeof SystemCommands'.",
+      "source": "handleReload",
+      "count": 1
+    },
+    {
+      "file": "src/core/commandHandler.js",
+      "code": 2554,
+      "message": "Expected 0 arguments, but got 1.",
+      "source": "ui",
+      "count": 1
+    },
+    {
+      "file": "src/core/githubModeOrchestrator.js",
+      "code": 2339,
+      "message": "Property 'configManager' does not exist on type 'GitHubModeOrchestrator'.",
+      "source": "configManager",
+      "count": 1
+    },
+    {
+      "file": "src/core/githubModeOrchestrator.js",
+      "code": 2339,
+      "message": "Property 'githubApi' does not exist on type 'GitHubModeOrchestrator'.",
+      "source": "githubApi",
+      "count": 9
+    },
+    {
+      "file": "src/core/githubModeOrchestrator.js",
+      "code": 2339,
+      "message": "Property 'pureMode' does not exist on type 'GitHubModeOrchestrator'.",
+      "source": "pureMode",
+      "count": 1
+    },
+    {
+      "file": "src/core/githubModeOrchestrator.js",
+      "code": 2339,
+      "message": "Property 'repo' does not exist on type 'GitHubModeOrchestrator'.",
+      "source": "repo",
+      "count": 7
+    },
+    {
+      "file": "src/core/githubModeOrchestrator.js",
+      "code": 2339,
+      "message": "Property 'sessionFactory' does not exist on type 'GitHubModeOrchestrator'.",
+      "source": "sessionFactory",
+      "count": 1
+    },
+    {
+      "file": "src/core/githubModeOrchestrator.js",
+      "code": 2339,
+      "message": "Property 'systemInstruction' does not exist on type 'GitHubModeOrchestrator'.",
+      "source": "systemInstruction",
+      "count": 1
+    },
+    {
+      "file": "src/core/githubModeOrchestrator.js",
+      "code": 2339,
+      "message": "Property 'tools' does not exist on type 'GitHubModeOrchestrator'.",
+      "source": "tools",
+      "count": 1
+    },
+    {
+      "file": "src/core/sessionFactory.js",
+      "code": 2339,
+      "message": "Property 'providerManager' does not exist on type 'ChatManager'.",
+      "source": "providerManager",
+      "count": 1
+    },
+    {
+      "file": "src/core/terminalUI.js",
+      "code": 2322,
+      "message": "Type 'string | Promise<string>' is not assignable to type 'Promise<string>'.\n  Type 'string' is not assignable to type 'Promise<string>'.",
+      "source": "return",
+      "count": 1
+    },
+    {
+      "file": "src/core/turnProcessor.js",
+      "code": 2345,
+      "message": "Argument of type 'string | any[]' is not assignable to parameter of type 'string'.\n  Type 'any[]' is not assignable to type 'string'.",
+      "source": "resultsPayload",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/McpManager.js",
+      "code": 2322,
+      "message": "Type 'Promise<void[]>' is not assignable to type 'Promise<void>'.\n  Type 'void[]' is not assignable to type 'void'.",
+      "source": "Promise.all(\n      Array.from(this.clients.keys()).map((name) => this._disconnectServer(name))\n    )",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/baseAdapter.js",
+      "code": 1345,
+      "message": "An expression of type 'void' cannot be tested for truthiness.",
+      "source": "history",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/baseAdapter.js",
+      "code": 2339,
+      "message": "Property 'content' does not exist on type 'never'.",
+      "source": "content",
+      "count": 4
+    },
+    {
+      "file": "src/infrastructure/baseAdapter.js",
+      "code": 2339,
+      "message": "Property 'length' does not exist on type 'never'.",
+      "source": "length",
+      "count": 5
+    },
+    {
+      "file": "src/infrastructure/baseAdapter.js",
+      "code": 2339,
+      "message": "Property 'parts' does not exist on type 'never'.",
+      "source": "parts",
+      "count": 7
+    },
+    {
+      "file": "src/infrastructure/baseAdapter.js",
+      "code": 2339,
+      "message": "Property 'reduce' does not exist on type 'never'.",
+      "source": "reduce",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/baseAdapter.js",
+      "code": 2339,
+      "message": "Property 'role' does not exist on type 'never'.",
+      "source": "role",
+      "count": 2
+    },
+    {
+      "file": "src/infrastructure/baseAdapter.js",
+      "code": 2339,
+      "message": "Property 'some' does not exist on type 'never'.",
+      "source": "some",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/baseAdapter.js",
+      "code": 2339,
+      "message": "Property 'splice' does not exist on type 'never'.",
+      "source": "splice",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/baseAdapter.js",
+      "code": 2339,
+      "message": "Property 'systemInstruction' does not exist on type 'BaseAdapter'.",
+      "source": "systemInstruction",
+      "count": 2
+    },
+    {
+      "file": "src/infrastructure/baseAdapter.js",
+      "code": 2339,
+      "message": "Property 'text' does not exist on type 'never'.",
+      "source": "text",
+      "count": 4
+    },
+    {
+      "file": "src/infrastructure/cerebras/adapter.js",
+      "code": 2339,
+      "message": "Property 'code' does not exist on type 'Error'.",
+      "source": "code",
+      "count": 2
+    },
+    {
+      "file": "src/infrastructure/cerebras/adapter.js",
+      "code": 2339,
+      "message": "Property 'response' does not exist on type 'Error'.",
+      "source": "response",
+      "count": 3
+    },
+    {
+      "file": "src/infrastructure/cerebras/adapter.js",
+      "code": 2341,
+      "message": "Property '_enforceContextLimit' is private and only accessible within class 'BaseAdapter'.",
+      "source": "_enforceContextLimit",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/cerebras/adapter.js",
+      "code": 2353,
+      "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
+      "source": "userNickname",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/cloudflare/adapter.js",
+      "code": 2339,
+      "message": "Property 'code' does not exist on type 'Error'.",
+      "source": "code",
+      "count": 2
+    },
+    {
+      "file": "src/infrastructure/cloudflare/adapter.js",
+      "code": 2339,
+      "message": "Property 'response' does not exist on type 'Error'.",
+      "source": "response",
+      "count": 3
+    },
+    {
+      "file": "src/infrastructure/cloudflare/adapter.js",
+      "code": 2341,
+      "message": "Property '_enforceContextLimit' is private and only accessible within class 'BaseAdapter'.",
+      "source": "_enforceContextLimit",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/cloudflare/adapter.js",
+      "code": 2353,
+      "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
+      "source": "userNickname",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/cohere/adapter.js",
+      "code": 2339,
+      "message": "Property 'code' does not exist on type 'Error'.",
+      "source": "code",
+      "count": 2
+    },
+    {
+      "file": "src/infrastructure/cohere/adapter.js",
+      "code": 2339,
+      "message": "Property 'payload' does not exist on type 'Error'.",
+      "source": "payload",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/cohere/adapter.js",
+      "code": 2339,
+      "message": "Property 'response' does not exist on type 'Error'.",
+      "source": "response",
+      "count": 4
+    },
+    {
+      "file": "src/infrastructure/cohere/adapter.js",
+      "code": 2339,
+      "message": "Property 'status' does not exist on type 'Error'.",
+      "source": "status",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/cohere/adapter.js",
+      "code": 2341,
+      "message": "Property '_enforceContextLimit' is private and only accessible within class 'BaseAdapter'.",
+      "source": "_enforceContextLimit",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/cohere/adapter.js",
+      "code": 2353,
+      "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
+      "source": "userNickname",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/conversationState.js",
+      "code": 2345,
+      "message": "Argument of type 'number' is not assignable to parameter of type 'string'.",
+      "source": "timestamp",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/conversationState.js",
+      "code": 2345,
+      "message": "Argument of type 'string | number' is not assignable to parameter of type 'number'.\n  Type 'string' is not assignable to type 'number'.",
+      "source": "ts",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/gemini/adapter.js",
+      "code": 2339,
+      "message": "Property 'code' does not exist on type 'Error'.",
+      "source": "code",
+      "count": 2
+    },
+    {
+      "file": "src/infrastructure/gemini/adapter.js",
+      "code": 2339,
+      "message": "Property 'response' does not exist on type 'Error'.",
+      "source": "response",
+      "count": 3
+    },
+    {
+      "file": "src/infrastructure/gemini/adapter.js",
+      "code": 2341,
+      "message": "Property '_enforceContextLimit' is private and only accessible within class 'BaseAdapter'.",
+      "source": "_enforceContextLimit",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/gemini/adapter.js",
+      "code": 2353,
+      "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
+      "source": "userNickname",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/groq/adapter.js",
+      "code": 2339,
+      "message": "Property 'code' does not exist on type 'Error'.",
+      "source": "code",
+      "count": 2
+    },
+    {
+      "file": "src/infrastructure/groq/adapter.js",
+      "code": 2339,
+      "message": "Property 'response' does not exist on type 'Error'.",
+      "source": "response",
+      "count": 3
+    },
+    {
+      "file": "src/infrastructure/groq/adapter.js",
+      "code": 2341,
+      "message": "Property '_enforceContextLimit' is private and only accessible within class 'BaseAdapter'.",
+      "source": "_enforceContextLimit",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/groq/adapter.js",
+      "code": 2353,
+      "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
+      "source": "userNickname",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/huggingface/adapter.js",
+      "code": 2339,
+      "message": "Property 'code' does not exist on type 'Error'.",
+      "source": "code",
+      "count": 2
+    },
+    {
+      "file": "src/infrastructure/huggingface/adapter.js",
+      "code": 2339,
+      "message": "Property 'response' does not exist on type 'Error'.",
+      "source": "response",
+      "count": 3
+    },
+    {
+      "file": "src/infrastructure/huggingface/adapter.js",
+      "code": 2341,
+      "message": "Property '_enforceContextLimit' is private and only accessible within class 'BaseAdapter'.",
+      "source": "_enforceContextLimit",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/huggingface/adapter.js",
+      "code": 2353,
+      "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
+      "source": "userNickname",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/nvidia-minimax/adapter.js",
+      "code": 2339,
+      "message": "Property 'code' does not exist on type 'Error'.",
+      "source": "code",
+      "count": 2
+    },
+    {
+      "file": "src/infrastructure/nvidia-minimax/adapter.js",
+      "code": 2339,
+      "message": "Property 'response' does not exist on type 'Error'.",
+      "source": "response",
+      "count": 5
+    },
+    {
+      "file": "src/infrastructure/nvidia-minimax/adapter.js",
+      "code": 2341,
+      "message": "Property '_enforceContextLimit' is private and only accessible within class 'BaseAdapter'.",
+      "source": "_enforceContextLimit",
+      "count": 3
+    },
+    {
+      "file": "src/infrastructure/nvidia-minimax/adapter.js",
+      "code": 2353,
+      "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
+      "source": "userNickname",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/nvidia-minimax/adapter.js",
+      "code": 2416,
+      "message": "Property 'injectMessage' in type 'NvidiaMiniMaxAdapter' is not assignable to the same property in base type 'BaseAdapter'.\n  Type '(role: string, content: string, timestamp?: number) => void' is not assignable to type '(_role: string, _content: any, _timestamp?: string) => void'.\n    Types of parameters 'timestamp' and '_timestamp' are incompatible.\n      Type 'string' is not assignable to type 'number'.",
+      "source": "injectMessage",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/nvidia/adapter.js",
+      "code": 2339,
+      "message": "Property 'code' does not exist on type 'Error'.",
+      "source": "code",
+      "count": 2
+    },
+    {
+      "file": "src/infrastructure/nvidia/adapter.js",
+      "code": 2339,
+      "message": "Property 'response' does not exist on type 'Error'.",
+      "source": "response",
+      "count": 3
+    },
+    {
+      "file": "src/infrastructure/nvidia/adapter.js",
+      "code": 2341,
+      "message": "Property '_enforceContextLimit' is private and only accessible within class 'BaseAdapter'.",
+      "source": "_enforceContextLimit",
+      "count": 3
+    },
+    {
+      "file": "src/infrastructure/nvidia/adapter.js",
+      "code": 2353,
+      "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
+      "source": "userNickname",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/nvidia/adapter.js",
+      "code": 2416,
+      "message": "Property 'injectMessage' in type 'NvidiaAdapter' is not assignable to the same property in base type 'BaseAdapter'.\n  Type '(role: string, content: string, timestamp?: number) => void' is not assignable to type '(_role: string, _content: any, _timestamp?: string) => void'.\n    Types of parameters 'timestamp' and '_timestamp' are incompatible.\n      Type 'string' is not assignable to type 'number'.",
+      "source": "injectMessage",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/openrouter/adapter.js",
+      "code": 2339,
+      "message": "Property 'code' does not exist on type 'Error'.",
+      "source": "code",
+      "count": 2
+    },
+    {
+      "file": "src/infrastructure/openrouter/adapter.js",
+      "code": 2339,
+      "message": "Property 'response' does not exist on type 'Error'.",
+      "source": "response",
+      "count": 5
+    },
+    {
+      "file": "src/infrastructure/openrouter/adapter.js",
+      "code": 2341,
+      "message": "Property '_enforceContextLimit' is private and only accessible within class 'BaseAdapter'.",
+      "source": "_enforceContextLimit",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/openrouter/adapter.js",
+      "code": 2353,
+      "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
+      "source": "userNickname",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/poolside/adapter.js",
+      "code": 2339,
+      "message": "Property 'code' does not exist on type 'Error'.",
+      "source": "code",
+      "count": 2
+    },
+    {
+      "file": "src/infrastructure/poolside/adapter.js",
+      "code": 2339,
+      "message": "Property 'response' does not exist on type 'Error'.",
+      "source": "response",
+      "count": 3
+    },
+    {
+      "file": "src/infrastructure/poolside/adapter.js",
+      "code": 2341,
+      "message": "Property '_enforceContextLimit' is private and only accessible within class 'BaseAdapter'.",
+      "source": "_enforceContextLimit",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/poolside/adapter.js",
+      "code": 2353,
+      "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
+      "source": "userNickname",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/zai/adapter.js",
+      "code": 2339,
+      "message": "Property 'code' does not exist on type 'Error'.",
+      "source": "code",
+      "count": 2
+    },
+    {
+      "file": "src/infrastructure/zai/adapter.js",
+      "code": 2339,
+      "message": "Property 'response' does not exist on type 'Error'.",
+      "source": "response",
+      "count": 5
+    },
+    {
+      "file": "src/infrastructure/zai/adapter.js",
+      "code": 2341,
+      "message": "Property '_enforceContextLimit' is private and only accessible within class 'BaseAdapter'.",
+      "source": "_enforceContextLimit",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/zai/adapter.js",
+      "code": 2345,
+      "message": "Argument of type 'Error' is not assignable to parameter of type 'AxiosError<unknown, any>'.\n  Type 'Error' is missing the following properties from type 'AxiosError<unknown, any>': isAxiosError, toJSON",
+      "source": "error",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/zai/adapter.js",
+      "code": 2353,
+      "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
+      "source": "userNickname",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/zenmux/adapter.js",
+      "code": 2339,
+      "message": "Property 'code' does not exist on type 'Error'.",
+      "source": "code",
+      "count": 2
+    },
+    {
+      "file": "src/infrastructure/zenmux/adapter.js",
+      "code": 2339,
+      "message": "Property 'response' does not exist on type 'Error'.",
+      "source": "response",
+      "count": 3
+    },
+    {
+      "file": "src/infrastructure/zenmux/adapter.js",
+      "code": 2341,
+      "message": "Property '_enforceContextLimit' is private and only accessible within class 'BaseAdapter'.",
+      "source": "_enforceContextLimit",
+      "count": 1
+    },
+    {
+      "file": "src/infrastructure/zenmux/adapter.js",
+      "code": 2353,
+      "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
+      "source": "userNickname",
+      "count": 1
+    },
+    {
+      "file": "src/main.js",
+      "code": 2554,
+      "message": "Expected 1-2 arguments, but got 3.",
+      "source": "{ promise }",
+      "count": 1
+    },
+    {
+      "file": "src/tools/gitTools.js",
+      "code": 2339,
+      "message": "Property 'code' does not exist on type 'Error'.",
+      "source": "code",
+      "count": 2
+    },
+    {
+      "file": "src/tools/gitTools.js",
+      "code": 2339,
+      "message": "Property 'signal' does not exist on type 'Error'.",
+      "source": "signal",
+      "count": 2
+    },
+    {
+      "file": "src/tools/gitTools.js",
+      "code": 2339,
+      "message": "Property 'stdinError' does not exist on type 'Error'.",
+      "source": "stdinError",
+      "count": 1
+    },
+    {
+      "file": "src/tools/githubTools.js",
+      "code": 2339,
+      "message": "Property 'response' does not exist on type 'Error'.",
+      "source": "response",
+      "count": 1
+    },
+    {
+      "file": "src/tools/githubTools.js",
+      "code": 2345,
+      "message": "Argument of type 'Error' is not assignable to parameter of type 'AxiosError<unknown, any>'.\n  Type 'Error' is missing the following properties from type 'AxiosError<unknown, any>': isAxiosError, toJSON",
+      "source": "error",
+      "count": 1
+    },
+    {
+      "file": "src/tools/jsonTools.js",
+      "code": 2698,
+      "message": "Spread types may only be created from object types.",
+      "source": "...data",
+      "count": 1
+    },
+    {
+      "file": "src/tools/loadTools.js",
+      "code": 2339,
+      "message": "Property 'code' does not exist on type 'Error'.",
+      "source": "code",
+      "count": 1
+    },
+    {
+      "file": "src/utils/retryHandler.js",
+      "code": 2339,
+      "message": "Property 'code' does not exist on type 'Error'.",
+      "source": "code",
+      "count": 3
+    },
+    {
+      "file": "src/utils/retryHandler.js",
+      "code": 2339,
+      "message": "Property 'response' does not exist on type 'Error'.",
+      "source": "response",
+      "count": 1
+    },
+    {
+      "file": "tests/binaryTools.test.js",
+      "code": 2339,
+      "message": "Property 'count' does not exist on type 'unknown'.",
+      "source": "count",
+      "count": 3
+    },
+    {
+      "file": "tests/binaryTools.test.js",
+      "code": 2339,
+      "message": "Property 'offsets' does not exist on type 'unknown'.",
+      "source": "offsets",
+      "count": 5
+    },
+    {
+      "file": "tests/binaryTools.test.js",
+      "code": 2339,
+      "message": "Property 'truncated' does not exist on type 'unknown'.",
+      "source": "truncated",
+      "count": 1
+    },
+    {
+      "file": "tests/binaryTools.test.js",
+      "code": 2345,
+      "message": "Argument of type 'unknown' is not assignable to parameter of type 'string'.",
+      "source": "atEof",
+      "count": 1
+    },
+    {
+      "file": "tests/binaryTools.test.js",
+      "code": 2345,
+      "message": "Argument of type 'unknown' is not assignable to parameter of type 'string'.",
+      "source": "dump",
+      "count": 3
+    },
+    {
+      "file": "tests/binaryTools.test.js",
+      "code": 2554,
+      "message": "Expected 2-7 arguments, but got 1.",
+      "source": "handleHexCommand",
+      "count": 1
+    },
+    {
+      "file": "tests/cliOptions.test.js",
+      "code": 2769,
+      "message": "No overload matches this call.\n  Overload 1 of 4, '(object: SystemPromptManager, methodName: FunctionPropertyNames<SystemPromptManager>, options?: MockFunctionOptions): any', gave the following error.\n    Argument of type '\"_exists\"' is not assignable to parameter of type 'FunctionPropertyNames<SystemPromptManager>'.\n  Overload 2 of 4, '(object: SystemPromptManager, methodName: FunctionPropertyNames<SystemPromptManager>, implementation: () => Promise<boolean>, options?: MockFunctionOptions): any', gave the following error.\n    Argument of type '\"_exists\"' is not assignable to parameter of type 'FunctionPropertyNames<SystemPromptManager>'.\n  Overload 3 of 4, '(object: SystemPromptManager, methodName: keyof SystemPromptManager, options: MockMethodOptions): Mock<Function>', gave the following error.\n    Argument of type '\"_exists\"' is not assignable to parameter of type 'keyof SystemPromptManager'.",
+      "source": "\"_exists\"",
+      "count": 2
+    },
+    {
+      "file": "tests/configManager.test.js",
+      "code": 2339,
+      "message": "Property 'NODE_TEST_CONTEXT' does not exist on type '{ HOME: any; PASER_MINI_LOG_LEVEL: string; }'.",
+      "source": "NODE_TEST_CONTEXT",
+      "count": 1
+    },
+    {
+      "file": "tests/configManager.test.js",
+      "code": 2339,
+      "message": "Property 'cause' does not exist on type 'unknown'.",
+      "source": "cause",
+      "count": 1
+    },
+    {
+      "file": "tests/configManager.test.js",
+      "code": 2339,
+      "message": "Property 'message' does not exist on type 'unknown'.",
+      "source": "message",
+      "count": 2
+    },
+    {
+      "file": "tests/configManager.test.js",
+      "code": 2345,
+      "message": "Argument of type 'NonSharedBuffer' is not assignable to parameter of type 'string'.",
+      "source": "fs.readFileSync(options.globalPath)",
+      "count": 2
+    },
+    {
+      "file": "tests/configManager.test.js",
+      "code": 2345,
+      "message": "Argument of type 'NonSharedBuffer' is not assignable to parameter of type 'string'.",
+      "source": "fs.readFileSync(options.localPath)",
+      "count": 5
+    },
+    {
+      "file": "tests/configManager.test.js",
+      "code": 2345,
+      "message": "Argument of type 'NonSharedBuffer' is not assignable to parameter of type 'string'.",
+      "source": "fs.readFileSync(source)",
+      "count": 1
+    },
+    {
+      "file": "tests/configManager.test.js",
+      "code": 2345,
+      "message": "Argument of type 'NonSharedBuffer' is not assignable to parameter of type 'string'.",
+      "source": "fs.readFileSync(target)",
+      "count": 1
+    },
+    {
+      "file": "tests/executionEngine.toolArgs.test.js",
+      "code": 2339,
+      "message": "Property 'args' does not exist on type 'unknown'.",
+      "source": "args",
+      "count": 1
+    },
+    {
+      "file": "tests/executionEngine.toolArgs.test.js",
+      "code": 2339,
+      "message": "Property 'name' does not exist on type 'unknown'.",
+      "source": "name",
+      "count": 1
+    },
+    {
+      "file": "tests/executionEngine.toolArgs.test.js",
+      "code": 2345,
+      "message": "Argument of type 'unknown' is not assignable to parameter of type 'string'.",
+      "source": "res.result",
+      "count": 1
+    },
+    {
+      "file": "tests/executionEngine.toolArgs.test.js",
+      "code": 2345,
+      "message": "Argument of type '{}' is not assignable to parameter of type '{ [key: string]: (...args: unknown[]) => Promise<unknown>; }'.\n  Index signature for type 'string' is missing in type '{}'.",
+      "source": "tools",
+      "count": 1
+    },
+    {
+      "file": "tests/filePathPolicy.test.js",
+      "code": 2322,
+      "message": "Type '(_executable: any, args: any) => Promise<never>' is not assignable to type '{ (file: string): PromiseWithChild<{ stdout: string; stderr: string; }>; (file: string, args: readonly string[]): PromiseWithChild<{ stdout: string; stderr: string; }>; (file: string, options: ExecFileOptionsWithBufferEncoding): PromiseWithChild<...>; (file: string, args: readonly string[], options: ExecFileOptionsW...'.\n  Property 'child' is missing in type 'Promise<never>' but required in type 'PromiseWithChild<{ stdout: string; stderr: string; }>'.",
+      "source": "executor",
+      "count": 1
+    },
+    {
+      "file": "tests/filePathPolicy.test.js",
+      "code": 2322,
+      "message": "Type '(executable: any, args: any) => EventEmitter<DefaultEventMap>' is not assignable to type '{ (command: string, options?: SpawnOptionsWithoutStdio): ChildProcessWithoutNullStreams; (command: string, options: SpawnOptionsWithStdioTuple<StdioPipe, StdioPipe, StdioPipe>): ChildProcessByStdio<...>; (command: string, options: SpawnOptionsWithStdioTuple<...>): ChildProcessByStdio<...>; (command: string, options:...'.\n  Type 'EventEmitter<DefaultEventMap>' is missing the following properties from type 'ChildProcessWithoutNullStreams': stdin, stdout, stderr, stdio, and 12 more.",
+      "source": "spawnProcess",
+      "count": 1
+    },
+    {
+      "file": "tests/filePathPolicy.test.js",
+      "code": 2322,
+      "message": "Type '(executable: any, args: any) => Promise<{ stdout: string; }>' is not assignable to type '{ (file: string): PromiseWithChild<{ stdout: string; stderr: string; }>; (file: string, args: readonly string[]): PromiseWithChild<{ stdout: string; stderr: string; }>; (file: string, options: ExecFileOptionsWithBufferEncoding): PromiseWithChild<...>; (file: string, args: readonly string[], options: ExecFileOptionsW...'.\n  Property 'child' is missing in type 'Promise<{ stdout: string; }>' but required in type 'PromiseWithChild<{ stdout: string; stderr: string; }>'.",
+      "source": "executor",
+      "count": 1
+    },
+    {
+      "file": "tests/filePathPolicy.test.js",
+      "code": 2339,
+      "message": "Property 'kill' does not exist on type 'EventEmitter<DefaultEventMap>'.",
+      "source": "kill",
+      "count": 1
+    },
+    {
+      "file": "tests/filePathPolicy.test.js",
+      "code": 2339,
+      "message": "Property 'killed' does not exist on type 'EventEmitter<DefaultEventMap>'.",
+      "source": "killed",
+      "count": 1
+    },
+    {
+      "file": "tests/filePathPolicy.test.js",
+      "code": 2339,
+      "message": "Property 'stderr' does not exist on type 'EventEmitter<DefaultEventMap>'.",
+      "source": "stderr",
+      "count": 1
+    },
+    {
+      "file": "tests/filePathPolicy.test.js",
+      "code": 2339,
+      "message": "Property 'stdin' does not exist on type 'EventEmitter<DefaultEventMap>'.",
+      "source": "stdin",
+      "count": 1
+    },
+    {
+      "file": "tests/filePathPolicy.test.js",
+      "code": 2339,
+      "message": "Property 'stdout' does not exist on type 'EventEmitter<DefaultEventMap>'.",
+      "source": "stdout",
+      "count": 2
+    },
+    {
+      "file": "tests/gitPathPolicy.test.js",
+      "code": 2769,
+      "message": "No overload matches this call.\n  Overload 1 of 2, '(block: Promise<unknown> | (() => Promise<unknown>), message?: string | Error): Promise<void>', gave the following error.\n    Argument of type 'string | RegExp' is not assignable to parameter of type 'string | Error'.\n      Type 'RegExp' is not assignable to type 'string | Error'.\n  Overload 2 of 2, '(block: Promise<unknown> | (() => Promise<unknown>), error: AssertPredicate, message?: string | Error): Promise<void>', gave the following error.\n    Argument of type 'string | RegExp' is not assignable to parameter of type 'AssertPredicate'.\n      Type 'string' is not assignable to type 'AssertPredicate'.",
+      "source": "cases[i][1]",
+      "count": 1
+    },
+    {
+      "file": "tests/gitTools.test.js",
+      "code": 2339,
+      "message": "Property 'cause' does not exist on type 'unknown'.",
+      "source": "cause",
+      "count": 5
+    },
+    {
+      "file": "tests/gitTools.test.js",
+      "code": 2339,
+      "message": "Property 'code' does not exist on type 'unknown'.",
+      "source": "code",
+      "count": 2
+    },
+    {
+      "file": "tests/githubMode.test.js",
+      "code": 2339,
+      "message": "Property 'errors' does not exist on type 'unknown'.",
+      "source": "errors",
+      "count": 4
+    },
+    {
+      "file": "tests/githubMode.test.js",
+      "code": 2339,
+      "message": "Property 'includes' does not exist on type 'unknown'.",
+      "source": "includes",
+      "count": 1
+    },
+    {
+      "file": "tests/githubMode.test.js",
+      "code": 2345,
+      "message": "Argument of type 'NonSharedBuffer' is not assignable to parameter of type 'string'.",
+      "source": "readFileSync(localConfig)",
+      "count": 1
+    },
+    {
+      "file": "tests/githubMode.test.js",
+      "code": 2345,
+      "message": "Argument of type 'NonSharedBuffer' is not assignable to parameter of type 'string'.",
+      "source": "readFileSync(path.join(dir, \".paser-mini\", \"config.json\"))",
+      "count": 1
+    },
+    {
+      "file": "tests/githubMode.test.js",
+      "code": 2554,
+      "message": "Expected 1 arguments, but got 0.",
+      "source": "requestInput",
+      "count": 1
+    },
+    {
+      "file": "tests/githubMode.test.js",
+      "code": 2722,
+      "message": "Cannot invoke an object which is possibly 'undefined'.",
+      "source": "release",
+      "count": 1
+    },
+    {
+      "file": "tests/logger.test.js",
+      "code": 2339,
+      "message": "Property 'NODE_TEST_CONTEXT' does not exist on type '{ PASER_MINI_LOG_LEVEL: string; }'.",
+      "source": "NODE_TEST_CONTEXT",
+      "count": 1
+    },
+    {
+      "file": "tests/mcpManager.test.js",
+      "code": 18048,
+      "message": "'received' is possibly 'undefined'.",
+      "source": "received",
+      "count": 5
+    },
+    {
+      "file": "tests/mcpManager.test.js",
+      "code": 2339,
+      "message": "Property 'mock' does not exist on type '() => Promise<void>'.",
+      "source": "mock",
+      "count": 4
+    },
+    {
+      "file": "tests/mcpManager.test.js",
+      "code": 2339,
+      "message": "Property 'mock' does not exist on type '(transport: Transport, options?: RequestOptions) => Promise<void>'.",
+      "source": "mock",
+      "count": 2
+    },
+    {
+      "file": "tests/mcpManager.test.js",
+      "code": 2722,
+      "message": "Cannot invoke an object which is possibly 'undefined'.",
+      "source": "release",
+      "count": 1
+    },
+    {
+      "file": "tests/mementoManager.test.js",
+      "code": 2339,
+      "message": "Property 'code' does not exist on type 'unknown'.",
+      "source": "code",
+      "count": 1
+    },
+    {
+      "file": "tests/mementoManager.test.js",
+      "code": 2339,
+      "message": "Property 'message' does not exist on type 'unknown'.",
+      "source": "message",
+      "count": 1
+    },
+    {
+      "file": "tests/modelRecovery.test.js",
+      "code": 2339,
+      "message": "Property 'aborted' does not exist on type 'unknown'.",
+      "source": "aborted",
+      "count": 1
+    },
+    {
+      "file": "tests/modelRecovery.test.js",
+      "code": 2339,
+      "message": "Property 'providerId' does not exist on type 'GeminiAdapter'.",
+      "source": "providerId",
+      "count": 1
+    },
+    {
+      "file": "tests/modelRecovery.test.js",
+      "code": 2345,
+      "message": "Argument of type '{ assistant: { providerId: string; }; turnProcessor: { api: { cancelPendingRequest(): void; }; }; }' is not assignable to parameter of type 'ChatManager'.\n  Type '{ assistant: { providerId: string; }; turnProcessor: { api: { cancelPendingRequest(): void; }; }; }' is missing the following properties from type 'ChatManager': tools, systemInstruction, pureMode, ui, and 37 more.",
+      "source": "manager",
+      "count": 1
+    },
+    {
+      "file": "tests/modelRecovery.test.js",
+      "code": 2740,
+      "message": "Type '{ get(key: string, fallback: unknown): any; save(key: string, value: unknown): void; }' is missing the following properties from type 'ConfigManager': #fs, globalPath, globalConfig, localPath, and 5 more.",
+      "source": "configManager",
+      "count": 1
+    },
+    {
+      "file": "tests/perfTools.test.js",
+      "code": 2554,
+      "message": "Expected 1 arguments, but got 0.",
+      "source": "snapshot",
+      "count": 1
+    },
+    {
+      "file": "tests/retryHandler.test.js",
+      "code": 2341,
+      "message": "Property '_getExponentialDelay' is private and only accessible within class 'RetryHandler'.",
+      "source": "_getExponentialDelay",
+      "count": 1
+    },
+    {
+      "file": "tests/sessionCommands.test.js",
+      "code": 2339,
+      "message": "Property 'cause' does not exist on type 'unknown'.",
+      "source": "cause",
+      "count": 1
+    },
+    {
+      "file": "tests/sessionCommands.test.js",
+      "code": 2722,
+      "message": "Cannot invoke an object which is possibly 'undefined'.",
+      "source": "finish",
+      "count": 1
+    },
+    {
+      "file": "tests/smartParser.test.js",
+      "code": 2339,
+      "message": "Property 'args' does not exist on type 'unknown'.",
+      "source": "args",
+      "count": 6
+    },
+    {
+      "file": "tests/smartParser.test.js",
+      "code": 2345,
+      "message": "Argument of type 'unknown' is not assignable to parameter of type 'string'.",
+      "source": "call.error",
+      "count": 1
+    },
+    {
+      "file": "tests/toolCatalog.test.js",
+      "code": 2339,
+      "message": "Property 'args' does not exist on type 'unknown'.",
+      "source": "args",
+      "count": 3
+    },
+    {
+      "file": "tests/toolCatalog.test.js",
+      "code": 2339,
+      "message": "Property 'name' does not exist on type 'unknown'.",
+      "source": "name",
+      "count": 3
+    },
+    {
+      "file": "tests/toolCatalog.test.js",
+      "code": 2345,
+      "message": "Argument of type 'unknown' is not assignable to parameter of type 'string | Error'.",
+      "source": "result.result",
+      "count": 1
+    },
+    {
+      "file": "tests/toolCatalog.test.js",
+      "code": 2345,
+      "message": "Argument of type 'unknown' is not assignable to parameter of type 'string'.",
+      "source": "result.result",
+      "count": 1
+    },
+    {
+      "file": "tests/turnRecovery.test.js",
+      "code": 2339,
+      "message": "Property 'cause' does not exist on type 'unknown'.",
+      "source": "cause",
+      "count": 2
+    },
+    {
+      "file": "tests/turnRecovery.test.js",
+      "code": 2339,
+      "message": "Property 'code' does not exist on type 'Error'.",
+      "source": "code",
+      "count": 1
+    },
+    {
+      "file": "tests/turnRecovery.test.js",
+      "code": 2339,
+      "message": "Property 'code' does not exist on type 'unknown'.",
+      "source": "code",
+      "count": 2
+    },
+    {
+      "file": "tests/turnRecovery.test.js",
+      "code": 2339,
+      "message": "Property 'message' does not exist on type 'unknown'.",
+      "source": "message",
+      "count": 1
+    },
+    {
+      "file": "tests/turnRecovery.test.js",
+      "code": 2339,
+      "message": "Property 'name' does not exist on type 'unknown'.",
+      "source": "name",
+      "count": 2
+    },
+    {
+      "file": "tests/turnRecovery.test.js",
+      "code": 2339,
+      "message": "Property 'response' does not exist on type 'unknown'.",
+      "source": "response",
+      "count": 1
+    },
+    {
+      "file": "tests/turnRecovery.test.js",
+      "code": 2359,
+      "message": "The right-hand side of an 'instanceof' expression must be either of type 'any', a class, function, or other type assignable to the 'Function' interface type, or an object type with a 'Symbol.hasInstance' method.",
+      "source": "ErrorType",
+      "count": 1
+    }
+  ]
+}
