@@ -44,7 +44,7 @@ async function fixture(t, mode, immersion, reply = "Respuesta") {
   const manager = await createSession({
     ui, configManager, providerManager, tools: {}, systemInstruction: "", pureMode: true,
   });
-  manager.initializeSession();
+  await manager.initializeSession();
   return { manager, assistant, ui, output, logs, payloads, dir, globalDir, providerManager };
 }
 
@@ -103,7 +103,7 @@ test("/nick persists globally and a session in another project uses it immediate
   const manager = await createSession({
     ui, configManager, providerManager: h.providerManager, tools: {}, systemInstruction: "", pureMode: true,
   });
-  manager.initializeSession();
+  await manager.initializeSession();
   await manager.commandHandler.handle("/ping Otro proyecto");
   assert.equal(manager.user.nickname, "Gustavo");
   assert.equal(manager.model.nickname, "Paser");

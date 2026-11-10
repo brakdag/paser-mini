@@ -1,3 +1,4 @@
+import readChatStream from "./chatStream.js";
 import IRCFormatter from "../utils/ircFormatter.js";
 import { normalizeRole, normalizeContent } from "./historyNormalizer.js";
 import logger from "../core/logger.js";
@@ -70,9 +71,20 @@ export async function sendChatCompletion(adapter, message, role, { signal, budge
   const name = adapter.constructor.name.replace(/Adapter$/, "");
   return adapter.retryHandler.execute(async () => {
     try {
-      const response = await adapter.client.post("/chat/completions", payload, { signal });
+      const streaming = adapter.configManager.get("streaming_enabled", true) === true
+        && typeof adapter.ui?.previewResponse === "function" && adapter.ui.streaming !== false;
+      const response = await adapter.client.post("/chat/completions", streaming ? { ...payload, stream: true } : payload,
+        streaming ? { signal, responseType: "stream" } : { signal });
       signal?.throwIfAborted();
-      const content = adapter.normalizeResponseText(response.data?.choices?.[0]?.message?.content || "");
+      /**
+       * @param {string} text - Transient accumulated response.
+       * @returns {void} Updates the temporary terminal preview.
+       */
+      const preview = text => adapter.ui.previewResponse(text);
+      const raw = streaming && response.data?.[Symbol.asyncIterator]
+        ? await readChatStream(response.data, { signal, preview })
+        : response.data?.choices?.[0]?.message?.content || "";
+      const content = adapter.normalizeResponseText(raw);
       if (!content) throw new Error(`Empty response from ${name}`);
       adapter.injectMessage("assistant", content, IRCFormatter.getTimestamp());
       return content;

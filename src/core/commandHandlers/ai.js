@@ -76,7 +76,8 @@ class AICommands {
       selectedProvider = providers[selectedIndex];
     }
 
-    const { id, defaultModel } = selectedProvider;
+    const { id } = selectedProvider;
+    const defaultModel = selectedProvider.defaultModel || String(chatManager.configManager.get("model_name", ""));
 
     await chatManager.switchProvider({ providerId: id, modelName: defaultModel, temp: chatManager.model.temperature });
     chatManager.saveConfig("provider", id);

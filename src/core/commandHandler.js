@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import SystemCommands from "./commandHandlers/system.js";
 import ModelCommands from "./commandHandlers/models.js";
 import ConfigCommands from "./commandHandlers/config.js";
@@ -331,6 +333,37 @@ class CommandHandler {
       });
     }
 
+    if (input.startsWith("/")) {
+      let expansion;
+      try {
+        const file = path.join(process.cwd(), ".paser-mini", "config", "shortcuts.json");
+        const shortcuts = JSON.parse(await readFile(file, "utf8"));
+        if (!shortcuts || typeof shortcuts !== "object" || Array.isArray(shortcuts)) throw new Error("Expected a JSON object");
+        const reserved = new Set([
+          ...Object.keys(COMMAND_MAP), ...Object.keys(PREFIX_COMMANDS).map(key => key.trim()),
+          "/rewrite", "/r", "/fav+", "/s",
+        ]);
+        Object.entries(shortcuts).forEach(([name, text]) => {
+          if (!/^[a-z][a-z0-9_-]*$/.test(name) || reserved.has(`/${name}`) || typeof text !== "string") {
+            throw new Error(`Invalid or reserved shortcut: ${name}`);
+          }
+        });
+        const match = /^\/(\S+)(?:[ \t]|\r?\n)?([\s\S]*)$/.exec(userInput.trimStart());
+        const name = match?.[1].toLowerCase();
+        if (Object.hasOwn(shortcuts, name)) {
+          expansion = shortcuts[name] + (match[2] ? `\n${match[2]}` : "");
+        }
+      } catch (error) {
+        if (error.code !== "ENOENT") {
+          this.ui.displayError(`Shortcuts: ${error.message}`);
+          return true;
+        }
+      }
+      if (expansion !== undefined) {
+        await this.chatManager.processTurn(expansion);
+        return true;
+      }
+    }
     if (input.startsWith("/") || input.startsWith(":")) {
       this.ui.displayError(
         "Invalid command. See /help for available commands.",

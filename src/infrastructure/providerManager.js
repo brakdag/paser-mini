@@ -71,6 +71,7 @@ class ProviderManager {
       defaultModel: DEFAULT_MODELS.POOLSIDE,
       path: "./poolside/adapter.js",
     },
+    COMPATIBLE: { name: "Compatible endpoint", defaultModel: "", path: "./compatible/adapter.js" },
   };
 
   /**

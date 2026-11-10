@@ -139,6 +139,16 @@ class TerminalUI {
   }
 
   /**
+   * Shows transient progress on stderr; the completed response is rendered once.
+   * @param {string} text - Accumulated response, or empty to clear the preview.
+   */
+  previewResponse(text) {
+    if (!process.stderr.isTTY) return;
+    const line = Array.from(text.slice(-202), char => char.codePointAt(0) < 32 || (char.codePointAt(0) >= 127 && char.codePointAt(0) < 160) ? " " : char).slice(-100).join("");
+    process.stderr.write(`\r\x1b[2K${line}`);
+  }
+
+  /**
    * Displays a chat message in the terminal and logs it.
    * @param {string} nickname The nickname of the sender.
    * @param {string} text The message text.
@@ -353,7 +363,7 @@ class TerminalUI {
   /**
    * Requests input from the user with a given prompt.
    * @param {string} [prompt] The prompt to display.
-   * @returns {Promise<string>} The user's input string.
+   * @returns {string|null|Promise<string|null>} The user's input string.
    */
   requestInput(prompt = "> ") {
     return this.input.requestInput(prompt);

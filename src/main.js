@@ -2,6 +2,8 @@ import "dotenv/config";
 import { existsSync, realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import parseCliOptions from "./core/cliOptions.js";
+import PipelineUI from "./core/pipelineUI.js";
+import readPipelineInput from "./core/pipeline.js";
 import TerminalUI from "./core/terminalUI.js";
 import createSession from "./core/sessionFactory.js";
 import ConfigManager from "./core/configManager.js";
@@ -43,7 +45,7 @@ export default async function main(lifecycle) {
     return;
   }
 
-  const ui = new TerminalUI();
+  const ui = options.pipeline ? new PipelineUI() : new TerminalUI();
   lifecycle.own(() => ui.close());
   const chatManager = await createSession({
     ui, configManager, systemInstruction, tools: filteredTools, pureMode,
@@ -54,9 +56,23 @@ export default async function main(lifecycle) {
    * Cancels the turn before waiting for its final publications.
    * @returns {Promise<void>} Final publications are settled.
    */
-  const closeSession = async () => { chatManager.requestExit(); await running; };
+  const closeSession = async () => {
+    chatManager.requestExit();
+    try { await running; } catch (error) {
+      if (error.name !== "UserInterruptException" && error.message !== "Session startup cancelled") throw error;
+    }
+  };
   lifecycle.own(closeSession);
   logger.info("Startup: Initialization complete. Handing off to ChatManager.\n");
+  if (options.pipeline) {
+    lifecycle.own(() => process.stdin.destroy());
+    const input = await readPipelineInput(process.stdin, options.message);
+    if (lifecycle.closing) return;
+    running = chatManager.runOnce(input);
+    await running;
+    if (ui instanceof PipelineUI) await ui.publish();
+    return;
+  }
   running = chatManager.run(options.message);
   await running;
 }

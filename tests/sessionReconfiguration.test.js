@@ -10,7 +10,7 @@ import { SystemTools } from "../src/tools/systemTools.js";
  * @returns {Promise<object>} Session fixture.
  */
 async function fixture(options = {}) {
-  const values = { provider: "GEMINI", model_name: "old-model", execute_enabled: true };
+  const values = { provider: "GEMINI", model_name: "old-model", execute_enabled: true, compatible_base_url: "http://localhost:9999/v1" };
   const saved = [];
   const info = [];
   const errors = [];
@@ -59,7 +59,7 @@ async function fixture(options = {}) {
     ui, configManager, providerManager, systemInstruction: "Session prompt", tools: {},
     async resolveTool(name) { return holders[name]; }, ...options,
   });
-  manager.initializeSession();
+  await manager.initializeSession();
   return { manager, values, saved, info, errors, contexts, system };
 }
 
@@ -72,12 +72,12 @@ new ProviderManager().getProviders().forEach(({ id, defaultModel }) => {
     manager.assistant.injectMessage("user", "Old history");
     const previous = manager.assistant;
     const before = structuredClone(previous.getHistory());
-    await manager.switchProvider({ providerId: id, modelName: defaultModel, temp: 0.2 });
+    await manager.switchProvider({ providerId: id, modelName: defaultModel || "old-model", temp: 0.2 });
     let next = manager.assistant;
     assert.notEqual(next, previous);
     assert.equal(next.user, manager.user);
     assert.equal(next.model, manager.model);
-    assert.equal(next.currentModel, defaultModel);
+    assert.equal(next.currentModel, defaultModel || "old-model");
     assert.equal(next.temperature, 0.2);
     assert.equal(next.renderingMode, "FOUNTAIN");
     assert.equal(next.immersionMode, true);

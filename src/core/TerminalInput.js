@@ -40,6 +40,8 @@ export class TerminalInput {
     this.rl.on("line", async (line) => {
       const trimmed = line.trim();
       if (!trimmed) return;
+      // Command handlers normalize built-ins; personal shortcuts retain their literal payload.
+      const submitted = trimmed.startsWith("/") ? line.trimStart() : trimmed;
 
       if (this.commandHandler?.interruptForExit?.(trimmed)) return;
 
@@ -54,11 +56,11 @@ export class TerminalInput {
       if (this.inputResolver) {
         const resolve = this.inputResolver;
         this.inputResolver = null;
-        resolve(trimmed);
+        resolve(submitted);
       } else if (modelChange) {
-        this.inputQueue.unshift(trimmed);
+        this.inputQueue.unshift(submitted);
       } else {
-        this.inputQueue.push(trimmed);
+        this.inputQueue.push(submitted);
       }
     });
   }

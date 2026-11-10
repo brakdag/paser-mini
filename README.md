@@ -36,6 +36,8 @@ Furthermore, the system embraces an **AI-native interface**: a terminal-based en
 
 ## 📈 Technical Documentation
 
+[Unix pipelines, configurable endpoints, progressive responses and personal shortcuts](docs/cli-composition.md).
+
 ### Installation and quality checks
 
 Use Debian/Linux with Node **24.x or 26.x** and npm. These are the supported lines

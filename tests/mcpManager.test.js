@@ -286,3 +286,40 @@ test("normalized tool identifiers still invoke the original remote tool name", a
     assert.deepEqual(manager.getTools(), {});
   });
 });
+
+["none", "collision", "error", "repeat", "endless", "close"].forEach((failure) => {
+  test(`A05 paginated discovery is atomic: ${failure}`, async t => {
+    mockServer(t);
+    const close = t.mock.method(Client.prototype, "close", async () => {});
+    const cursors = [];
+    let pages = 0;
+    t.mock.method(Client.prototype, "listTools", async function listPage(params) {
+      cursors.push(params?.cursor ?? null);
+      pages += 1;
+      if (pages === 1) return { tools: [{ name: "first", inputSchema: { type: "object" } }], nextCursor: "two" };
+      if (failure === "error") throw new Error("page failed");
+      if (failure === "close") this.onclose();
+      let nextCursor;
+      if (failure === "repeat") nextCursor = "two";
+      if (failure === "endless") nextCursor = String(pages);
+      return {
+        tools: [{ name: failure === "collision" ? "first" : `last${pages}`, inputSchema: { type: "object", properties: { value: { type: "string" } } } }],
+        ...(nextCursor ? { nextCursor } : {}),
+      };
+    });
+    const manager = fixtureManager();
+    await manager.connectServer("fixture", { command: "fake" });
+    if (failure === "none") {
+      assert.deepEqual(cursors, [null, "two"]);
+      assert.equal(await manager.getTools().mcp_fixture_last2({}).then(result => result.content[0].text), "last2");
+      assert.deepEqual(manager.getSchemas().mcp_fixture_last2.properties, { value: { type: "string" } });
+    } else {
+      assert.equal(manager.clients.size, 0);
+      assert.deepEqual(manager.getTools(), {});
+      assert.deepEqual(manager.getSchemas(), {});
+      assert.equal(close.mock.callCount(), 1);
+      assert.ok(pages <= 100);
+    }
+    await manager.shutdown();
+  });
+});

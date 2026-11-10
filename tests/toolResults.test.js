@@ -210,7 +210,7 @@ test("remote isError counts toward turn error limits and never records success",
     async sendMessage() { requests += 1; return 'Əread("file") Əread("file") Əread("file")'; },
   };
   const turn = new TurnProcessor(assistant, tools, parser, engine, ui, new RepetitionDetector(), { maxErrors: 2 });
-  await turn.process("go");
+  await assert.rejects(turn.process("go"), /consecutive error limit/);
   assert.equal(requests, 1);
   assert.equal(ui.monitored.length, 2);
   assert.equal(successes.mock.callCount(), 0);

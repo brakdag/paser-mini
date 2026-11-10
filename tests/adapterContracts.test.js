@@ -12,9 +12,12 @@ new ProviderManager().getProviders().forEach(provider => {
   test(`${provider.id}: local defaults, configured wire payload, roles and reset`, async () => {
     const adapter = await new ProviderManager().createAdapter({
       providerId: provider.id, ui: {}, userNickname: "human", agentNickname: "bot",
-      configManager: { get(key, fallback) { return key === "rpm_limit" ? 60000000 : fallback; } },
+      configManager: { get(key, fallback) {
+        const values = { rpm_limit: 60000000, compatible_base_url: "http://localhost:9999/v1", model_name: "fixture" };
+        return key in values ? values[key] : fallback;
+      } },
     });
-    assert.equal(adapter.currentModel, provider.defaultModel);
+    assert.equal(adapter.currentModel, provider.id === "COMPATIBLE" ? "fixture" : provider.defaultModel);
     const client = adapter.restClient?.client || adapter.client;
     const requests = [];
     /**

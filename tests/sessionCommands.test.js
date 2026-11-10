@@ -350,7 +350,7 @@ test("an empty prompt allows tools unless pure mode is explicitly enabled", asyn
 test("immersed IRC strips echoed headers before parsing tools and storing their exchanges", async t => {
   let executions = 0;
   const h = harness(t, { tools: { async read() { executions += 1; return "Contents"; } } });
-  h.manager.initializeSession();
+  await h.manager.initializeSession();
   h.manager.setImmersionMode(true);
   h.answers.push('[12:34] <agent> [12:34] <agent> Əread("fixture.txt")', "[12:35] <agent> Final answer");
   await h.manager.processTurn("Question");

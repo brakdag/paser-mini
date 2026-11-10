@@ -225,9 +225,20 @@ class McpManager {
       this.connecting.add(client);
       await client.connect(transport);
       if (this.stopping) throw new Error("MCP manager is shutting down");
-      const toolsResponse = await client.listTools();
-      const discovered = toolsResponse?.tools;
-      if (!Array.isArray(discovered)) throw new Error("Invalid MCP tool discovery response");
+      const discovered = [];
+      const cursors = new Set();
+      let cursor;
+      for (let page = 0; ; page += 1) {
+        if (closed || this.stopping) throw new Error("MCP connection closed during discovery");
+        if (page >= 100) throw new Error("MCP tool discovery page limit reached");
+        const response = await client.listTools(cursor === undefined ? undefined : { cursor });
+        if (!Array.isArray(response?.tools)) throw new Error("Invalid MCP tool discovery response");
+        discovered.push(...response.tools);
+        cursor = response.nextCursor;
+        if (cursor === undefined) break;
+        if (typeof cursor !== "string" || cursors.has(cursor)) throw new Error("Invalid or repeated MCP discovery cursor");
+        cursors.add(cursor);
+      }
       const tools = {};
       const schemas = {};
       discovered.forEach((tool) => {

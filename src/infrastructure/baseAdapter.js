@@ -24,9 +24,11 @@ export default class BaseAdapter {
    * @param {object} config - Configuration object for the adapter.
    * @param {object} config.ui - The UI interface.
    * @param {object} config.configManager - The configuration manager.
+   * @param {string} [config.userNickname] - Initial user nickname.
+   * @param {string} [config.agentNickname] - Initial assistant nickname.
    * @throws {Error} If instantiated directly.
    */
-  constructor({ ui, configManager }) {
+  constructor({ ui, configManager, userNickname = "user", agentNickname = "assistant" }) {
     if (this.constructor === BaseAdapter) {
       throw new Error(
         "BaseAdapter is an abstract class and cannot be instantiated directly.",
@@ -34,8 +36,8 @@ export default class BaseAdapter {
     }
     this.ui = ui;
     this.configManager = configManager;
-    this.user = { nickname: "user" };
-    this.model = { nickname: "assistant" };
+    this.user = { nickname: userNickname };
+    this.model = { nickname: agentNickname };
     this.ircFormatter = new IRCFormat();
     this.cleanFormatter = new CleanFormat();
     this.fountainFormatter = new FountainFormat();
@@ -327,9 +329,12 @@ export default class BaseAdapter {
    * @param {string} _modelName - The name of the model to use.
    * @param {string} _systemInstruction - The system prompt/preamble.
    * @param {number} [_temperature] - The sampling temperature.
+   * @param {object} [_options] - Optional startup cancellation.
+   * @param {AbortSignal} [_options.signal] - Cancels initialization.
+   * @returns {void|Promise<void>} Initialization completion.
    * @throws {Error} If the method is not implemented by the subclass.
    */
-  startChat(_modelName, _systemInstruction, _temperature = 0.7) {
+  startChat(_modelName, _systemInstruction, _temperature = 0.7, _options = {}) {
     throw new Error("Method 'startChat()' must be implemented.");
   }
 

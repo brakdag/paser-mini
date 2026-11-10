@@ -34,7 +34,7 @@ class FileTools {
     if (content.split(searchText).length > 2) {
       throw new Error("Multiple results");
     }
-    return content.replace(searchText, replaceText);
+    return content.replace(searchText, () => replaceText);
   }
 
   /**

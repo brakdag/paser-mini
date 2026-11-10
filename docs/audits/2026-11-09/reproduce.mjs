@@ -1,4 +1,4 @@
-// Characterization probes: exit 0 confirms the audited defects, NOT their fixes.
+// Regression probes: exit 0 confirms fixes; observed.jsonl retains original evidence.
 // Run from any cwd: node docs/audits/2026-11-09/reproduce.mjs
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
@@ -74,7 +74,7 @@ async function reproduce() {
   }
   const reply = text => ({ data: { candidates: [{ content: { parts: [{ text }] } }] } });
 
-  // A01: startChat pauses at metadata; runOnce sends before the system entry exists.
+  // A01: startup waits for metadata before the first generation.
   {
     const h = harness(CerebrasAdapter);
     const metadata = Promise.withResolvers();
@@ -84,26 +84,28 @@ async function reproduce() {
       payload = structuredClone(request);
       return { data: { choices: [{ message: { content: "answer" } }] } };
     };
-    await h.manager.runOnce("first question");
-    assert.equal(payload.messages.some(message => message.role === "system"), false);
-    metadata.resolve({ data: { context_length: 8192 } });
+    const running = h.manager.runOnce("first question");
     await new Promise(resolve => setImmediate(resolve));
+    assert.equal(payload, undefined);
+    metadata.resolve({ data: { context_length: 8192 } });
+    await running;
+    assert.equal(payload.messages[0].role, "system");
     assert.equal(h.assistant.getHistory()[0].role, "system");
     report("A01", { firstPayloadRoles: payload.messages.map(message => message.role), systemAppearsAfterMetadata: true });
   }
 
-  // A02: a scheduling limit is swallowed, losing /rewrite rollback and batch failure.
+  // A02: scheduling limits reject, restore rewrite state and allow issue retries.
   {
     const h = harness(GeminiAdapter, { tools: { read: async () => "fixture" } });
-    h.manager.initializeSession();
+    await h.manager.initializeSession();
     h.assistant.client.post = async () => reply("original answer");
     await h.manager.processTurn("original question");
     const before = structuredClone(h.assistant.getHistory());
     h.manager.turnProcessor.limits = { maxRequests: 1 };
     h.assistant.client.post = async () => reply('Əread("fixture.txt")');
-    const rewritten = await h.manager.rewriteLastTurn("replacement question");
-    assert.equal(rewritten, true);
-    assert.notDeepEqual(h.assistant.getHistory(), before);
+    await assert.rejects(h.manager.rewriteLastTurn("replacement question"), /request limit/);
+    const rewritten = false;
+    assert.deepEqual(h.assistant.getHistory(), before);
     assert.match(h.errors.at(-1), /request limit/);
 
     const comments = [];
@@ -125,14 +127,14 @@ async function reproduce() {
       },
     });
     const issue = { number: 1, title: "fixture", body: "#ai-assistance" };
-    await runner.processIssue(issue);
-    await runner.processIssue(issue);
-    assert.equal(runs, 1);
-    assert.ok(comments.some(comment => comment.body.includes("paser-mini:completed:")));
-    report("A02", { rewriteReportedSuccess: rewritten, oldHistoryRestored: false, githubCompletionReceipt: true, runsForTwoAttempts: runs });
+    await assert.rejects(runner.processIssue(issue), /Issue #1 failed/);
+    await assert.rejects(runner.processIssue(issue), /Issue #1 failed/);
+    assert.equal(runs, 2);
+    assert.ok(!comments.some(comment => comment.body.includes("paser-mini:completed:")));
+    report("A02", { rewriteReportedSuccess: rewritten, oldHistoryRestored: true, githubCompletionReceipt: false, runsForTwoAttempts: runs });
   }
 
-  // A03: String.replace interprets dollar substitutions in supposedly literal text.
+  // A03: replacement text is literal, including dollar substitutions.
   {
     const files = new FileTools();
     await files.write("replace.txt", "before TOKEN after");
@@ -140,8 +142,7 @@ async function reproduce() {
     await files.replace("replace.txt", "TOKEN", replacement);
     const actual = await files.read("replace.txt");
     const expected = `before ${replacement} after`;
-    assert.equal(actual, "before cost=$; matched=TOKEN after");
-    assert.notEqual(actual, expected);
+    assert.equal(actual, expected);
     report("A03", { expected, actual });
   }
 
@@ -151,13 +152,13 @@ async function reproduce() {
     const h = harness(GeminiAdapter, { tools: { execute: command => system.execute(command) } });
     h.ui.bashEnabled = true;
     const result = await h.manager.engine.executeToolCall("execute", { command: "printf partial; exit 7" });
-    assert.equal(result.success, true);
-    assert.equal(result.outcome.isError, false);
-    assert.match(result.result, /Exit Code 7/);
+    assert.equal(result.success, false);
+    assert.equal(result.outcome.isError, true);
+    assert.equal(result.outcome.metadata.exitCode, 7);
     report("A04", { success: result.success, isError: result.outcome.isError, output: result.result });
   }
 
-  // A05: the real manager receives two advertised pages, but asks only for page one.
+  // A05: discovery requests every advertised page.
   {
     const originals = Object.fromEntries(["connect", "listTools", "close"].map(key => [key, Client.prototype[key]]));
     const cursors = [];
@@ -172,30 +173,30 @@ async function reproduce() {
           : { tools: [{ name: "first", inputSchema: { type: "object" } }], nextCursor: "page-2" };
       };
       await manager.connectServer("fixture", { command: "never-spawned" });
-      assert.deepEqual(Object.keys(manager.getTools()), ["mcp_fixture_first"]);
-      assert.deepEqual(cursors, [null]);
-      report("A05", { cursorsRequested: cursors, discovered: Object.keys(manager.getTools()), missing: "mcp_fixture_second" });
+      assert.deepEqual(Object.keys(manager.getTools()), ["mcp_fixture_first", "mcp_fixture_second"]);
+      assert.deepEqual(cursors, [null, "page-2"]);
+      report("A05", { cursorsRequested: cursors, discovered: Object.keys(manager.getTools()), lastPageIncluded: true });
     } finally {
       await manager.shutdown();
       Object.assign(Client.prototype, originals);
     }
   }
 
-  // A06: rejection of an overlapping turn releases the flag owned by the first turn.
+  // A06: rejected overlap preserves the lock owned by the first turn.
   {
     const h = harness();
-    h.manager.initializeSession();
+    await h.manager.initializeSession();
     const response = Promise.withResolvers();
     const entered = Promise.withResolvers();
     h.assistant.client.post = async () => { entered.resolve(); return response.promise; };
     const first = h.manager.processTurn("pending question");
     await entered.promise;
     await assert.rejects(h.manager.processTurn("overlap"), /already active/);
-    assert.equal(h.manager._turnInProgress, false);
+    assert.equal(h.manager._turnInProgress, true);
     assert.ok(h.manager.turnProcessor.control);
-    await h.manager.updateSystemContext("changed during active turn", {});
-    assert.equal(h.assistant.systemInstruction, "changed during active turn");
-    report("A06", { managerReportsIdle: true, processorStillActive: true, promptChangedDuringRequest: true });
+    await assert.rejects(h.manager.updateSystemContext("changed during active turn", {}), /active turn/);
+    assert.equal(h.assistant.systemInstruction, "AUDIT_SYSTEM_SENTINEL");
+    report("A06", { managerReportsIdle: false, processorStillActive: true, promptChangedDuringRequest: false });
     response.resolve(reply("answer"));
     await first;
   }

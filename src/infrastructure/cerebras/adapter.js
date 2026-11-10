@@ -59,11 +59,12 @@ class CerebrasAdapter extends BaseAdapter {
 
   /**
    * Fetches and updates the context token limit for the current model.
+   * @param {AbortSignal} [signal] - Startup cancellation.
    * @returns {Promise<void>}
    */
-  async _syncContextLimit() {
+  async _syncContextLimit(signal) {
     try {
-      const response = await this.client.get(`/models/${this.currentModel}`);
+      const response = await this.client.get(`/models/${this.currentModel}`, { signal, timeout: 5000 });
       const apiLimit = response.data?.context_length || response.data?.max_context_length;
       
       if (apiLimit && typeof apiLimit === 'number') {
@@ -74,6 +75,7 @@ class CerebrasAdapter extends BaseAdapter {
         logger.warn(`[CerebrasAdapter] API did not return context limit. Using fallback: ${this.maxContextTokens} tokens for ${this.currentModel}`);
       }
     } catch (error) {
+      signal?.throwIfAborted();
       this.maxContextTokens = MODEL_CONTEXT_LIMITS[this.currentModel] || this.maxContextTokens;
       logger.warn(`[CerebrasAdapter] Failed to sync context limit, using fallback: ${this.maxContextTokens}. Error: ${error.message}`);
     }
@@ -84,14 +86,17 @@ class CerebrasAdapter extends BaseAdapter {
    * @param {string} modelName - The model identifier.
    * @param {string} systemInstruction - The system-level prompt.
    * @param {number} [temperature] - The sampling temperature.
+   * @param {object} [options] - Startup options.
+   * @param {AbortSignal} [options.signal] - Startup cancellation.
    */
-  async startChat(modelName, systemInstruction, temperature = DEFAULT_TEMPERATURE) {
+  async startChat(modelName, systemInstruction, temperature = DEFAULT_TEMPERATURE, { signal } = {}) {
     this.currentModel = modelName || this.currentModel;
     this.systemInstruction = systemInstruction;
     this.temperature = temperature;
 
     // Automatically sync the context limit from the API or fallback
-    await this._syncContextLimit();
+    await this._syncContextLimit(signal);
+    signal?.throwIfAborted();
 
     this.updateSystemInstruction(this.systemInstruction);
   }

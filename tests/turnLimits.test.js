@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import TurnLimitError from "../src/core/exceptions/TurnLimitError.js";
 import TurnProcessor from "../src/core/turnProcessor.js";
 import ExecutionEngine from "../src/core/executionEngine.js";
 import SmartToolParser from "../src/core/smartParser.js";
@@ -46,12 +47,12 @@ function harness(reply, limits = {}) {
 
 test("identical successful results stop without another tool or recovery request; next turn is fresh", async () => {
   const h = harness('Əread("a")');
-  await h.processor.process("first");
+  await assert.rejects(h.processor.process("first"), TurnLimitError);
   assert.equal(h.calls.length, 5);
   assert.equal(h.requests.length, 6);
   assert.match(h.errors[0], /repetition limit/);
   assert.deepEqual(h.messages, []);
-  await h.processor.process("second");
+  await assert.rejects(h.processor.process("second"), TurnLimitError);
   assert.equal(h.calls.length, 10);
   assert.equal(h.requests.length, 12);
   assert.equal(h.errors.length, 2);
@@ -65,7 +66,7 @@ test("changed output permits progress but cannot bypass the action budget within
    * @returns {Promise<string>} The simulated tool result.
    */
   h.tools.read = async (...args) => { h.calls.push(args); return `revision ${h.calls.length}`; };
-  await h.processor.process("go");
+  await assert.rejects(h.processor.process("go"), TurnLimitError);
   assert.equal(h.calls.length, 3);
   assert.equal(h.requests.length, 1);
   assert.match(h.errors[0], /action limit/);
@@ -81,7 +82,7 @@ test("changed output permits progress but cannot bypass the action budget within
      * @returns {Promise<string>} The simulated tool result.
      */
     h.tools.read = async (...args) => { h.calls.push(args); throw new Error("tool broke"); };
-    await h.processor.process("go");
+    await assert.rejects(h.processor.process("go"), TurnLimitError);
     assert.equal(h.calls.length, parserFailure ? 0 : 3);
     assert.equal(h.requests.length, 1);
     assert.match(h.errors[0], /consecutive error limit/);
@@ -117,7 +118,7 @@ test("a success resets consecutive errors while total actions remain bounded", a
     if (step % 2) throw new Error("failed");
     return "ok";
   };
-  await h.processor.process("go");
+  await assert.rejects(h.processor.process("go"), TurnLimitError);
   assert.equal(h.calls.length, 4);
   assert.match(h.errors[0], /action limit/);
 });
@@ -126,7 +127,7 @@ test("repeated prose recovery exhausts the model exchange budget", async () => {
   const h = harness("same text", { maxRequests: 3 });
   /** @returns {string} Forces prose repetition recovery. */
   h.processor.repetitionDetector.addText = () => "same text";
-  await h.processor.process("go");
+  await assert.rejects(h.processor.process("go"), TurnLimitError);
   assert.equal(h.requests.length, 3);
   assert.equal(h.calls.length, 0);
   assert.match(h.errors.at(-1), /model request limit/);
@@ -141,7 +142,7 @@ test("deadline after a tool prevents the next tool and model request", async () 
    * @returns {Promise<string>} The simulated tool result.
    */
   h.tools.read = async (...args) => { h.calls.push(args); time = 10; return "ok"; };
-  await h.processor.process("go");
+  await assert.rejects(h.processor.process("go"), TurnLimitError);
   assert.equal(h.calls.length, 1);
   assert.equal(h.requests.length, 1);
   assert.match(h.errors[0], /time limit/);
@@ -155,7 +156,7 @@ test("deadline after an initial response prevents tools and final rendering, inc
     h.engine.strictPureMode = pure;
     /** @returns {Promise<string>} Delivers a tool request after the deadline. */
     h.processor.api.assistant.sendMessage = async () => { time = 10; return 'Əread("a")'; };
-    await h.processor.process("go");
+    await assert.rejects(h.processor.process("go"), TurnLimitError);
     assert.equal(h.calls.length, 0);
     assert.deepEqual(h.messages, []);
     assert.match(h.errors[0], /time limit/);
@@ -204,7 +205,7 @@ test("deadline after an initial response prevents tools and final rendering, inc
       /** Throws at the selected boundary. */
       h.tools.read = async () => { throw new UserInterruptException(); };
     }
-    if (failurePoint === "start") await h.processor.process("go");
+    if (failurePoint === "start") await assert.rejects(h.processor.process("go"), TurnLimitError);
     else await assert.rejects(h.processor.process("go"), /failed|interrupted/i);
     assert.equal(h.monitoring.length, 2);
     assert.equal(h.calls.length, failurePoint === "end" || failurePoint === "format" ? 1 : 0);
@@ -230,7 +231,7 @@ test("the per-call total cap also stops calls whose output keeps changing", asyn
   h.engine.toolTracker.maxAttempts = 2;
   /** @returns {Promise<string>} A different result on every successful attempt. */
   h.tools.read = async () => String(h.calls.push([]));
-  await h.processor.process("go");
+  await assert.rejects(h.processor.process("go"), TurnLimitError);
   assert.equal(h.calls.length, 2);
   assert.equal(h.requests.length, 3);
   assert.match(h.errors[0], /repetition limit/);
@@ -240,7 +241,7 @@ test("consecutive tool errors accumulate across model exchanges", async () => {
   const h = harness('Əread("a")', { maxErrors: 2 });
   /** @returns {Promise<never>} Always rejects this action. */
   h.tools.read = async () => { h.calls.push([]); throw new Error("broken"); };
-  await h.processor.process("go");
+  await assert.rejects(h.processor.process("go"), TurnLimitError);
   assert.equal(h.calls.length, 2);
   assert.equal(h.requests.length, 2);
   assert.match(h.errors[0], /consecutive error limit/);
@@ -253,7 +254,7 @@ test("safety recovery uses the same model budget as the initial exchange", async
     h.requests.push("request");
     throw new GeminiSafetyError("blocked");
   };
-  await h.processor.process("go");
+  await assert.rejects(h.processor.process("go"), TurnLimitError);
   assert.equal(h.requests.length, 1);
   assert.equal(h.calls.length, 0);
   assert.match(h.errors.at(-1), /model request limit/);

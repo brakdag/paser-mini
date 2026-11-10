@@ -257,7 +257,7 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
    * Manually injects a message into the conversation state.
    * @param {string} role - The role of the message sender.
    * @param {string} content - The message content to inject.
-   * @param {number|null} timestamp - The optional message timestamp.
+   * @param {string|null} timestamp - The optional message timestamp.
    */
   injectMessage(role, content, timestamp = null) {
     this.state.addMessage(normalizeRole(role, this.user.nickname, this.model.nickname), content, timestamp);

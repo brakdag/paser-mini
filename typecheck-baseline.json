@@ -11,43 +11,8 @@
     {
       "file": "src/core/chatManager.js",
       "code": 2345,
-      "message": "Argument of type 'unknown' is not assignable to parameter of type 'string'.",
-      "source": "this.configManager.get(\"context_window_limit\", DEFAULT_CONTEXT_WINDOW_LIMIT)",
-      "count": 1
-    },
-    {
-      "file": "src/core/chatManager.js",
-      "code": 2345,
-      "message": "Argument of type 'unknown' is not assignable to parameter of type 'string'.",
-      "source": "this.configManager.get(\"rendering_mode\", \"IRC\")",
-      "count": 1
-    },
-    {
-      "file": "src/core/chatManager.js",
-      "code": 2345,
       "message": "Argument of type '{ [key: string]: (...args: unknown[]) => unknown; }' is not assignable to parameter of type '{ [key: string]: (...args: unknown[]) => Promise<unknown>; }'.\n  'string' index signatures are incompatible.\n    Type '(...args: unknown[]) => unknown' is not assignable to type '(...args: unknown[]) => Promise<unknown>'.\n      Type '{}' is missing the following properties from type 'Promise<unknown>': then, catch, finally, [Symbol.toStringTag]",
       "source": "this.tools",
-      "count": 1
-    },
-    {
-      "file": "src/core/terminalUI.js",
-      "code": 2322,
-      "message": "Type 'string | Promise<string>' is not assignable to type 'Promise<string>'.\n  Type 'string' is not assignable to type 'Promise<string>'.",
-      "source": "return",
-      "count": 1
-    },
-    {
-      "file": "src/infrastructure/cerebras/adapter.js",
-      "code": 2353,
-      "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
-      "source": "userNickname",
-      "count": 1
-    },
-    {
-      "file": "src/infrastructure/cloudflare/adapter.js",
-      "code": 2353,
-      "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
-      "source": "userNickname",
       "count": 1
     },
     {
@@ -79,27 +44,6 @@
       "count": 1
     },
     {
-      "file": "src/infrastructure/cohere/adapter.js",
-      "code": 2353,
-      "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
-      "source": "userNickname",
-      "count": 1
-    },
-    {
-      "file": "src/infrastructure/conversationState.js",
-      "code": 2345,
-      "message": "Argument of type 'number' is not assignable to parameter of type 'string'.",
-      "source": "timestamp",
-      "count": 1
-    },
-    {
-      "file": "src/infrastructure/conversationState.js",
-      "code": 2345,
-      "message": "Argument of type 'string | number' is not assignable to parameter of type 'number'.\n  Type 'string' is not assignable to type 'number'.",
-      "source": "ts",
-      "count": 1
-    },
-    {
       "file": "src/infrastructure/gemini/adapter.js",
       "code": 2339,
       "message": "Property 'code' does not exist on type 'Error'.",
@@ -112,27 +56,6 @@
       "message": "Property 'response' does not exist on type 'Error'.",
       "source": "response",
       "count": 3
-    },
-    {
-      "file": "src/infrastructure/gemini/adapter.js",
-      "code": 2353,
-      "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
-      "source": "userNickname",
-      "count": 1
-    },
-    {
-      "file": "src/infrastructure/groq/adapter.js",
-      "code": 2353,
-      "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
-      "source": "userNickname",
-      "count": 1
-    },
-    {
-      "file": "src/infrastructure/huggingface/adapter.js",
-      "code": 2353,
-      "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
-      "source": "userNickname",
-      "count": 1
     },
     {
       "file": "src/infrastructure/nvidia-minimax/adapter.js",
@@ -149,20 +72,6 @@
       "count": 5
     },
     {
-      "file": "src/infrastructure/nvidia-minimax/adapter.js",
-      "code": 2353,
-      "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
-      "source": "userNickname",
-      "count": 1
-    },
-    {
-      "file": "src/infrastructure/nvidia-minimax/adapter.js",
-      "code": 2416,
-      "message": "Property 'injectMessage' in type 'NvidiaMiniMaxAdapter' is not assignable to the same property in base type 'BaseAdapter'.\n  Type '(role: string, content: string, timestamp?: number) => void' is not assignable to type '(_role: string, _content: any, _timestamp?: string) => void'.\n    Types of parameters 'timestamp' and '_timestamp' are incompatible.\n      Type 'string' is not assignable to type 'number'.",
-      "source": "injectMessage",
-      "count": 1
-    },
-    {
       "file": "src/infrastructure/nvidia/adapter.js",
       "code": 2339,
       "message": "Property 'code' does not exist on type 'Error'.",
@@ -177,20 +86,6 @@
       "count": 3
     },
     {
-      "file": "src/infrastructure/nvidia/adapter.js",
-      "code": 2353,
-      "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
-      "source": "userNickname",
-      "count": 1
-    },
-    {
-      "file": "src/infrastructure/nvidia/adapter.js",
-      "code": 2416,
-      "message": "Property 'injectMessage' in type 'NvidiaAdapter' is not assignable to the same property in base type 'BaseAdapter'.\n  Type '(role: string, content: string, timestamp?: number) => void' is not assignable to type '(_role: string, _content: any, _timestamp?: string) => void'.\n    Types of parameters 'timestamp' and '_timestamp' are incompatible.\n      Type 'string' is not assignable to type 'number'.",
-      "source": "injectMessage",
-      "count": 1
-    },
-    {
       "file": "src/infrastructure/openrouter/adapter.js",
       "code": 2339,
       "message": "Property 'code' does not exist on type 'Error'.",
@@ -203,34 +98,6 @@
       "message": "Property 'response' does not exist on type 'Error'.",
       "source": "response",
       "count": 5
-    },
-    {
-      "file": "src/infrastructure/openrouter/adapter.js",
-      "code": 2353,
-      "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
-      "source": "userNickname",
-      "count": 1
-    },
-    {
-      "file": "src/infrastructure/poolside/adapter.js",
-      "code": 2353,
-      "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
-      "source": "userNickname",
-      "count": 1
-    },
-    {
-      "file": "src/infrastructure/zai/adapter.js",
-      "code": 2353,
-      "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
-      "source": "userNickname",
-      "count": 1
-    },
-    {
-      "file": "src/infrastructure/zenmux/adapter.js",
-      "code": 2353,
-      "message": "Object literal may only specify known properties, and 'userNickname' does not exist in type '{ ui: any; configManager: any; }'.",
-      "source": "userNickname",
-      "count": 1
     },
     {
       "file": "src/tools/gitTools.js",
@@ -587,13 +454,6 @@
       "code": 2339,
       "message": "Property 'providerId' does not exist on type 'GeminiAdapter'.",
       "source": "providerId",
-      "count": 1
-    },
-    {
-      "file": "tests/modelRecovery.test.js",
-      "code": 2740,
-      "message": "Type '{ get(key: string, fallback: unknown): any; save(key: string, value: unknown): void; }' is missing the following properties from type 'ConfigManager': #fs, globalPath, globalConfig, localPath, and 5 more.",
-      "source": "configManager",
       "count": 1
     },
     {

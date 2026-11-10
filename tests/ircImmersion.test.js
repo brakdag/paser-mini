@@ -41,7 +41,10 @@ test("IRC reply normalization preserves quoted/code transcripts, other speakers 
 async function fixture(providerId, rawReply = null) {
   const adapter = await new ProviderManager().createAdapter({
     providerId, ui: {},
-    configManager: { get(key, fallback) { return key === "rpm_limit" ? 60000000 : fallback; } },
+    configManager: { get(key, fallback) {
+      const values = { rpm_limit: 60000000, compatible_base_url: "http://localhost:9999/v1", model_name: "fixture" };
+      return key in values ? values[key] : fallback;
+    } },
   });
   const body = "Hola.\n> [12:33] <Paser> Una cita";
   const reply = rawReply ?? "[12:34] <Paser> ".repeat(3) + body;

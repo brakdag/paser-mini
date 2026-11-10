@@ -11,6 +11,7 @@ export default function parseCliOptions(argv = process.argv) {
   program
     .name("paser-mini")
     .description("Minimalist Autonomous Agent (JS Port)")
+    .option("--pipeline", "Read stdin as one document, write the reply and exit")
     .option("-m, --message <message>", "Initial message to send")
     .option(
       "-si, --system-instruction <instruction>",
@@ -32,6 +33,7 @@ export default function parseCliOptions(argv = process.argv) {
     .parse(argv);
 
   const options = program.opts();
+  if (options.pipeline && options.githubMode) throw new Error("--pipeline cannot be combined with --github-mode");
   return {
     ...options,
     pureMode: options.systemInstruction === false,

@@ -20,7 +20,7 @@ node docs/audits/2026-11-09/reproduce.mjs
 
 [reproduce.mjs](reproduce.mjs) crea un proyecto temporal, ejecuta el código real mediante imports, inyecta configuración y transportes y elimina únicamente ese fixture al finalizar. El hijo recibe una lista acotada de variables de entorno sin credenciales ni configuración de usuario. No escribe en los logs ni en la configuración reales.
 
-**Es un reproductor del estado defectuoso, no una suite de aceptación.** Sus aserciones exigen los comportamientos incorrectos observados; un arreglo puede hacerlo fallar. [observed.jsonl](observed.jsonl) conserva la salida de esta auditoría, con código de salida **0**:
+**Actualización 2026-11-10:** el reproductor ahora exige los arreglos de A01–A06. Su salida 0 confirma las regresiones corregidas. Para consultar las aserciones originales, usar la versión anterior en Git; la evidencia fechada se conserva sin cambios en `observed.jsonl`. El informe y los resultados siguientes describen el estado auditado original. [observed.jsonl](observed.jsonl) conserva la salida de esta auditoría, con código de salida **0**:
 
 | Caso | Estímulo controlado | Observación confirmada |
 | --- | --- | --- |

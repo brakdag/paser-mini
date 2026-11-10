@@ -13,7 +13,8 @@ const require = createRequire(import.meta.url);
  * System tools for environment management, code analysis, and system control.
  */
 export class SystemTools {
-  #execPromise = promisify(exec);
+  /** @type {(command: string, options: object) => Promise<{stdout: string, stderr: string}>} */
+  #execPromise;
 
   #execFilePromise;
 
@@ -24,9 +25,11 @@ export class SystemTools {
   /**
    * Configures subprocess execution; tests can supply a local fake.
    * @param {object} [options] - Execution dependencies.
+   * @param {(command: string, options: object) => Promise<{stdout: string, stderr: string}>} [options.execRunner] - Shell runner.
    * @param {(command: string, args: string[], options: object) => Promise<{stdout: string}>} [options.execFileRunner] - Subprocess runner.
    */
-  constructor({ execFileRunner = promisify(execFile) } = {}) {
+  constructor({ execFileRunner = promisify(execFile), execRunner = promisify(exec) } = {}) {
+    this.#execPromise = execRunner;
     this.#execFilePromise = execFileRunner;
   }
 
@@ -164,7 +167,7 @@ export class SystemTools {
   /**
    * Executes a bash command in the system shell.
    * @param {string} command The command to execute.
-   * @returns {Promise<string>} The command output.
+   * @returns {Promise<string|object>} The command output and failure metadata.
    * @throws {Error} If the bash command fails.
    */
   async execute(command) {
@@ -175,10 +178,12 @@ export class SystemTools {
       });
       return stdout || stderr || "Command executed successfully (no output).";
     } catch (e) {
-      if (e.stdout) {
-        return `Exit Code ${e.code}:\n${e.stdout}\n${e.stderr || ""}`;
-      }
-      throw new Error(`Bash error: ${e.message}`);
+      return {
+        isError: true,
+        content: [{ type: "text", text: `Bash error: ${e.message}\n${e.stdout || ""}\n${e.stderr || ""}` }],
+        exitCode: e.code ?? null, signal: e.signal ?? null,
+        timedOut: e.killed === true && e.code == null, stdout: e.stdout || "", stderr: e.stderr || "",
+      };
     }
   }
 }

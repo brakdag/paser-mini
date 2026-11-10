@@ -88,7 +88,7 @@ export async function runProcess(work, lifecycle) {
    * Stops on a termination signal.
    * @returns {void}
    */
-  const signal = () => stop();
+  const signal = () => { exitCode = 130; console.error("Paser Mini interrupted"); stop(); };
   /**
    * @param {unknown} error - Unhandled failure.
    * @returns {void}

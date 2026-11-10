@@ -25,7 +25,7 @@ class ChatManager {
    * @param {object} params.user - The shared user identity object.
    * @param {object} params.model - The shared model identity object.
    * @param {boolean} [params.instanceMode] - Whether this is a sub-instance of the agent.
-   * @param {ConfigManager|null} [params.configManager] - Optional injected configuration manager.
+   * @param {Pick<ConfigManager, "get"|"save"|"setTemporary">|null} [params.configManager] - Optional injected configuration manager.
    */
   constructor({ assistant, tools, systemInstruction, pureMode = false, ui, user, model, instanceMode = false, configManager = null }) {
     this.assistant = assistant;
@@ -44,11 +44,11 @@ class ChatManager {
     const DEFAULT_CONTEXT_WINDOW_LIMIT = 0;
 
     this.contextWindowLimit = parseInt(
-      this.configManager.get("context_window_limit", DEFAULT_CONTEXT_WINDOW_LIMIT),
+      String(this.configManager.get("context_window_limit", DEFAULT_CONTEXT_WINDOW_LIMIT)),
       10,
     );
 
-    this.ui.setBashEnabled(this.configManager.get("execute_enabled", false));
+    this.ui.setBashEnabled(this.configManager.get("execute_enabled", false) === true);
     this.currentChannel = "#main";
     
     this.parser = new SmartToolParser();
@@ -73,8 +73,8 @@ class ChatManager {
 
     this.ui.setIdentities(this.user, this.model);
     logger.setAgentNickname(this.model.nickname);
-    this.setRenderingMode(this.configManager.get("rendering_mode", "IRC"));
-    this.immersionMode = this.configManager.get("immersion_mode", false);
+    this.setRenderingMode(String(this.configManager.get("rendering_mode", "IRC")));
+    this.immersionMode = this.configManager.get("immersion_mode", false) === true;
     if (this.assistant && this.assistant.setImmersionMode) {
       this.assistant.setImmersionMode(this.immersionMode);
     }
@@ -97,6 +97,7 @@ class ChatManager {
    */
   requestExit() {
     this.stopRequested = true;
+    this._initialization?.abort(new Error("Session startup cancelled"));
     this.turnProcessor.cancelPendingTurn();
     this.ui.close?.();
   }
@@ -117,7 +118,7 @@ class ChatManager {
    * @param {number} params.temp - The target temperature.
    */
   async switchProvider({ providerId, modelName, temp }) {
-    if (this._turnInProgress || this._reconfiguring) {
+    if (this._initialization || this._turnInProgress || this._reconfiguring) {
       throw new Error("Wait for the active turn or reconfiguration to finish.");
     }
     if (!modelName?.trim() || !Number.isFinite(temp)) {
@@ -185,7 +186,7 @@ class ChatManager {
    * @param {boolean} [pureMode] - The explicit execution mode, retained when omitted.
    */
   async updateSystemContext(systemInstruction, tools, pureMode = this.pureMode) {
-    if (this._turnInProgress || this._reconfiguring) {
+    if (this._initialization || this._turnInProgress || this._reconfiguring) {
       throw new Error("Wait for the active turn or reconfiguration to finish.");
     }
     this._reconfiguring = true;
@@ -284,10 +285,31 @@ class ChatManager {
 
   /**
    * Initializes the adapter without opening terminal input or requesting another turn.
+   * @returns {Promise<void>} Startup completion, or rejection on failure, cancellation or timeout.
    */
-  initializeSession() {
-    this.assistant.setIdentities(this.user, this.model);
-    this.assistant.startChat(this.model.name, this.systemInstruction, this.model.temperature);
+  async initializeSession() {
+    if (this.stopRequested) throw new Error("Session is closed");
+    if (this._turnInProgress || this._reconfiguring || this._initialization) throw new Error("Session initialization or a turn is in progress");
+    const controller = new AbortController();
+    this._initialization = controller;
+    const timer = setTimeout(() => controller.abort(new Error("Session startup timed out after 10 seconds")), 10000);
+    let onAbort;
+    try {
+      this.assistant.setIdentities(this.user, this.model);
+      await Promise.race([
+        Promise.resolve().then(() => this.assistant.startChat(this.model.name, this.systemInstruction, this.model.temperature, { signal: controller.signal })),
+        new Promise((_, reject) => {
+          /** @returns {void} Rejects the startup wait when its owner closes the session. */
+          onAbort = () => reject(controller.signal.reason);
+          controller.signal.addEventListener("abort", onAbort, { once: true });
+        }),
+      ]);
+      controller.signal.throwIfAborted();
+    } finally {
+      clearTimeout(timer);
+      controller.signal.removeEventListener("abort", onAbort);
+      this._initialization = null;
+    }
   }
 
   /**
@@ -296,7 +318,7 @@ class ChatManager {
    * @returns {Promise<void>} Resolves after the turn and its publications finish.
    */
   async runOnce(input) {
-    this.initializeSession();
+    await this.initializeSession();
     const failures = [];
     try {
       await this.processTurn(input);
@@ -320,10 +342,12 @@ class ChatManager {
   async run(initialInput = null) {
     logger.info("Initializing ChatManager.run");
 
-    this.initializeSession();
-
-    if (this.ui.initInput) {
-      this.ui.initInput();
+    this.ui.initInput?.();
+    try {
+      await this.initializeSession();
+    } catch (error) {
+      if (this.stopRequested) return;
+      throw error;
     }
 
     if (initialInput) {
@@ -337,8 +361,8 @@ class ChatManager {
       try {
         await this.processTurn(initialInput);
       } catch (error) {
-        if (error.name !== "UserInterruptException") throw error;
-        this.ui.displayInfo("Agent interrupted. Processing new request...");
+        if (!["UserInterruptException", "TurnLimitError"].includes(error.name)) throw error;
+        if (error.name === "UserInterruptException") this.ui.displayInfo("Agent interrupted. Processing new request...");
       }
     }
 
@@ -367,6 +391,8 @@ class ChatManager {
         if (e.name === "UserInterruptException") {
           logger.info("Turn interrupted by user input");
           this.ui.displayInfo("Agent interrupted. Processing new request...");
+        } else if (e.name === "TurnLimitError") {
+          // The processor already displayed the reason; leave input available.
         } else if (e.name === "APIError") {
           const statusCode = e.response?.status || e.code || e.name;
           this.ui.displayError(
@@ -387,7 +413,8 @@ class ChatManager {
    */
   async processTurn(userInput) {
     if (!userInput?.trim()) return undefined;
-    if (this._reconfiguring) throw new Error("Session reconfiguration is in progress.");
+    if (this._turnInProgress) throw new Error("A turn is already active.");
+    if (this._initialization || this._reconfiguring) throw new Error("Session reconfiguration is in progress.");
     const { assistant } = this;
     const before = structuredClone(assistant.getHistory());
     this._turnInProgress = true;
@@ -411,7 +438,7 @@ class ChatManager {
       this.ui.displayError("Usage: /rewrite <message> (or /r <message>).");
       return false;
     }
-    if (this._turnInProgress) {
+    if (this._initialization || this._reconfiguring || this._turnInProgress) {
       this.ui.displayError("Wait for the active turn to finish before rewriting.");
       return false;
     }
@@ -423,6 +450,8 @@ class ChatManager {
 
     const historyBefore = structuredClone(this.assistant.getHistory());
     const repetitionBefore = structuredClone(this.repetitionDetector.buffer);
+    const attemptsBefore = structuredClone(this.engine.toolTracker.attempts);
+    const outcomesBefore = structuredClone(this.engine.toolTracker.outcomes);
     try {
       const history = this.assistant.getHistory();
       history.splice(0, history.length, ...structuredClone(previous.before));
@@ -433,6 +462,8 @@ class ChatManager {
       const history = this.assistant.getHistory();
       history.splice(0, history.length, ...historyBefore);
       this.repetitionDetector.buffer = repetitionBefore;
+      this.engine.toolTracker.attempts = attemptsBefore;
+      this.engine.toolTracker.outcomes = outcomesBefore;
       this._lastTurn = previous;
       throw error;
     }
@@ -443,6 +474,7 @@ class ChatManager {
    */
   stopExecution() {
     this.stopRequested = true;
+    this._initialization?.abort(new Error("Session startup cancelled"));
     this.turnProcessor.cancelPendingTurn();
   }
 

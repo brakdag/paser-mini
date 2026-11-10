@@ -99,6 +99,7 @@ test("/models cancels an in-flight initial message and the next turn uses the se
     model: { nickname: "agent", name: "models/old", temperature: 0.7 },
     configManager: {
       get(key, fallback) { return settings.has(key) ? settings.get(key) : fallback; },
+      setTemporary() {},
       save(key, value) { settings.set(key, value); },
     },
   });
@@ -206,7 +207,7 @@ test("/models still lists models and selects a filtered index", async () => {
       Object.assign(this.model, { name: modelName, temperature: temp });
     },
     saveConfig() {},
-    configManager: { get(key, fallback) { return settings.get(key) ?? fallback; }, save() {} },
+    configManager: { get(key, fallback) { return settings.get(key) ?? fallback; }, save() {}, setTemporary() {} },
   };
   const ui = {
     displayMenu(title, models) { menus.push(models); },

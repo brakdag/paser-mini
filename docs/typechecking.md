@@ -30,7 +30,7 @@ The history hook now declares its existing array contract; message elements rema
 untyped. Completing T22 resolves another 25 diagnostics through explicit GitHub
 runner fields, correct command/logger calls and an object view for JSON cloning.
 T14 declares the session provider manager explicitly and resolves its two missing-field diagnostics.
-The current inventory contains **170 diagnostics**, with no new debt. T12 removes three occurrences from Z.AI’s obsolete Axios retry interceptor; it adds no exemptions. T11 removes 16 inherited-hook visibility diagnostics by making the shared context policy an explicit adapter contract.
+After T11–T23 the inventory contained **170 diagnostics**. A07 (2026-11-10) reduces it to **150 diagnostics** (46 in production, 104 in tests), with no new debt. T12 removes three occurrences from Z.AI’s obsolete Axios retry interceptor; it adds no exemptions. T11 removes 16 inherited-hook visibility diagnostics by making the shared context policy an explicit adapter contract.
 
 T19/T20 remove 37 occurrences: shared API error construction replaces seven copies (35), MCP shutdown now returns void (1), and the injectable inspector launcher documents the process seam used by fixtures (1). No new diagnostics or exemptions were added.
 
@@ -38,8 +38,8 @@ The retained diagnostics were reviewed by these groups:
 
 | Files | Existing contract or typing debt | Follow-up |
 | --- | --- | --- |
-| Provider `adapter.js`, `conversationState.js` | Constructor options narrower than callers, private JSDoc on inherited hooks, timestamp formats, custom HTTP error properties | T11/T12/T14/T15/T19; align contracts while testing each provider |
-| `chatManager.js`, `sessionFactory.js`, `terminalUI.js` | Config values typed as `unknown`, sync/async tool and UI return differences, session fields assigned after construction | T13/T14/T20 |
+| Provider `adapter.js` | Custom HTTP error properties without matching declarations | Further transport type maintenance after A07; retain retry/error behavior tests |
+| `chatManager.js`, `turnProcessor.js` | Tool return contract permits synchronous results while the engine annotation expects promises; manager field assigned after construction | Further shared-contract maintenance after A07 |
 | `gitTools.js`, `githubTools.js`, `loadTools.js`, `retryHandler.js` | Error objects extended with transport/OS metadata without matching declarations | Incremental type maintenance; transport contracts remain in T12 |
 | `tests/**/*.test.js` | Intentionally missing arguments, JSON Buffer coercion, `unknown` validation/error results, injected partial interfaces, mock properties and callbacks that TypeScript cannot infer as assigned | Narrow declarations as the corresponding contracts are maintained; retain behavior assertions |
 
@@ -47,6 +47,18 @@ Small annotation defects were corrected during T21 rather than baselined:
 constructor return tags, duplicate privacy tags on `#` methods, invalid JSDoc
 module paths, and `parseInt`'s string input in `tail`. Newly added type-control,
 AST and system-tool tests and scripts have no baseline exemptions.
+
+A07 aligns the twelve adapter constructor options, string timestamps in
+ConversationState and both NVIDIA adapters, synchronous/asynchronous terminal
+input, and the configuration reads in ChatManager. Its injected configuration
+contract names the storage methods the manager actually uses. Base startup now
+declares `void | Promise<void>` and optional cancellation; ChatManager awaits it
+in both session modes. Turn limits reject through `processTurn` and `runOnce`,
+which is also documented in [CLI composition](cli-composition.md).
+Only resolved entries were removed: 19 production occurrences and one test
+occurrence. The new regression and feature tests introduce no inventory entries,
+`any` annotations, or `checkJs` exclusions. Remaining HTTP/OS error metadata and
+mock debt stays inventoried for later batches.
 
 ## Maintaining the inventory
 

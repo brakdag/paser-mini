@@ -112,7 +112,10 @@ test("importing domain modules and the entry point creates no session files or h
       process.exit(code);
     `], options);
     assert.ifError(result.error);
-    assert.equal(result.status, ["exception", "rejection", "startup"].includes(mode) ? 1 : 0, result.stderr);
+    let expected = 0;
+    if (["SIGINT", "SIGTERM"].includes(mode)) expected = 130;
+    if (["exception", "rejection", "startup"].includes(mode)) expected = 1;
+    assert.equal(result.status, expected, result.stderr);
     const log = await fs.readFile(path.join(options.cwd, ".paser-mini/log/session.log"), "utf8");
     assert.match(log, /last cleanup 1\n$/);
     assert.doesNotMatch(log, /last cleanup 2/);
@@ -223,7 +226,7 @@ cliStops.forEach(mode => {
       child.once("error", reject);
       child.once("exit", resolve);
     });
-    assert.equal(code, mode === "fatal" ? 1 : 0, stderr);
+    assert.equal(code, mode === "fatal" ? 1 : 130, stderr);
     if (mode === "fatal") assert.match(stderr, /fatal CLI fixture/);
     else assert.equal(signaled, true);
     assert.match(await fs.readFile(path.join(options.cwd, ".paser-mini/log/session.log"), "utf8"), /Session Started/);

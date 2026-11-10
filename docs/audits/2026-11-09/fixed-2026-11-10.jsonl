@@ -1,0 +1,6 @@
+{"id":"A01","firstPayloadRoles":["system","user"],"systemAppearsAfterMetadata":true}
+{"id":"A02","rewriteReportedSuccess":false,"oldHistoryRestored":true,"githubCompletionReceipt":false,"runsForTwoAttempts":2}
+{"id":"A03","expected":"before cost=$$; matched=$& after","actual":"before cost=$$; matched=$& after"}
+{"id":"A04","success":false,"isError":true,"output":{"isError":true,"content":[{"type":"text","text":"Bash error: Command failed: printf partial; exit 7\n\npartial\n"}],"exitCode":7,"signal":null,"timedOut":false,"stdout":"partial","stderr":""}}
+{"id":"A05","cursorsRequested":[null,"page-2"],"discovered":["mcp_fixture_first","mcp_fixture_second"],"lastPageIncluded":true}
+{"id":"A06","managerReportsIdle":false,"processorStillActive":true,"promptChangedDuringRequest":false}

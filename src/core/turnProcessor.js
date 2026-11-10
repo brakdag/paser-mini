@@ -54,6 +54,7 @@ class TurnProcessor {
     } catch (error) {
       if (!(error instanceof TurnLimitError)) throw error;
       this.ui.displayError(error.message);
+      throw error;
     } finally {
       this.assistant.endContextTurn?.();
       this.control = null;

@@ -25,7 +25,7 @@ class ConversationState {
   /**
    * @param {string} role - The role of the message sender.
    * @param {string} text - The message text content.
-   * @param {number|null} [timestamp] - Optional timestamp override.
+   * @param {string|null} [timestamp] - Optional timestamp override.
    * @returns {string} The formatted message string.
    */
   _formatMessage(role, text, timestamp = null) {
@@ -47,7 +47,7 @@ class ConversationState {
   /**
    * @param {string} role - The role of the message sender.
    * @param {string} text - The message text content.
-   * @param {number|null} [timestamp] - Optional timestamp override.
+   * @param {string|null} [timestamp] - Optional timestamp override.
    * @returns {string} The formatted message string.
    */
   addMessage(role, text, timestamp = null) {
