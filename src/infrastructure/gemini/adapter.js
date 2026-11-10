@@ -126,7 +126,7 @@ class GeminiAdapter extends BaseAdapter {
   _filterThoughts(text) {
     if (!text) return "";
     const cleaned = text.replace(/<(thought|reasoning)>[\s\S]*?<\/\1>/gi, "");
-    return cleaned.trim();
+    return this.immersionMode && this.renderingMode === "IRC" ? cleaned.trimEnd() : cleaned.trim();
   }
 
   /**
@@ -260,7 +260,7 @@ class GeminiAdapter extends BaseAdapter {
     }
 
     let textContent = content.parts.map((p) => p.text).join("");
-    textContent = this._filterThoughts(textContent);
+    textContent = this.normalizeResponseText(this._filterThoughts(textContent));
 
     if (textContent) {
       this._recordMessage("model", textContent);

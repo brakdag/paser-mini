@@ -63,6 +63,16 @@ Changing files externally does not reload an existing ConfigManager;
 The shared `model.temperature` is the session's temperature source;
 `session.temperature` remains a read-only accessor for existing integrations.
 
+With `/true` enabled in IRC mode, the model still receives timestamps and nicks
+on conversation messages. Leading `[HH:mm] <agent>` headers echoed by the model
+(also accepting seconds) are removed before its reply is stored or displayed;
+the application adds one header when formatting the message. Repeated leading
+headers matching the exact current agent nick are removed. Quoted/fenced or
+indented code, other speakers and headers inside the body remain untouched.
+Old duplicated assistant text is also normalized when preparing IRC payloads;
+existing log files are not rewritten. This normalization is specific to immersed
+IRC and does not alter CLEAN, Fountain or non-immersive responses.
+
 `timestamps_enabled`, `safemode` and `instance_timeout` do not control current
 execution; old saved values are left untouched. Shell execution is gated by
 `execute_enabled`; pure mode disables tool execution. Neither flag creates an

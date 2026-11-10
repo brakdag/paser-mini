@@ -200,7 +200,7 @@ class SystemCommands {
       ui.displayError("Usage: /ping <message>");
       return true;
     }
-    ui.displayChatMessage(ui.userNickname, message);
+    ui.displayChatMessage(chatManager.user.nickname, message);
     const start = Date.now();
     await chatManager.processTurn(message);
     const elapsed = Date.now() - start;

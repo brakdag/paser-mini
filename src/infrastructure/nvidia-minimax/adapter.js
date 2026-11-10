@@ -185,7 +185,7 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
       });
     }
 
-    const content = this._filterThoughts(rawContent);
+    const content = this.normalizeResponseText(this._filterThoughts(rawContent));
 
     if (!content) {
       logger.error("NvidiaMiniMaxAdapter: Empty content after filtering", {
@@ -250,7 +250,7 @@ class NvidiaMiniMaxAdapter extends BaseAdapter {
   _filterThoughts(text) {
     if (!text) return "";
     const cleaned = text.replace(/<(thought|reasoning)>[\s\S]*?<\/\1>/gi, "");
-    return cleaned.trim();
+    return this.immersionMode && this.renderingMode === "IRC" ? cleaned.trimEnd() : cleaned.trim();
   }
 
   /**

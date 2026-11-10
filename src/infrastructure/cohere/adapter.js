@@ -200,7 +200,8 @@ class CohereAdapter extends BaseAdapter {
       toolCallText = `[TOOL_EXEC] ${toolNames.join('\n[TOOL_EXEC] ')}`;
     }
 
-    const finalText = `${textContent}${textContent && toolCallText ? '\n' : ''}${toolCallText}`.trim();
+    const combined = `${textContent}${textContent && toolCallText ? '\n' : ''}${toolCallText}`;
+    const finalText = this.normalizeResponseText(this.immersionMode && this.renderingMode === "IRC" ? combined.trimEnd() : combined.trim());
 
     if (finalText) {
       const msgTimestamp = IRCFormatter.getTimestamp();
@@ -239,7 +240,7 @@ class CohereAdapter extends BaseAdapter {
    */
   injectMessage(role, content, timestamp = null) {
     const apiRole = normalizeRole(role, this.user.nickname, this.model.nickname);
-    const finalContent = normalizeContent(content, apiRole);
+    const finalContent = normalizeContent(content, apiRole, this.immersionMode && this.renderingMode === "IRC");
     const lastMessage = this.history[this.history.length - 1];
 
     const safeRole = apiRole === 'assistant' ? 'assistant' : 'user';

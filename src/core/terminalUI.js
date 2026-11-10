@@ -77,7 +77,7 @@ class TerminalUI {
    * @param {string} nick The nickname of the user.
    */
   setUserNickname(nick) {
-    this.userNickname = nick;
+    this.user.nickname = nick;
   }
 
   /**
@@ -86,7 +86,7 @@ class TerminalUI {
    * @param {object} [chatManager] The chat manager instance for persistence.
    */
   setAgentNickname(newNick, chatManager = null) {
-    this.agentNickname = newNick;
+    this.model.nickname = newNick;
     if (chatManager) {
       chatManager.configManager.save("agent_nickname", newNick);
     }

@@ -21,9 +21,10 @@ export function normalizeRole(role, userNickname, agentNickname) {
  * Normalizes message content for the API, handling objects, arrays, and thought filtering.
  * @param {string|object|Array} content - The raw content.
  * @param {string} apiRole - The normalized API role.
+ * @param {boolean} [preserveLeadingWhitespace] - Preserve code indentation in immersed IRC replies.
  * @returns {string|Array} The normalized content.
  */
-export function normalizeContent(content, apiRole) {
+export function normalizeContent(content, apiRole, preserveLeadingWhitespace = false) {
   let finalContent = content;
 
   if (content && typeof content === 'object' && content.mime_type && content.data) {
@@ -37,7 +38,8 @@ export function normalizeContent(content, apiRole) {
   }
 
   if (typeof finalContent === 'string' && apiRole === 'assistant') {
-    finalContent = finalContent.replace(/<thought>[\s\S]*?<\/thought>/gi, '').trim();
+    const cleaned = finalContent.replace(/<thought>[\s\S]*?<\/thought>/gi, '');
+    finalContent = preserveLeadingWhitespace ? cleaned.trimEnd() : cleaned.trim();
   }
 
   return finalContent;

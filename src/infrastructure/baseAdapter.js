@@ -5,6 +5,7 @@ import IRCFormat from "../formats/IRCFormat.js";
 import CleanFormat from "../formats/CleanFormat.js";
 import FountainFormat from "../formats/FountainFormat.js";
 import logger from "../core/logger.js";
+import IRCFormatter from "../utils/ircFormatter.js";
 import RequestBudget from "../utils/requestBudget.js";
 import { contextSettings, estimateContextTokens, planContext } from "./contextBudget.js";
 
@@ -100,10 +101,13 @@ export default class BaseAdapter {
    * @returns {string|Array} The formatted content.
    */
   formatTextForPayload(role, text, timestamp = null) {
-    const projected = providerContent(text, this.constructor.name, this.supportsImageParts);
+    let projected = providerContent(text, this.constructor.name, this.supportsImageParts);
     if (Array.isArray(projected)) {
       return projected.map(block => (block.type === "text"
         ? { ...block, text: this.formatTextForPayload(role, block.text, timestamp) } : block));
+    }
+    if (role === "assistant" || role === "model" || role === this.model.nickname) {
+      projected = this.normalizeResponseText(projected);
     }
     if (!this.immersionMode || this.renderingMode === "CLEAN") {
       return projected;
@@ -130,6 +134,16 @@ export default class BaseAdapter {
     }
 
     return projected;
+  }
+
+  /**
+   * Keeps IRC headers out of stored/generated bodies while preserving immersion.
+   * @param {string} text - Provider reply before storage and display.
+   * @returns {string} Reply with any echoed leading self headers removed.
+   */
+  normalizeResponseText(text) {
+    if (!this.immersionMode || this.renderingMode !== "IRC") return text;
+    return IRCFormatter.stripReplyHeaders(text, this.model.nickname);
   }
 
   /**

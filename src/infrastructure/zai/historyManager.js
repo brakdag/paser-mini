@@ -21,10 +21,11 @@ class HistoryManager {
    * @param {string} role - The role of the message sender.
    * @param {string|object|Array} content - The content of the message.
    * @param {string|null} [timestamp] - The timestamp of the message.
+   * @param {boolean} [preserveLeadingWhitespace] - Preserve IRC code indentation.
    */
-  injectMessage(role, content, timestamp = null) {
+  injectMessage(role, content, timestamp = null, preserveLeadingWhitespace = false) {
     const apiRole = normalizeRole(role, this.userNickname, this.agentNickname);
-    const finalContent = normalizeContent(content, apiRole);
+    const finalContent = normalizeContent(content, apiRole, preserveLeadingWhitespace);
 
     this.history.push({
       role: apiRole,

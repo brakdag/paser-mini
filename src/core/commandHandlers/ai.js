@@ -10,9 +10,8 @@ class AICommands {
    * @returns {Promise<boolean>} True if the operation succeeded.
    */
   static async handlePaim(chatManager, ui, message) {
-    const content = ui.formatChatMessage(ui.agentNickname, message);
-    chatManager.assistant.injectMessage("model", content);
-    ui.displayChatMessage(ui.agentNickname, message);
+    chatManager.assistant.injectMessage("model", message);
+    ui.displayChatMessage(chatManager.model.nickname, message);
     return true;
   }
 

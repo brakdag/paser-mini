@@ -94,7 +94,6 @@ class InterfaceCommands {
    */
   static async handleNick(chatManager, ui, newNick) {
     chatManager.updateUserNickname(newNick);
-    ui.setUserNickname(newNick);
     ui.displayInfo(`User nickname successfully changed to '${newNick}'`);
     return true;
   }
@@ -108,7 +107,7 @@ class InterfaceCommands {
    */
   static async handleMe(chatManager, ui, action) {
     const formattedAction = `* ${action} *`;
-    ui.displayChatMessage(ui.userNickname, formattedAction);
+    ui.displayChatMessage(chatManager.user.nickname, formattedAction);
     await chatManager.processTurn(formattedAction);
     return true;
   }

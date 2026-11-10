@@ -12,7 +12,7 @@ import logger from "../core/logger.js";
 export function appendChatMessage(adapter, role, content, timestamp = null) {
   const apiRole = normalizeRole(role, adapter.user.nickname, adapter.model.nickname);
   adapter.history.push({
-    role: apiRole, content: normalizeContent(content, apiRole),
+    role: apiRole, content: normalizeContent(content, apiRole, adapter.immersionMode && adapter.renderingMode === "IRC"),
     timestamp: timestamp || IRCFormatter.getTimestamp(),
   });
 }
@@ -72,7 +72,7 @@ export async function sendChatCompletion(adapter, message, role, { signal, budge
     try {
       const response = await adapter.client.post("/chat/completions", payload, { signal });
       signal?.throwIfAborted();
-      const content = response.data?.choices?.[0]?.message?.content;
+      const content = adapter.normalizeResponseText(response.data?.choices?.[0]?.message?.content || "");
       if (!content) throw new Error(`Empty response from ${name}`);
       adapter.injectMessage("assistant", content, IRCFormatter.getTimestamp());
       return content;

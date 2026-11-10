@@ -229,7 +229,7 @@ class OpenRouterAdapter extends BaseAdapter {
    * @throws {Error} If the response text is empty.
    */
   _handleResponse(response) {
-    const textContent = response.data.choices[0].message.content;
+    const textContent = this.normalizeResponseText(response.data.choices[0].message.content || "");
 
     if (textContent) {
       const msgTimestamp = IRCFormatter.getTimestamp();

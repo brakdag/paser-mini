@@ -136,7 +136,7 @@ class NvidiaAdapter extends BaseAdapter {
    */
   _handleResponse(data) {
     const rawContent = data.choices?.[0]?.message?.content || "";
-    const content = this._filterThoughts(rawContent);
+    const content = this.normalizeResponseText(this._filterThoughts(rawContent));
 
     if (!content) {
       logger.warn("NvidiaAdapter: Empty response received");
@@ -174,7 +174,7 @@ class NvidiaAdapter extends BaseAdapter {
   _filterThoughts(text) {
     if (!text) return "";
     const cleaned = text.replace(/<(thought|reasoning)>[\s\S]*?<\/\1>/gi, "");
-    return cleaned.trim();
+    return this.immersionMode && this.renderingMode === "IRC" ? cleaned.trimEnd() : cleaned.trim();
   }
 
   /**

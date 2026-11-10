@@ -5,6 +5,24 @@ import chalk from "chalk";
  */
 class IRCFormatter {
   /**
+   * Removes echoed headers only at the start of the agent's own reply.
+   * Fenced/indented code, quotes, other speakers and subsequent lines stay intact.
+   * @param {string} text - Reply body, possibly prefixed with repeated IRC headers.
+   * @param {string} nickname - Exact agent nickname, compared literally.
+   * @returns {string} Body without transport headers.
+   */
+  static stripReplyHeaders(text, nickname) {
+    const header = /^(?:[ \t]*\r?\n)* {0,3}\[(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?\][ \t]+<([^>\r\n]+)>[ \t]*(?:\r?\n)?/u;
+    let body = text;
+    let match = header.exec(body);
+    while (match && match[1] === nickname) {
+      body = body.slice(match[0].length);
+      match = header.exec(body);
+    }
+    return body;
+  }
+
+  /**
    * Generates a timestamp in [HH:mm] format.
    * @returns {string} The formatted timestamp string.
    */

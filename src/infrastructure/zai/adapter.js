@@ -212,7 +212,7 @@ class ZaiAdapter extends BaseAdapter {
    * @throws {Error} If the response text is empty.
    */
   _handleResponse(response) {
-    const textContent = response.data.choices?.[0]?.message?.content;
+    const textContent = this.normalizeResponseText(response.data.choices?.[0]?.message?.content || "");
 
     if (textContent) {
       const msgTimestamp = IRCFormatter.getTimestamp();
@@ -240,7 +240,7 @@ class ZaiAdapter extends BaseAdapter {
    * @param {string|null} [timestamp] - The timestamp of the message.
    */
   injectMessage(role, content, timestamp = null) {
-    this.historyManager.injectMessage(role, content, timestamp);
+    this.historyManager.injectMessage(role, content, timestamp, this.immersionMode && this.renderingMode === "IRC");
   }
 
   /**
