@@ -53,7 +53,7 @@ class OpenRouterAdapter extends BaseAdapter {
       timeout: 600000,
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
-        "HTTP-Referer": "https://paser-mini.local",
+        "HTTP-Referer": "https://brakdag.github.io/paser-mini/",
         "X-Title": "Paser Mini",
         "Content-Type": "application/json",
       },
