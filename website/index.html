@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Paser Mini: un agente de IA para la terminal. Herramientas locales, múltiples proveedores y una filosofía simple: cuidar cada token del contexto.">
+    <meta name="theme-color" content="#f6f5f0">
+    <link rel="canonical" href="https://brakdag.github.io/paser-mini/">
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="./style.css">
+    <title>Paser Mini — Cada token cuenta.</title>
+  </head>
+  <body>
+    <a class="skip" href="#contenido">Ir al contenido</a>
+    <div class="page">
+      <header>
+        <a class="wordmark" href="./" aria-label="Paser Mini, inicio">paser<span class="accent">/</span>mini<span class="status" aria-hidden="true"></span></a>
+        <nav aria-label="Navegación principal">
+          <a href="#instalar">Instalar</a>
+          <a href="https://github.com/brakdag/paser-mini">GitHub <span aria-hidden="true">↗</span></a>
+        </nav>
+      </header>
+
+      <main id="contenido">
+        <section class="intro" aria-labelledby="titulo">
+          <p class="eyebrow">Un agente de IA. En tu terminal.</p>
+          <h1 id="titulo">Cada token<br><span class="accent">cuenta.</span></h1>
+          <p class="lead">El contexto es espacio para pensar.<br>Paser Mini busca aprovecharlo al máximo.</p>
+          <p class="description">Un agente que razona, usa herramientas y continúa la tarea. Lee archivos, edita código y ejecuta comandos desde una interfaz de texto. Mini por filosofía: dar al modelo el contexto que necesita para trabajar.</p>
+          <a class="primary-link" href="#instalar">Empezar <span aria-hidden="true">↓</span></a>
+        </section>
+
+        <section class="principles" aria-label="Cómo trabaja Paser Mini">
+          <article>
+            <span class="index" aria-hidden="true">01 /</span>
+            <h2>Contexto con intención.</h2>
+            <p>Indexar, buscar y leer lo relevante. Elegir las herramientas para evitar información innecesaria en la conversación.</p>
+          </article>
+          <article>
+            <span class="index" aria-hidden="true">02 /</span>
+            <h2>La terminal alcanza.</h2>
+            <p>Archivos, comandos, herramientas MCP y pipelines de Unix. Una interfaz de texto para trabajar sobre tu proyecto.</p>
+          </article>
+          <article>
+            <span class="index" aria-hidden="true">03 /</span>
+            <h2>Vos elegís el modelo.</h2>
+            <p>Usá tu propia API key con Gemini, OpenRouter, Groq y otros proveedores, o configurá un endpoint compatible.</p>
+          </article>
+        </section>
+
+        <section class="install" id="instalar" aria-labelledby="install-title">
+          <div class="section-heading">
+            <h2 id="install-title">Del repo a la terminal.</h2>
+            <p>Debian / Linux · Node.js 24 o 26 · Git</p>
+          </div>
+          <div class="terminal">
+            <div class="terminal-heading"><span aria-hidden="true">›_</span> instalación</div>
+            <pre aria-label="Comandos de instalación"><code>git clone https://github.com/brakdag/paser-mini.git
+cd paser-mini
+npm ci --ignore-scripts
+export GEMINI_API_KEY="tu-api-key"
+npm start</code></pre>
+          </div>
+          <p class="note">Gemini es el proveedor inicial. Para usar otro, configurá su API key y seleccioná el proveedor con <code>/connect</code>. El consumo depende del modelo y del servicio que elijas.</p>
+          <div class="resource-links">
+            <a href="https://github.com/brakdag/paser-mini#readme">Leer la documentación <span aria-hidden="true">↗</span></a>
+            <a href="https://github.com/brakdag/paser-mini/blob/main/docs/cli-composition.md">Pipelines y endpoints <span aria-hidden="true">↗</span></a>
+          </div>
+        </section>
+
+        <aside class="openrouter" aria-labelledby="openrouter-title">
+          <h2 id="openrouter-title">¿Venís de OpenRouter?</h2>
+          <p>Paser Mini es un cliente independiente. Usá <code>OPENROUTER_API_KEY</code> y elegí OpenRouter con <code>/connect</code>. La disponibilidad y las condiciones de cada modelo las define el proveedor.</p>
+        </aside>
+      </main>
+
+      <footer>
+        <span>paser/mini <span class="footer-dot" aria-hidden="true">·</span> por <a href="https://github.com/brakdag">brakdag</a></span>
+        <a href="https://github.com/brakdag/paser-mini/blob/main/LICENSE">Código abierto · MIT <span aria-hidden="true">↗</span></a>
+      </footer>
+    </div>
+  </body>
+</html>

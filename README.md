@@ -1,5 +1,7 @@
 # Paser Mini (Extreme Minimalist Autonomous Agent)
 
+[Project website](https://brakdag.github.io/paser-mini/)
+
 ## Mission
 To engineer an autonomous, AI-driven agent of absolute minimalism and maximum efficiency, proving that a tiny, obsessed team can outperform bloated corporate monoliths by stripping away all operational noise and focusing purely on the intelligence loop.
 
@@ -444,3 +446,7 @@ These are not aggregate RAM or project-disk quotas. File effects completed
 before termination persist. Globals no longer persist between calls.
 This policy relies on the host kernel and installed runtime; it does not
 isolate `execute` or provide a virtual machine for hostile native software.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
