@@ -73,12 +73,16 @@ function shortenText(value, fraction) {
     const head = Math.ceil((length - marker.length) / 2);
     return value.slice(0, head) + marker + value.slice(-(length - marker.length - head));
   }
-  if (Array.isArray(value)) return value.map(item => shortenText(item, fraction));
+  if (Array.isArray(value)) {
+    const items = value.map(item => shortenText(item, fraction));
+    return items.some((item, index) => item !== value[index]) ? items : value;
+  }
   if (!value || typeof value !== "object") return value;
   // Never slice base64, URLs, tool arguments, identifiers or provider metadata.
-  return Object.fromEntries(Object.entries(value).map(([key, item]) => [key,
+  const entries = Object.entries(value).map(([key, item]) => [key,
     ["text", "content", "parts", "resource"].includes(key) ? shortenText(item, fraction) : item,
-  ]));
+  ]);
+  return entries.some(([key, item]) => item !== value[key]) ? Object.fromEntries(entries) : value;
 }
 
 /**
@@ -128,7 +132,7 @@ export function planContext(messages, settings, systemInstruction, extra = {}) {
     ["content", "parts", "text", "sourceContent"].forEach(key => {
       if (key in copy) copy[key] = shortenText(copy[key], fraction);
     });
-    return copy;
+    return Object.keys(copy).some(key => copy[key] !== message[key]) ? copy : message;
   });
   let result = shortened(0);
   const target = Math.max(settings.limit, cost(result));

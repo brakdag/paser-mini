@@ -1,7 +1,38 @@
+import parseCommandArguments from "../../utils/commandArguments.js";
+
 /**
  * Handles AI-related commands such as connecting to providers and injecting messages.
  */
 class AICommands {
+  /**
+   * Configures and activates a custom chat-completions endpoint.
+   * @param {object} chatManager - Session manager.
+   * @param {object} ui - Terminal UI.
+   * @param {string} payload - Endpoint URL; authentication comes from CUSTOM_API_KEY.
+   * @returns {Promise<boolean>} Whether the command was handled.
+   */
+  static async handleCustom(chatManager, ui, payload) {
+    try {
+      const args = parseCommandArguments(payload);
+      if (args.length !== 1) throw new Error('Usage: /custom "endpoint" (set CUSTOM_API_KEY in the environment for authentication)');
+      const configOverrides = {
+        compatible_base_url: args[0], compatible_api_key_env: null,
+      };
+      const modelName = chatManager.model.name;
+      await chatManager.switchProvider({
+        providerId: "COMPATIBLE", modelName, temp: chatManager.model.temperature, configOverrides,
+      });
+      Object.entries(configOverrides).forEach(([key, value]) => chatManager.saveConfig(key, value));
+      if (chatManager.configManager.get("compatible_api_key") != null) chatManager.saveConfig("compatible_api_key", null);
+      chatManager.saveConfig("provider", "COMPATIBLE");
+      chatManager.saveConfig("model_name", modelName);
+      ui.displayInfo(`Compatible endpoint configured. Current model: ${modelName}. Use /model "model-id" to change it.`);
+    } catch (error) {
+      ui.displayError(error.message);
+    }
+    return true;
+  }
+
   /**
    * Injects a message into the chat history and displays it in the UI.
    * @param {object} chatManager The chat manager instance.

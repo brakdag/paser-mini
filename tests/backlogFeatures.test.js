@@ -236,11 +236,11 @@ test("F04 expands a single literal instruction, preserves whitespace and never d
   assert.match(h.errors[0], /Invalid command/);
 });
 
-["{broken", "[]", '{"help":"override"}', '{"custom":5}', '{"models":"override"}'].forEach((content) => {
+["{broken", "[]", '{"help":"override"}', '{"custom":5}', '{"models":"override"}', '{"custom":"override"}', '{"model":"override"}'].forEach((content) => {
   test(`F04 invalid shortcut file reports a clear diagnostic: ${content}`, async t => {
     const h = await shortcutsFixture(t);
     await fs.writeFile(h.file, content);
-    await h.handler.handle("/custom");
+    await h.handler.handle("/unknown");
     assert.equal(h.sent.length, 0);
     assert.match(h.errors[0], /Shortcuts:/);
   });

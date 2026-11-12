@@ -1,7 +1,32 @@
+import parseCommandArguments from "../../utils/commandArguments.js";
+
 /**
  * Handles commands for managing AI models, including selection, availability checks, and variant switching.
  */
 class ModelCommands {
+  /**
+   * Selects an exact model identifier without consulting provider model lists.
+   * @param {object} chatManager - Session manager.
+   * @param {object} ui - Terminal UI.
+   * @param {string} payload - Model identifier, optionally quoted.
+   * @returns {Promise<boolean>} Whether the command was handled.
+   */
+  static async handleModel(chatManager, ui, payload) {
+    try {
+      const args = parseCommandArguments(payload);
+      if (args.length !== 1 || !args[0].trim()) throw new Error('Usage: /model "model-id"');
+      const [modelName] = args;
+      await chatManager.switchProvider({
+        providerId: chatManager.assistant.providerId, modelName, temp: chatManager.model.temperature,
+      });
+      chatManager.saveConfig("model_name", modelName);
+      ui.displayInfo(`Model changed to ${modelName}`);
+    } catch (error) {
+      ui.displayError(error.message);
+    }
+    return true;
+  }
+
   /**
    * Lists available models or changes the current model and temperature.
    * @param {object} chatManager The chat manager instance.

@@ -256,3 +256,136 @@ test("connect and cross-provider favorite persist selection and retain denied ex
   assert.equal((await h.manager.engine.executeToolCall("execute", { command: "echo blocked" })).success, false);
   assert.deepEqual(h.errors, []);
 });
+
+/**
+ * Sets the optional custom credential and restores the environment after a test.
+ * @param {object} t - Test context.
+ * @param {string|undefined} value - Credential or absence.
+ */
+function customKey(t, value) {
+  const previous = process.env.CUSTOM_API_KEY;
+  if (value === undefined) delete process.env.CUSTOM_API_KEY;
+  else process.env.CUSTOM_API_KEY = value;
+  t.after(() => {
+    if (previous === undefined) delete process.env.CUSTOM_API_KEY;
+    else process.env.CUSTOM_API_KEY = previous;
+  });
+}
+
+test("/custom and /model configure authenticated transport, preserve exact IDs and survive reconnect", async (t) => {
+  customKey(t, "Secret-Key");
+  const h = await fixture();
+  h.values.compatible_api_key_env = "PASER_NONEXISTENT_CUSTOM_KEY";
+  await h.manager.commandHandler.handle('/CUSTOM "http://localhost:8000/prefix/v1"');
+  assert.equal(h.manager.assistant.providerId, "COMPATIBLE");
+  assert.equal(h.manager.assistant.client.defaults.baseURL, "http://localhost:8000/prefix/v1");
+  assert.equal(h.manager.assistant.client.defaults.headers.Authorization, "Bearer Secret-Key");
+  assert.equal(h.values.compatible_api_key, undefined);
+  assert.doesNotMatch(JSON.stringify(h.values), /Secret-Key/);
+  assert.equal(h.values.compatible_api_key_env, null);
+  assert.equal(h.values.provider, "COMPATIBLE");
+  h.manager.assistant.injectMessage("user", "Keep custom history");
+  const history = structuredClone(h.manager.assistant.getHistory());
+  await h.manager.commandHandler.handle('/model "Org/Exact Model:Q4"');
+  assert.equal(h.manager.model.name, "Org/Exact Model:Q4");
+  assert.equal(h.manager.assistant.currentModel, "Org/Exact Model:Q4");
+  assert.equal(h.values.model_name, "Org/Exact Model:Q4");
+  assert.equal(h.manager.model.temperature, 0.7);
+  assert.deepEqual(h.manager.assistant.getHistory(), history);
+  const requests = [];
+  t.mock.method(h.manager.assistant.client, "post", async (url, payload) => {
+    requests.push({ url, payload });
+    return { data: { choices: [{ message: { content: "Custom reply" } }] } };
+  });
+  assert.equal(await h.manager.assistant.sendMessage("Hello"), "Custom reply");
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].url, "/chat/completions");
+  assert.equal(requests[0].payload.model, "Org/Exact Model:Q4");
+  await h.manager.commandHandler.handle("/connect GEMINI");
+  await h.manager.commandHandler.handle("/connect compatible");
+  assert.equal(h.manager.assistant.client.defaults.headers.Authorization, "Bearer Secret-Key");
+  assert.doesNotMatch(JSON.stringify([h.info, h.errors]), /Secret-Key/);
+  assert.deepEqual(h.errors, []);
+});
+
+test("/custom ignores and clears legacy plaintext credentials when CUSTOM_API_KEY is absent", async t => {
+  customKey(t, undefined);
+  const h = await fixture();
+  h.values.compatible_api_key = "legacy-secret";
+  await h.manager.commandHandler.handle('/connect compatible');
+  assert.equal(h.manager.assistant.client.defaults.headers.Authorization, undefined);
+  await h.manager.commandHandler.handle('/custom http://localhost:9000/v1');
+  assert.equal(h.values.compatible_api_key, null);
+  assert.equal(h.manager.assistant.client.defaults.headers.Authorization, undefined);
+  assert.doesNotMatch(JSON.stringify([h.values, h.info, h.errors]), /legacy-secret/);
+  assert.deepEqual(h.errors, []);
+});
+
+test("/custom treats an empty environment key as unauthenticated and rejects multiline keys", async t => {
+  customKey(t, "");
+  const h = await fixture();
+  await h.manager.commandHandler.handle('/custom http://localhost:9000/v1');
+  assert.equal(h.manager.assistant.client.defaults.headers.Authorization, undefined);
+  const previous = h.manager.assistant;
+  const values = structuredClone(h.values);
+  process.env.CUSTOM_API_KEY = "secret\nkey";
+  await h.manager.commandHandler.handle('/custom http://localhost:8000/v1');
+  assert.equal(h.manager.assistant, previous);
+  assert.deepEqual(h.values, values);
+  assert.deepEqual(h.errors, ["Compatible API key must be a single-line string"]);
+});
+
+test("invalid custom or model arguments leave session and saved configuration intact", async () => {
+  const h = await fixture();
+  const old = h.manager.assistant;
+  const values = structuredClone(h.values);
+  const saved = [...h.saved];
+  const commands = [
+    "/custom", '/custom "http://localhost/v1" "key" extra',
+    '/custom "http://localhost/v1" "secret"', '/custom "http://localhost/v1" ""',
+    '/custom "http://localhost/v1', '/custom "http://localhost/v1"oops',
+    '/custom "not-a-url" "secret"', '/custom "https://user:secret@localhost/v1"',
+    '/custom "http://localhost/v1?token=secret"', '/custom "file:///tmp/secret"',
+    '/custom "http://localhost/v1" "secret\\nkey"',
+    "/model", '/model ""', '/model "   "', '/model "unterminated', "/model a b",
+  ];
+  for (let index = 0; index < commands.length; index += 1) {
+    assert.equal(await h.manager.commandHandler.handle(commands[index]), true);
+    assert.equal(h.errors.length, index + 1);
+    assert.equal(h.manager.assistant, old);
+    assert.deepEqual(h.values, values);
+    assert.deepEqual(h.saved, saved);
+  }
+  assert.doesNotMatch(JSON.stringify(h.errors), /secret/);
+});
+
+test("failed /custom and /model switches preserve the previous configuration", async (t) => {
+  const h = await fixture();
+  const old = h.manager.assistant;
+  const values = structuredClone(h.values);
+  const saved = [...h.saved];
+  t.mock.method(h.manager.providerManager, "createAdapter", async () => { throw new Error("Cannot initialize adapter"); });
+  await h.manager.commandHandler.handle('/custom "http://localhost:8000/v1"');
+  await h.manager.commandHandler.handle('/model "new-model"');
+  assert.equal(h.manager.assistant, old);
+  assert.deepEqual(h.values, values);
+  assert.deepEqual(h.saved, saved);
+  assert.deepEqual(h.errors, ["Cannot initialize adapter", "Cannot initialize adapter"]);
+});
+
+test("custom and exact model changes respect instance mode and model interruption boundaries", async () => {
+  const h = await fixture({ instanceMode: true });
+  await h.manager.commandHandler.handle('/custom "http://localhost:8000/v1"');
+  await h.manager.commandHandler.handle("/model 'Custom/CaseSensitive'");
+  assert.equal(h.values.provider, "COMPATIBLE");
+  assert.equal(h.values.model_name, "Custom/CaseSensitive");
+  assert.deepEqual(h.saved, []);
+  let cancellations = 0;
+  /** Records requests to interrupt the active turn. */
+  h.manager.turnProcessor.cancelPendingTurn = () => { cancellations += 1; };
+  assert.equal(h.manager.commandHandler.interruptForModelChange('/model "new"'), true);
+  assert.equal(h.manager.commandHandler.interruptForModelChange("/models"), true);
+  assert.equal(h.manager.commandHandler.interruptForModelChange("/modelExtra"), false);
+  assert.equal(cancellations, 2);
+  assert.deepEqual(h.errors, []);
+});

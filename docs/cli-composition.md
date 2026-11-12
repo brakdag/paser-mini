@@ -49,11 +49,19 @@ For a server requiring a bearer credential:
 
 Set `MY_INFERENCE_API_KEY` in the process environment. The configuration stores
 its variable name, and request diagnostics exclude authorization headers. Omit
-`compatible_api_key_env` for unauthenticated servers. A named but unset or empty
+`compatible_api_key_env` to use `CUSTOM_API_KEY` by default (unset or empty means
+no authentication). API keys are read only from environment variables; plaintext
+`compatible_api_key` configuration values are ignored. A named but unset or empty
 credential is an error. URLs must use HTTP(S), without userinfo, query parameters
 or fragments. Prefixes are retained: `/team/v1` receives POST requests at
 `/team/v1/chat/completions`. The model must be explicit; model discovery is not
 required. Configure these fields before selecting `COMPATIBLE` with `/connect`.
+
+You can also configure the endpoint interactively with `/custom "http://localhost:8080/v1"`
+and select an exact model with `/model "my-local-model"`. `/custom` accepts only the
+endpoint and uses `CUSTOM_API_KEY` for optional Bearer authentication. Define it
+before starting Paser; the command never accepts or saves an API key. A successful
+`/custom` clears a legacy plaintext key from the active project configuration.
 
 The supported protocol uses `model`, `messages`, `temperature`, and `max_tokens`,
 and reads `choices[0].message.content` for full responses. It reuses the common

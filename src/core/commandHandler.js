@@ -229,6 +229,16 @@ const PREFIX_COMMANDS = {
    * @param {CommandContext} args The context.
    * @returns {Promise<boolean>} Always true.
    */
+  "/custom": ({ cm, ui, payload }) => AICommands.handleCustom(cm, ui, payload),
+  /**
+   * @param {CommandContext} args The context.
+   * @returns {Promise<boolean>} Always true.
+   */
+  "/model": ({ cm, ui, payload }) => ModelCommands.handleModel(cm, ui, payload),
+  /**
+   * @param {CommandContext} args The context.
+   * @returns {Promise<boolean>} Always true.
+   */
   "/models": ({ cm, ui, input }) =>
     ModelCommands.handleModels(cm, ui, input.split(/\s+/)),
   /**
@@ -291,7 +301,7 @@ class CommandHandler {
    * @returns {boolean} Whether model selection should take priority.
    */
   interruptForModelChange(input) {
-    if (!/^\/models(?:\s|$)/i.test(input.trim())) return false;
+    if (!/^\/models?(?:\s|$)/i.test(input.trim())) return false;
     this.chatManager.turnProcessor.cancelPendingTurn();
     return true;
   }

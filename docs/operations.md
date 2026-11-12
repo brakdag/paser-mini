@@ -144,7 +144,13 @@ also applies to imported history. System/developer instructions, media, tool
 schemas and protocol structure are preserved; each text block retains at least
 128 characters (or its full text if shorter). These mandatory fields and the
 output/protocol reserve impose a soft minimum, so very small limits may be
-exceeded. A local budget never raises `CONTEXT_BUDGET` or stops the agent loop.
+exceeded. A long active turn with many tool exchanges can also exceed the target
+because each message and its minimum text are preserved. The final request check
+reports the estimated total including reserves when this happens. Trimming and
+minimum-over-budget notices each appear once per active turn and budget setting,
+including retries; subsequent requests still apply the policy silently. Text
+already at its minimum does not trigger a trimming notice.
+A local budget never raises `CONTEXT_BUDGET` or stops the agent loop.
 Provider limits and transport errors still apply; failed transport restores
 history removed or shortened during preparation. Already completed tool effects
 persist. `max_tokens` must be a positive integer; any nonnegative integer local

@@ -186,15 +186,31 @@ export default class BaseAdapter {
 
   #pendingEntries = null;
 
+  #contextNotices = new Set();
+
   /** Marks one user turn, including its tool exchanges and recovery requests. */
   beginContextTurn() {
     if (this.#contextTurn) throw new Error("A context turn is already active");
     this.#contextTurn = randomUUID();
+    this.#contextNotices.clear();
   }
 
   /** Finishes turn grouping without deleting its history identifiers. */
   endContextTurn() {
     this.#contextTurn = null;
+    this.#contextNotices.clear();
+  }
+
+  /**
+   * Reports each context condition once per active turn and budget setting.
+   * Tool exchanges and transport retries share the same notice allowance.
+   * @param {string} condition - Notice category and budget settings.
+   * @param {string} message - User-facing diagnostic.
+   */
+  _reportContext(condition, message) {
+    if (this.#contextTurn && this.#contextNotices.has(condition)) return;
+    if (this.#contextTurn) this.#contextNotices.add(condition);
+    this.ui?.displayInfo?.(message);
   }
 
   /**
@@ -236,7 +252,8 @@ export default class BaseAdapter {
     if (retained.some((message, index) => message !== history[index]) || retained.length !== history.length) {
       const removed = history.length - retained.length;
       history.splice(0, history.length, ...retained);
-      this.ui?.displayInfo?.(`Context estimate: removed ${removed} messages in complete older turns; shortened active text if needed (target ${settings.limit} tokens).`);
+      const action = removed > 0 ? `removed ${removed} messages in complete older turns and shortened remaining text if needed` : "shortened active-turn text";
+      this._reportContext(`trim:${settings.limit}:${settings.output}`, `Context estimate: ${action} (target ${settings.limit} tokens; further trims in this turn are silent).`);
     }
   }
 
@@ -265,7 +282,14 @@ export default class BaseAdapter {
     const retained = planContext(original, settings, "", extra);
     Object.assign(payload, { [key]: retained });
     if (retained.some((message, index) => message !== original[index]) || retained.length !== original.length) {
-      this.ui?.displayInfo?.(`Context estimate: shortened formatted request text (target ${settings.limit} tokens).`);
+      this._reportContext(`trim:${settings.limit}:${settings.output}`, `Context estimate: shortened formatted request text (target ${settings.limit} tokens; further trims in this turn are silent).`);
+    }
+    const total = estimateContextTokens(retained, "", settings.charsPerToken, extra) + settings.output + 500;
+    if (total > settings.limit) {
+      this._reportContext(`minimum:${settings.limit}:${settings.output}`,
+        `Context estimate: minimum preserved request is ~${total} tokens including response/protocol reserve, above target ${settings.limit}. ` +
+        "Instructions, media, schemas, message structure and up to 128 characters per text block are preserved; the agent continues. " +
+        "Further minimum notices in this turn are silent.");
     }
   }
 

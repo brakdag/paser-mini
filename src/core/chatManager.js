@@ -116,8 +116,9 @@ class ChatManager {
    * @param {string} params.providerId - The target provider ID.
    * @param {string} params.modelName - The target model name.
    * @param {number} params.temp - The target temperature.
+   * @param {object} [params.configOverrides] - Candidate configuration, applied before persisting a successful switch.
    */
-  async switchProvider({ providerId, modelName, temp }) {
+  async switchProvider({ providerId, modelName, temp, configOverrides = {} }) {
     if (this._initialization || this._turnInProgress || this._reconfiguring) {
       throw new Error("Wait for the active turn or reconfiguration to finish.");
     }
@@ -129,14 +130,27 @@ class ChatManager {
       const previous = this.assistant;
       const preserveHistory = previous.providerId === providerId;
       const nextModel = { ...this.model, name: modelName, temperature: temp };
+      const candidateConfig = {
+        ...configOverrides, model_name: modelName,
+      };
+      const configManager = {
+        /**
+         * @param {string} key - Configuration key.
+         * @param {unknown} [fallback] - Default value.
+         * @returns {unknown} Candidate value or current session setting.
+         */
+        get: (key, fallback) => Object.hasOwn(candidateConfig, key)
+          ? candidateConfig[key] : this.configManager.get(key, fallback),
+      };
       const candidate = await this.providerManager.createAdapter({
-        providerId, ui: this.ui, configManager: this.configManager,
+        providerId, ui: this.ui, configManager,
         userNickname: this.user.nickname, agentNickname: this.model.nickname,
       });
       candidate.setIdentities({ ...this.user }, nextModel);
       candidate.setRenderingMode(this.renderingMode);
       candidate.setImmersionMode(this.immersionMode);
       await candidate.startChat(modelName, this.systemInstruction, temp);
+      candidate.configManager = this.configManager;
       if (preserveHistory) {
         const history = candidate.getHistory();
         history.splice(0, history.length, ...structuredClone(previous.getHistory()));

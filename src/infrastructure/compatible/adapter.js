@@ -28,8 +28,11 @@ export default class CompatibleAdapter extends BaseAdapter {
     if (keyEnv != null && (typeof keyEnv !== "string" || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(keyEnv))) {
       throw new Error("compatible_api_key_env must name an environment variable");
     }
-    const key = keyEnv ? process.env[keyEnv] : null;
+    const key = process.env[keyEnv || "CUSTOM_API_KEY"];
     if (keyEnv && !key) throw new Error("Configured compatible API credential is missing");
+    if (key != null && (typeof key !== "string" || /[\r\n]/.test(key))) {
+      throw new Error("Compatible API key must be a single-line string");
+    }
     this.client = axios.create({
       baseURL: url.href.replace(/\/$/, ""), timeout: 600000,
       headers: { "Content-Type": "application/json", ...(key ? { Authorization: `Bearer ${key}` } : {}) },

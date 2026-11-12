@@ -150,6 +150,61 @@ test("an oversized tool result is shortened and the active turn continues", asyn
   assert.equal(await adapter.sendMessage("Continue with next tool result"), "Answer");
 });
 
+test("a long active tool turn reports its preserved minimum once without claiming no-op trims", async (t) => {
+  const { adapter, settings, payloads, information } = await fixture(t);
+  settings.context_window_limit = 30000;
+  adapter.beginContextTurn();
+  t.after(() => adapter.endContextTurn());
+  await adapter.sendMessage("Original task");
+  const { contextTurn } = adapter.getHistory().at(-1);
+  payloads.length = 0;
+  // Hundreds of exchanges in one user turn cannot be removed as older turns.
+  for (let index = 0; index < 800; index += 1) {
+    adapter.injectMessage(index % 2 ? "model" : "user", "x".repeat(128));
+    adapter.getHistory().at(-1).contextTurn = contextTurn;
+  }
+  await adapter.sendMessage("Latest tool result");
+  const { contents, ...extra } = payloads.at(-1);
+  const total = estimateContextTokens(contents, "", adapter.getCharsPerToken(), extra) + adapter.getMaxOutputTokens() + 500;
+  assert.ok(total > 30000);
+  assert.ok(information.some(message => message.includes(`~${total} tokens`) && message.includes("above target 30000")));
+  assert.ok(!information.some(message => /shortened|removed 0/u.test(message)));
+  const notices = information.length;
+  await adapter.sendMessage("Next tool result");
+  assert.equal(information.length, notices);
+  assert.equal(payloads.length, 2);
+  assert.ok(JSON.stringify(payloads.at(-1)).includes("Next tool result"));
+  adapter.endContextTurn();
+  adapter.beginContextTurn();
+  adapter._validateContextPayload(structuredClone(payloads[0]));
+  assert.equal(information.length, notices + 1);
+});
+
+test("history and formatted payload trimming share one notice through tool exchanges and retries", async (t) => {
+  const { adapter, settings, payloads, information } = await fixture(t);
+  settings.context_window_limit = 1000;
+  adapter.beginContextTurn();
+  t.after(() => adapter.endContextTurn());
+  await adapter.sendMessage("Huge snapshot ".repeat(2000));
+  await adapter.sendMessage("Another snapshot ".repeat(2000));
+  assert.equal(information.filter(message => message.includes("Context estimate:")).length, 1);
+  assert.ok(!information.some(message => /removed 0/u.test(message)));
+  const payload = structuredClone(payloads.at(-1));
+  adapter._validateContextPayload(payload);
+  adapter._validateContextPayload(payload);
+  assert.equal(information.length, 1);
+  settings.context_window_limit = 900;
+  await adapter.sendMessage("Changed limit snapshot ".repeat(2000));
+  assert.ok(information.some(message => message.includes("target 900")));
+});
+
+test("text already at its preserved minimum is unchanged even above budget", () => {
+  const messages = [{ role: "user", parts: [{ text: "x".repeat(128) }], contextTurn: "active" }];
+  const retained = planContext(messages, contextSettings(1, 64, 3.5), "");
+  assert.equal(retained[0], messages[0]);
+  assert.equal(retained[0].parts, messages[0].parts);
+});
+
 test("transport failure still restores history after truncation", async (t) => {
   const { adapter, settings } = await fixture(t, "nvidia");
   await adapter.sendMessage("Earlier question".repeat(500));
