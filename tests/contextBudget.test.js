@@ -2,6 +2,10 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { contextSettings, estimateContextTokens, planContext } from "../src/infrastructure/contextBudget.js";
 import ChatManager from "../src/core/chatManager.js";
+import TurnProcessor from "../src/core/turnProcessor.js";
+import ExecutionEngine from "../src/core/executionEngine.js";
+import SmartToolParser from "../src/core/smartParser.js";
+import RepetitionDetector from "../src/core/repetitionDetector.js";
 
 const providers = ["gemini", "nvidia", "nvidia-minimax", "cohere", "zai", "groq", "cerebras", "cloudflare", "openrouter", "huggingface", "poolside", "zenmux"];
 
@@ -148,6 +152,58 @@ test("an oversized tool result is shortened and the active turn continues", asyn
   assert.equal(payloads.length, calls + 1);
   assert.ok(JSON.stringify(payloads.at(-1)).includes("[Context truncated]"));
   assert.equal(await adapter.sendMessage("Continue with next tool result"), "Answer");
+});
+
+[{ maxActions: 2 }, { maxRequests: 2 }].forEach(limits => {
+  test(`OpenRouter resumes tools after ${JSON.stringify(limits)} with an 80000-token truncated history`, async (t) => {
+    const { adapter, settings, payloads, information } = await fixture(t, "openrouter");
+    settings.context_window_limit = 80000;
+    adapter.currentModel = "baidu/ernie-5.5-flash-preview";
+    const errors = [];
+    const messages = [];
+    Object.assign(adapter.ui, {
+      model: { nickname: "agent" }, inputQueue: [],
+      displayError(message) { errors.push(message); },
+      displayChatMessage(_nickname, message) { messages.push(message); },
+      startToolMonitoring() {}, endToolMonitoring() {},
+    });
+    let calls = 0;
+    let resumed = false;
+    let content = 'Əread("a")';
+    const tools = {
+      async read() {
+        calls += 1;
+        if (resumed) content = "finished";
+        return `START${"large tool output ".repeat(25000)}END`;
+      },
+    };
+    t.mock.method(adapter.client, "post", async (_url, payload) => {
+      payloads.push(structuredClone(payload));
+      return { data: { choices: [{ message: { content } }] } };
+    });
+    const parser = new SmartToolParser();
+    const processor = new TurnProcessor(adapter, tools, parser,
+      new ExecutionEngine(tools, parser, adapter.ui), adapter.ui, new RepetitionDetector(), limits);
+
+    await assert.rejects(processor.process("initial request"), { name: "TurnLimitError" });
+    assert.equal(calls, 2);
+    assert.ok(information.some(message => message.includes("target 80000")));
+    assert.ok(JSON.stringify(payloads.at(-1)).includes("[Context truncated]"));
+    const stoppedTurn = adapter.getHistory().at(-1).contextTurn;
+    const previousRequests = payloads.length;
+    resumed = true;
+    content = 'Əread("a")';
+
+    await processor.process("continue");
+
+    assert.equal(calls, 3);
+    assert.equal(payloads.length, previousRequests + 2);
+    assert.equal(payloads[previousRequests].messages.at(-1).content, "continue");
+    assert.notEqual(adapter.getHistory().at(-1).contextTurn, stoppedTurn);
+    assert.deepEqual(messages, ["finished"]);
+    assert.equal(errors.length, 1);
+    assert.equal(processor.control, null);
+  });
 });
 
 test("a long active tool turn reports its preserved minimum once without claiming no-op trims", async (t) => {

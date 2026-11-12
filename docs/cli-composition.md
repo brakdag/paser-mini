@@ -123,9 +123,11 @@ adapter ignores it, the session owner stops waiting within the total deadline an
 does not send a subsequent request.
 
 `initializeSession()` returns a promise, including for synchronous adapters.
-`processTurn()` and `runOnce()` reject on turn limits, repetition stops and
-cancellation. They resolve after a completed turn; `runOnce()` also waits for UI
-publications. Interactive input stays available after a turn limit. Failed
+Normal sessions have no automatic turn, duration, consecutive-error or repetition
+limits. `processTurn()` and `runOnce()` reject on cancellation and on finite limits
+explicitly supplied by programmatic callers. They resolve after a completed turn;
+`runOnce()` also waits for UI publications. Interactive input stays available after
+an explicitly configured turn limit. Failed
 rewrites restore history, the previous rewrite target and repetition/tool tracking;
 external tool side effects are retained. Incomplete GitHub issues release their
 processing label and receive no completion receipt, allowing retry.

@@ -2,21 +2,21 @@ import { performance } from "node:perf_hooks";
 import TurnLimitError from "./exceptions/TurnLimitError.js";
 import { UserInterruptException } from "./exceptions.js";
 
-/** Owns the scheduling limits and cancellation state of one turn. */
+/** Owns cancellation and optional scheduling limits for one turn. */
 export default class TurnControl {
   /**
-   * Creates finite budgets. The deadline stops scheduling; it cannot kill in-flight work.
+   * Turns are unlimited by default. Explicit programmatic budgets can restrict scheduling.
    * @param {object} ui - Input queue owner.
    * @param {object} [options] - Programmatic limits and clock for tests.
-   * @param {number} [options.maxActions] - Tool calls, including invalid arguments.
-   * @param {number} [options.maxRequests] - Model exchanges, including recovery requests.
-   * @param {number} [options.maxErrors] - Consecutive failed actions.
-   * @param {number} [options.maxDurationMs] - Elapsed scheduling deadline.
+   * @param {number} [options.maxActions] - Tool calls, including invalid arguments; Infinity disables the limit.
+   * @param {number} [options.maxRequests] - Model exchanges, including recovery; Infinity disables the limit.
+   * @param {number} [options.maxErrors] - Consecutive failed actions; Infinity disables the limit.
+   * @param {number} [options.maxDurationMs] - Elapsed scheduling deadline; Infinity disables the limit.
    * @param {() => number} [options.now] - Monotonic clock.
    */
-  constructor(ui, { maxActions = 500, maxRequests = 500, maxErrors = 10, maxDurationMs = 1800000, now = () => performance.now() } = {}) {
-    if ([maxActions, maxRequests, maxErrors, maxDurationMs].some(value => !Number.isSafeInteger(value) || value <= 0)) {
-      throw new RangeError("Turn limits must be positive safe integers.");
+  constructor(ui, { maxActions = Infinity, maxRequests = Infinity, maxErrors = Infinity, maxDurationMs = Infinity, now = () => performance.now() } = {}) {
+    if ([maxActions, maxRequests, maxErrors, maxDurationMs].some(value => value !== Infinity && (!Number.isSafeInteger(value) || value <= 0))) {
+      throw new RangeError("Turn limits must be positive safe integers or Infinity.");
     }
     this.ui = ui;
     this.maxActions = maxActions;

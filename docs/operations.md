@@ -77,7 +77,7 @@ IRC and does not alter CLEAN, Fountain or non-immersive responses.
 execution; old saved values are left untouched. Shell execution is gated by
 `execute_enabled`; pure mode disables tool execution. Neither flag creates an
 operating-system sandbox. Persistence and concurrent-writer limitations are
-documented in the README; use one writer process per project.
+documented in the [runtime reference](runtime.md#configuration-persistence); use one writer process per project.
 
 ## Argument names and compatibility
 
@@ -165,7 +165,7 @@ projections and explicit unsupported-content responses.
 | Operation | Observable effects |
 | --- | --- |
 | File, JSON, binary extraction, patch and Git restore tools | Modify project files; path policy applies, with protected metadata exclusions |
-| `run` | Requires Linux/Bubblewrap/prlimit; fresh isolated process per call, writable project, read-only top-level protected metadata/runtime, no host network/environment; terminates namespace processes within 5 seconds; completed file effects persist. See README for limits and project inode caveats |
+| `run` | Requires Linux/Bubblewrap/prlimit; fresh isolated process per call, writable project, read-only top-level protected metadata/runtime, no host network/environment; terminates namespace processes within 5 seconds; completed file effects persist. See the [execution policy](local-tools.md#run-execution-policy) for limits and project inode caveats |
 | `execute`, inspector commands | Execute with user permissions; arbitrary code can access resources beyond convenience path helpers |
 | `doc`, `snapshot` | Write generated HTML or heap snapshots to the requested validated destination |
 | `fetch`, `url`, `search` | Make network requests and may start renderers; results use the documented limits and cache policies |
@@ -181,7 +181,7 @@ Only `/execute` controls the shell tool; it does not gate every tool that can
 execute code or modify files. Completed effects persist when a turn fails or
 is cancelled. Model requests share five total attempts and a ten-minute deadline
 covering transport and waits; `/models` cancels them for every provider. See the
-README request retry policy for programmatic limits and remote generation effects.
+[request retry policy](runtime.md#request-retries-and-deadlines) for programmatic limits and remote generation effects.
 EOF, `/exit` (and its aliases), SIGINT/SIGTERM, startup failures and unhandled
 process errors use one idempotent application shutdown. EOF drains queued input
 and the current turn before shutdown; `/exit` and termination signals cancel the

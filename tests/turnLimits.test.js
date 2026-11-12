@@ -7,6 +7,7 @@ import SmartToolParser from "../src/core/smartParser.js";
 import RepetitionDetector from "../src/core/repetitionDetector.js";
 import TerminalUI from "../src/core/terminalUI.js";
 import ToolExecutor from "../src/core/toolExecutor.js";
+import TurnControl from "../src/core/turnControl.js";
 import { UserInterruptException, GeminiSafetyError } from "../src/core/exceptions.js";
 
 /**
@@ -45,8 +46,67 @@ function harness(reply, limits = {}) {
   return { processor, engine, parser, ui, tools, calls, requests, errors, messages, monitoring };
 }
 
-test("identical successful results stop without another tool or recovery request; next turn is fresh", async () => {
+test("default turns exceed former request, action, repetition and time limits until the model finishes", async (t) => {
+  let time = 0;
+  const h = harness('Əread("a")', { now() { return time; } });
+  h.processor.repetitionDetector = new RepetitionDetector();
+  t.mock.method(h.tools, "read", async (...args) => {
+    h.calls.push(args);
+    time += 3600000;
+    return "unchanged";
+  });
+  t.mock.method(h.processor.assistant, "sendMessage", async (message) => {
+    h.requests.push(message);
+    return h.calls.length < 600 ? 'Əread("a")' : "finished";
+  });
+
+  await h.processor.process("go");
+
+  assert.equal(h.calls.length, 600);
+  assert.equal(h.requests.length, 601);
+  assert.deepEqual(h.errors, []);
+  assert.deepEqual(h.messages, [{ nick: "agent", message: "finished" }]);
+  assert.deepEqual(h.processor.repetitionDetector.buffer, []);
+  assert.equal(h.engine.toolTracker.attempts.size, 0);
+  assert.equal(h.engine.toolTracker.outcomes.size, 0);
+});
+
+test("default turns return repeated tool and argument errors to the model until it finishes", async (t) => {
+  const h = harness("");
+  h.processor.repetitionDetector = new RepetitionDetector();
+  t.mock.method(h.tools, "read", async (...args) => { h.calls.push(args); throw new Error("tool failed"); });
+  t.mock.method(h.processor.assistant, "sendMessage", async (message) => {
+    h.requests.push(message);
+    return h.requests.length === 1 ? Array(12).fill('Əread("a") Əread()').join(" ") : "finished";
+  });
+
+  await h.processor.process("go");
+
+  assert.equal(h.calls.length, 12);
+  assert.equal(h.requests.length, 2);
+  assert.match(h.requests[1], /tool failed/);
+  assert.match(h.requests[1], /ERR:/);
+  assert.deepEqual(h.errors, []);
+  assert.deepEqual(h.messages, [{ nick: "agent", message: "finished" }]);
+});
+
+test("scheduling budgets are unlimited by default and finite overrides remain validated", () => {
+  const control = new TurnControl({});
+  assert.equal(control.maxActions, Infinity);
+  assert.equal(control.maxRequests, Infinity);
+  assert.equal(control.maxErrors, Infinity);
+  assert.equal(control.deadline, Infinity);
+  ["maxActions", "maxRequests", "maxErrors", "maxDurationMs"].forEach(key => {
+    assert.doesNotThrow(() => new TurnControl({}, { [key]: Infinity }));
+    [0, -1, -Infinity, NaN, 1.5, "2"].forEach(value => {
+      assert.throws(() => new TurnControl({}, { [key]: value }), RangeError);
+    });
+  });
+});
+
+test("an explicitly enabled unchanged-result limit stops the turn and resets on the next input", async () => {
   const h = harness('Əread("a")');
+  h.engine.toolTracker.maxUnchangedResults = 5;
   await assert.rejects(h.processor.process("first"), TurnLimitError);
   assert.equal(h.calls.length, 5);
   assert.equal(h.requests.length, 6);
@@ -70,6 +130,61 @@ test("changed output permits progress but cannot bypass the action budget within
   assert.equal(h.calls.length, 3);
   assert.equal(h.requests.length, 1);
   assert.match(h.errors[0], /action limit/);
+});
+
+["actions", "requests", "errors", "duration", "attempts", "unchanged results"].forEach((kind) => {
+  test(`the first user message after the ${kind} limit starts at zero and can execute tools`, async (t) => {
+    let time = 0;
+    let resumed = false;
+    const limits = {
+      actions: { maxActions: 2 },
+      requests: { maxRequests: 2 },
+      errors: { maxErrors: 2 },
+      duration: { maxDurationMs: 10, now() { return time; } },
+      attempts: {},
+      "unchanged results": {},
+    };
+    const h = harness('Əread("a")', limits[kind]);
+    if (kind === "attempts") h.engine.toolTracker.maxAttempts = 2;
+    if (kind === "unchanged results") h.engine.toolTracker.maxUnchangedResults = 2;
+    t.mock.method(h.tools, "read", async (...args) => {
+      h.calls.push(args);
+      if (!resumed && kind === "errors") throw new Error("tool failed");
+      if (!resumed && kind === "duration") time = 10;
+      return kind === "attempts" ? `revision ${h.calls.length}` : "unchanged";
+    });
+    await assert.rejects(h.processor.process("first"), TurnLimitError);
+    const callsBefore = h.calls.length;
+    const requestsBefore = h.requests.length;
+    assert.ok(callsBefore > 0);
+    assert.equal(h.processor.control, null);
+    assert.equal(h.processor.api.pendingRequest, null);
+
+    resumed = true;
+    const starts = [];
+    /** Records the counters before the new turn's first model request. */
+    h.processor.assistant.beginContextTurn = () => {
+      const { actions, requests, errors, cancelled } = h.processor.control;
+      starts.push({ actions, requests, errors, cancelled });
+      assert.equal(h.engine.toolTracker.attempts.size, 0);
+      assert.equal(h.engine.toolTracker.outcomes.size, 0);
+      assert.deepEqual(h.processor.repetitionDetector.buffer, []);
+    };
+    t.mock.method(h.processor.assistant, "sendMessage", async (message) => {
+      h.requests.push(message);
+      return message === "continue" ? 'Əread("a")' : "finished";
+    });
+
+    await h.processor.process("continue");
+
+    assert.deepEqual(starts, [{ actions: 0, requests: 0, errors: 0, cancelled: false }]);
+    assert.equal(h.calls.length, callsBefore + 1);
+    assert.equal(h.requests.length, requestsBefore + 2);
+    assert.equal(h.requests[requestsBefore], "continue");
+    assert.deepEqual(h.messages, [{ nick: "agent", message: "finished" }]);
+    assert.equal(h.errors.length, 1);
+    assert.equal(h.processor.control, null);
+  });
 });
 
 [false, true].forEach((parserFailure) => {

@@ -1,13 +1,13 @@
 /**
- * Detects cyclic repetitions in text by monitoring n-grams in a sliding window buffer.
+ * Optionally detects cyclic repetitions; normal sessions allow repeated responses.
  */
 class RepetitionDetector {
   /**
    * Initializes the RepetitionDetector.
    * @param {number} [n] - The size of the n-gram to monitor for repetitions.
-   * @param {number} [maxRepeats] - The maximum number of allowed repetitions before a cycle is detected.
+   * @param {number} [maxRepeats] - Maximum repetitions; Infinity disables detection and buffering.
    */
-  constructor(n = 20, maxRepeats = 5) {
+  constructor(n = 20, maxRepeats = Infinity) {
     this.n = n;
     this.maxRepeats = maxRepeats;
     this.buffer = [];
@@ -20,7 +20,7 @@ class RepetitionDetector {
    * @returns {string|boolean} The repeated sequence if a cycle is detected, otherwise true if the text is valid.
    */
   addText(text) {
-    if (!text) return true;
+    if (this.maxRepeats === Infinity || !text) return true;
 
     // Simple tokenization based on words
     const tokens = text.match(/\w+/g) || [];
