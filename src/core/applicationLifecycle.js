@@ -5,7 +5,9 @@ export default class ApplicationLifecycle {
    * @param {number} [options.timeoutMs] - Total shutdown deadline.
    * @param {() => unknown} [options.flush] - Final buffered log flush.
    */
-  constructor({ timeoutMs = 5000, flush = () => {} } = {}) {
+  // MCP stdio shutdown can spend 2s on EOF and 2s on SIGTERM before SIGKILL.
+  // The resource phase (80% of the deadline) must leave room for that escalation.
+  constructor({ timeoutMs = 7500, flush = () => {} } = {}) {
     this.timeoutMs = timeoutMs;
     this.flush = flush;
     this.resources = [];

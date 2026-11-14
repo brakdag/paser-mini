@@ -233,35 +233,67 @@ cliStops.forEach(mode => {
   });
 });
 
-test("/exit cancels an active model transport and drains the real CLI", async t => {
-  const { spawn } = await import("node:child_process");
-  const options = await fixture(t);
-  const preload = path.join(options.cwd, "offline.mjs");
-  const axiosUrl = new URL("../node_modules/axios/index.js", import.meta.url).href;
-  await fs.writeFile(preload, `
-    import axios from ${JSON.stringify(axiosUrl)};
-    axios.defaults.adapter = config => new Promise((resolve, reject) => {
-      config.signal.addEventListener('abort', () => reject(config.signal.reason), {once: true});
-      process.stdout.write('request-started\\n');
+["/exit", ":q"].forEach(command => {
+  test(`${command} cancels an active model transport and drains the real CLI`, async t => {
+    const { spawn } = await import("node:child_process");
+    const options = await fixture(t);
+    if (command === ":q") {
+      const directory = path.join(options.cwd, ".paser-mini/config");
+      await fs.mkdir(directory, { recursive: true });
+      // Exercise both SDK grace periods: ignore EOF and SIGTERM until SIGKILL.
+      const server = `
+        require('node:fs').writeFileSync('server.pid', String(process.pid));
+        process.on('SIGTERM', () => {});
+        require('node:readline').createInterface({input: process.stdin}).on('line', line => {
+          const request = JSON.parse(line);
+          if (request.id === undefined) return;
+          const result = request.method === 'initialize'
+            ? {protocolVersion: '2024-11-05', capabilities: {tools: {}}, serverInfo: {name: 'fixture', version: '1'}}
+            : {tools: []};
+          process.stdout.write(JSON.stringify({jsonrpc: '2.0', id: request.id, result}) + '\\n');
+        });
+        setInterval(() => {}, 1000);
+      `;
+      await fs.writeFile(path.join(directory, "mcp.json"), JSON.stringify({
+        mcpServers: { fixture: { command: process.execPath, args: ["-e", server] } },
+      }));
+    }
+    const preload = path.join(options.cwd, "offline.mjs");
+    const axiosUrl = new URL("../node_modules/axios/index.js", import.meta.url).href;
+    await fs.writeFile(preload, `
+      import axios from ${JSON.stringify(axiosUrl)};
+      axios.defaults.adapter = config => new Promise((resolve, reject) => {
+        config.signal.addEventListener('abort', () => reject(config.signal.reason), {once: true});
+        process.stdout.write('request-started\\n');
+      });
+    `);
+    const args = ["--import", preload, mainUrl.pathname, "--message", "go"];
+    if (command === "/exit") args.push("--no-system-instruction");
+    const child = spawn(process.execPath, args, options);
+    t.after(() => { if (child.exitCode === null) child.kill("SIGKILL"); });
+    let stderr = "";
+    let exiting = false;
+    child.stderr.on("data", data => { stderr += data; });
+    child.stdout.on("data", data => {
+      if (!exiting && data.toString().includes("request-started")) {
+        exiting = true;
+        child.stdin.write(`${command}\n`);
+      }
     });
-  `);
-  const child = spawn(process.execPath, ["--import", preload, mainUrl.pathname, "--no-system-instruction", "--message", "go"], options);
-  t.after(() => { if (child.exitCode === null) child.kill("SIGKILL"); });
-  let stderr = "";
-  let exiting = false;
-  child.stderr.on("data", data => { stderr += data; });
-  child.stdout.on("data", data => {
-    if (!exiting && data.toString().includes("request-started")) {
-      exiting = true;
-      child.stdin.write("/exit\n");
+    const code = await new Promise((resolve, reject) => {
+      child.once("error", reject);
+      child.once("exit", resolve);
+    });
+    assert.equal(code, 0, stderr);
+    assert.equal(exiting, true);
+    assert.doesNotMatch(stderr, /shutdown error|deadline exceeded/);
+    if (command === ":q") {
+      const pid = Number(await fs.readFile(path.join(options.cwd, "server.pid"), "utf8"));
+      assert.throws(() => process.kill(pid, 0), { code: "ESRCH" });
+      const log = await fs.readFile(path.join(options.cwd, ".paser-mini/log/session.log"), "utf8");
+      assert.match(log, /Session Started/);
     }
   });
-  const code = await new Promise((resolve, reject) => {
-    child.once("error", reject);
-    child.once("exit", resolve);
-  });
-  assert.equal(code, 0, stderr);
-  assert.equal(exiting, true);
 });
 
 test("tool reload and permanent shutdown share cleanup and reject late acquisitions", async t => {
