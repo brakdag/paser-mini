@@ -370,6 +370,16 @@ class TerminalUI {
   }
 
   /**
+   * Gives a remote operation exclusive terminal input until it finishes.
+   * @param {object} session - Remote terminal session.
+   * @param {(output: (text: string) => void) => Promise<object>} operation - Terminal operation to await.
+   * @returns {Promise<object>} Captured remote result.
+   */
+  withTerminal(session, operation) {
+    return this.input.withTerminal(session, operation);
+  }
+
+  /**
    * Requests a yes/no confirmation from the user.
    * @param {string} message The confirmation message.
    * @returns {Promise<boolean>} True if confirmed, false otherwise.

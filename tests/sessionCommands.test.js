@@ -57,6 +57,65 @@ function harness(t, options = {}) {
   return { manager, assistant, errors, messages, payloads, answers };
 }
 
+test("/ssh shares remote command results with the AI and preserves them on provider failure", async t => {
+  const h = harness(t, { pureMode: true });
+  const remote = { target: "user@home", code: 1, output: "remote Linux", error: "", truncated: false };
+  const commands = [];
+  /**
+   * @param {object} _session - Terminal session.
+   * @param {(output: (text: string) => void) => Promise<object>} operation - Terminal operation.
+   * @returns {Promise<object>} Offline terminal operation result.
+   */
+  h.manager.ui.withTerminal = async (_session, operation) => operation(() => {});
+  t.mock.method(h.manager.sshSession, "run", async command => { commands.push(command); return remote; });
+  h.answers.push("Try /ssh run pwd");
+  await h.manager.commandHandler.handle('/ssh run printf "%s" "literal; command"');
+  assert.deepEqual(commands, ['printf "%s" "literal; command"']);
+  const request = JSON.stringify(h.payloads.at(-1));
+  assert.match(request, /Remote SSH host: user@home/);
+  assert.match(request, /remote Linux/);
+  assert.match(request, /Exit code: 1/);
+  assert.match(request, /\/run executes on my local PC/);
+  h.answers.push(new Error("Provider unavailable"));
+  await assert.rejects(h.manager.commandHandler.handle("/ssh run false"), /Provider unavailable/);
+  assert.match(JSON.stringify(h.assistant.getHistory()), /remote Linux/);
+});
+
+test("/ssh connect omits authentication output from AI history and closes on exit", async t => {
+  const h = harness(t);
+  /**
+   * @param {object} _session - Terminal session.
+   * @param {(output: (text: string) => void) => Promise<object>} operation - Terminal operation.
+   * @returns {Promise<object>} Offline terminal operation result.
+   */
+  h.manager.ui.withTerminal = async (_session, operation) => operation(() => {});
+  t.mock.method(h.manager.sshSession, "connect", async target => {
+    h.manager.sshSession.target = target;
+    return { code: 0, output: "private-authentication-exchange" };
+  });
+  const close = t.mock.method(h.manager.sshSession, "disconnect", () => {});
+  await h.manager.commandHandler.handle("/ssh connect user@home");
+  assert.equal(h.payloads.length, 0);
+  const history = JSON.stringify(h.assistant.getHistory());
+  assert.match(history, /user@home/);
+  assert.doesNotMatch(history, /private-authentication/);
+  await h.manager.commandHandler.handle("/ssh disconnect");
+  h.manager.requestExit();
+  assert.equal(close.mock.callCount(), 2);
+});
+
+test("/ssh rejects missing arguments and noninteractive UI before launching SSH", async t => {
+  const h = harness(t);
+  const connect = t.mock.method(h.manager.sshSession, "connect", async () => {});
+  await h.manager.commandHandler.handle("/ssh connect");
+  assert.match(h.errors.at(-1), /Usage/);
+  await h.manager.commandHandler.handle("/ssh connect home");
+  assert.match(h.errors.at(-1), /interactive terminal/);
+  assert.equal(connect.mock.callCount(), 0);
+  await h.manager.commandHandler.handle("/sshextra");
+  assert.match(h.errors.at(-1), /Invalid command/);
+});
+
 test("/help and /config describe actual reset and context behavior", async (t) => {
   const h = harness(t);
   const panels = [];

@@ -85,6 +85,51 @@ export class TerminalInput {
     });
   }
 
+  /**
+   * Temporarily transfers the physical terminal to a user-owned interactive session.
+   * Keystrokes bypass readline, queues and session logs, including passwords.
+   * @param {object} session - Interactive terminal with write and resize methods.
+   * @param {(output: (text: string) => void) => Promise<object>} operation - Operation completed by the remote shell.
+   * @returns {Promise<object>} Operation result after restoring chat input.
+   */
+  async withTerminal(session, operation) {
+    if (!process.stdin.isTTY || !process.stdout.isTTY || !this.rl || this.closed) {
+      throw new Error("/ssh requires an interactive terminal.");
+    }
+    const input = process.stdin;
+    const wasRaw = input.isRaw;
+    this.rl.pause();
+    const listeners = /** @type {Array<(data: Buffer|string) => void>} */ (input.listeners("data"));
+    listeners.forEach(listener => input.removeListener("data", listener));
+    /**
+     * @param {Buffer|string} data - Raw terminal keystrokes.
+     * @returns {void} Keystrokes forwarded privately.
+     */
+    const forward = data => session.write(data.toString());
+    /**
+     * Resizes the remote terminal with the local window.
+     * @returns {void} Remote terminal resized.
+     */
+    const resize = () => session.resize(process.stdout.columns || 80, process.stdout.rows || 24);
+    try {
+      input.setRawMode(true);
+      input.on("data", forward);
+      process.stdout.on("resize", resize);
+      input.resume();
+      return await operation(text => process.stdout.write(text));
+    } finally {
+      input.pause();
+      input.removeListener("data", forward);
+      process.stdout.removeListener("resize", resize);
+      input.setRawMode(this.closed ? false : wasRaw);
+      if (!this.closed) {
+        listeners.forEach(listener => input.on("data", listener));
+        this.rl.resume();
+      }
+      process.stdout.write("\n");
+    }
+  }
+
   /** Closes readline and resolves pending reads; repeated calls are harmless. */
   close() {
     this.closed = true;

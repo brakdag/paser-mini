@@ -7,6 +7,7 @@ import logger from "./logger.js";
 import ConfigManager from "./configManager.js";
 import TurnProcessor from "./turnProcessor.js";
 import { estimateContextTokens } from "../infrastructure/contextBudget.js";
+import SshSession from "./sshSession.js";
 
 /**
  * ChatManager orchestrates the interaction between the user, the AI assistant,
@@ -33,6 +34,7 @@ class ChatManager {
     this.systemInstruction = systemInstruction;
     this.pureMode = pureMode;
     this.ui = ui;
+    this.sshSession = new SshSession();
     this.user = user;
     this.model = model;
     this.instanceMode = instanceMode;
@@ -97,6 +99,7 @@ class ChatManager {
    */
   requestExit() {
     this.stopRequested = true;
+    this.sshSession.disconnect();
     this._initialization?.abort(new Error("Session startup cancelled"));
     this.turnProcessor.cancelPendingTurn();
     this.ui.close?.();

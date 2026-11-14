@@ -45,6 +45,9 @@ paser-mini --no-system-instruction  # Pure chat
 | `/reload` | Rebuild the prompt and tool catalog, including MCP configuration |
 | `/execute` | Enable shell access |
 | `/run <command>` | Run your own shell command and share output with the AI for guidance; always available |
+| `/ssh connect [user@]host` | Open a persistent remote terminal using SSH (also accepts SSH config aliases) |
+| `/ssh run <command>` | Run in the remote shell, preserve directory and variables, and share results with the AI |
+| `/ssh status` / `/ssh disconnect` | Inspect or close the remote session; `Ctrl+]` disconnects during interaction |
 | `/tool <call>` | Invoke a tool and add its call and result to AI context |
 | `/exit` | End the session |
 

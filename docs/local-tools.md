@@ -92,6 +92,43 @@ with the command in conversation history, including failures. The AI then
 receives a request to explain the result and suggest the next command for you to
 type. Keep `/execute off` if you want to reserve shell execution for yourself.
 
+For a persistent remote shell, use an interactive terminal:
+
+```text
+/ssh connect user@192.168.100.18
+/ssh run cd /var/log
+/ssh run pwd
+/ssh run uname -a
+/ssh status
+/ssh disconnect
+```
+
+`/ssh` requires the local OpenSSH client (`ssh`), a remote POSIX `sh` and `stty`,
+and the `node-pty` dependency (installation may require native build tools).
+SSH uses your normal keys, agent, host verification and `~/.ssh/config`; aliases
+in that file can configure ports, identity files and jump hosts. One connection
+belongs to each chat session. Directory changes and exported variables survive
+between `/ssh run` commands; reconnecting starts a fresh shell. `/run` continues
+to execute locally. The remote terminal uses POSIX `sh`; changing its `PS1` prompt
+or replacing the shell can interrupt command completion detection (use `Ctrl+]`
+to disconnect). SSH is a manual command, available even with `/execute off`
+or in pure chat mode; it does not give the AI a remote execution tool.
+
+While connecting or running a remote command, keyboard input goes directly to
+SSH, so you can answer host verification, passwords, passphrases and interactive
+prompts such as `sudo`. These raw keystrokes bypass chat history and logging.
+Authentication output is not sent to the AI. Remote command output and the
+command you submit are shared with the AI, including errors; avoid putting secrets
+directly in command arguments or printing them. The AI explains each result and
+waits for your next command. Commands have no fixed execution deadline; `Ctrl+C`
+is sent to the remote terminal and **`Ctrl+]` disconnects and returns to chat**.
+The connection handshake has a two-minute deadline. Exiting the app also closes
+SSH. A lost connection is reported and requires an explicit reconnect; commands
+are never retried automatically. Up to one million characters of each command's
+output are retained for AI context while terminal output streams live.
+Interactive prompts work directly; full-screen applications are best used from
+a standalone terminal because this chat does not emulate a screen.
+
 `/tool execute("git status")` still follows agent tool permissions. `/tool`
 now saves the tool call and result in conversation history, including status,
 metadata and media blocks, so the AI sees them on your next message. It does

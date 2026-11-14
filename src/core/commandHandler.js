@@ -326,6 +326,10 @@ class CommandHandler {
       return SystemCommands.handleRun(this.chatManager, this.ui, input.replace(/^\/\S+\s*/, ""));
     }
 
+    if (/^\/ssh(?:\s|$)/i.test(input)) {
+      return SystemCommands.handleSsh(this.chatManager, this.ui, input.replace(/^\/\S+\s*/, ""));
+    }
+
     if (/^\/(?:rewrite|r)(?:\s|$)/i.test(input)) {
       return SessionCommands.handleRewrite(this.chatManager, this.ui, input.replace(/^\/\S+\s*/, ""));
     }
@@ -355,7 +359,7 @@ class CommandHandler {
         if (!shortcuts || typeof shortcuts !== "object" || Array.isArray(shortcuts)) throw new Error("Expected a JSON object");
         const reserved = new Set([
           ...Object.keys(COMMAND_MAP), ...Object.keys(PREFIX_COMMANDS).map(key => key.trim()),
-          "/rewrite", "/r", "/fav+", "/s", "/run",
+          "/rewrite", "/r", "/fav+", "/s", "/run", "/ssh",
         ]);
         Object.entries(shortcuts).forEach(([name, text]) => {
           if (!/^[a-z][a-z0-9_-]*$/.test(name) || reserved.has(`/${name}`) || typeof text !== "string") {

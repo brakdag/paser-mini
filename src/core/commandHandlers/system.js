@@ -285,6 +285,62 @@ class SystemCommands {
   }
 
   /**
+   * Manages a persistent, manually controlled remote shell and shares command results.
+   * @param {object} chatManager - Chat owning the SSH session.
+   * @param {object} ui - Interactive user interface.
+   * @param {string} payload - SSH subcommand and its literal arguments.
+   * @returns {Promise<boolean>} Whether handled.
+   */
+  static async handleSsh(chatManager, ui, payload) {
+    const [, action = "status", argument = ""] = /^(\S+)?(?:\s+([\s\S]*))?$/.exec(payload) || [];
+    const session = chatManager.sshSession;
+    if (action.toLowerCase() === "status") {
+      ui.displayInfo(session.terminal ? `SSH connected: ${session.target}` : "SSH disconnected. /run executes locally.");
+      return true;
+    }
+    if (action.toLowerCase() === "disconnect") {
+      const { target } = session;
+      session.disconnect();
+      ui.displayInfo(`SSH disconnected${target ? `: ${target}` : ""}. /run executes locally.`);
+      chatManager.assistant.injectMessage("user", [{ type: "text", text: `User disconnected SSH session: ${target || "none"}.` }]);
+      return true;
+    }
+    if (!["connect", "run"].includes(action.toLowerCase()) || !argument.trim()) {
+      ui.displayError("Usage: /ssh connect [user@]host | /ssh run <command> | /ssh status | /ssh disconnect");
+      return true;
+    }
+    let result;
+    try {
+      if (!ui.withTerminal) throw new Error("/ssh requires an interactive terminal.");
+      ui.displayInfo(`SSH ${action.toLowerCase() === "connect" ? argument : session.target || "disconnected"} — Ctrl+] disconnects and returns to chat.`);
+      if (action.toLowerCase() === "connect") {
+        result = await ui.withTerminal(session, output => session.connect(argument, output));
+        if (result.error || result.code !== 0) throw new Error(result.error || "SSH connection failed.");
+        ui.displayInfo(`SSH connected: ${session.target}. Use /ssh run <command>; /run executes locally.`);
+        // Authentication conversation and keystrokes never enter model history.
+        chatManager.assistant.injectMessage("user", [{ type: "text",
+          text: `User connected a persistent SSH shell to ${session.target}. Remote commands use /ssh run; /run remains local.` }]);
+        return true;
+      }
+      ui.displayChatMessage(chatManager.user.nickname, `/ssh run ${argument}`);
+      result = await ui.withTerminal(session, output => session.run(argument, output));
+    } catch (error) {
+      ui.displayError(`SSH: ${error.message}`);
+      return true;
+    }
+    const text = `Remote SSH host: ${result.target}\nCommand: ${argument}\nExit code: ${result.code ?? "unknown"}\n` +
+      `${result.error}\n${result.output}${result.truncated ? "\n[Output truncated to 1M characters]" : ""}`;
+    // Save before requesting guidance, so provider failures do not lose the remote result.
+    chatManager.assistant.injectMessage("user", [{ type: "text", text }]);
+    await chatManager.processTurn(
+      "Explain the result of my remote /ssh run command and guide me through the next step. " +
+      "I type the commands myself; suggest /ssh run commands and wait for me. " +
+      "/run executes on my local PC. Do not execute more commands unless I explicitly ask you to.",
+    );
+    return true;
+  }
+
+  /**
    * Lists, enables, disables, or removes MCP servers configured in mcp.json.
    * @param {object} chatManager The chat manager instance.
    * @param {object} ui The terminal UI instance.
