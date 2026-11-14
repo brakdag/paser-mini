@@ -3,6 +3,8 @@ import path from "path";
 import SmartToolParser from "../smartParser.js";
 import promptManager from "../systemPromptManager.js";
 import mcpManager from "../../infrastructure/McpManager.js";
+import { normalizeToolResult, toolResultsContent, toolResultText } from "../toolResult.js";
+import { SystemTools } from "../../tools/systemTools.js";
 
 /**
  * Handles system-level commands such as clearing the terminal, 
@@ -209,7 +211,7 @@ class SystemCommands {
   }
 
   /**
-   * Executes an agent tool directly and displays the result without modifying history.
+   * Executes an agent tool directly and shares its result with conversation history.
    * @param {object} chatManager The chat manager instance.
    * @param {object} ui The terminal UI instance.
    * @param {string} rawToolCall The raw tool call expression (e.g. read("file.js")).
@@ -224,19 +226,61 @@ class SystemCommands {
 
     try {
       ui.displayInfo(`Executing tool: ${data.name}`);
-      const { result } = await chatManager.engine.executeToolCall(
+      const execution = await chatManager.engine.executeToolCall(
         data.name,
         data.args,
       );
       
-      const output = typeof result === "object" 
-        ? JSON.stringify(result, null, 2) 
-        : result;
-      
+      const output = toolResultText(execution.outcome);
       ui.displayMessage(`\n[Tool Output]\n${output}\n`);
+      chatManager.assistant.injectMessage("user", [
+        { type: "text", text: `User invoked /tool ${rawToolCall}` },
+        ...SystemCommands.manualResultBlocks(data.name, execution),
+      ]);
     } catch (e) {
       ui.displayError(`Execution Error: ${e.message}`);
     }
+    return true;
+  }
+
+  /**
+   * Keeps status, metadata and multimodal output in manually invoked tool results.
+   * @param {string} name The invoked tool name.
+   * @param {object} execution The engine result.
+   * @returns {Array<object>} Model content blocks.
+   */
+  static manualResultBlocks(name, execution) {
+    const content = toolResultsContent([{ name, ...execution }]);
+    return typeof content === "string" ? [{ type: "text", text: content }] : content;
+  }
+
+  /**
+   * Executes a user-written shell command and asks the agent for guidance.
+   * @param {object} chatManager The chat manager instance.
+   * @param {object} ui The terminal UI instance.
+   * @param {string} command The shell command, passed without tool-expression parsing.
+   * @returns {Promise<boolean>} True when handled.
+   */
+  static async handleRun(chatManager, ui, command) {
+    if (!command.trim()) {
+      ui.displayError("Usage: /run <shell command>");
+      return true;
+    }
+    ui.displayChatMessage(chatManager.user.nickname, `/run ${command}`);
+    // This is a user action, independent of the agent's tool catalog and permissions.
+    const result = await new SystemTools().execute(command, { loginShell: true });
+    const execution = { outcome: normalizeToolResult(result) };
+    ui.displayMessage(`\n[Shell Output]\n${toolResultText(execution.outcome)}\n`);
+    // Store the result before requesting guidance so it survives provider failures.
+    chatManager.assistant.injectMessage("user", [
+      { type: "text", text: `User invoked /run ${command}` },
+      ...SystemCommands.manualResultBlocks("execute", execution),
+    ]);
+    await chatManager.processTurn(
+      "Explain the result of my /run command and guide me through the next step. " +
+      "I am typing the shell commands myself; suggest commands for me to run and wait for me. " +
+      "Do not execute more commands unless I explicitly ask you to.",
+    );
     return true;
   }
 

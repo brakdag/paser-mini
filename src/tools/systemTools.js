@@ -26,7 +26,7 @@ export class SystemTools {
    * Configures subprocess execution; tests can supply a local fake.
    * @param {object} [options] - Execution dependencies.
    * @param {(command: string, options: object) => Promise<{stdout: string, stderr: string}>} [options.execRunner] - Shell runner.
-   * @param {(command: string, args: string[], options: object) => Promise<{stdout: string}>} [options.execFileRunner] - Subprocess runner.
+   * @param {(command: string, args: string[], options: object) => Promise<{stdout: string, stderr?: string}>} [options.execFileRunner] - Subprocess runner.
    */
   constructor({ execFileRunner = promisify(execFile), execRunner = promisify(exec) } = {}) {
     this.#execPromise = execRunner;
@@ -165,18 +165,24 @@ export class SystemTools {
   }
 
   /**
-   * Executes a bash command in the system shell.
+   * Executes a command in the system shell or the user's login shell.
    * @param {string} command The command to execute.
+   * @param {object} [options] Shell options.
+   * @param {boolean} [options.loginShell] Load the user's shell profile and PATH.
    * @returns {Promise<string|object>} The command output and failure metadata.
    * @throws {Error} If the bash command fails.
    */
-  async execute(command) {
+  async execute(command, { loginShell = false } = {}) {
     try {
-      const { stdout, stderr } = await this.#execPromise(command, {
+      const options = {
         cwd: process.cwd(),
         timeout: EXEC_TIMEOUT_MS,
-      });
-      return stdout || stderr || "Command executed successfully (no output).";
+        env: { ...process.env },
+      };
+      const { stdout, stderr } = loginShell && process.platform !== "win32"
+        ? await this.#execFilePromise(process.env.SHELL || "/bin/sh", ["-lc", command], options)
+        : await this.#execPromise(command, options);
+      return [stdout, stderr].filter(Boolean).join("\n") || "Command executed successfully (no output).";
     } catch (e) {
       return {
         isError: true,

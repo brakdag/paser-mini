@@ -9,6 +9,7 @@ import GeminiAdapter from "../src/infrastructure/gemini/adapter.js";
 import { UserInterruptException } from "../src/core/exceptions.js";
 import promptManager, { SystemPromptManager } from "../src/core/systemPromptManager.js";
 import mcpManager from "../src/infrastructure/McpManager.js";
+import { SystemTools } from "../src/tools/systemTools.js";
 
 /**
  * Creates an offline session with the real turn processor and Gemini history.
@@ -26,13 +27,14 @@ function harness(t, options = {}) {
     save() {},
   };
   const ui = {
-    setBashEnabled() {},
+    setBashEnabled(enabled) { this.bashEnabled = enabled; },
     setCommandHandler() {},
     setRenderingMode() {},
     setIdentities(_user, model) { this.model = model; },
     displayError(message) { errors.push(message); },
     displayInfo() {},
     displayChatMessage(nick, message) { messages.push({ nick, message }); },
+    displayMessage(message) { messages.push({ message }); },
     startToolMonitoring() {},
     endToolMonitoring() {},
   };
@@ -345,6 +347,70 @@ test("pure mode displays literal tool syntax without executing tools or requesti
 test("an empty prompt allows tools unless pure mode is explicitly enabled", async (t) => {
   const h = harness(t, { systemInstruction: "" });
   assert.equal(h.manager.engine.strictPureMode, false);
+});
+
+[false, true].forEach(pureMode => {
+  test(`/run shares literal shell input and output with the AI without agent shell access (pure=${pureMode})`, async t => {
+    const h = harness(t, { pureMode });
+    const command = 'printf "%s" "a $HOME" | cat';
+    const shell = t.mock.method(SystemTools.prototype, "execute", async () => "Console output\nwarning");
+    h.answers.push("Try the next command yourself.");
+    assert.equal(await h.manager.commandHandler.handle(`/RUN\t${command}`), true);
+    assert.equal(shell.mock.calls[0].arguments[0], command);
+    assert.deepEqual(shell.mock.calls[0].arguments[1], { loginShell: true });
+    assert.equal(h.manager.ui.bashEnabled, false);
+    assert.equal(h.manager.engine.tools.execute, undefined);
+    assert.match(h.messages.find(entry => entry.message.includes("Shell Output")).message, /Console output\nwarning/);
+    const request = JSON.stringify(h.payloads[0]);
+    assert.ok(request.includes(JSON.stringify(command).slice(1, -1)));
+    assert.match(request, /Console output/);
+    assert.match(request, /Do not execute more commands/);
+    assert.match(request, /✓ OK/);
+    assert.equal(h.payloads.length, 1);
+  });
+});
+
+test("/run records command failures and preserves output if AI guidance fails", async t => {
+  const h = harness(t);
+  t.mock.method(SystemTools.prototype, "execute", async () => ({
+    isError: true, content: [{ type: "text", text: "command not found" }], exitCode: 127,
+  }));
+  h.answers.push(new Error("Provider unavailable"));
+  await assert.rejects(h.manager.commandHandler.handle("/run missing-command"), /Provider unavailable/);
+  assert.match(JSON.stringify(h.assistant.getHistory()), /missing-command/);
+  assert.match(JSON.stringify(h.assistant.getHistory()), /command not found/);
+  assert.match(JSON.stringify(h.assistant.getHistory()), /127/);
+  assert.match(JSON.stringify(h.assistant.getHistory()), /ERROR/);
+  assert.ok(h.messages.some(entry => entry.message.includes("command not found")));
+});
+
+test("/run without input reports usage and never launches a shell or AI request", async t => {
+  const h = harness(t);
+  const shell = t.mock.method(SystemTools.prototype, "execute", async () => "unused");
+  assert.equal(await h.manager.commandHandler.handle("/run   "), true);
+  assert.match(h.errors.at(-1), /Usage: \/run/);
+  assert.equal(shell.mock.callCount(), 0);
+  assert.equal(h.payloads.length, 0);
+  await h.manager.commandHandler.handle("/runner");
+  assert.match(h.errors.at(-1), /Invalid command/);
+});
+
+test("/tool shares calls, status and media with the next AI request without requesting a reply", async t => {
+  const image = { type: "image", mimeType: "image/png", data: "YWJj" };
+  const h = harness(t, { tools: { async read() {
+    return { isError: true, content: [{ type: "text", text: "Partial result" }, image], exitCode: 1 };
+  } } });
+  await h.manager.commandHandler.handle('/tool read("fixture.txt")');
+  assert.equal(h.payloads.length, 0);
+  const history = JSON.stringify(h.assistant.getHistory());
+  assert.match(history, /fixture.txt/);
+  assert.match(history, /Partial result/);
+  assert.match(history, /ERROR/);
+  assert.match(history, /YWJj/);
+  h.answers.push("Explanation");
+  await h.manager.processTurn("Explain that result");
+  assert.match(JSON.stringify(h.payloads[0]), /Partial result/);
+  assert.match(JSON.stringify(h.payloads[0]), /YWJj/);
 });
 
 test("immersed IRC strips echoed headers before parsing tools and storing their exchanges", async t => {

@@ -77,6 +77,26 @@ parameter order and implementation. It replaces `registry_positional.json`.
 The parser, validator, executable registry and generated prompt use this catalog.
 `execute` remains hidden until `/execute` enables shell access.
 
+For a guided console session, type `/run fastfetch` or `/run git status`.
+`/run` always executes the command you wrote, independently of `/execute`, pure
+chat mode, and the agent's tool catalog. It does not enable shell access for the
+agent. The command runs in the project directory using `$SHELL -lc` (a login
+shell, falling back to `/bin/sh` when `$SHELL` is unset). It inherits the process
+environment and loads the shell's login profile, including configured `PATH`
+entries. On Windows it uses the default command shell. Commands retain
+the existing 60-second timeout; it is intended for commands that finish without
+interactive input. Each invocation starts a new shell, so `cd` and environment
+changes do not persist across invocations. Quotes, pipes and shell expressions
+are passed directly to the shell. Both stdout and stderr are displayed and saved
+with the command in conversation history, including failures. The AI then
+receives a request to explain the result and suggest the next command for you to
+type. Keep `/execute off` if you want to reserve shell execution for yourself.
+
+`/tool execute("git status")` still follows agent tool permissions. `/tool`
+now saves the tool call and result in conversation history, including status,
+metadata and media blocks, so the AI sees them on your next message. It does
+not request an immediate AI response.
+
 `/reload` is an alias for `/cache`: both rebuild the system prompt and tool
 catalog using the startup options, reread the role file and reconcile MCP
 configuration, then save the startup cache. Conversation history is retained.

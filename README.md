@@ -44,6 +44,8 @@ paser-mini --no-system-instruction  # Pure chat
 | `/rewrite <message>` | Replace the latest completed turn; tool effects persist |
 | `/reload` | Rebuild the prompt and tool catalog, including MCP configuration |
 | `/execute` | Enable shell access |
+| `/run <command>` | Run your own shell command and share output with the AI for guidance; always available |
+| `/tool <call>` | Invoke a tool and add its call and result to AI context |
 | `/exit` | End the session |
 
 See [CLI arguments](docs/runtime.md#command-line-arguments) for system instruction
